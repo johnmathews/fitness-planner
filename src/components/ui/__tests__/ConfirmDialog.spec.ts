@@ -7,7 +7,7 @@ type Props = InstanceType<typeof ConfirmDialog>['$props']
 
 const removePushUps = {
   title: 'Remove Push-ups?',
-  message: 'It comes off this week’s plan. Earlier weeks keep it, with their marks.',
+  message: 'It comes off this week’s plan. Weeks with their own plan keep it, and its marks stay.',
   confirmLabel: 'Remove',
 }
 

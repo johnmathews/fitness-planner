@@ -182,6 +182,18 @@ describe('Stepper', () => {
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
   })
 
+  it('can keep its label for screen readers only, still naming the group and spinbutton', () => {
+    const wrapper = mountStepper({ modelValue: 4, label: 'Squats goal', hideLabel: true })
+    const label = wrapper.get('[data-slot="stepper-label"]')
+    expect(label.text()).toBe('Squats goal')
+    expect(label.classes()).toEqual(['sr-only'])
+    // Positioned, so the hidden label and live region cannot escape a scrolling parent.
+    expect(wrapper.get('[data-slot="stepper"]').classes()).toContain('relative')
+    expect(wrapper.get('[role="spinbutton"]').attributes('aria-labelledby')).toBe(
+      label.attributes('id'),
+    )
+  })
+
   it('uses a consumer id for the spinbutton and puts a consumer class on the wrapper', () => {
     const wrapper = mountStepper({ modelValue: 3, id: 'daily-pick', class: 'mt-4' })
     expect(parts(wrapper).spin.attributes('id')).toBe('daily-pick')

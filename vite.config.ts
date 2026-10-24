@@ -4,10 +4,23 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import { APP_NAME } from './src/lib/app.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), tailwindcss(), vueDevTools()],
+  plugins: [
+    vue(),
+    tailwindcss(),
+    vueDevTools(),
+    // The page title is the app's one name (src/lib/app.ts), written into index.html.
+    {
+      name: 'app-name',
+      transformIndexHtml: {
+        order: 'pre',
+        handler: (html) => html.replaceAll('%APP_NAME%', APP_NAME),
+      },
+    },
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

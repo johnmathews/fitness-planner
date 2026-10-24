@@ -1,10 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
+import { DOMWrapper, flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
 import { SESSION_KEY } from '@/stores/session'
 import { usePlannerStore } from '@/stores/planner'
-import { CACHE_PREFIX, CONFLICT_NOTICE, OUTBOX_PREFIX, useSyncStore } from '@/stores/sync'
+import {
+  CACHE_PREFIX,
+  CONFLICT_NOTICE,
+  OUTBOX_PREFIX,
+  REFUSED_NOTICE,
+  useSyncStore,
+} from '@/stores/sync'
 import { FakeApi, PASSWORD } from '@/lib/__tests__/fakeApi'
 import { USER, signedIn } from '@/lib/__tests__/signedIn'
 
@@ -41,6 +47,28 @@ function heading(): string {
 
 function button(name: string) {
   return wrapper.findAll('button').find((b) => b.text() === name)!
+}
+
+/** Lets Reka's queued work (focus moves, presence, nextTick chains) settle. */
+async function settle(): Promise<void> {
+  for (let i = 0; i < 4; i++) await new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+async function openSettings(): Promise<void> {
+  await wrapper.get('button[aria-label="Settings"]').trigger('click')
+  await settle()
+}
+
+/** The open ConfirmDialog, by role; Reka renders it in a portal on document.body. */
+function confirmation(): DOMWrapper<HTMLElement> | null {
+  const el = document.querySelector<HTMLElement>('[role="alertdialog"]')
+  return el ? new DOMWrapper(el) : null
+}
+
+function confirmButton(name: string) {
+  return confirmation()!
+    .findAll('button')
+    .find((b) => b.text() === name)!
 }
 
 beforeEach(() => {
@@ -335,13 +363,6 @@ describe('invite and reset links', () => {
 })
 
 describe('signing out', () => {
-  async function openSettings(): Promise<void> {
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text().endsWith('Settings'))!
-      .trigger('click')
-  }
-
   it('shows who is signed in and signs out, forgetting the data', async () => {
     api = signedIn()
     mountApp()
@@ -362,11 +383,21 @@ describe('signing out', () => {
     await wrapper.findAll('button[aria-label^="Squats,"]')[0]!.trigger('click')
     await flushPromises()
     api.offline = false
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
     await openSettings()
     await button('Sign out').trigger('click')
-    expect(confirm).toHaveBeenCalledWith('2 changes haven’t synced yet. Sign out anyway?')
+    await settle()
+    // The question replaces the panel: signing out forgets this device's unsent changes.
+    expect(confirmation()!.get('h2').text()).toBe('Sign out now?')
+    expect(confirmation()!.text()).toContain(
+      'Two changes on this device haven’t reached the server yet. Signing out now loses them.',
+    )
+    expect(wrapper.find('[data-slot="popover-content"]').exists()).toBe(false)
+    await confirmButton('Cancel').trigger('click')
+    await settle()
+    expect(confirmation()).toBeNull()
     expect(api.paths('/auth/logout')).toEqual([])
+    // Focus goes back to Settings, the control the question came from.
+    expect(document.activeElement).toBe(wrapper.get('button[aria-label="Settings"]').element)
   })
 
   it('signs out after a confirm, in the singular for one change', async () => {
@@ -375,14 +406,45 @@ describe('signing out', () => {
     await flushPromises()
     api.offline = true
     await openSettings()
-    await wrapper.get('button[aria-label="Ink blue"]').trigger('click')
+    await wrapper
+      .findAll('[role="radio"]')
+      .find((r) => r.text() === 'Ink blue')!
+      .trigger('click')
     await flushPromises()
     api.offline = false
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
     await button('Sign out').trigger('click')
-    await flushPromises()
-    expect(confirm).toHaveBeenCalledWith('1 change hasn’t synced yet. Sign out anyway?')
+    await settle()
+    expect(confirmation()!.text()).toContain(
+      'One change on this device hasn’t reached the server yet. Signing out now loses them.',
+    )
+    const release = api.hold()
+    await confirmButton('Sign out').trigger('click')
+    await confirmButton('Sign out').trigger('click') // a second press while the first is under way
+    expect(confirmButton('Sign out').attributes('aria-busy')).toBe('true')
+    release()
+    await settle()
+    expect(api.paths('/auth/logout')).toHaveLength(1)
+    expect(confirmation()).toBeNull()
     expect(heading()).toBe('Sign in')
+  })
+
+  it('keeps the question open and says why when signing out fails there', async () => {
+    api = signedIn()
+    mountApp()
+    await flushPromises()
+    api.offline = true
+    await wrapper.findAll('button[aria-label^="Squats,"]')[0]!.trigger('click')
+    await flushPromises()
+    await openSettings()
+    await button('Sign out').trigger('click')
+    await settle()
+    await confirmButton('Sign out').trigger('click')
+    await settle()
+    expect(confirmation()!.get('[role="alert"]').text()).toBe(
+      'Can’t reach the server. Check the connection and try again.',
+    )
+    expect(confirmButton('Sign out').attributes('aria-busy')).toBeUndefined()
+    expect(heading()).toBe('Oct 19 – Oct 25, 2026')
   })
 
   it('refuses while offline, and says why', async () => {
@@ -397,7 +459,7 @@ describe('signing out', () => {
       'Can’t reach the server. Check the connection and try again.',
     )
     expect(wrapper.get('[data-testid="sign-out-problem"]').attributes('role')).toBe('alert')
-    expect(wrapper.find('[aria-label="Week navigation"]').exists()).toBe(true)
+    expect(wrapper.find('nav[aria-label="Week"]').exists()).toBe(true)
   })
 })
 
@@ -421,10 +483,7 @@ describe('other tabs', () => {
     )
     await flushPromises()
     expect(heading()).toBe('Oct 19 – Oct 25, 2026')
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text().endsWith('Settings'))!
-      .trigger('click')
+    await openSettings()
     expect(wrapper.get('[data-testid="signed-in-as"]').text()).toBe('Signed in as bob')
   })
 })
@@ -451,9 +510,17 @@ describe('sync status', () => {
     api.offline = true
     mountApp()
     await flushPromises()
-    expect(status().text()).toContain('this device has no saved copy of your data yet')
+    expect(status().text()).toBe(
+      'Can’t reach the server. This device has no saved copy of your data yet. Retry',
+    )
     api.offline = false
+    const release = api.hold()
     await status().get('button').trigger('click')
+    // Trying again: the banner says so at once, without the offline icon or Retry.
+    expect(status().text()).toBe('Loading your data…')
+    expect(status().attributes('data-tone')).toBe('neutral')
+    expect(status().find('svg').exists()).toBe(false)
+    release()
     await flushPromises()
     expect(status().exists()).toBe(false)
     expect(wrapper.find('[data-testid="exercise-grid"]').exists()).toBe(true)
@@ -466,8 +533,8 @@ describe('sync status', () => {
     api.offline = true
     await wrapper.findAll('button[aria-label^="Squats,"]')[0]!.trigger('click')
     await flushPromises()
-    expect(status().get('span').text()).toBe(
-      'Offline. 2 changes will sync when the connection is back.',
+    expect(status().get('p').text()).toBe(
+      'Not synced. Two changes are saved on this device and will sync when you’re back online.',
     )
     expect(JSON.parse(localStorage.getItem(OUTBOX_PREFIX + USER)!)).toHaveLength(2)
     api.offline = false
@@ -483,8 +550,8 @@ describe('sync status', () => {
     api.offline = true
     usePlannerStore().setAccent('#ff9f0a')
     await flushPromises()
-    expect(status().get('span').text()).toBe(
-      'Offline. 1 change will sync when the connection is back.',
+    expect(status().get('p').text()).toBe(
+      'Not synced. One change is saved on this device and will sync when you’re back online.',
     )
   })
 
@@ -493,7 +560,22 @@ describe('sync status', () => {
     api.offline = true
     mountApp()
     await flushPromises()
-    expect(status().get('span').text()).toBe('Offline. Showing the data saved on this device.')
+    expect(status().get('p').text()).toBe('Offline. Showing the data saved on this device.')
+  })
+
+  it('tells offline and a lost change apart by tone and icon, not only words (F27)', async () => {
+    api = signedIn()
+    api.offline = true
+    mountApp()
+    await flushPromises()
+    const offline = status()
+    expect(offline.attributes('data-tone')).toBe('neutral')
+    expect(offline.get('svg').classes()).toContain('lucide-cloud-off')
+    useSyncStore().notice = CONFLICT_NOTICE
+    await flushPromises()
+    const conflict = wrapper.get('[data-testid="sync-notice"]')
+    expect(conflict.attributes('data-tone')).toBe('error')
+    expect(conflict.get('svg').classes()).toContain('lucide-circle-alert')
   })
 
   it('shows a conflict notice until dismissed', async () => {
@@ -503,9 +585,33 @@ describe('sync status', () => {
     useSyncStore().notice = CONFLICT_NOTICE
     await flushPromises()
     const notice = wrapper.get('[data-testid="sync-notice"]')
-    expect(notice.text()).toContain(CONFLICT_NOTICE)
+    expect(notice.get('p').text()).toBe(`Your change wasn’t kept. ${CONFLICT_NOTICE}`)
     await notice.get('button').trigger('click')
     expect(wrapper.find('[data-testid="sync-notice"]').exists()).toBe(false)
+  })
+
+  it('says a refused change was not saved, and what to do', async () => {
+    api = signedIn()
+    mountApp()
+    await flushPromises()
+    useSyncStore().notice = REFUSED_NOTICE
+    await flushPromises()
+    const notice = wrapper.get('[data-testid="sync-notice"]')
+    expect(notice.attributes('data-tone')).toBe('error')
+    expect(notice.get('p').text()).toBe(
+      'Your change wasn’t saved. The server refused it, so it was undone here. Reload to see what was saved.',
+    )
+  })
+
+  it('shows any other notice as it is, still in the error tone', async () => {
+    api = signedIn()
+    mountApp()
+    await flushPromises()
+    useSyncStore().notice = 'Something else happened to a change.'
+    await flushPromises()
+    const notice = wrapper.get('[data-testid="sync-notice"]')
+    expect(notice.attributes('data-tone')).toBe('error')
+    expect(notice.get('p').text()).toBe('Something else happened to a change.')
   })
 
   it('leaves a hidden tab alone, and ignores sessionStorage events', async () => {

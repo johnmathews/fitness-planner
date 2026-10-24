@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { dateKey, formatShort, mondayOf, weekDates, weekLabel } from '@/lib/dates'
+import {
+  dateKey,
+  dayMonth,
+  formatShort,
+  mondayOf,
+  weekDates,
+  weekLabel,
+  weekRange,
+} from '@/lib/dates'
 
 describe('mondayOf', () => {
   it('returns the same day at midnight for a Monday', () => {
@@ -52,5 +60,22 @@ describe('labels', () => {
   it('formats the week label with the Sunday year', () => {
     expect(weekLabel(new Date(2026, 9, 19))).toBe('Oct 19 – Oct 25, 2026')
     expect(weekLabel(new Date(2026, 11, 28))).toBe('Dec 28 – Jan 3, 2027')
+  })
+})
+
+describe('dayMonth', () => {
+  it('writes the day before the whole month', () => {
+    expect(dayMonth(new Date(2026, 9, 26))).toBe('26 October')
+  })
+})
+
+describe('weekRange', () => {
+  it('names the month once within a month', () => {
+    expect(weekRange(new Date(2026, 9, 19))).toBe('19–25 October')
+  })
+
+  it('shortens both months across a month or a year', () => {
+    expect(weekRange(new Date(2026, 8, 28))).toBe('28 Sept – 4 Oct')
+    expect(weekRange(new Date(2026, 11, 28))).toBe('28 Dec – 3 Jan')
   })
 })

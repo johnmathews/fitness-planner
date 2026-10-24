@@ -91,25 +91,6 @@
   }
 }
 
-/* The last of the old component classes, until the navbar, settings popover, import prompt, sync
-   banner and week header move onto Button and SegmentedControl; then this layer goes. */
-@layer components {
-  /* Outlined button: the navbar, settings and secondary actions. */
-  .btn {
-    @apply inline-flex h-8 items-center gap-1.5 rounded-md border border-control-border bg-panel px-2.5 text-sm font-medium whitespace-nowrap text-ink hover:bg-tile sm:px-3;
-  }
-
-  /* The primary action is ink, not a brand colour (K8): one colour means "act". */
-  .btn-primary {
-    @apply inline-flex h-9 items-center rounded-md bg-ink px-4 text-sm font-semibold whitespace-nowrap text-on-ink hover:bg-ink/85;
-  }
-
-  /* One option in a segmented control (a track of aria-pressed buttons); the chosen one is ink. */
-  .segment {
-    @apply rounded-md text-xs font-medium text-ink-secondary hover:text-ink aria-pressed:bg-ink aria-pressed:text-on-ink;
-  }
-}
-
 /*
  * Printing gives a plain black-on-white sheet in either theme: the roles switch to print values,
  * so done marks print solid black, empty cells keep a grey ring and today's highlight disappears.

@@ -39,6 +39,7 @@ function save(): void {
           id="edit-exercise-sets"
           :model-value="sets"
           label="Sets"
+          hint="Optional."
           maxlength="2"
           inputmode="numeric"
           data-field="sets"

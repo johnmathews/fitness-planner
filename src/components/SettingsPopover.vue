@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
+import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
+import { Download, LogOut, Settings, Upload } from '@lucide/vue'
 import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import { useSessionStore } from '@/stores/session'
@@ -7,8 +8,10 @@ import { useSyncStore } from '@/stores/sync'
 import { describeProblem } from '@/lib/problems'
 import { useImportSummary } from '@/composables/importSummary'
 import { MAX_DAILY_PICK, MIN_DAILY_PICK } from '@/lib/storage'
-import { INKS, inkFor } from '@/lib/inks'
+import { INKS, inkFor, type InkId } from '@/lib/inks'
 import { THEMES, type Theme } from '@/lib/theme'
+import { countOf } from '@/lib/words'
+import { APP_NAME } from '@/lib/app'
 import {
   buildExport,
   downloadExport,
@@ -16,15 +19,30 @@ import {
   type ExportData,
   type ParseError,
 } from '@/lib/transfer'
-import NumberStepper from '@/components/NumberStepper.vue'
+import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { IconButton } from '@/components/ui/icon-button'
+import { InkPicker } from '@/components/ui/ink-picker'
+import { InlineMessage } from '@/components/ui/inline-message'
+import { Popover } from '@/components/ui/popover'
+import { SegmentedControl } from '@/components/ui/segmented-control'
+import { Stepper } from '@/components/ui/stepper'
 
 const THEME_NAMES: Record<Theme, string> = { system: 'System', light: 'Light', dark: 'Dark' }
+const THEME_OPTIONS = THEMES.map((t) => ({ value: t, label: THEME_NAMES[t] }))
 
 const IMPORT_ERRORS: Record<ParseError | 'read', string> = {
   json: 'That file isn’t valid JSON.',
-  format: 'That file isn’t an Fitness Planner export.',
+  format: `That file isn’t a ${APP_NAME} export.`,
   version: 'That export comes from a newer version of the app.',
   read: 'That file couldn’t be read.',
+}
+
+const IMPORT_FAILED: Record<'offline' | 'server' | 'auth' | 'error', string> = {
+  offline: 'Can’t reach the server, so nothing was imported. Try again when you’re online.',
+  server: 'The server had a problem, so nothing was imported. Try again in a while.',
+  auth: 'Your session has ended. Sign in again, then import the file.',
+  error: 'The server refused the import, so nothing changed.',
 }
 
 const store = usePlannerStore()
@@ -32,19 +50,32 @@ const diet = useDietStore()
 const session = useSessionStore()
 const sync = useSyncStore()
 const open = ref(false)
-const root = ref<HTMLElement | null>(null)
-const trigger = ref<HTMLButtonElement | null>(null)
-const panelId = useId()
-const LABEL = 'text-[11px] font-semibold tracking-wider text-ink-secondary uppercase'
+const trigger = useTemplateRef<InstanceType<typeof IconButton>>('trigger')
+const dataLabelId = useId()
 
 const fileInput = ref<HTMLInputElement | null>(null)
 /** A parsed file waiting for "Import". */
 const pending = ref<ExportData | null>(null)
-const notice = ref<{ tone: 'error' | 'done'; text: string } | null>(null)
+const notice = ref<{ tone: 'error' | 'success'; text: string } | null>(null)
 const signOutProblem = ref<string | null>(null)
+const importing = ref(false)
 const summary = useImportSummary()
+
 // The ink the stored accent shows as (K3a): a legacy accent shows as its ink until one is chosen.
 const ink = computed(() => inkFor(store.accent, store.savedSettings() !== null))
+function chooseInk(id: InkId): void {
+  // Choosing an ink stores its light hex, the accent's wire format.
+  store.setAccent(INKS.find((i) => i.id === id)!.light)
+}
+
+const theme = computed({
+  get: () => store.theme,
+  set: (value: string) => store.setTheme(value as Theme),
+})
+const dailyPick = computed({
+  get: () => store.dailyPick,
+  set: (value: number) => store.changeDailyPick(value - store.dailyPick),
+})
 
 // Each opening starts clean, rather than showing the last import's or sign-out's outcome.
 watch(open, () => {
@@ -84,27 +115,14 @@ async function onFile(ev: Event): Promise<void> {
     return
   }
   if (!summary.addsAnything(result.data)) {
-    notice.value = { tone: 'done', text: 'Nothing new: everything in that file is already here.' }
+    notice.value = {
+      tone: 'success',
+      text: 'Nothing new: everything in that file is already here.',
+    }
     return
   }
   pending.value = result.data
 }
-
-async function signOut(): Promise<void> {
-  const n = sync.pending
-  const waiting = n === 1 ? '1 change hasn’t' : `${n} changes haven’t`
-  if (n && !window.confirm(`${waiting} synced yet. Sign out anyway?`)) return
-  const problem = await session.logout()
-  signOutProblem.value = problem ? describeProblem(problem) : null
-}
-
-const IMPORT_FAILED: Record<'offline' | 'server' | 'auth' | 'error', string> = {
-  offline: 'Can’t reach the server, so nothing was imported. Try again when you’re online.',
-  server: 'The server had a problem, so nothing was imported. Try again in a while.',
-  auth: 'Your session has ended. Sign in again, then import the file.',
-  error: 'The server refused the import, so nothing changed.',
-}
-const importing = ref(false)
 
 /** Merge the file on the server (one request, never deleting), then show the result. */
 async function confirmImport(data: ExportData): Promise<void> {
@@ -114,161 +132,128 @@ async function confirmImport(data: ExportData): Promise<void> {
   importing.value = false
   if (outcome.ok) {
     pending.value = null
-    notice.value = { tone: 'done', text: 'Imported.' }
+    notice.value = { tone: 'success', text: 'Imported.' }
   } else {
     notice.value = { tone: 'error', text: IMPORT_FAILED[outcome.code] }
   }
 }
 
-function onPointerDown(ev: PointerEvent): void {
-  if (open.value && root.value && !root.value.contains(ev.target as Node)) open.value = false
-}
-function onKeydown(ev: KeyboardEvent): void {
-  if (ev.key !== 'Escape' || !open.value) return
+// Sign out with unsynced changes asks first: signing out forgets this device's outbox, so those
+// changes are lost (session.logout → sync.forget).
+const askSignOut = ref(false)
+const signingOut = ref(false)
+const signOutError = ref<string | undefined>(undefined)
+const unsynced = computed(() => {
+  const n = sync.pending
+  return `${countOf(n, 'change', true)} on this device ${n === 1 ? 'hasn’t' : 'haven’t'} reached the server yet. Signing out now loses them.`
+})
+
+async function signOut(): Promise<void> {
+  if (!sync.pending) {
+    const problem = await session.logout()
+    signOutProblem.value = problem ? describeProblem(problem) : null
+    return
+  }
+  // The question replaces the panel, and focus goes back to Settings first, so Cancel returns
+  // it there rather than to a button that is no longer on the page.
   open.value = false
-  // The panel unmounts, so hand focus back rather than letting it fall to <body>.
-  trigger.value?.focus()
+  await nextTick()
+  ;(trigger.value?.$el as HTMLElement | undefined)?.focus()
+  signOutError.value = undefined
+  askSignOut.value = true
 }
 
-onMounted(() => {
-  document.addEventListener('pointerdown', onPointerDown)
-  document.addEventListener('keydown', onKeydown)
-})
-onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', onPointerDown)
-  document.removeEventListener('keydown', onKeydown)
-})
+async function confirmSignOut(): Promise<void> {
+  if (signingOut.value) return
+  signingOut.value = true
+  const problem = await session.logout()
+  signingOut.value = false
+  if (problem) signOutError.value = describeProblem(problem)
+  else askSignOut.value = false
+}
 </script>
 
+<!--
+  The Settings popover (brand/design-system/project/components/Popover): Theme, Ink, Exercises a
+  day, then Your data and Account after rules. The panel renders in place after its trigger, so Tab
+  from its last control moves on to Print, and focus leaving closes it (F14).
+-->
 <template>
-  <div ref="root" class="relative" data-noprint>
-    <button
-      ref="trigger"
-      type="button"
-      class="btn aria-expanded:bg-tile"
-      :aria-expanded="open"
-      :aria-controls="panelId"
-      @click="open = !open"
-    >
-      <span class="size-2 rounded-full bg-pen" aria-hidden="true" />
-      <!-- Below 380px a gear stands in for the word, so the navbar fits a 320px screen. -->
-      <span class="hidden max-[379px]:inline" aria-hidden="true">⚙&#xFE0E;</span>
-      <span class="max-[379px]:sr-only">Settings</span>
-    </button>
-    <div
-      v-if="open"
-      :id="panelId"
-      class="absolute top-full right-0 z-30 mt-2 flex w-60 flex-col gap-2 rounded-xl border border-line bg-panel p-3 shadow-overlay"
-      role="group"
-      aria-label="Settings"
-    >
-      <div :class="LABEL">Account</div>
-      <div class="mb-1 flex items-center justify-between gap-2">
-        <span class="truncate text-sm" data-testid="signed-in-as">
-          <span class="text-ink-secondary">Signed in as</span> {{ session.user }}
-        </span>
-        <button type="button" class="btn shrink-0" @click="signOut">Sign out</button>
-      </div>
-      <p
-        v-if="signOutProblem"
-        role="alert"
-        class="text-sm text-error-ink"
-        data-testid="sign-out-problem"
-      >
-        {{ signOutProblem }}
-      </p>
-      <div :class="LABEL">Appearance</div>
-      <div
-        class="mb-1 flex rounded-lg border border-line bg-tile p-0.5"
-        role="group"
-        aria-label="Theme"
-      >
-        <button
-          v-for="t in THEMES"
-          :key="t"
-          type="button"
-          class="segment h-7 flex-1"
-          :aria-pressed="store.theme === t"
-          @click="store.setTheme(t)"
-        >
-          {{ THEME_NAMES[t] }}
-        </button>
-      </div>
-      <div :class="LABEL">Ink</div>
-      <div class="flex gap-2.5 px-0.5 pt-0.5 pb-1.5" role="group" aria-label="Ink colour">
-        <!-- Each swatch is its ink's token, so it shows the value for the current theme. -->
-        <button
-          v-for="i in INKS"
-          :key="i.id"
-          type="button"
-          class="size-5.5 rounded-full ring-offset-2 ring-offset-panel aria-pressed:ring-2 aria-pressed:ring-ink"
-          :style="{ background: `var(--${i.id})` }"
-          :aria-pressed="ink.id === i.id"
-          :aria-label="i.name"
-          :title="i.name"
-          @click="store.setAccent(i.light)"
-        />
-      </div>
-      <div :class="LABEL">Exercises per day</div>
-      <div class="flex items-center justify-between">
-        <span
-          class="text-xl font-semibold tabular-nums"
-          aria-live="polite"
-          data-testid="daily-pick"
-        >
-          {{ store.dailyPick }}
-        </span>
-        <NumberStepper
-          :value="store.dailyPick"
+  <div data-noprint>
+    <Popover v-model:open="open" title="Settings">
+      <template #trigger>
+        <IconButton ref="trigger" label="Settings"><Settings /></IconButton>
+      </template>
+      <div class="flex flex-col gap-4">
+        <SegmentedControl v-model="theme" label="Theme" :options="THEME_OPTIONS" />
+        <InkPicker :model-value="ink.id" @update:model-value="chooseInk" />
+        <Stepper
+          v-model="dailyPick"
+          label="Exercises a day"
+          lower-label="Fewer exercises a day"
+          raise-label="More exercises a day"
           :min="MIN_DAILY_PICK"
           :max="MAX_DAILY_PICK"
-          lower-title="Fewer per day"
-          raise-title="More per day"
-          lower-label="Fewer exercises per day"
-          raise-label="More exercises per day"
-          @change="store.changeDailyPick"
         />
-      </div>
-      <div :class="LABEL" class="mt-1">Data</div>
-      <div class="flex gap-2">
-        <button type="button" class="btn flex-1 justify-center" @click="exportData">Export</button>
-        <button type="button" class="btn flex-1 justify-center" @click="fileInput?.click()">
-          Import…
-        </button>
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".json,application/json"
-          class="hidden"
-          aria-label="Export file to import"
-          data-testid="import-file"
-          @change="onFile"
-        />
-      </div>
-      <div v-if="pending" class="flex flex-col gap-2" role="group" aria-label="Confirm import">
-        <p class="text-sm text-ink" data-testid="import-summary">{{ summary.describe(pending) }}</p>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="btn flex-1 justify-center"
-            :aria-busy="importing"
-            @click="confirmImport(pending)"
-          >
-            Import
-          </button>
-          <button type="button" class="btn flex-1 justify-center" @click="pending = null">
-            Cancel
-          </button>
+
+        <div class="flex flex-col gap-2 border-t border-line pt-4">
+          <span :id="dataLabelId" class="label text-ink">Your data</span>
+          <div role="group" :aria-labelledby="dataLabelId" class="flex gap-3">
+            <Button class="flex-1" @click="exportData"
+              ><Download :stroke-width="1.5" />Export</Button
+            >
+            <Button class="flex-1" @click="fileInput?.click()"
+              ><Upload :stroke-width="1.5" />Import…</Button
+            >
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".json,application/json"
+              class="hidden"
+              aria-label="Export file to import"
+              data-testid="import-file"
+              @change="onFile"
+            />
+          </div>
+          <div v-if="pending" class="flex flex-col gap-2" role="group" aria-label="Confirm import">
+            <p class="caption text-ink" data-testid="import-summary">
+              {{ summary.describe(pending) }}
+            </p>
+            <div class="flex justify-end gap-3">
+              <Button @click="pending = null">Cancel</Button>
+              <Button variant="primary" :busy="importing" @click="confirmImport(pending)">
+                Import
+              </Button>
+            </div>
+          </div>
+          <InlineMessage v-if="notice" :tone="notice.tone" data-testid="import-notice">
+            {{ notice.text }}
+          </InlineMessage>
+        </div>
+
+        <div class="flex flex-col gap-2 border-t border-line pt-4">
+          <div class="flex items-center justify-between gap-3">
+            <p class="caption min-w-0 truncate text-ink-secondary" data-testid="signed-in-as">
+              Signed in as <span class="text-ink">{{ session.user }}</span>
+            </p>
+            <Button class="shrink-0" @click="signOut"
+              ><LogOut :stroke-width="1.5" />Sign out</Button
+            >
+          </div>
+          <InlineMessage v-if="signOutProblem" tone="error" data-testid="sign-out-problem">
+            {{ signOutProblem }}
+          </InlineMessage>
         </div>
       </div>
-      <p
-        v-if="notice"
-        :role="notice.tone === 'error' ? 'alert' : 'status'"
-        :data-tone="notice.tone"
-        class="text-sm data-[tone=done]:text-ink-secondary data-[tone=error]:text-error-ink"
-      >
-        {{ notice.text }}
-      </p>
-    </div>
+    </Popover>
+    <ConfirmDialog
+      v-model:open="askSignOut"
+      title="Sign out now?"
+      :message="unsynced"
+      confirm-label="Sign out"
+      :busy="signingOut"
+      :error="signOutError"
+      @confirm="confirmSignOut"
+    />
   </div>
 </template>

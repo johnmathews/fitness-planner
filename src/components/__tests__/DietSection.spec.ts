@@ -84,9 +84,9 @@ describe('DietSection', () => {
   it('moves with the shared week navigation', async () => {
     mountApp()
     await cells('Fruit')[0]!.trigger('click')
-    await wrapper.get('button[title="Previous week"]').trigger('click')
+    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
     expect(cells('Fruit')[0]!.attributes('aria-pressed')).toBe('false')
-    await wrapper.get('button[title="Next week"]').trigger('click')
+    await wrapper.get('button[aria-label="Next week"]').trigger('click')
     expect(cells('Fruit')[0]!.attributes('aria-pressed')).toBe('true')
   })
 
@@ -100,8 +100,13 @@ describe('DietSection', () => {
     const plan = api.accounts.get(USER)!.plans.diet['2026-10-19']!.items as { name: string }[]
     expect(plan.at(-1)!.name).toBe('Beans')
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     await diet().get('button[aria-label="Remove Nuts"]').trigger('click')
+    await flushPromises()
+    // Reka renders the ConfirmDialog in a portal on document.body.
+    const dialog = document.querySelector<HTMLElement>('[role="alertdialog"]')!
+    expect(dialog.querySelector('h2')!.textContent).toBe('Remove Nuts?')
+    ;[...dialog.querySelectorAll('button')].find((b) => b.textContent === 'Remove')!.click()
+    await flushPromises()
     expect(cells('Nuts')).toHaveLength(0)
   })
 

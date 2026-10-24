@@ -2,12 +2,14 @@
 import { computed } from 'vue'
 import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
-import { addDays, fromKey, weekLabel } from '@/lib/dates'
+import { addDays, dayMonth, fromKey, weekLabel } from '@/lib/dates'
+import { useConfirm } from '@/composables/useConfirm'
+import { Button } from '@/components/ui/button'
 
 const store = usePlannerStore()
 const diet = useDietStore()
 
-const nextLabel = computed(() => weekLabel(addDays(store.monday, 7)))
+const { confirm } = useConfirm()
 const label = (key: string | null) => (key ? weekLabel(fromKey(key)) : null)
 
 /**
@@ -24,10 +26,15 @@ const carriedNote = computed(() => {
 })
 
 /** Copies exercises and foods (with their sets, reps, weights and goals), then shows that week. */
-function copyToNextWeek(): void {
-  const replacing = store.nextWeekHasPlan || diet.nextWeekHasPlan
-  if (replacing && !window.confirm(`Replace the plan for ${nextLabel.value} with this week’s?`)) {
-    return
+async function copyToNextWeek(): Promise<void> {
+  // Asks only when next week has a plan of its own (exercises or foods), which the copy replaces.
+  if (store.nextWeekHasPlan || diet.nextWeekHasPlan) {
+    const yes = await confirm({
+      title: 'Replace next week’s plan?',
+      message: `The week of ${dayMonth(addDays(store.monday, 7))} already has its own plan. Copying replaces it with this week’s exercises and foods.`,
+      confirmLabel: 'Replace',
+    })
+    if (!yes) return
   }
   store.copyToNextWeek()
   diet.copyToNextWeek()
@@ -47,7 +54,7 @@ function copyToNextWeek(): void {
         class="flex flex-wrap items-center gap-x-3 gap-y-2 pt-2"
         data-noprint
       >
-        <button type="button" class="btn" @click="copyToNextWeek">Copy plan to next week</button>
+        <Button size="sm" @click="copyToNextWeek">Copy plan to next week</Button>
         <span v-if="carriedNote" class="text-xs text-ink-secondary" data-testid="carried-from">
           {{ carriedNote }}
         </span>

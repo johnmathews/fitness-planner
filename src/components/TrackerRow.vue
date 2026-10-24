@@ -3,8 +3,9 @@ import { computed } from 'vue'
 import type { Day } from '@/stores/planner'
 import { MAX_TARGET, MIN_TARGET } from '@/lib/storage'
 import { goalMet, type Tracked } from '@/lib/tracker'
+import { useConfirm } from '@/composables/useConfirm'
 import DayCell from '@/components/DayCell.vue'
-import NumberStepper from '@/components/NumberStepper.vue'
+import { Stepper } from '@/components/ui/stepper'
 
 const props = defineProps<{
   item: Tracked
@@ -28,8 +29,26 @@ const ICON_BUTTON = 'size-6 shrink-0 rounded-md text-ink-secondary hover:bg-tile
 
 const met = computed(() => goalMet(props.total, props.item.target))
 
-function remove(): void {
-  if (window.confirm(`Remove ${props.item.name}?`)) emit('remove')
+const { confirm } = useConfirm()
+
+/**
+ * Removing takes the item off this week's plan only (and off the weeks that follow it without a
+ * plan of their own); weeks with their own plan and the log are untouched (removeExercise,
+ * removeFood). So the question says what goes and what stays, per the ConfirmDialog card.
+ */
+async function remove(): Promise<void> {
+  const yes = await confirm({
+    title: `Remove ${props.item.name}?`,
+    message:
+      'It comes off this week’s plan. Weeks with their own plan keep it, and its marks stay.',
+    confirmLabel: 'Remove',
+  })
+  if (yes) emit('remove')
+}
+
+/** The Stepper reports a new goal (only ever a changed one); the stores take a step. */
+function setTarget(value: number): void {
+  emit('changeTarget', value - props.item.target)
 }
 </script>
 
@@ -98,17 +117,17 @@ function remove(): void {
       >
         {{ total }}<span class="text-xs text-ink-secondary"> / {{ item.target }}</span>
       </div>
-      <NumberStepper
+      <Stepper
         v-if="configMode"
-        :value="item.target"
-        :min="MIN_TARGET"
-        :max="MAX_TARGET"
-        lower-title="Lower goal"
-        raise-title="Raise goal"
+        :model-value="item.target"
+        :label="`${item.name} goal`"
+        hide-label
         :lower-label="`Lower ${item.name} goal`"
         :raise-label="`Raise ${item.name} goal`"
+        :min="MIN_TARGET"
+        :max="MAX_TARGET"
         data-noprint
-        @change="emit('changeTarget', $event)"
+        @update:model-value="setTarget"
       />
     </div>
   </div>

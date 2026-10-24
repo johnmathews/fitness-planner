@@ -43,7 +43,13 @@ defineEmits<{
     class="mt-4 overflow-x-auto rounded-xl border border-line bg-panel shadow-xs print:break-inside-avoid print:overflow-visible"
   >
     <div
-      class="grid min-w-[780px] grid-cols-[minmax(220px,1.7fr)_repeat(7,minmax(64px,1fr))_minmax(124px,0.9fr)]"
+      class="grid"
+      :class="
+        // Edit plan widens the last column to hold the goal Stepper (three 44px-wide parts).
+        configMode
+          ? 'min-w-[808px] grid-cols-[minmax(220px,1.7fr)_repeat(7,minmax(64px,1fr))_minmax(152px,0.9fr)]'
+          : 'min-w-[780px] grid-cols-[minmax(220px,1.7fr)_repeat(7,minmax(64px,1fr))_minmax(124px,0.9fr)]'
+      "
       role="table"
       :aria-label="tableLabel"
     >
