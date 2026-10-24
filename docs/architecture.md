@@ -58,7 +58,7 @@ App.vue                 picks the screen (link, planner or sign-in), the pen var
 │   │                       mode the goal Stepper and edit/remove IconButtons in the row header
 │   ├── AddExerciseForm.vue config mode only: name, sets, reps, PerSideToggle, weight (kg)
 │   └── EditExerciseDialog.vue  Dialog: name, sets, reps, PerSideToggle, weight
-└── DietSection.vue     the Diet section: SectionHeader ("2 of 4 goals met"), kept with its grid
+└── DietSection.vue     the Food section: SectionHeader ("2 of 4 goals met"), kept with its grid
     ├── TrackerGrid.vue wired to diet: no chips and no Picked row (foods have no daily pick)
     └── AddFoodForm.vue config mode only: name, Add food
 ```
@@ -268,7 +268,7 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   state instead of overwriting it, and their writes share one outbox (§7). The plan had proposed a
   `BroadcastChannel`; the cache already lives in `localStorage`, whose events carry the same news
   with no second channel to keep in step.
-- **Diet sits below the exercises** on the same page, sharing the week navigation and the print
+- **Food sits below the exercises** on the same page, sharing the week navigation and the print
   sheet. It has no daily target, so its grid has no Picked row.
 - **Print is black on white in either theme** (§6.7).
 - **Narrow screens.** Below 640px the navbar drops Print…, shortens the switch's visible label to
@@ -410,7 +410,7 @@ there too, so the user's ink can't leak through. Shadows and transitions are off
 - "One extra" keeps its underline and words. The Picked row's `<tfoot>` prints as an ordinary row
   group, so a table split across pages repeats its header but prints the Picked row once, at the
   end.
-- Diet's heading stays with its grid (`print:break-inside-avoid`), and a section header never ends
+- The Food section's heading stays with its grid (`print:break-inside-avoid`), and a section header never ends
   a page (`print:break-after-avoid`).
 
 ### 6.8 The style guide

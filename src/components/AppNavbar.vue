@@ -18,7 +18,7 @@ function print(): void {
 
 /**
  * On the phone's Today list, its first mark (today's first exercise, or food). Otherwise today's
- * cell in the first grid that shows today (Exercises, or Diet when there are no exercises); in
+ * cell in the first grid that shows today (Exercises, or Food when there are no exercises); in
  * another week, the first day; with no rows anywhere, the first grid's tab stop.
  */
 function skipToToday(): void {

@@ -41,7 +41,7 @@ const VIEWS = [
 const SUMMARIES = computed(() => [0, 2, 3, 4].map((n) => [n, todaySummary(n, PICK)] as const))
 
 /**
- * In the app TodayList is the page: the date is its h1 and Exercises and Diet are h2s. Here it
+ * In the app TodayList is the page: the date is its h1 and Exercises and Food are h2s. Here it
  * sits under this section's h2, so `v-nested-headings` moves its headings two levels down
  * (aria-level 3 and 4) and the page's outline stays in order (axe heading-order).
  */
@@ -54,7 +54,7 @@ const vNestedHeadings: Directive<HTMLElement> = { mounted: nestHeadings, updated
 </script>
 
 <!-- The card's phone column, drawn by the app's own TodayList inside a 390px frame: the view switch,
-     the band, the summary, then Exercises and Diet. Marks toggle; nothing is saved. In the app the
+     the band, the summary, then Exercises and Food. Marks toggle; nothing is saved. In the app the
      list is the page's h1 and shows only below 640px. -->
 <template>
   <ExampleGroup>

@@ -51,7 +51,7 @@ describe('DietSection', () => {
 
   it('renders below the exercises with the default foods and no reps chips', () => {
     mountApp()
-    expect(wrapper.get('#diet-heading').text()).toBe('Diet')
+    expect(wrapper.get('#diet-heading').text()).toBe('Food')
     expect(
       diet()
         .findAll('[data-testid="item-name"]')

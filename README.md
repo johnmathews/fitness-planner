@@ -13,7 +13,7 @@
   **Week** column counts sessions against a weekly goal of 0–7 days, and turns to your ink with a
   check once a non-zero goal is met. The **Picked** row counts each day's exercises against the
   daily pick and says so in words when a day goes over ("one extra").
-- **Diet.** Below the exercises, foods work the same way: tick each day you ate one, and its Week
+- **Food.** Below the exercises, foods work the same way: tick each day you ate one, and its Week
   column counts days against a goal. The section header shows how many food goals are met. Defaults
   are Vegetables (7), Fruit (5), Fish (2) and Nuts (3).
 - **Normal mode and config mode.** The app opens in normal mode, where you only tick cells. The

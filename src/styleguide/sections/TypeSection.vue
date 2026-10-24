@@ -3,7 +3,7 @@
 const STYLES = [
   { name: 'display', sample: 'This week' },
   { name: 'title-1', sample: 'Exercises' },
-  { name: 'title-2', sample: 'Diet' },
+  { name: 'title-2', sample: 'Food' },
   { name: 'body-large', sample: 'Three of four sessions done this week.' },
   { name: 'body', sample: 'This invite has already been used. Go to sign in.' },
   { name: 'caption', sample: 'At least 10 characters.' },

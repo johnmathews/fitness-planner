@@ -22,7 +22,7 @@ import StateExample from '../parts/StateExample.vue'
       <SectionHeader
         id="sg-section-header-met"
         class="w-full"
-        title="Diet"
+        title="Food"
         hint="Mark each day you ate it."
         heading-id="sg-section-header-met-title"
       >

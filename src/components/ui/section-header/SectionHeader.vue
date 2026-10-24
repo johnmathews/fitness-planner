@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  /** "Exercises", "Diet": sentence case, no icon. */
+  /** "Exercises", "Food": sentence case, no icon. */
   title: string
   /** One optional line of plain instructions; small numbers as words. It doesn't print. */
   hint?: string

@@ -4,7 +4,7 @@ The one strong number in a section: a figure and the words that say what it coun
 
 - The figure at 20/26 weight 600 (the `title-2` size, in Source Sans 3), tabular; the words after it in `body-large` `ink-secondary`, on the same baseline, `space-2` apart.
 - **Exercises:** sessions done this week "of" the sum of the weekly goals: "10 of 12 this week". Met once the sessions reach a non-zero sum.
-- **Diet:** foods whose weekly goal is met, of all foods: "2 of 4 goals met". Met once every food's goal is.
+- **Food:** foods whose weekly goal is met, of all foods: "2 of 4 goals met". Met once every food's goal is.
 - One StatFigure per section, in its SectionHeader. Never a second big number, a percentage, a progress bar or a ring chart.
 - Figures, not words: this is data. In running sentences (TodayList's summary) small numbers become words instead.
 

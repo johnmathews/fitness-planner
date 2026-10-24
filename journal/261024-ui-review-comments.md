@@ -18,3 +18,11 @@ and reviewed there. Two comments on the desktop week view led to this change.
 
 The WeekGrid, Chip and SectionHeader cards in `brand/design-system/` changed first. The gate passes
 with `--complete`. The Design System artifact has not been republished from them yet.
+
+## Diet becomes Food
+
+A third comment renamed the section. Every label a person reads now says "Food": the section
+heading, the grid's table label ("Food, week of 19 October"), the Today list's group heading, and
+the design-system cards and style guide that show them. Code names (`useDietStore`, `DietSection`,
+`diet-heading`, the `diet` key in stored and synced data) stay as they are, so stored data, the
+API and the transfer format do not change.

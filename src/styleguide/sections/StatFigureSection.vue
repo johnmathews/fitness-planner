@@ -23,7 +23,7 @@ import StateExample from '../parts/StateExample.vue'
     <StateExample state="Zero">
       <StatFigure id="sg-stat-figure-zero" :figure="0" :total="12" words="this week" :met="false" />
     </StateExample>
-    <StateExample state="Diet, not met yet">
+    <StateExample state="Food, not met yet">
       <StatFigure id="sg-stat-figure-diet" :figure="2" :total="4" words="goals met" :met="false" />
     </StateExample>
   </ExampleGroup>

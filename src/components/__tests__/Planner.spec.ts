@@ -348,7 +348,7 @@ describe('the planner grids (W10)', () => {
       expect(name(focused())).toBe('Push-ups, Friday 23 October, today')
     })
 
-    it('skips to the Diet grid when there are no exercises', async () => {
+    it('skips to the Food grid when there are no exercises', async () => {
       const state = emptyState()
       state.exercise.plans = { [WEEK]: [] }
       mountApp(state)
@@ -404,16 +404,16 @@ describe('the planner grids (W10)', () => {
       expect(wrapper.get('h1').text()).toBe('19–25 October')
     })
 
-    it('gives each section an h2 and its one figure, and Diet a hint that does not print', () => {
+    it('gives each section an h2 and its one figure, and Food a hint that does not print', () => {
       mountApp()
       const sections = wrapper.findAll('section[aria-labelledby]')
-      expect(sections.map((s) => s.get('h2').text())).toEqual(['Exercises', 'Diet'])
+      expect(sections.map((s) => s.get('h2').text())).toEqual(['Exercises', 'Food'])
       const hints = wrapper.findAll('[data-slot="section-hint"]')
       expect(hints.map((h) => h.text())).toEqual(['Mark each day you ate it.'])
       for (const hint of hints) expect(hint.attributes('data-noprint')).toBeDefined()
     })
 
-    it('keeps the Diet heading with its grid on paper', () => {
+    it('keeps the Food heading with its grid on paper', () => {
       mountApp()
       const header = wrapper.get('#diet-heading').element.closest('[data-slot="section-header"]')!
       expect(header.classList).toContain('print:break-after-avoid')

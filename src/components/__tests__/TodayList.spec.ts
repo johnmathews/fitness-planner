@@ -62,7 +62,7 @@ describe('TodayList', () => {
   it('lists exercises, then diet: the name, its chips, the week so far and one DayMark', () => {
     const wrapper = mount(TodayList, { props })
     const groups = wrapper.findAll('h2')
-    expect(groups.map((h) => h.text())).toEqual(['Exercises', 'Diet'])
+    expect(groups.map((h) => h.text())).toEqual(['Exercises', 'Food'])
     const squats = wrapper.findAll('li')[2]!
     expect(squats.get('[data-testid="item-name"]').text()).toBe('Squats')
     expect(squats.findAll('[data-testid="item-detail"]').map((c) => c.text())).toEqual([
@@ -100,7 +100,7 @@ describe('TodayList', () => {
 
   it('leaves out an empty group, and says so plainly when nothing is planned', async () => {
     const wrapper = mount(TodayList, { props: { ...props, exercises: [] } })
-    expect(wrapper.findAll('h2').map((h) => h.text())).toEqual(['Diet'])
+    expect(wrapper.findAll('h2').map((h) => h.text())).toEqual(['Food'])
     expect(wrapper.find('[data-testid="today-summary"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="today-empty"]').exists()).toBe(false)
     await wrapper.setProps({ foods: [] })

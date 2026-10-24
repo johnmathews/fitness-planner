@@ -16,7 +16,7 @@ function flagsFor(id: string): boolean[] {
 </script>
 
 <!--
-  The Diet section: the same WeekGrid without chips and without the Picked row (foods have no
+  The Food section: the same WeekGrid without chips and without the Picked row (foods have no
   daily pick), under its own SectionHeader whose figure counts the foods whose goal is met. A
   line rule and space-8 set it apart from Exercises. On paper the heading and the grid stay on
   one page (F20): the header avoids a break after it, and the pair avoids a break inside.
@@ -27,7 +27,7 @@ function flagsFor(id: string): boolean[] {
     aria-labelledby="diet-heading"
   >
     <div class="print:break-inside-avoid" data-print-keep>
-      <SectionHeader title="Diet" hint="Mark each day you ate it." heading-id="diet-heading">
+      <SectionHeader title="Food" hint="Mark each day you ate it." heading-id="diet-heading">
         <StatFigure
           :figure="diet.goalsMet"
           :total="diet.foods.length"
@@ -38,7 +38,7 @@ function flagsFor(id: string): boolean[] {
       </SectionHeader>
       <TrackerGrid
         label="Food"
-        :table-label="`Diet, week of ${dayMonth(planner.monday)}`"
+        :table-label="`Food, week of ${dayMonth(planner.monday)}`"
         :items="diet.foods"
         :days="planner.days"
         :flags-for="flagsFor"
