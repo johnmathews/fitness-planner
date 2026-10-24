@@ -1,11 +1,28 @@
 import { DAY_NAMES } from '@/lib/dates'
 import type { Log } from '@/lib/storage'
+import { numberWord } from '@/lib/words'
 
 /** Anything tracked as a tick per day against a weekly goal: exercises and foods. */
 export type Tracked = { id: string; name: string; target: number }
 
-/** Footer colour for a per-day count: accent, warning, muted, or neutral. */
-export type CountTone = 'met' | 'over' | 'under' | 'plain'
+/**
+ * A day's count in the Picked row against the daily pick (WeekGrid card): at the pick, over it,
+ * under it, or a day still to come with nothing marked.
+ */
+export type CountTone = 'met' | 'over' | 'under' | 'future'
+
+/** One cell of the Picked row: the count, its tone, and the amount over in words. */
+export type PickedCount = { n: number; tone: CountTone; extra: string | null }
+
+/**
+ * Over the pick says how far over in words ("one extra", "two extra"), so it never rests on
+ * colour (F3). A day still to come with nothing marked shows an en dash instead of a 0.
+ */
+export function pickedCount(n: number, pick: number, future: boolean): PickedCount {
+  if (future && n === 0) return { n, tone: 'future', extra: null }
+  if (n > pick) return { n, tone: 'over', extra: `${numberWord(n - pick)} extra` }
+  return { n, tone: n === pick ? 'met' : 'under', extra: null }
+}
 
 /** One week of a log: item id → done flags Mon–Sun. */
 export type WeekLog = Record<string, boolean[]>

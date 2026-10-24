@@ -94,6 +94,32 @@ describe('ConfirmDialog', () => {
     expect(alertDialog()).toBeNull()
   })
 
+  it('returns focus to the control that asked when it closes', async () => {
+    const opener = document.createElement('button')
+    document.body.append(opener)
+    opener.focus()
+    await mountOpen()
+    buttons()[0]!.click()
+    await settle()
+    expect(document.activeElement).toBe(opener)
+  })
+
+  it('sends focus where returnFocus says once the answer’s work is done', async () => {
+    const opener = document.createElement('button')
+    const neighbour = document.createElement('button')
+    document.body.append(opener, neighbour)
+    opener.focus()
+    const wrapper = await mountOpen({
+      returnFocus: () => (opener.isConnected ? opener : neighbour),
+    })
+    buttons()[1]!.click()
+    await wrapper.setProps({ open: false })
+    // The confirmed action removes the control that asked after the dialog has begun closing.
+    opener.remove()
+    await settle()
+    expect(document.activeElement).toBe(neighbour)
+  })
+
   it('keeps the verb while busy, marking it aria-busy', async () => {
     await mountOpen({ busy: true, confirmLabel: 'Sign out', title: 'Sign out now?' })
     const confirm = buttons()[1]!

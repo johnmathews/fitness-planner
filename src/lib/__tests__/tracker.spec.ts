@@ -6,6 +6,7 @@ import {
   goalsMet,
   grandTotal,
   isDone,
+  pickedCount,
   newId,
   toggleDay,
   totalFor,
@@ -75,5 +76,22 @@ describe('toggleDay on a reactive log', () => {
     toggleDay(log, '2026-10-19', 'sq', 0)
     // Creating the flags is a change too (undefined → false), then each flip.
     expect(seen).toEqual([false, true, false])
+  })
+})
+
+describe('pickedCount', () => {
+  it('says how far over the pick in words', () => {
+    expect(pickedCount(4, 3, false)).toEqual({ n: 4, tone: 'over', extra: 'one extra' })
+    expect(pickedCount(5, 3, false)).toEqual({ n: 5, tone: 'over', extra: 'two extra' })
+  })
+
+  it('is met at the pick and under below it, today or before', () => {
+    expect(pickedCount(3, 3, false)).toEqual({ n: 3, tone: 'met', extra: null })
+    expect(pickedCount(0, 3, false)).toEqual({ n: 0, tone: 'under', extra: null })
+  })
+
+  it('leaves a day still to come blank until something is marked on it', () => {
+    expect(pickedCount(0, 3, true)).toEqual({ n: 0, tone: 'future', extra: null })
+    expect(pickedCount(1, 3, true)).toEqual({ n: 1, tone: 'under', extra: null })
   })
 })

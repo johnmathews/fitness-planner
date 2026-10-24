@@ -15,6 +15,7 @@ watch(request, (asked) => {
       message: asked.message,
       confirmLabel: asked.confirmLabel,
       cancelLabel: asked.cancelLabel,
+      returnFocus: asked.returnFocus,
     }
   }
 })
@@ -27,6 +28,7 @@ watch(request, (asked) => {
     :message="words.message"
     :confirm-label="words.confirmLabel"
     :cancel-label="words.cancelLabel"
+    :return-focus="words.returnFocus"
     @confirm="answer(true)"
     @cancel="answer(false)"
   />

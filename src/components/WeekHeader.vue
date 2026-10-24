@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
-import { addDays, dayMonth, fromKey, weekLabel } from '@/lib/dates'
+import { addDays, dayMonth, fromKey, weekOf } from '@/lib/dates'
 import { useConfirm } from '@/composables/useConfirm'
 import { Button } from '@/components/ui/button'
 
@@ -10,7 +10,8 @@ const store = usePlannerStore()
 const diet = useDietStore()
 
 const { confirm } = useConfirm()
-const label = (key: string | null) => (key ? weekLabel(fromKey(key)) : null)
+const label = (key: string | null) =>
+  key ? `the week of ${weekOf(fromKey(key), new Date())}` : null
 
 /**
  * Says where a plan this week hasn't changed comes from. Exercises and foods get their own plans
@@ -42,29 +43,19 @@ async function copyToNextWeek(): Promise<void> {
 }
 </script>
 
+<!--
+  The page's one h1: the week, as the Header writes it ("19–25 October"), set in display above the
+  sections (SectionHeader card). Each section brings its own heading and figure. In Edit plan the
+  plan's own actions follow, off paper.
+-->
 <template>
-  <section class="flex flex-wrap items-end justify-between gap-3 pt-8 pb-2 print:pt-0">
-    <div class="flex flex-col gap-1">
-      <h1 class="display">{{ store.label }}</h1>
-      <p class="text-sm text-ink-secondary" data-testid="pick-hint">
-        Pick {{ store.dailyPick }} exercises a day. Click a cell when it’s done.
-      </p>
-      <div
-        v-if="store.configMode"
-        class="flex flex-wrap items-center gap-x-3 gap-y-2 pt-2"
-        data-noprint
-      >
-        <Button size="sm" @click="copyToNextWeek">Copy plan to next week</Button>
-        <span v-if="carriedNote" class="text-xs text-ink-secondary" data-testid="carried-from">
-          {{ carriedNote }}
-        </span>
-      </div>
+  <div class="flex flex-col gap-3 pt-8 print:pt-0">
+    <h1 class="display text-ink">{{ store.label }}</h1>
+    <div v-if="store.configMode" class="flex flex-wrap items-center gap-x-3 gap-y-2" data-noprint>
+      <Button size="sm" @click="copyToNextWeek">Copy plan to next week</Button>
+      <span v-if="carriedNote" class="caption text-ink-secondary" data-testid="carried-from">
+        {{ carriedNote }}
+      </span>
     </div>
-    <div class="flex items-baseline gap-1.5">
-      <div class="text-3xl font-semibold text-pen tabular-nums" data-testid="grand-total">
-        {{ store.grandTotal }}
-      </div>
-      <div class="text-sm text-ink-secondary">sessions this week</div>
-    </div>
-  </section>
+  </div>
 </template>

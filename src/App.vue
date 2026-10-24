@@ -4,7 +4,6 @@ import { usePlannerStore } from '@/stores/planner'
 import AppNavbar from '@/components/AppNavbar.vue'
 import WeekHeader from '@/components/WeekHeader.vue'
 import ExerciseGrid from '@/components/ExerciseGrid.vue'
-import AddExerciseForm from '@/components/AddExerciseForm.vue'
 import DietSection from '@/components/DietSection.vue'
 import LoginForm from '@/components/LoginForm.vue'
 import PasswordForm from '@/components/PasswordForm.vue'
@@ -122,7 +121,6 @@ onBeforeUnmount(() => {
       <template v-if="sync.loaded">
         <WeekHeader />
         <ExerciseGrid />
-        <AddExerciseForm v-if="store.configMode" />
         <DietSection />
       </template>
     </main>

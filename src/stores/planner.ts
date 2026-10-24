@@ -1,14 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import {
-  DAY_NAMES,
-  addDays,
-  dateKey,
-  formatShort,
-  mondayOf,
-  weekDates,
-  weekLabel,
-} from '@/lib/dates'
+import { DAY_NAMES, addDays, dateKey, fullDate, mondayOf, weekDates, weekTitle } from '@/lib/dates'
 import {
   DEFAULT_SETTINGS,
   MAX_DAILY_PICK,
@@ -35,7 +27,18 @@ import * as tracker from '@/lib/tracker'
 import type { Theme } from '@/lib/theme'
 import { copyPlan, planSource, type Plans } from '@/lib/plans'
 
-export type Day = { name: string; date: string; key: string; isToday: boolean }
+/**
+ * One column of the week: `name` "Thu" and `date` "22" for the header, `full` "Thursday 22
+ * October" for the DayMarks' names, and whether it is today or still to come.
+ */
+export type Day = {
+  name: string
+  date: string
+  full: string
+  key: string
+  isToday: boolean
+  isFuture: boolean
+}
 
 export type NewExercise = {
   name: string
@@ -46,17 +49,18 @@ export type NewExercise = {
 }
 
 /**
- * The chips under an exercise name: "3 × 10 reps" or "3 × 8 each side" ("10 reps / set" and
- * "8 each side / set" without a set count, "3 sets" without reps), then "12 kg" when weighted;
- * "—" when it has none of these.
+ * The chips under an exercise name, in the Chip card's words: "3 × 12" or "3 × 8 each side" with
+ * sets, "10 reps a set" or "8 each side" without, "3 sets" without reps, then "16 kg" when
+ * weighted. None at all when it has none of these (no dash).
  */
 export function exerciseDetails(e: Exercise): string[] {
   const chips: string[] = []
-  const count = e.perSide ? `${e.reps} each side` : `${e.reps} reps`
-  if (e.reps) chips.push(e.sets ? `${e.sets} × ${count}` : `${count} / set`)
+  const side = e.perSide ? ' each side' : ''
+  if (e.reps && e.sets) chips.push(`${e.sets} × ${e.reps}${side}`)
+  else if (e.reps) chips.push(e.perSide ? `${e.reps} each side` : `${e.reps} reps a set`)
   else if (e.sets) chips.push(`${e.sets} sets`)
   if (e.weight) chips.push(`${e.weight} kg`)
-  return chips.length ? chips : ['—']
+  return chips
 }
 
 /** Cleans form input into the stored fields; null when the trimmed name is empty. */
@@ -96,7 +100,8 @@ export const usePlannerStore = defineStore('planner', () => {
 
   const monday = computed(() => mondayOf(now.value, weekOffset.value))
   const weekKey = computed(() => dateKey(monday.value))
-  const label = computed(() => weekLabel(monday.value))
+  /** The page heading: "19–25 October", with the year when it isn't this one. */
+  const label = computed(() => weekTitle(monday.value, now.value))
   const nextWeekKey = computed(() => dateKey(addDays(monday.value, 7)))
   const week = computed(() => log.value[weekKey.value] ?? {})
 
@@ -118,9 +123,12 @@ export const usePlannerStore = defineStore('planner', () => {
     const todayKey = dateKey(now.value)
     return weekDates(monday.value).map((d, i) => ({
       name: DAY_NAMES[i]!,
-      date: formatShort(d).replace(/^\w+ /, ''),
+      date: String(d.getDate()),
+      full: fullDate(d),
       key: dateKey(d),
       isToday: dateKey(d) === todayKey,
+      // Keys are YYYY-MM-DD, so they compare as dates.
+      isFuture: dateKey(d) > todayKey,
     }))
   })
 

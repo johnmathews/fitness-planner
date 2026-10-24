@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   dateKey,
   dayMonth,
-  formatShort,
+  fullDate,
   mondayOf,
   weekDates,
-  weekLabel,
+  weekOf,
   weekRange,
+  weekTitle,
 } from '@/lib/dates'
 
 describe('mondayOf', () => {
@@ -52,14 +53,33 @@ describe('weekDates', () => {
   })
 })
 
-describe('labels', () => {
-  it('formats a short date', () => {
-    expect(formatShort(new Date(2026, 9, 19))).toBe('Oct 19')
+describe('weekTitle', () => {
+  const now = new Date(2026, 9, 23)
+
+  it('is the Header’s week label within this year', () => {
+    expect(weekTitle(new Date(2026, 9, 19), now)).toBe('19–25 October')
+    expect(weekTitle(new Date(2026, 8, 28), now)).toBe('28 Sept – 4 Oct')
   })
 
-  it('formats the week label with the Sunday year', () => {
-    expect(weekLabel(new Date(2026, 9, 19))).toBe('Oct 19 – Oct 25, 2026')
-    expect(weekLabel(new Date(2026, 11, 28))).toBe('Dec 28 – Jan 3, 2027')
+  it('adds the Sunday’s year when the week ends in another year', () => {
+    expect(weekTitle(new Date(2026, 11, 28), now)).toBe('28 Dec – 3 Jan 2027')
+    expect(weekTitle(new Date(2025, 9, 20), now)).toBe('20–26 October 2025')
+    // Seen from the new year, the week that started in December is this year's.
+    expect(weekTitle(new Date(2026, 11, 28), new Date(2027, 0, 2))).toBe('28 Dec – 3 Jan')
+  })
+})
+
+describe('weekOf', () => {
+  it('names a week by its Monday, with the year only when it is not this year', () => {
+    const now = new Date(2026, 9, 23)
+    expect(weekOf(new Date(2026, 9, 19), now)).toBe('19 October')
+    expect(weekOf(new Date(2025, 11, 29), now)).toBe('29 December 2025')
+  })
+})
+
+describe('fullDate', () => {
+  it('writes the weekday and the month in full, as a DayMark’s name does', () => {
+    expect(fullDate(new Date(2026, 9, 22))).toBe('Thursday 22 October')
   })
 })
 

@@ -100,7 +100,7 @@ describe('signing in', () => {
     mountApp()
     await flushPromises()
     await signIn(` ${USER} `, PASSWORD)
-    expect(heading()).toBe('Oct 19 – Oct 25, 2026')
+    expect(heading()).toBe('19–25 October')
     expect(JSON.parse(localStorage.getItem(SESSION_KEY)!)).toEqual({ user: USER })
   })
 
@@ -186,7 +186,7 @@ describe('invite and reset links', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(location.hash).toBe('')
-    expect(heading()).toBe('Oct 19 – Oct 25, 2026')
+    expect(heading()).toBe('19–25 October')
     expect(api.accounts.get('bob')!.password).toBe('a long new password')
   })
 
@@ -444,7 +444,7 @@ describe('signing out', () => {
       'Can’t reach the server. Check the connection and try again.',
     )
     expect(confirmButton('Sign out').attributes('aria-busy')).toBeUndefined()
-    expect(heading()).toBe('Oct 19 – Oct 25, 2026')
+    expect(heading()).toBe('19–25 October')
   })
 
   it('refuses while offline, and says why', async () => {
@@ -482,7 +482,7 @@ describe('other tabs', () => {
       new StorageEvent('storage', { key: SESSION_KEY, storageArea: localStorage }),
     )
     await flushPromises()
-    expect(heading()).toBe('Oct 19 – Oct 25, 2026')
+    expect(heading()).toBe('19–25 October')
     await openSettings()
     expect(wrapper.get('[data-testid="signed-in-as"]').text()).toBe('Signed in as bob')
   })

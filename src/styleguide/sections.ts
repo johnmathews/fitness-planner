@@ -16,6 +16,11 @@ import DialogSection from './sections/DialogSection.vue'
 import ConfirmDialogSection from './sections/ConfirmDialogSection.vue'
 import InlineMessageSection from './sections/InlineMessageSection.vue'
 import BannerSection from './sections/BannerSection.vue'
+import DayMarkSection from './sections/DayMarkSection.vue'
+import ChipSection from './sections/ChipSection.vue'
+import StatFigureSection from './sections/StatFigureSection.vue'
+import SectionHeaderSection from './sections/SectionHeaderSection.vue'
+import WeekGridSection from './sections/WeekGridSection.vue'
 
 /**
  * One section of the style guide. StyleGuide.vue renders each as
@@ -157,5 +162,40 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     summary:
       'A full-width bar above the week that says how the data stands with the server, in words, with the one action that helps.',
     component: BannerSection,
+  },
+  {
+    id: 'sg-day-mark',
+    title: 'DayMark',
+    summary:
+      'One day of one exercise or food: a filled pen dot when it’s done, an empty ring when it isn’t, and the button that switches between them.',
+    component: DayMarkSection,
+  },
+  {
+    id: 'sg-chip',
+    title: 'Chip',
+    summary:
+      'A small quiet tag under an exercise name that says how much: sets × reps, each side, or the weight.',
+    component: ChipSection,
+  },
+  {
+    id: 'sg-stat-figure',
+    title: 'StatFigure',
+    summary:
+      'The one strong number in a section: a figure and the words that say what it counts, in pen once the goal is met.',
+    component: StatFigureSection,
+  },
+  {
+    id: 'sg-section-header',
+    title: 'SectionHeader',
+    summary:
+      'The heading over a WeekGrid: the section’s name in serif, one line of hint, and the section’s one StatFigure.',
+    component: SectionHeaderSection,
+  },
+  {
+    id: 'sg-week-grid',
+    title: 'WeekGrid',
+    summary:
+      'One week, Monday to Sunday, as a grid: a row per exercise or food, a DayMark per day, the week’s total at the end of each row, and for exercises a picked row that counts each day against the daily pick.',
+    component: WeekGridSection,
   },
 ]

@@ -118,15 +118,15 @@ describe('App', () => {
 
   it('renders the week label, the default rows and the reps chips', () => {
     mountApp()
-    expect(wrapper.find('h1').text()).toBe('Oct 19 – Oct 25, 2026')
+    expect(wrapper.find('h1').text()).toBe('19–25 October')
     expect(
       ex()
         .findAll('[data-testid="item-name"]')
         .map((n) => n.text()),
     ).toEqual(['Push-ups', 'Pull-ups', 'Squats', 'Back extensions', 'Kettlebell halos'])
     const chips = wrapper.findAll('[data-testid="item-detail"]').map((c) => c.text())
-    expect(chips[0]).toBe('10 reps / set')
-    expect(chips[4]).toBe('8 each side / set')
+    expect(chips[0]).toBe('10 reps a set')
+    expect(chips[4]).toBe('8 each side')
   })
 
   it('marks today’s column in the header and the cells', () => {
@@ -150,10 +150,10 @@ describe('App', () => {
     expect(cell.attributes('aria-pressed')).toBe('false')
     await cell.trigger('click')
     expect(cell.attributes('aria-pressed')).toBe('true')
-    expect(cell.find('[data-on="true"]').text()).toBe('✓')
-    expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('1')
-    expect(ex().findAll('[data-testid="day-count"]')[1]!.text()).toBe('1/3')
-    expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('1 / 4')
+    expect(cell.find('[data-on="true"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('1 of 18 this week')
+    expect(ex().findAll('[data-testid="day-count"]')[1]!.text()).toBe('1')
+    expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('1 of 4')
   })
 
   it('colours the footer count by whether the daily pick is met, exceeded or not', async () => {
@@ -174,16 +174,16 @@ describe('App', () => {
     const lower = wrapper.get('button[aria-label="Lower Back extensions goal"]')
     await lower.trigger('click')
     await lower.trigger('click')
-    expect(total().text()).toBe('1 / 1')
+    expect(total().text()).toBe('1 of 1')
     expect(total().attributes('data-met')).toBe('true')
     await lower.trigger('click')
-    expect(total().text()).toBe('1 / 0')
+    expect(total().text()).toBe('1 of 0')
     expect(total().attributes('data-met')).toBe('false')
     expect(lower.attributes('aria-disabled')).toBe('true')
     await lower.trigger('click')
-    expect(total().text()).toBe('1 / 0')
+    expect(total().text()).toBe('1 of 0')
     await wrapper.get('button[aria-label="Raise Back extensions goal"]').trigger('click')
-    expect(total().text()).toBe('1 / 1')
+    expect(total().text()).toBe('1 of 1')
   })
 
   it('takes a typed goal, and leaves the plan alone when the goal does not change', async () => {
@@ -195,7 +195,7 @@ describe('App', () => {
     await goal.setValue('6')
     await goal.trigger('keydown', { key: 'Enter' })
     await flushPromises()
-    expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('0 / 6')
+    expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('0 of 6')
     const plans = () => JSON.stringify(usePlannerStore().plans)
     const before = plans()
     await goal.setValue('6')
@@ -211,14 +211,14 @@ describe('App', () => {
     expect(thisWeek()).toBeUndefined()
     expect(wrapper.get('[data-testid="week-label"]').text()).toBe('19–25 October')
     await wrapper.get('button[aria-label="Previous week"]').trigger('click')
-    expect(wrapper.find('h1').text()).toBe('Oct 12 – Oct 18, 2026')
+    expect(wrapper.find('h1').text()).toBe('12–18 October')
     expect(wrapper.get('[data-testid="week-label"]').text()).toBe('12–18 October')
     await wrapper.get('button[aria-label="Next week"]').trigger('click')
     await wrapper.get('button[aria-label="Next week"]').trigger('click')
-    expect(wrapper.find('h1').text()).toBe('Oct 26 – Nov 1, 2026')
+    expect(wrapper.find('h1').text()).toBe('26 Oct – 1 Nov')
     expect(wrapper.get('[data-testid="week-label"]').text()).toBe('26 Oct – 1 Nov')
     await thisWeek()!.trigger('click')
-    expect(wrapper.find('h1').text()).toBe('Oct 19 – Oct 25, 2026')
+    expect(wrapper.find('h1').text()).toBe('19–25 October')
     expect(thisWeek()).toBeUndefined()
   })
 
@@ -282,7 +282,7 @@ describe('App', () => {
         .findAll('[data-testid="item-name"]')
         .map((n) => n.text()),
     ).toEqual(['From other tab'])
-    expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('1')
+    expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('1 of 2 this week')
   })
 })
 
@@ -310,8 +310,8 @@ describe('AddExerciseForm', () => {
       .find((b) => b.text() === 'Each side')!
       .trigger('click')
     await wrapper.get('form').trigger('submit')
-    expect(wrapper.findAll('[data-testid="item-detail"]').at(-1)!.text()).toBe('12 each side / set')
-    expect(ex().findAll('[data-testid="row-total"]').at(-1)!.text()).toBe('0 / 3')
+    expect(wrapper.findAll('[data-testid="item-detail"]').at(-1)!.text()).toBe('12 each side')
+    expect(ex().findAll('[data-testid="row-total"]').at(-1)!.text()).toBe('0 of 3')
     expect((wrapper.get('#add-exercise-name').element as HTMLInputElement).value).toBe('')
     expect((reps.element as HTMLInputElement).value).toBe('')
     const perSet = wrapper.findAll('button[aria-pressed]').find((b) => b.text() === 'Per set')!
@@ -348,11 +348,13 @@ describe('AddExerciseForm', () => {
     expect(ex().findAll('[data-testid="item-name"]')).toHaveLength(5)
   })
 
-  it('shows an em dash when no reps are given', async () => {
+  it('shows no chip, not a dash, when no reps are given', async () => {
     await mountConfig()
     await wrapper.get('#add-exercise-name').setValue('Plank')
     await wrapper.get('form').trigger('submit')
-    expect(wrapper.findAll('[data-testid="item-detail"]').at(-1)!.text()).toBe('—')
+    const plank = ex().findAll('tbody tr').at(-1)!
+    expect(plank.get('[data-testid="item-name"]').text()).toBe('Plank')
+    expect(plank.findAll('[data-testid="item-detail"]')).toHaveLength(0)
   })
 })
 
@@ -380,10 +382,11 @@ describe('SettingsPopover', () => {
 
     await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
     expect(dailyPick()).toBe('4')
-    expect(wrapper.find('[data-testid="pick-hint"]').text()).toBe(
-      'Pick 4 exercises a day. Click a cell when it’s done.',
+    expect(wrapper.find('[data-slot="section-hint"]').text()).toBe(
+      'Pick four a day. Mark each one when it’s done.',
     )
-    expect(ex().findAll('[data-testid="day-count"]')[0]!.text()).toBe('0/4')
+    expect(ex().get('tfoot [role="rowheader"]').text()).toBe('Picked4 a day')
+    expect(ex().findAll('[data-testid="day-count"]')[0]!.text()).toBe('0')
 
     const violet = inkRadio('Violet').element as HTMLElement
     violet.focus()
@@ -583,7 +586,7 @@ describe('export and import', () => {
     await openSettings()
     await choose(jsonFile(EXPORT))
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds 3 weekly plans and 3 ticks, plus the accent and exercises per day. Existing plans and ticks stay as they are.',
+      'Adds 3 weekly plans and 3 ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
     )
     await button('Import').trigger('click')
     await flushPromises()
@@ -614,9 +617,9 @@ describe('export and import', () => {
     mountApp()
     await openSettings()
     await choose(jsonFile(EXPORT))
-    expect(wrapper.get('[data-testid="import-summary"]').text()).toContain('plus the accent')
+    expect(wrapper.get('[data-testid="import-summary"]').text()).toContain('plus the ink')
     await inkRadio('Ink blue').trigger('click')
-    expect(wrapper.get('[data-testid="import-summary"]').text()).not.toContain('plus the accent')
+    expect(wrapper.get('[data-testid="import-summary"]').text()).not.toContain('plus the ink')
     await button('Import').trigger('click')
     await flushPromises()
     expect(pen()).toEqual(INK_BLUE)
@@ -779,7 +782,7 @@ describe('export and import with the sample data', () => {
     await input.trigger('change')
     await flushPromises()
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds 6 weekly plans and 102 ticks, plus the accent and exercises per day. Existing plans and ticks stay as they are.',
+      'Adds 6 weekly plans and 102 ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
     )
     await button('Import').trigger('click')
     await flushPromises()
@@ -886,7 +889,7 @@ describe('exercise weight', () => {
     await weight.setValue('16,5kg')
     expect((weight.element as HTMLInputElement).value).toBe('16.5')
     await wrapper.get('form').trigger('submit')
-    expect(detail('Swings')).toBe('20 reps / set · 16.5 kg')
+    expect(detail('Swings')).toBe('20 reps a set · 16.5 kg')
     expect((weight.element as HTMLInputElement).value).toBe('')
   })
 
@@ -905,7 +908,7 @@ describe('exercise weight', () => {
     await edit.get('form').trigger('submit')
     await flushPromises()
     expect(dialog()).toBeNull()
-    expect(detail('Squats')).toBe('15 reps / set · 12 kg')
+    expect(detail('Squats')).toBe('15 reps a set · 12 kg')
   })
 
   it('labels every field in the dialog, and saves from the button outside the form', async () => {
@@ -933,7 +936,7 @@ describe('exercise weight', () => {
       .trigger('click')
     await flushPromises()
     expect(dialog()).toBeNull()
-    expect(detail('Squats')).toBe('15 reps / set')
+    expect(detail('Squats')).toBe('15 reps a set')
   })
 
   it('edits the name, reps and per-side count, keeping the goal', async () => {
@@ -947,8 +950,8 @@ describe('exercise weight', () => {
     await toggle('Per set').trigger('click')
     await edit.get('form').trigger('submit')
     await flushPromises()
-    expect(detail('Halos')).toBe('10 reps / set')
-    expect(ex().findAll('[data-testid="row-total"]').at(-1)!.text()).toBe('0 / 3')
+    expect(detail('Halos')).toBe('10 reps a set')
+    expect(ex().findAll('[data-testid="row-total"]').at(-1)!.text()).toBe('0 of 3')
   })
 
   it('closes on Escape and on Close without saving, returning focus to its Edit button', async () => {
@@ -968,7 +971,7 @@ describe('exercise weight', () => {
       await flushPromises()
       expect(dialog()).toBeNull()
       expect(document.activeElement).toBe(opener)
-      expect(detail('Squats')).toBe('15 reps / set')
+      expect(detail('Squats')).toBe('15 reps a set')
     }
   })
 
@@ -980,7 +983,7 @@ describe('exercise weight', () => {
     await flushPromises()
     expect(dialog()).not.toBeNull()
     expect((dialog()!.get('#edit-exercise-name').element as HTMLInputElement).value).toBe('  ')
-    expect(detail('Squats')).toBe('15 reps / set')
+    expect(detail('Squats')).toBe('15 reps a set')
   })
 
   it('closes the dialog when another tab deletes the exercise', async () => {
@@ -1063,13 +1066,13 @@ describe('config mode and weekly plans', () => {
     await edit.get('#edit-exercise-weight').setValue('12')
     await edit.get('form').trigger('submit')
     await flushPromises()
-    expect(chips('Squats')).toBe('3 × 15 reps · 12 kg')
+    expect(chips('Squats')).toBe('3 × 15 · 12 kg')
 
     await button('Copy plan to next week')!.trigger('click')
     await settle()
     expect(confirmation()).toBeNull()
-    expect(wrapper.find('h1').text()).toBe('Oct 26 – Nov 1, 2026')
-    expect(chips('Squats')).toBe('3 × 15 reps · 12 kg')
+    expect(wrapper.find('h1').text()).toBe('26 Oct – 1 Nov')
+    expect(chips('Squats')).toBe('3 × 15 · 12 kg')
     expect(wrapper.find('[data-testid="carried-from"]').exists()).toBe(false)
   })
 
@@ -1085,13 +1088,13 @@ describe('config mode and weekly plans', () => {
       'The week of 26 October already has its own plan. Copying replaces it with this week’s exercises and foods.',
     )
     await answer('Cancel')
-    expect(wrapper.find('h1').text()).toBe('Oct 19 – Oct 25, 2026')
+    expect(wrapper.find('h1').text()).toBe('19–25 October')
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('false')
 
     await button('Copy plan to next week')!.trigger('click')
     await settle()
     await answer('Replace')
-    expect(wrapper.find('h1').text()).toBe('Oct 26 – Nov 1, 2026')
+    expect(wrapper.find('h1').text()).toBe('26 Oct – 1 Nov')
     // The copy replaced next week's own plan; its tick stays in the log.
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('true')
   })
@@ -1100,7 +1103,7 @@ describe('config mode and weekly plans', () => {
     await mountConfig()
     await wrapper.get('button[aria-label="Raise Squats goal"]').trigger('click')
     await wrapper.get('button[aria-label="Next week"]').trigger('click')
-    expect(wrapper.get('[data-testid="carried-from"]').text()).toContain('Oct 19 – Oct 25, 2026')
+    expect(wrapper.get('[data-testid="carried-from"]').text()).toContain('the week of 19 October')
     await wrapper.get('button[aria-label="Raise Squats goal"]').trigger('click')
     expect(wrapper.find('[data-testid="carried-from"]').exists()).toBe(false)
   })
@@ -1111,11 +1114,11 @@ describe('config mode and weekly plans', () => {
     await wrapper.get('button[aria-label="Raise Fish goal"]').trigger('click')
     await wrapper.get('button[aria-label="Next week"]').trigger('click')
     expect(wrapper.get('[data-testid="carried-from"]').text()).toBe(
-      'Uses the plan from Oct 19 – Oct 25, 2026 until you change this week.',
+      'Uses the plan from the week of 19 October until you change this week.',
     )
     await rowCells('Squats')[0]!.trigger('click')
     expect(wrapper.get('[data-testid="carried-from"]').text()).toBe(
-      'Uses the plan for foods from Oct 19 – Oct 25, 2026 until you change them this week.',
+      'Uses the plan for foods from the week of 19 October until you change them this week.',
     )
   })
 
@@ -1134,6 +1137,6 @@ describe('config mode and weekly plans', () => {
     await wrapper.get('#add-exercise-sets').setValue('4x')
     await wrapper.get('#add-exercise-reps').setValue('20')
     await wrapper.get('form').trigger('submit')
-    expect(chips('Swings')).toBe('4 × 20 reps')
+    expect(chips('Swings')).toBe('4 × 20')
   })
 })

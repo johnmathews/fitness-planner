@@ -92,9 +92,11 @@
 }
 
 /*
- * Printing gives a plain black-on-white sheet in either theme: the roles switch to print values,
- * so done marks print solid black, empty cells keep a grey ring and today's highlight disappears.
- * The user's ink cannot leak through: --pen is set here, and App.vue only sets --user-pen-*.
+ * Printing gives a plain black-on-white sheet in either theme (WeekGrid card, Print): the roles
+ * switch to the card's print values, so done marks print solid black, empty rings grey, chips
+ * outlined, and today's highlight disappears; "one extra" keeps its underline and words. These
+ * are the only literal colours the system allows. The user's ink cannot leak through: --pen is
+ * set here, and App.vue only sets --user-pen-*.
  */
 @media print {
   @page {
@@ -104,17 +106,17 @@
 
   :root,
   .dark {
-    --canvas: #fff;
-    --panel: #fff;
-    --tile: #fff;
-    --line: #bbb;
-    --control-border: #999;
-    --ink: #000;
-    --on-ink: #fff;
-    --ink-secondary: #555;
-    --error-ink: #000;
-    --caution-ink: #000;
-    --pen: #000;
+    --canvas: #ffffff;
+    --panel: #ffffff;
+    --tile: #ffffff;
+    --line: #b3b3b3;
+    --control-border: #767676;
+    --ink: #000000;
+    --on-ink: #ffffff;
+    --ink-secondary: #3d3d3d;
+    --error-ink: #000000;
+    --caution-ink: #000000;
+    --pen: #000000;
     --highlight: transparent;
     --shadow-overlay: none;
     color-scheme: light;
