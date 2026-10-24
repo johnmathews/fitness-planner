@@ -148,17 +148,21 @@ const unsynced = computed(() => {
   return `${countOf(n, 'change', true)} on this device ${n === 1 ? 'hasn’t' : 'haven’t'} reached the server yet. Signing out now loses them.`
 })
 
+/** The Settings button, where focus returns once the sign-out question closes. */
+function settingsButton(): HTMLElement | null {
+  return (trigger.value?.$el as HTMLElement | undefined) ?? null
+}
+
 async function signOut(): Promise<void> {
   if (!sync.pending) {
     const problem = await session.logout()
     signOutProblem.value = problem ? describeProblem(problem) : null
     return
   }
-  // The question replaces the panel, and focus goes back to Settings first, so Cancel returns
-  // it there rather than to a button that is no longer on the page.
+  // The question replaces the panel; Cancel returns focus to Settings (settingsButton) rather
+  // than to a button that is no longer on the page.
   open.value = false
   await nextTick()
-  ;(trigger.value?.$el as HTMLElement | undefined)?.focus()
   signOutError.value = undefined
   askSignOut.value = true
 }
@@ -253,6 +257,7 @@ async function confirmSignOut(): Promise<void> {
       confirm-label="Sign out"
       :busy="signingOut"
       :error="signOutError"
+      :return-focus="settingsButton"
       @confirm="confirmSignOut"
     />
   </div>

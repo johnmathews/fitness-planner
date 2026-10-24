@@ -1,6 +1,7 @@
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { usePlannerStore } from '@/stores/planner'
 import { parseJson, readKey, writeKey } from '@/lib/storage'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 
 /** The phone's two views (TodayList card): today's list, or the week's grids. */
 export type View = 'today' | 'week'
@@ -29,13 +30,7 @@ export const VIEW_KEY = 'fitness-planner-view-v1'
 export function usePhoneView() {
   const store = usePlannerStore()
 
-  const query = window.matchMedia?.(PHONE_QUERY)
-  const phone = ref(query?.matches ?? false)
-  function onChange(ev: MediaQueryListEvent): void {
-    phone.value = ev.matches
-  }
-  onMounted(() => query?.addEventListener('change', onChange))
-  onBeforeUnmount(() => query?.removeEventListener('change', onChange))
+  const phone = useMediaQuery(PHONE_QUERY)
 
   const chosen = ref<View>(parseJson(readKey(VIEW_KEY)) === 'week' ? 'week' : 'today')
   watch(chosen, (next) => writeKey(VIEW_KEY, next))

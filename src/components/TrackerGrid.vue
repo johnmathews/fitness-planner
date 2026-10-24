@@ -51,15 +51,15 @@ useGridNav(table, {
  * screen. Where the table fits (sm and up) there is nothing to scroll, and this changes nothing.
  */
 const scroller = ref<HTMLDivElement | null>(null)
-function showToday(): void {
+function scrollToToday(): void {
   const heads = table.value!.tHead!.rows[0]!.cells
   // Header cells: the names at 0, then Monday at 1, so the day before today is at today's index.
   const today = props.days.findIndex((d) => d.isToday)
   scroller.value!.scrollLeft =
     !props.configMode && today > 0 ? heads[today]!.offsetLeft - heads[0]!.offsetWidth : 0
 }
-onMounted(showToday)
-watch([() => props.days, () => props.configMode], showToday, { flush: 'post' })
+onMounted(scrollToToday)
+watch([() => props.days, () => props.configMode], scrollToToday, { flush: 'post' })
 
 /**
  * Brings a focused day or total wholly into view. Chrome's own focus scroll leaves a cell that is
@@ -81,7 +81,7 @@ function reveal(ev: FocusEvent): void {
   table scrolls sideways inside its own container, never the page: the container is positioned so
   the visually hidden text inside it can't escape and widen the page. The name column is sticky
   (stickyName) and the container's scroll-padding-left is its width, so a focused cell scrolls
-  clear of the names rather than under them; the container opens scrolled to today (showToday).
+  clear of the names rather than under them; the container opens scrolled to today (scrollToToday).
 
   Edit plan widens only the name column, by exactly the controls it gains (a 136px Stepper and
   two 44px IconButtons, with 8px gaps), so each row keeps its height (F25).

@@ -1,12 +1,9 @@
 import { useDietStore } from '@/stores/diet'
 import { usePlannerStore } from '@/stores/planner'
 import { mergeSummary, type ExportData } from '@/lib/transfer'
+import { countOf } from '@/lib/words'
 
 export type Additions = { plans: number; ticks: number; settings: boolean }
-
-function plural(n: number, word: string): string {
-  return `${n} ${word}${n === 1 ? '' : 's'}`
-}
 
 /**
  * What importing export data would add to the signed-in user's state, and that as a sentence.
@@ -37,7 +34,7 @@ export function useImportSummary() {
     const { plans, ticks, settings } = additions(data)
     // The settings as Settings names them: the Ink and Exercises a day (the accent is now an ink).
     const extra = settings ? ', plus the ink and the number of exercises a day' : ''
-    return `Adds ${plural(plans, 'weekly plan')} and ${plural(ticks, 'tick')}${extra}. Existing plans and ticks stay as they are.`
+    return `Adds ${countOf(plans, 'weekly plan')} and ${countOf(ticks, 'tick')}${extra}. Existing plans and ticks stay as they are.`
   }
 
   return { additions, addsAnything, describe }
