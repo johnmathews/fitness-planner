@@ -13,7 +13,6 @@ import StateExample from '../parts/StateExample.vue'
         id="sg-section-header-unmet"
         class="w-full"
         title="Exercises"
-        hint="Pick three a day. Mark each one when it’s done."
         heading-id="sg-section-header-unmet-title"
       >
         <StatFigure :figure="10" :total="12" words="this week" :met="false" />
@@ -35,7 +34,6 @@ import StateExample from '../parts/StateExample.vue'
         id="sg-section-header-zero"
         class="w-full"
         title="Exercises"
-        hint="Pick three a day. Mark each one when it’s done."
         heading-id="sg-section-header-zero-title"
       >
         <StatFigure :figure="0" :total="12" words="this week" :met="false" />

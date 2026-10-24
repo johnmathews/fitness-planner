@@ -186,7 +186,7 @@ describe('the planner grids (W10)', () => {
   })
 
   describe('rows', () => {
-    it('shows the goal in the row header and the chips in the card’s words', () => {
+    it('shows the chips in the card’s words, and the goal only in the week total', () => {
       mountApp()
       const row = ex()
         .findAll('[role="rowheader"]')
@@ -194,7 +194,10 @@ describe('the planner grids (W10)', () => {
       expect(row.findAll('[data-testid="item-detail"]').map((c) => c.text())).toEqual([
         '8 each side',
       ])
-      expect(row.get('[data-testid="item-goal"]').text()).toBe('3 a week')
+      expect(row.text()).not.toContain('a week')
+      expect(
+        row.element.closest('tr')!.querySelector('[data-testid="row-total"]')!.textContent,
+      ).toBe('0 of 3')
     })
 
     it('puts the edit, remove and goal controls in the row header, as IconButtons (F28)', async () => {
@@ -213,12 +216,12 @@ describe('the planner grids (W10)', () => {
       )
     })
 
-    it('keeps the goal caption’s space in edit mode, so the row keeps its height (F25)', async () => {
+    it('holds the row header at the Stepper’s height in both modes, so rows keep their height (F25)', async () => {
       await mountConfig()
-      const goal = ex().findAll('[data-testid="item-goal"]')[0]!
-      expect(goal.classes()).toContain('invisible')
+      const block = () => ex().findAll('[role="rowheader"]')[0]!.get('div')
+      expect(block().classes()).toContain('min-h-11')
       await wrapper.get('button[role="switch"]').trigger('click')
-      expect(ex().findAll('[data-testid="item-goal"]')[0]!.classes()).not.toContain('invisible')
+      expect(block().classes()).toContain('min-h-11')
     })
 
     /** Press a row's Remove, then answer the ConfirmDialog with `answer`. */
@@ -401,15 +404,12 @@ describe('the planner grids (W10)', () => {
       expect(wrapper.get('h1').text()).toBe('19–25 October')
     })
 
-    it('gives each section an h2, its one figure and a hint that does not print', () => {
+    it('gives each section an h2 and its one figure, and Diet a hint that does not print', () => {
       mountApp()
       const sections = wrapper.findAll('section[aria-labelledby]')
       expect(sections.map((s) => s.get('h2').text())).toEqual(['Exercises', 'Diet'])
       const hints = wrapper.findAll('[data-slot="section-hint"]')
-      expect(hints.map((h) => h.text())).toEqual([
-        'Pick three a day. Mark each one when it’s done.',
-        'Mark each day you ate it.',
-      ])
+      expect(hints.map((h) => h.text())).toEqual(['Mark each day you ate it.'])
       for (const hint of hints) expect(hint.attributes('data-noprint')).toBeDefined()
     })
 

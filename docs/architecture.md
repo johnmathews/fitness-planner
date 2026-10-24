@@ -51,10 +51,10 @@ App.vue                 picks the screen (link, planner or sign-in), the pen var
 │                       it (usePhoneView, src/composables/phoneView.ts) leads to the week below
 ├── WeekHeader.vue      the page's h1, the week ("19–25 October"); in config mode "Copy plan to
 │                       next week" and a note when the plan is carried over
-├── ExerciseGrid.vue    the Exercises section: SectionHeader (hint, "10 of 12 this week" StatFigure)
+├── ExerciseGrid.vue    the Exercises section: SectionHeader ("10 of 12 this week" StatFigure)
 │   ├── TrackerGrid.vue a <table> (WeekGrid card): day header, one TrackerRow per item, today's
 │   │   │               highlight band, and the Picked row ("4", "one extra" over the pick)
-│   │   └── TrackerRow.vue  name, chips and "3 a week"; 7 × DayMark; "3 of 4" total; in config
+│   │   └── TrackerRow.vue  name and chips; 7 × DayMark; "3 of 4" total; in config
 │   │                       mode the goal Stepper and edit/remove IconButtons in the row header
 │   ├── AddExerciseForm.vue config mode only: name, sets, reps, PerSideToggle, weight (kg)
 │   └── EditExerciseDialog.vue  Dialog: name, sets, reps, PerSideToggle, weight

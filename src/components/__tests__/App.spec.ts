@@ -383,9 +383,6 @@ describe('SettingsPopover', () => {
 
     await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
     expect(dailyPick()).toBe('4')
-    expect(wrapper.find('[data-slot="section-hint"]').text()).toBe(
-      'Pick four a day. Mark each one when it’s done.',
-    )
     expect(ex().get('tfoot [role="rowheader"]').text()).toBe('Picked4 a day')
     expect(ex().findAll('[data-testid="day-count"]')[0]!.text()).toBe('0')
 

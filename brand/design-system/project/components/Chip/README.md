@@ -16,7 +16,7 @@ A small quiet tag under an exercise name that says how much: sets × reps, each 
   | nothing | no chip (not a dash) |
 
 - Use the multiplication sign "×" with spaces, never "x" or "*". Figures, not words: chips are data.
-- In WeekGrid and TodayList the chips sit on the line under the name, before the goal caption ("3 a week").
+- In WeekGrid and TodayList the chips sit on the line under the name.
 - Never the `pen` colour, never a colour per exercise type, never clickable. A chip is information, not a filter or a button.
 - **Print:** the fill drops and a 1px rule outlines the chip, so it survives black-and-white printing.
 
@@ -26,7 +26,7 @@ One state. Chips don't hover, select or dismiss.
 
 ## Accessibility
 
-- Plain text in a `<span>`; a screen reader reads "Squats, 3 × 15, 16 kg, 3 a week" in order. Read "×" as "by" only if testing shows a screen reader skipping it; VoiceOver and NVDA read "times".
+- Plain text in a `<span>`; a screen reader reads "Squats, 3 × 15, 16 kg" in order. Read "×" as "by" only if testing shows a screen reader skipping it; VoiceOver and NVDA read "times".
 - `ink-secondary` on `tile` meets 4.5:1 in both themes (measured by the gate).
 
 ## You provide

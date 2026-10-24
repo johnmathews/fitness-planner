@@ -4,7 +4,6 @@ import { exerciseDetails, usePlannerStore } from '@/stores/planner'
 import type { Exercise } from '@/lib/storage'
 import { goalMet, pickedCount, type Tracked } from '@/lib/tracker'
 import { dayMonth } from '@/lib/dates'
-import { numberWord } from '@/lib/words'
 import { SectionHeader } from '@/components/ui/section-header'
 import { StatFigure } from '@/components/ui/stat-figure'
 import TrackerGrid from '@/components/TrackerGrid.vue'
@@ -53,15 +52,11 @@ watch(
 )
 </script>
 
-<!-- The Exercises section (SectionHeader, StatFigure and WeekGrid cards): its heading, hint and
-     one figure, the week, and in Edit plan the add form. -->
+<!-- The Exercises section (SectionHeader, StatFigure and WeekGrid cards): its heading and one
+     figure, the week, and in Edit plan the add form. -->
 <template>
   <section aria-labelledby="exercises-heading" class="pt-8 print:pt-4">
-    <SectionHeader
-      title="Exercises"
-      :hint="`Pick ${numberWord(store.dailyPick)} a day. Mark each one when it’s done.`"
-      heading-id="exercises-heading"
-    >
+    <SectionHeader title="Exercises" heading-id="exercises-heading">
       <StatFigure
         :figure="store.grandTotal"
         :total="goal"

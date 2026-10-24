@@ -28,19 +28,16 @@ const FORMS = [
           <span class="body block font-semibold">Squats</span>
           <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Chip>3 × 15</Chip><Chip>16 kg</Chip>
-            <span class="caption text-ink-secondary">3 a week</span>
           </span>
         </li>
         <li class="border-b border-line py-2">
           <span class="body block font-semibold">Plank</span>
           <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Chip>3 sets</Chip>
-            <span class="caption text-ink-secondary">2 a week</span>
           </span>
         </li>
         <li class="border-b border-line py-2">
           <span class="body block font-semibold">Back extensions</span>
-          <span class="caption text-ink-secondary">3 a week</span>
         </li>
       </ul>
     </ExampleGroup>
