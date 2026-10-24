@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { Day } from '@/stores/planner'
 import type { CountTone, PickedCount, Tracked } from '@/lib/tracker'
+import { useGridNav } from '@/composables/gridNav'
 import TrackerRow from '@/components/TrackerRow.vue'
 
 defineProps<{
@@ -33,6 +35,14 @@ const TONE: Record<Exclude<CountTone, 'future'>, string> = {
   met: 'font-semibold text-ink',
   over: 'font-semibold text-caution-ink underline decoration-[1.5px] underline-offset-[3px]',
 }
+
+// One tab stop for the whole grid, on today's DayMark in the first row (see gridNav for the keys
+// and for Edit plan's controls in the row headers).
+const table = ref<HTMLTableElement | null>(null)
+useGridNav(table, {
+  widget: '[data-slot="day-mark-button"]',
+  start: '[data-slot="day-mark-button"][aria-current="date"]',
+})
 </script>
 
 <!--
@@ -44,13 +54,17 @@ const TONE: Record<Exclude<CountTone, 'future'>, string> = {
   the container is positioned so the visually hidden text inside it can't escape and widen the page.
 
   Edit plan widens only the name column, by exactly the controls it gains (a 136px Stepper and
-  two 44px IconButtons, with 8px gaps), so each row keeps its height (F25). W11 turns this into
-  the WAI-ARIA grid with one tab stop; every day's DayMark is its cell's one widget.
+  two 44px IconButtons, with 8px gaps), so each row keeps its height (F25).
+
+  Keyboard (F15): the WAI-ARIA grid, one tab stop per grid (useGridNav). A day cell's focus is its
+  DayMark, the cell's one widget; the names, totals and Picked cells take focus themselves and
+  draw the focus ring inset, so the scroller never clips it.
 -->
 <template>
   <div class="relative overflow-x-auto print:overflow-visible">
     <table
-      role="table"
+      ref="table"
+      role="grid"
       :aria-label="tableLabel"
       class="w-full table-fixed border-collapse tabular-nums"
       :class="
@@ -119,15 +133,19 @@ const TONE: Record<Exclude<CountTone, 'future'>, string> = {
       <!-- On paper a split table repeats its header, but the Picked row prints once, at the end. -->
       <tfoot v-if="picked" class="print:table-row-group">
         <tr role="row">
-          <th scope="row" role="rowheader" class="py-3 pr-3 text-left align-top font-normal">
+          <th
+            scope="row"
+            role="rowheader"
+            class="py-3 pr-3 text-left align-top font-normal focus-visible:-outline-offset-2"
+          >
             <span class="body block text-ink">Picked</span>
             <span class="caption block text-ink-secondary">{{ picked.caption }}</span>
           </th>
           <td
             v-for="(c, i) in picked.counts"
             :key="i"
-            role="cell"
-            class="px-0.5 py-3 text-center align-top"
+            role="gridcell"
+            class="px-0.5 py-3 text-center align-top focus-visible:-outline-offset-2"
             :class="{ 'bg-highlight': days[i]!.isToday }"
             :data-tone="c.tone"
             data-testid="day-count"
@@ -149,7 +167,7 @@ const TONE: Record<Exclude<CountTone, 'future'>, string> = {
             </template>
           </td>
           <!-- Nothing to total for the picks (the section's figure counts the week), so the cell is
-               out of the accessibility tree and never takes focus. -->
+               out of the accessibility tree and out of the grid's navigation. -->
           <td aria-hidden="true" class="p-0" />
         </tr>
       </tfoot>

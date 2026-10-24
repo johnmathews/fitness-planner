@@ -242,6 +242,12 @@ describe('the planner grids (W10)', () => {
       await removeRow(ex(), 'Squats', 'Remove')
       expect(marks('Squats')).toHaveLength(0)
       expect(focused()).toBe('Remove Back extensions')
+      // Focus put back on a control lets its row's controls into the Tab order (gridNav).
+      expect(document.activeElement!.getAttribute('tabindex')).toBeNull()
+      expect(ex().get('button[aria-label="Edit Back extensions"]').attributes('tabindex')).toBe(
+        undefined,
+      )
+      expect(ex().get('button[aria-label="Edit Pull-ups"]').attributes('tabindex')).toBe('-1')
     })
 
     it('falls back to the previous row, then to the add form, as rows run out', async () => {
@@ -250,6 +256,142 @@ describe('the planner grids (W10)', () => {
       expect(focused()).toBe('Remove Fish')
       for (const name of ['Fish', 'Fruit', 'Vegetables']) await removeRow(diet(), name, 'Remove')
       expect(document.activeElement?.id).toBe('add-food-name')
+    })
+  })
+
+  describe('keyboard (F15, W11)', () => {
+    /** What Tab stops on, in page order (jsdom has no layout, so visibility isn't checked). */
+    function tabStops(): HTMLElement[] {
+      return [
+        ...document.querySelectorAll<HTMLElement>(
+          'a[href], button, input, select, textarea, [tabindex]',
+        ),
+      ].filter((el) => el.tabIndex >= 0 && !el.matches(':disabled'))
+    }
+    const name = (el: Element | null) =>
+      el?.getAttribute('aria-label') ?? el?.textContent?.trim() ?? null
+    const focused = () => document.activeElement as HTMLElement
+    async function press(key: string, init: KeyboardEventInit = {}): Promise<void> {
+      focused().dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...init }))
+      await flushPromises()
+    }
+
+    it('makes each grid a WAI-ARIA grid with one tab stop, on today’s cell in the first row', () => {
+      mountApp()
+      const grids: [ReturnType<typeof ex>, string][] = [
+        [ex(), 'Push-ups, Friday 23 October, today'],
+        [diet(), 'Vegetables, Friday 23 October, today'],
+      ]
+      for (const [grid, today] of grids) {
+        expect(grid.get('table').attributes('role')).toBe('grid')
+        expect(grid.findAll('[role="gridcell"]').length).toBeGreaterThan(0)
+        expect(grid.find('[role="cell"]').exists()).toBe(false)
+        const stops = tabStops().filter((el) => grid.element.contains(el))
+        expect(stops.map(name)).toEqual([today])
+      }
+    })
+
+    it('stops on the skip link, the Header, then each grid once', () => {
+      mountApp()
+      expect(tabStops().map(name)).toEqual([
+        'Skip to today',
+        'Previous week',
+        'Next week',
+        'Edit plan',
+        'Settings',
+        'Print…',
+        'Push-ups, Friday 23 October, today',
+        'Vegetables, Friday 23 October, today',
+      ])
+    })
+
+    it('moves by arrow keys cell by cell, and Home and End along the row', async () => {
+      mountApp()
+      ;(marks('Push-ups')[4]!.element as HTMLElement).focus()
+      await press('ArrowRight')
+      expect(name(focused())).toBe('Push-ups, Saturday 24 October')
+      await press('ArrowDown')
+      expect(name(focused())).toBe('Pull-ups, Saturday 24 October')
+      await press('End')
+      expect(focused().textContent).toBe('0 of 4')
+      expect(focused().getAttribute('role')).toBe('gridcell')
+      await press('Home')
+      expect(focused().getAttribute('role')).toBe('rowheader')
+      expect(focused().textContent).toContain('Pull-ups')
+      // The tab stop follows, so Tab comes back to the last cell used.
+      expect(tabStops().filter((el) => ex().element.contains(el))).toEqual([focused()])
+      await press('End', { ctrlKey: true })
+      expect(focused().closest('tfoot')).not.toBeNull()
+      expect(focused().textContent).toContain('Not yet')
+    })
+
+    it('toggles a day on Space or Enter only through its DayMark, as a button', async () => {
+      mountApp()
+      const mark = marks('Squats')[4]!
+      ;(mark.element as HTMLElement).focus()
+      await press('ArrowRight')
+      await press('ArrowLeft')
+      expect(focused()).toBe(mark.element)
+      await mark.trigger('click')
+      expect(mark.attributes('aria-pressed')).toBe('true')
+    })
+
+    it('has a "Skip to today" link first, which focuses today’s exercise cell', async () => {
+      mountApp()
+      const skip = wrapper.get('a[data-testid="skip-to-today"]')
+      expect(skip.text()).toBe('Skip to today')
+      expect(skip.classes()).toContain('sr-only')
+      await skip.trigger('click')
+      expect(name(focused())).toBe('Push-ups, Friday 23 October, today')
+    })
+
+    it('skips to the Diet grid when there are no exercises', async () => {
+      const state = emptyState()
+      state.exercise.plans = { [WEEK]: [] }
+      mountApp(state)
+      await wrapper.get('a[data-testid="skip-to-today"]').trigger('click')
+      expect(name(focused())).toBe('Vegetables, Friday 23 October, today')
+    })
+
+    it('skips to the first day in another week, and to the grid when it has no rows', async () => {
+      // This week has nothing planned; the week before falls back to the default plan.
+      const state = emptyState()
+      state.exercise.plans = { [WEEK]: [] }
+      state.diet.plans = { [WEEK]: [] }
+      mountApp(state)
+      const skip = wrapper.get('a[data-testid="skip-to-today"]')
+      await skip.trigger('click')
+      expect(focused().getAttribute('role')).toBe('rowheader')
+      expect(focused().textContent).toContain('Picked')
+      ;(document.activeElement as HTMLElement).blur()
+      await wrapper.get('button[aria-label="Previous week"]').trigger('click')
+      await flushPromises()
+      await skip.trigger('click')
+      expect(name(focused())).toBe('Push-ups, Monday 12 October')
+    })
+
+    it('keeps one stop per grid in Edit plan; Enter on a name reaches its controls', async () => {
+      await mountConfig()
+      expect(tabStops().filter((el) => ex().element.contains(el))).toHaveLength(1)
+      ;(marks('Squats')[0]!.element as HTMLElement).focus()
+      await press('Home')
+      expect(focused().getAttribute('role')).toBe('rowheader')
+      await press('Enter')
+      expect(name(focused())).toBe('Lower Squats goal')
+      const header = focused().closest('th')!
+      // The name cell keeps the tab stop (Shift+Tab returns to it), then its controls in order.
+      const inHeader = tabStops().filter((el) => header.contains(el))
+      expect(inHeader[0]).toBe(header)
+      expect(inHeader.slice(1).map((el) => el.getAttribute('aria-label') ?? el.tagName)).toEqual([
+        'Lower Squats goal',
+        'INPUT',
+        'Raise Squats goal',
+        'Edit Squats',
+        'Remove Squats',
+      ])
+      await press('Escape')
+      expect(focused()).toBe(header)
+      expect(tabStops().filter((el) => ex().element.contains(el))).toEqual([header])
     })
   })
 

@@ -48,6 +48,16 @@ const log = reactive<Log>({
 const week = computed(() => log[WEEK]!)
 const editing = ref(false)
 
+/** The grid's keys (WeekGrid card, Accessibility; src/composables/gridNav.ts). */
+const KEYS: [string, string][] = [
+  ['Tab', 'Lands once on the grid: today’s first mark, or the last cell used. Tab again leaves.'],
+  ['Arrows', 'Move cell by cell: names, days, totals and the Picked row. Never wrap.'],
+  ['Home, End', 'First and last cell in the row.'],
+  ['Ctrl+Home, Ctrl+End', 'First and last cell of the grid.'],
+  ['Space, Enter', 'Toggle a day’s mark. Nothing on any other cell.'],
+  ['Enter or F2, Escape', 'In Edit plan, on a name: into its goal, Edit and Remove; Escape back.'],
+]
+
 const picked = computed(() => ({
   caption: `${PICK} a day`,
   counts: dayCounts(rows, week.value).map((n, i) => pickedCount(n, PICK, days[i]!.isFuture)),
@@ -92,5 +102,16 @@ function remove(id: string): void {
         />
       </div>
     </StateExample>
+  </ExampleGroup>
+  <ExampleGroup title="Keyboard">
+    <dl
+      class="grid w-full max-w-160 grid-cols-[auto_1fr] gap-x-6 gap-y-2"
+      data-testid="sg-week-grid-keys"
+    >
+      <template v-for="[key, does] in KEYS" :key="key">
+        <dt class="text-base font-semibold text-ink">{{ key }}</dt>
+        <dd class="text-base text-ink">{{ does }}</dd>
+      </template>
+    </dl>
   </ExampleGroup>
 </template>

@@ -77,10 +77,16 @@ function setTarget(value: number): void {
   caption ink-secondary; a DayMark per day; the week's total as "3 of 4". In Edit plan the goal
   Stepper and the edit and remove IconButtons sit beside the name block, which keeps its width,
   and the goal caption keeps its space (invisible), so the row keeps its height (F25).
+  Those controls stay out of the Tab order until Enter (or F2) on the name cell lets them in, and
+  Escape leaves them (gridNav), so each grid stays one tab stop in Edit plan too.
 -->
 <template>
   <tr ref="row" role="row" class="border-b border-line">
-    <th scope="row" role="rowheader" class="py-2 pr-3 text-left align-middle font-normal">
+    <th
+      scope="row"
+      role="rowheader"
+      class="py-2 pr-3 text-left align-middle font-normal focus-visible:-outline-offset-2"
+    >
       <div class="flex items-center gap-2">
         <div class="flex w-31 shrink-0 flex-col sm:w-47">
           <span
@@ -121,7 +127,7 @@ function setTarget(value: number): void {
     <td
       v-for="(d, i) in days"
       :key="d.key"
-      role="cell"
+      role="gridcell"
       class="p-0 align-middle"
       :class="{ 'bg-highlight': d.isToday }"
     >
@@ -133,7 +139,7 @@ function setTarget(value: number): void {
         @toggle="emit('toggle', i)"
       />
     </td>
-    <td role="cell" class="px-1 text-center align-middle">
+    <td role="gridcell" class="px-1 text-center align-middle focus-visible:-outline-offset-2">
       <span
         class="body-large inline-flex items-center justify-center gap-1 whitespace-nowrap"
         :data-met="met"
