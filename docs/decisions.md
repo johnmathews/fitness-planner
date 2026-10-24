@@ -108,3 +108,4 @@ The design system followed in its own run of units, numbered afresh from W1:
 | W5–W7   | The primitives and the `/styleguide` route                     | #15 |
 | W8–W9   | Forms, sign-in, navbar, settings and confirmations             | #16 |
 | W10–W12 | The planner on the new marks, keyboard grids, phone Today view | #17 |
+| W13–W14 | Lint, CI and e2e enforcement; the design-system docs | #18 |
