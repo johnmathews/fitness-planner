@@ -103,7 +103,9 @@ async function submit(): Promise<void> {
         </template>
       </p>
       <form class="flex flex-col gap-4" @submit.prevent="submit">
-        <!-- For password managers, which save the new password against this username. -->
+        <!-- For password managers, which save the new password against this username. It is
+             `hidden`, so nobody sees or hears it and it needs no label. -->
+        <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
         <input
           type="text"
           name="username"

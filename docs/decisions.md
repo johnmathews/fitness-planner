@@ -1,11 +1,12 @@
-# Decisions: multi-user accounts and sync
+# Decisions
 
 > Purpose
 >
 > The record of why the planner has accounts, a Python API and server-side sync, and of the
-> choices made while building them in October 2026. The journals and pull requests cite these IDs
-> (D3, P7); this is where they resolve. The current design lives in [architecture.md](architecture.md)
-> and [api.md](api.md); this file keeps the reasons.
+> choices made while building them in October 2026, then of the calls behind its design system. The journals and pull requests cite these IDs
+> (D3, P7, K5); this is where they resolve. The current design lives in
+> [architecture.md](architecture.md), [api.md](api.md) and [brand.md](brand.md); this file keeps the
+> reasons.
 
 ## 1. Context
 
@@ -34,29 +35,47 @@ test suites run.
 
 ## 3. Made while planning and building (2026-10-24)
 
-| ID  | Decision                                                                                                                                | Why                                                                                                           |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| P1  | One export format (`fitness-planner-export` v1) for the file, `GET /api/export` and `POST /api/import`                                  | One validator per language, one set of fixtures                                                               |
-| P2  | Import always merges and never deletes: existing weeks keep their plan, ticks are OR-ed, settings apply only when there are none        | No import, anywhere, can destroy data                                                                         |
-| P3  | The theme is never exported or synced                                                                                                   | It belongs to the device; `public/theme-init.js` reads it before first paint                                  |
-| P4  | Invite and reset tokens travel in the URL fragment, then in request bodies, never in a path                                             | No access log (Traefik, nginx, uvicorn) records them                                                          |
-| P5  | The CLI fixes the username when it mints an invite                                                                                      | A leaked link cannot claim an arbitrary name                                                                  |
-| P6  | Every write must carry `Origin` equal to `PUBLIC_ORIGIN` and a JSON body                                                                | `SameSite=Lax` alone treats other `*.itsa-pizza.com` hosts as same-site                                       |
-| P7  | A plan create whose items match the stored plan succeeds instead of conflicting                                                         | A first tick creates the week's plan, and two devices do that from the same source                            |
-| P8  | Argon2 at its defaults, one hash at a time, a bounded login queue, and the API's own memory limit (160m, measured)                      | One hash takes 64 MiB, the web container's whole limit                                                        |
-| P9  | Synced data lives in new per-user cache keys; the keys from before accounts are never written                                           | The old data survives untouched, for the first-login import                                                   |
-| P10 | nginx forwards to the host `fitness-api:8000`                                                                                           | The production compose file names the service to match                                                        |
-| P11 | Invite links last 7 days; reset links 24 hours                                                                                          | John, at the planning gate                                                                                    |
-| P12 | Sessions last 90 days from last use, refreshed at most daily; logout ends one, a reset ends all                                         | John, at the planning gate                                                                                    |
-| P13 | The home-server deployment (W5) is part of this work, not a hand-off                                                                    | John, at the planning gate                                                                                    |
-| P14 | Every request names its user (`X-Expected-User`), and the API refuses any other                                                         | A tab left open as one person must never touch the account of someone who signed in later on the same browser |
-| P15 | Writes become operations by diffing the stores against the state the server is known to hold, rather than one API call per store action | Every write path, present and future, syncs without extra code                                                |
-| P16 | Tabs share the cache and outbox through `localStorage` events, not a `BroadcastChannel`                                                 | The cache is in `localStorage` already; one channel instead of two                                            |
-| P17 | Sign-out is refused while offline                                                                                                       | The session cookie is HttpOnly, so only the server can end it                                                 |
-| P18 | Imports, from a file or the first-login prompt, merge on the server in one request                                                      | One transaction against the account's real state, not one write per tick                                      |
-| P19 | The phone's Today                                                                                                                       | Week choice is kept per device in `localStorage` (`fitness-planner-view-v1`), never synced or exported        | Like the theme (P3), it suits the screen, not the person; the phone still opens on Today until someone picks Week |
+| ID  | Decision                                                                                                                                | Why                                                                                                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| P1  | One export format (`fitness-planner-export` v1) for the file, `GET /api/export` and `POST /api/import`                                  | One validator per language, one set of fixtures                                                                   |
+| P2  | Import always merges and never deletes: existing weeks keep their plan, ticks are OR-ed, settings apply only when there are none        | No import, anywhere, can destroy data                                                                             |
+| P3  | The theme is never exported or synced                                                                                                   | It belongs to the device; `public/theme-init.js` reads it before first paint                                      |
+| P4  | Invite and reset tokens travel in the URL fragment, then in request bodies, never in a path                                             | No access log (Traefik, nginx, uvicorn) records them                                                              |
+| P5  | The CLI fixes the username when it mints an invite                                                                                      | A leaked link cannot claim an arbitrary name                                                                      |
+| P6  | Every write must carry `Origin` equal to `PUBLIC_ORIGIN` and a JSON body                                                                | `SameSite=Lax` alone treats other `*.itsa-pizza.com` hosts as same-site                                           |
+| P7  | A plan create whose items match the stored plan succeeds instead of conflicting                                                         | A first tick creates the week's plan, and two devices do that from the same source                                |
+| P8  | Argon2 at its defaults, one hash at a time, a bounded login queue, and the API's own memory limit (160m, measured)                      | One hash takes 64 MiB, the web container's whole limit                                                            |
+| P9  | Synced data lives in new per-user cache keys; the keys from before accounts are never written                                           | The old data survives untouched, for the first-login import                                                       |
+| P10 | nginx forwards to the host `fitness-api:8000`                                                                                           | The production compose file names the service to match                                                            |
+| P11 | Invite links last 7 days; reset links 24 hours                                                                                          | John, at the planning gate                                                                                        |
+| P12 | Sessions last 90 days from last use, refreshed at most daily; logout ends one, a reset ends all                                         | John, at the planning gate                                                                                        |
+| P13 | The home-server deployment (W5) is part of this work, not a hand-off                                                                    | John, at the planning gate                                                                                        |
+| P14 | Every request names its user (`X-Expected-User`), and the API refuses any other                                                         | A tab left open as one person must never touch the account of someone who signed in later on the same browser     |
+| P15 | Writes become operations by diffing the stores against the state the server is known to hold, rather than one API call per store action | Every write path, present and future, syncs without extra code                                                    |
+| P16 | Tabs share the cache and outbox through `localStorage` events, not a `BroadcastChannel`                                                 | The cache is in `localStorage` already; one channel instead of two                                                |
+| P17 | Sign-out is refused while offline                                                                                                       | The session cookie is HttpOnly, so only the server can end it                                                     |
+| P18 | Imports, from a file or the first-login prompt, merge on the server in one request                                                      | One transaction against the account's real state, not one write per tick                                          |
+| P19 | The phone's choice between Today and Week is kept per device in `localStorage` (`fitness-planner-view-v1`), never synced or exported    | Like the theme (P3), it suits the screen, not the person. The phone still opens on Today until someone picks Week |
 
-## 4. Accepted risks
+## 4. The design system (2026-10-24)
+
+The brand spec ([2026-10-24-brand-design.md](specs/2026-10-24-brand-design.md) §10) made these calls
+on the owner's behalf, open to veto by ID. All were approved, and K3a was added while planning.
+[brand.md](brand.md) describes the result.
+
+| ID  | Decision                                                                                                                                                                                                                    | Why                                                                                                                                                                  |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| K1  | The component layer is shadcn-vue: owned source on Reka UI, restyled to the tokens, in `src/components/ui/`                                                                                                                 | Tested keyboard and focus behaviour for Dialog, Popover and Stepper, at about 67 KB gzipped. Rejected: hand-rolled primitives, the evaluation's first preference     |
+| K2  | The living style guide is two things: the published Design System artifact (the brand book) and the dev-only `/styleguide` route, which renders the real components in both themes and all four inks                        | The artifact is for people and agents designing. The route is what the accessibility and visual checks run against                                                   |
+| K3  | Four inks replace the four iOS accents. Saved accents map blue to Ink blue, green to Forest, purple to Violet and orange to Ink blue                                                                                        | Every ink is measured for contrast in both themes. An orange pen could be mistaken for `caution-ink`. Supersedes the handoff's accent swatches and the green default |
+| K3a | The stored accent keeps its wire format: any `#rrggbb`, `#30d158` for missing or invalid input. `inkFor` (`src/lib/inks.ts`) turns it into an ink, Ink blue when nothing is saved, and choosing an ink stores its light hex | No change to the API, the export format, the parity fixtures or sync                                                                                                 |
+| K4  | No monospace: numbers use Source Sans 3 with tabular figures                                                                                                                                                                | One family for words and numbers. Tabular figures keep columns aligned                                                                                               |
+| K5  | Below 640px the app opens on a Today list, and the week grid's name column is sticky                                                                                                                                        | On a phone today's column sat off-screen (F1). Supersedes "the grid scrolls sideways, as designed" in architecture.md §5                                             |
+| K6  | Notes on an exercise or a set are a separate feature, built after the system. The system supplies NoteMark and NoteEditor                                                                                                   | Keeps this work to the look, while giving notes a designed home                                                                                                      |
+| K7  | "Have fun. Avoid injury. Don't stop." stay principles in the brand spec and never appear in the UI                                                                                                                          | A slogan on screen is the kind of gimmick the brand rules out                                                                                                        |
+| K8  | The primary action colour is `ink`, not a brand blue                                                                                                                                                                        | One colour for "act", and the `pen` for "done"                                                                                                                       |
+
+## 5. Accepted risks
 
 Each is described where it applies:
 
@@ -67,7 +86,7 @@ Each is described where it applies:
 - while the API restarts, Docker's DNS can forward the web container's `fitness-api` lookup to the
   LAN resolver (home-server `documentation/infra_vm.md`, "Fitness").
 
-## 5. How it was built
+## 6. How it was built
 
 Six units, each its own pull request with a journal entry:
 
@@ -79,3 +98,15 @@ Six units, each its own pull request with a journal entry:
 | W3   | Sign-in, sync and the nginx proxy | #9               | `journal/261024-synced-client.md`           |
 | W4   | The first-login import prompt     | #10              | `journal/261024-import-prompt.md`           |
 | W5   | The infra-vm deployment           | home-server #245 | home-server `journal/261024-fitness-api.md` |
+
+The design system followed in its own run of units, numbered afresh from W1, with one journal entry
+for the whole run (`journal/261024-design-system.md`):
+
+| Units   | What                                                           | PR  |
+| ------- | -------------------------------------------------------------- | --- |
+| W1–W3   | The design system source, the gate and the artifact            | #13 |
+| W4      | The app's tokens, fonts and inks                               | #14 |
+| W5–W7   | The primitives and the `/styleguide` route                     | #15 |
+| W8–W9   | Forms, sign-in, navbar, settings and confirmations             | #16 |
+| W10–W12 | The planner on the new marks, keyboard grids, phone Today view | #17 |
+| W13–W14 | Lint, CI and e2e enforcement; the design-system docs           | #18 |

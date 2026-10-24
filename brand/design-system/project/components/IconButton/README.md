@@ -2,7 +2,7 @@ A 44px square button that shows one Lucide icon and carries its meaning in an ac
 
 ## Use
 
-- For actions whose icon is understood at a glance and repeats often: previous and next week (`chevron-left`, `chevron-right`), settings (`settings`), close (`x`), clear a search, and the Stepper's `minus` and `plus`.
+- For actions whose icon is understood at a glance and repeats often: previous and next week (`chevron-left`, `chevron-right`), settings (`settings`), close (`x`), a row's edit (`pencil`) and remove (`trash-2`) in Edit plan, clear a search, and the Stepper's `minus` and `plus`.
 - **Quiet** (the default): no border, `ink` icon, a `tile` fill on hover and while its popover or menu is open (`aria-expanded="true"`).
 - **Outlined:** 1px `control-border`, for a button that sits alone in a form or beside fields.
 - The icon is 20px, Lucide outline at 1.5px stroke in `currentColor`, `aria-hidden="true"`. The hit area is always 44 × 44px, `radius-md`, on every layout.
@@ -16,5 +16,5 @@ A 44px square button that shows one Lucide icon and carries its meaning in an ac
 
 ## You provide
 
-- `label` (required): the accessible name, as a verb phrase or the thing it opens: "Previous week", "Next week", "Settings", "Close", "Clear search". The component sets it as `aria-label`; a button without one must not render.
+- `label` (required): the accessible name, as a verb phrase or the thing it opens: "Previous week", "Next week", "Settings", "Close", "Edit Push-ups", "Remove Push-ups", "Clear search". A row action names its row, since a list of "Remove" buttons is useless out of context. The component sets it as `aria-label`; a button without one must not render.
 - `icon`: the Lucide name. `variant` (`quiet`, `outlined`), the click handler, and `aria-expanded` and `aria-controls` when it opens something.

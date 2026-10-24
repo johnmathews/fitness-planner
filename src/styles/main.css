@@ -4,8 +4,13 @@
  * brand/design-system/project/tokens.json by `npm run tokens`; never edit it by hand. That script
  * drops the generated @font-face rules: the fonts come from the Fontsource packages imported in
  * src/main.ts, which Vite bundles under /assets/ (the CSP allows only 'self').
+ *
+ * It goes in Tailwind's `components` layer, below `utilities`, so a utility beside a type class
+ * wins as it reads: `caption font-semibold` is semibold. Unlayered, the type class beat every
+ * utility and that rendered at 400. The layer is also how the lint (eslint.config.ts) knows
+ * `caption` and `title-2` are real classes. The roles still beat Tailwind's own `theme` layer.
  */
-@import './tokens.css';
+@import './tokens.css' layer(components);
 
 /* Dark mode follows a `.dark` class on <html>, set from the theme setting (System, Light or Dark)
    by public/theme-init.js before first paint and by App.vue after. tokens.css matches it. */
@@ -26,15 +31,18 @@
   color-scheme: dark;
 }
 
-/* Type-style details tokens.css does not emit: the note is italic, the display smaller on phones. */
-.note {
-  font-style: italic;
-}
+/* Type-style details tokens.css does not emit: the note is italic, the display smaller on phones.
+   In the same layer as the type classes, so utilities still win over them. */
+@layer components {
+  .note {
+    font-style: italic;
+  }
 
-@media (width < 40rem) {
-  .display {
-    font-size: 32px;
-    line-height: 36px;
+  @media (width < 40rem) {
+    .display {
+      font-size: 32px;
+      line-height: 36px;
+    }
   }
 }
 
@@ -64,8 +72,9 @@
   --color-scrim: var(--scrim);
 }
 
-/* tokens.css already declares --font-sans/--font-serif and --radius-sm/md/lg as unlayered :root
-   rules, so font-sans and rounded-lg follow the tokens without mapping (a self-map is a cycle). */
+/* tokens.css already declares --font-sans/--font-serif and --radius-sm/md/lg on :root, in the
+   components layer, which beats Tailwind's theme layer: font-sans and rounded-lg follow the tokens
+   without mapping (a self-map is a cycle). */
 @utility shadow-overlay {
   box-shadow: var(--shadow-overlay);
 }

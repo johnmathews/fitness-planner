@@ -1,8 +1,14 @@
 import { settle } from '@/components/ui/__tests__/setup'
 import { describe, expect, it } from 'vitest'
+import { defineComponent, h } from 'vue'
 import { mount } from '@vue/test-utils'
 import { ConfirmHost } from '@/components/ui/confirm-dialog'
-import { useConfirm, useConfirmRequest, type ConfirmOptions } from '@/composables/useConfirm'
+import {
+  dismissConfirm,
+  useConfirm,
+  useConfirmRequest,
+  type ConfirmOptions,
+} from '@/composables/useConfirm'
 
 const replacePlan: ConfirmOptions = {
   title: 'Replace next week’s plan?',
@@ -83,6 +89,50 @@ describe('useConfirm', () => {
     expect(alertDialog()!.textContent).toContain('Sign out now?')
     button('Sign out').click()
     await expect(second).resolves.toBe(true)
+  })
+
+  /** A component that asks from its own setup scope, as WeekHeader and TrackerRow do. */
+  function mountAsker(options = replacePlan): { answer: Promise<boolean>; unmount: () => void } {
+    let answer!: Promise<boolean>
+    const Asker = defineComponent({
+      setup() {
+        answer = useConfirm().confirm(options)
+        return () => h('span')
+      },
+    })
+    const wrapper = mount(Asker, { attachTo: document.body })
+    return { answer, unmount: () => wrapper.unmount() }
+  }
+
+  it('answers false when the component that asked goes away', async () => {
+    mount(ConfirmHost, { attachTo: document.body })
+    const asker = mountAsker()
+    await settle()
+    expect(alertDialog()).not.toBeNull()
+    asker.unmount()
+    await expect(asker.answer).resolves.toBe(false)
+    await settle()
+    expect(alertDialog()).toBeNull()
+  })
+
+  it('leaves a newer question open when an earlier asker goes away', async () => {
+    mount(ConfirmHost, { attachTo: document.body })
+    const first = mountAsker()
+    const second = mountAsker({ ...replacePlan, title: 'Remove Squats?', confirmLabel: 'Remove' })
+    await expect(first.answer).resolves.toBe(false)
+    first.unmount()
+    await settle()
+    expect(alertDialog()!.textContent).toContain('Remove Squats?')
+    button('Remove').click()
+    await expect(second.answer).resolves.toBe(true)
+  })
+
+  it('answers an open question false when dismissed from outside', async () => {
+    const { answer } = await ask()
+    dismissConfirm()
+    await expect(answer).resolves.toBe(false)
+    await settle()
+    expect(alertDialog()).toBeNull()
   })
 
   it('ignores an answer when no question is open', () => {

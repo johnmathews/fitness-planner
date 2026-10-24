@@ -1,4 +1,4 @@
-<!-- @dsCard group="Planner" height=250 subtitle="The one number per section: met, not met, zero" -->
+<!-- @dsCard group="Planner" height=320 subtitle="The one number per section: met (pen and a check), not met, zero" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -17,6 +17,9 @@
   .stat .rest { color: var(--ink-secondary); }
   .stat.met .fig { color: var(--pen); }
   .stat.zero .fig { color: var(--ink-secondary); font-weight: 400; }
+  /* Met is pen plus a check, never colour alone (Graphite's pen is close to ink). */
+  .stat .check { flex: none; align-self: center; width: 16px; height: 16px; color: var(--pen); }
+  .stat { flex-wrap: wrap; }
   @media (max-width: 639px) { body { padding: var(--space-4); } }
 </style>
 </head>
@@ -24,7 +27,7 @@
 <ul class="list">
   <li>
     <span class="label state">Met</span>
-    <p class="stat met"><span class="fig">12</span><span class="rest body-large">of 12 this week</span></p>
+    <p class="stat met"><span class="fig">12</span><span class="rest body-large">of 12 this week</span><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></p>
   </li>
   <li>
     <span class="label state">Not met yet</span>
@@ -37,6 +40,10 @@
   <li>
     <span class="label state">Diet, not met yet</span>
     <p class="stat"><span class="fig">2</span><span class="rest body-large">of 4 goals met</span></p>
+  </li>
+  <li>
+    <span class="label state">Diet, met</span>
+    <p class="stat met"><span class="fig">4</span><span class="rest body-large">of 4 goals met</span><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></p>
   </li>
 </ul>
 <script></script>

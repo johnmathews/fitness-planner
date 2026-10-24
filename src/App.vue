@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import { exerciseDetails, usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import AppNavbar from '@/components/AppNavbar.vue'
@@ -14,6 +14,8 @@ import ImportPrompt from '@/components/ImportPrompt.vue'
 import { ConfirmHost } from '@/components/ui/confirm-dialog'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { usePhoneView } from '@/composables/phoneView'
+import { dismissConfirm } from '@/composables/useConfirm'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 import { isDark } from '@/lib/theme'
 import { inkFor } from '@/lib/inks'
 import { useSessionStore } from '@/stores/session'
@@ -89,14 +91,20 @@ watchEffect(() => {
 })
 
 // matchMedia is missing in some environments (jsdom), so "System" falls back to light there.
-const colorScheme = window.matchMedia?.('(prefers-color-scheme: dark)')
-const systemDark = ref(colorScheme?.matches ?? false)
+const systemDark = useMediaQuery('(prefers-color-scheme: dark)')
 watchEffect(() =>
   document.documentElement.classList.toggle('dark', isDark(store.theme, systemDark.value)),
 )
-function onColorScheme(ev: MediaQueryListEvent): void {
-  systemDark.value = ev.matches
-}
+
+// An open question (useConfirm) was about the signed-in user's data. When another tab signs in as
+// someone else, or out, the stores change under it, so it closes unanswered rather than letting
+// its verb act on the new user's data. Synchronous, so a switch from one user straight to another
+// (null for a moment between) is never missed.
+watch(
+  () => session.user,
+  () => dismissConfirm(),
+  { flush: 'sync' },
+)
 
 function onVisible(): void {
   if (document.visibilityState !== 'visible') return
@@ -129,7 +137,6 @@ onMounted(() => {
   window.addEventListener('online', onOnline)
   window.addEventListener('storage', onStorage)
   window.addEventListener('hashchange', onHash)
-  colorScheme?.addEventListener('change', onColorScheme)
   tick = setInterval(onTick, 60_000)
 })
 onBeforeUnmount(() => {
@@ -138,7 +145,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('online', onOnline)
   window.removeEventListener('storage', onStorage)
   window.removeEventListener('hashchange', onHash)
-  colorScheme?.removeEventListener('change', onColorScheme)
   clearInterval(tick)
   sync.stop()
 })

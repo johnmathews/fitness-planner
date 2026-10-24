@@ -2,7 +2,8 @@
 
 > Purpose
 >
-> The toolchain, the scripts, the code conventions, and how the tests are organised.
+> The toolchain, the scripts, the code conventions, the style guide and the design gate, and how
+> the tests are organised.
 
 ## 1. Toolchain
 
@@ -13,6 +14,10 @@
   `npx -y npm@11 install`. CI and the Dockerfile both do the former.
 - Vue 3.5, Pinia 4, Vite 8, Tailwind CSS 4, TypeScript 6, Vitest 4 with jsdom, ESLint 10 + oxlint,
   Prettier with `prettier-plugin-tailwindcss`.
+- The UI layer: shadcn-vue components on Reka UI 2 (owned source in `src/components/ui/`),
+  Lucide icons (`@lucide/vue`), and the Source Serif 4 and Source Sans 3 Fontsource variable
+  packages. The design system's scripts (`scripts/check_design_system.py`,
+  `scripts/design_preview.py`) need only Python 3's standard library.
 - Running the app needs the API: the README's Getting started shows how. `npm run dev` forwards
   `/api` to `http://127.0.0.1:8000` (`API_URL` overrides it), so the browser sees one origin as it
   does behind nginx. `scripts/compose-smoke.sh` runs both images together and checks them through
@@ -24,34 +29,119 @@
 
 ## 2. Scripts
 
-| Script                            | Does                                                               |
-| --------------------------------- | ------------------------------------------------------------------ |
-| `npm run dev`                     | Vite dev server with Vue devtools                                  |
-| `npm run build`                   | `type-check` and `build-only` in parallel; either failing fails it |
-| `npm run build-only`              | `vite build` into `dist/` without type-checking (CI runs it last)  |
-| `npm run preview`                 | serve `dist/`                                                      |
-| `npm test`                        | run the Vitest suite once                                          |
-| `npm run test:watch`              | Vitest in watch mode                                               |
-| `npm run test:coverage`           | suite plus v8 coverage (per-file text table, HTML in `coverage/`)  |
-| `npm run type-check`              | `vue-tsc --build` across the app, node and test configs            |
-| `npm run lint`                    | `lint:oxlint` then `lint:eslint`, read-only (CI runs this)         |
-| `npm run lint-fix`                | both linters with `--fix`                                          |
-| `npm run format` / `format:check` | Prettier over `src/` and `fixtures/`                               |
+| Script                            | Does                                                                        |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `npm run dev`                     | Vite dev server with Vue devtools                                           |
+| `npm run build`                   | `type-check` and `build-only` in parallel; either failing fails it          |
+| `npm run build-only`              | `vite build` into `dist/` without type-checking (CI runs it last)           |
+| `npm run preview`                 | serve `dist/`                                                               |
+| `npm test`                        | run the Vitest suite once                                                   |
+| `npm run test:watch`              | Vitest in watch mode                                                        |
+| `npm run test:coverage`           | suite plus v8 coverage (per-file text table, HTML in `coverage/`)           |
+| `npm run type-check`              | `vue-tsc --build` across the app, node and test configs                     |
+| `npm run lint`                    | `lint:oxlint` then `lint:eslint`, read-only (CI runs this)                  |
+| `npm run lint-fix`                | both linters with `--fix`                                                   |
+| `npm run format` / `format:check` | Prettier over `src/`, `fixtures/`, `e2e/` and `playwright.config.ts`        |
+| `npm run tokens`                  | regenerate `src/styles/tokens.css` from the design system's tokens          |
+| `npm run test:e2e`                | the Playwright browser checks in `e2e/` against their own dev server (§3.3) |
 
-The linters ignore `design_handoff_exercise_planner/`, which holds vendored prototype code.
+The linters ignore `design_handoff_exercise_planner/`, which holds vendored prototype code, and
+build and coverage output. ESLint also ignores Playwright's `playwright-report/` and
+`test-results/`.
 
 ## 3. Conventions
 
 - Prettier (`.prettierrc.json`): no semicolons, single quotes, print width 100. The Tailwind plugin
-  sorts class lists in templates; it reads the theme from `src/styles/main.css`. `.editorconfig`
-  sets indentation for editors; `.vscode/extensions.json` recommends the Vue and lint extensions.
+  sorts class lists in templates. It reads the theme from `src/styles/main.css`. `.prettierignore`
+  keeps it off the generated `src/styles/tokens.css`. `.editorconfig` sets indentation for
+  editors, and `.vscode/extensions.json` recommends the Vue and lint extensions.
 - `@/` resolves to `src/` in Vite (`vite.config.ts`) and TypeScript (`tsconfig.app.json`).
 - Components use `<script setup lang="ts">` and Tailwind utility classes, with no `<style>` blocks.
-  Use the semantic colours (`bg-surface`, `text-muted`, `border-line`, …) from
-  `src/styles/main.css` rather than palette colours, so both themes work; a class list used more
-  than once in a component goes in a constant in its script.
-- Tests find elements by role, label, `data-testid` or state attributes (`data-today`, `data-tone`,
-  `data-met`, `data-on`, `aria-pressed`), never by styling classes.
+  A class list used more than once in a component goes in a constant in its script.
+- **Role utilities only.** Colours come from the roles (`bg-canvas`, `text-ink-secondary`,
+  `border-control-border`, `text-pen`), never a palette class, a hex value or an arbitrary colour.
+  The palette is switched off, so a class such as `bg-red-500` silently draws nothing.
+  [brand.md](brand.md) §3 says what each role means. `pen` is for done, `highlight` for today and
+  `caution-ink` for over the pick, nothing else.
+- **Type-style classes for text.** Set text with `display`, `title-1`, `title-2`, `body-large`,
+  `body`, `caption`, `label` or `note`, rather than font-size and line-height utilities. The type
+  classes sit in Tailwind's `components` layer, so a utility beside one wins as it reads
+  (`caption font-semibold` is semibold): add one only where a card asks for it. Numbers take
+  `tabular-nums`.
+- **Primitives before raw elements.** Use the components in `src/components/ui/` (Button,
+  IconButton, TextField, Dialog, `useConfirm`) rather than a raw `<button>`, `<input>` or
+  `window.confirm`. A component the system lacks starts as a card, then a primitive
+  ([brand.md](brand.md) §10).
+- **Icons** are Lucide (`@lucide/vue`) at `:stroke-width="1.5"`, 20px in buttons and 16px beside
+  text, never a Unicode glyph or emoji. An icon-only button is an IconButton with a `label`.
+- **Ids.** TextField and TextArea forward `id` (and `inputmode`, `autocomplete`, `data-*`) to the
+  real control, and generate an id with Vue's `useId()` when none is given. Pass a fixed `id` only
+  where a test or another element needs it (the sign-in and link forms).
+- Tests find elements by role, label, `data-testid`, `data-slot` or state attributes (`data-today`,
+  `data-tone`, `data-met`, `data-on`, `aria-pressed`, `aria-current`), never by styling classes.
+
+### 3.1 The style guide
+
+`npm run dev` serves the living style guide at <http://localhost:5173/styleguide>: every primitive
+and planner component, in each state, rendered by its real source. Its Theme and Ink menus switch
+the look, and the address keeps it (`/styleguide?theme=dark&ink=forest`), so a link or a browser
+test opens any combination. It needs no API and no sign-in, and the production build leaves it out.
+Add a section for each new component in `src/styleguide/sections/` and one entry in
+`src/styleguide/sections.ts`.
+
+### 3.2 The design gate and the tokens
+
+The design system's source is `brand/design-system/` ([brand.md](brand.md)). After any change to
+it, run the gate, which must exit 0:
+
+```bash
+python3 scripts/check_design_system.py brand/design-system --complete
+```
+
+It checks contrast in both themes for every role pair and ink, the token shapes, the banned words,
+and that every required component has a card. After a change to `tokens.json`, regenerate the app's
+tokens with `npm run tokens` and commit `src/styles/tokens.css` with it. Never edit that file by
+hand.
+
+### 3.3 Lint rules, e2e suite and CI checks
+
+`npm run lint` enforces the conventions above, so a break fails CI rather than review:
+
+- **Tailwind classes** (`eslint-plugin-better-tailwindcss`, read against `src/styles/main.css`): an
+  unknown class fails, and with the default palette switched off `bg-red-500` is unknown. So do
+  conflicting, duplicate and deprecated classes, an arbitrary colour (`bg-[#…]`, `text-[rgb(…)]`)
+  and a colour utility on a raw variable (`bg-[var(--canvas)]`). The type styles (`caption`,
+  `title-2`, …) are known because `tokens.css` is imported into the `components` layer, which also
+  lets a utility beside them win (`caption font-semibold` is semibold).
+- **Template accessibility** (`eslint-plugin-vuejs-accessibility`, recommended rules): a click
+  handler on a non-interactive element, a control without a label, and so on. The explicit grid roles
+  on `tr` and `th` are allowed, since `gridNav` and the specs find cells by role. Two lines disable a
+  rule with a reason: the hidden username field password managers use (`PasswordForm.vue`) and the
+  Stepper's live-region `<output>`.
+- **Single-word names** are kept where the design system or shadcn-vue gives them: Banner, Button,
+  Chip, Dialog, Popover, Stepper and Switch in `src/components/ui/` each open with a comment that
+  disables `vue/multi-word-component-names` and says whose name it is.
+- **No `<style>` blocks** in components (`vue/no-restricted-block`): styling is utilities on roles.
+
+`npm run test:e2e` runs the Playwright suite in `e2e/` against its own dev server (port 5179, with
+`PLAYWRIGHT=1`, which turns the Vue DevTools overlay off). `/api` is mocked with `page.route` and the
+clock is fixed to Wednesday 21 October 2026, so every run sees the same week.
+
+- `a11y.spec.ts`: axe (WCAG 2.0–2.2 A and AA plus best practice) on the style guide in both themes and
+  all four inks, and on the app's week view, Edit plan, open Settings, the phone Today view and
+  sign-in, in light and dark; and the focus ring's shape, a solid 2px outline at 2px offset. Two
+  "dark really is dark" tests guard the audit: on the style guide and on the app, the `.dark` class
+  must be set and `--canvas` must differ from light, so a dark audit can never quietly re-run
+  light.
+- `phone.spec.ts`: no sideways scroll at 375px on the style guide and in the Today, Week and Edit plan
+  views, and a focused grid cell never sits under the sticky name column.
+
+CI (`.github/workflows/ci.yml`) runs three jobs on every pull request and every push to `main`.
+`check` runs lint, format, types, unit tests with coverage, the build, the design gate and
+"tokens.css is current" (`npm run tokens` followed by
+`git diff --exit-code src/styles/tokens.css`). `e2e` installs Chromium and runs `npm run test:e2e`,
+keeping traces of a failure. `api` checks the Python service. One convention has no check yet: unit
+tests should not query styling classes.
 
 ## 4. Tests
 
@@ -93,6 +183,32 @@ listed in [api.md](api.md) §10):
   reply, `holdNext()` one, or `stall()` one forever. `signedIn.ts` sets up a browser already signed
   in as alice: the fake API, the remembered session, and an empty or given cache.
 - `src/lib/__tests__/theme.spec.ts`: theme names and how System, Light and Dark resolve.
+- `src/lib/__tests__/inks.spec.ts`: the four inks match `tokens.json`, and `inkFor` (K3a): Ink blue
+  with no saved settings, each legacy accent per K3, each ink's own hex in either case, and Ink
+  blue for anything else.
+- `src/lib/__tests__/words.spec.ts`: small numbers as words (capitalised to open a sentence),
+  singular and plural, and the app name with its monogram.
+- `src/lib/__tests__/utils.spec.ts`: `cn` (conflicting utilities, role colours kept apart from text
+  sizes) and `joinIds`.
+- `src/composables/__tests__/useConfirm.spec.ts`: the question, its verb and Cancel, true and false
+  answers, Escape, focus returned, a newer question answering an older one false, and an open
+  question answered false when the component that asked goes away or `dismissConfirm()` runs.
+- `src/composables/__tests__/useMediaQuery.spec.ts`: the media query's match, its updates, the
+  listener removed with the scope, and a browser without `matchMedia`.
+- `src/composables/__tests__/gridNav.spec.ts`: the grid keyboard model on a small table: the one
+  tab stop (today, the first day, the last cell focused), arrows, Home and End with and without
+  Ctrl, the hidden Picked cell never landed on, Space and Enter left to the DayMark, Edit plan's
+  controls (Enter or F2 in, Escape out, parked when focus leaves), and rows coming and going.
+- `src/components/ui/__tests__/`: one spec per primitive (Banner, BrandMark, Button, Chip,
+  ConfirmDialog, DayMark, Dialog, IconButton, InkPicker, InlineMessage, Popover, SectionHeader,
+  SegmentedControl, StatFigure, Stepper, Switch, TextArea, TextField, TextLink), each checking its
+  roles, accessible names, sizes, states and the role colours its card names. Examples: an
+  IconButton renders nothing without a label, the Popover closes when focus leaves it (F14), the
+  Stepper's limits stay focusable with `aria-disabled`, and a met StatFigure adds a check (F6).
+  `transitions.spec.ts` checks no primitive animates `outline-color`, so the focus ring never fades
+  in. `setup.ts` fills the jsdom gaps Reka UI's overlays reach for.
+- `src/styleguide/__tests__/look.spec.ts`: the style guide's theme and ink from the query string,
+  the round trip back to it, and the class and pen variables it sets.
 - `src/stores/__tests__/planner.spec.ts`: toggling, totals, week navigation, goal clamping, adding,
   removal's effect on totals, settings, detail chips, editing exercises, sets, weekly plans
   (defaults, carry forward, a week getting its own plan, copying to the next week), config mode,
@@ -127,11 +243,11 @@ listed in [api.md](api.md) §10):
   still-valid cookie, switching user, every login refusal, invite links, sign-out forgetting the
   device's data, and sign-out refused offline.
 - `src/components/__tests__/App.spec.ts`: the mounted app in jsdom. Covers rendering, the today
-  column, cell toggling and `aria-pressed`, footer colours, the goal stepper and its bounds,
+  column, cell toggling and `aria-pressed`, the goal stepper and its bounds,
   navigation, confirm-before-remove, print, the visibility and one-minute clock refresh, another
-  tab's writes to the cache, the add form, the settings popover including focus return, and the theme: the
-  `dark` class following the OS (with a stubbed `matchMedia`), the theme buttons and their
-  persistence. Also the weight and sets fields, the edit dialog (found by `role="dialog"` on
+  tab's writes to the cache, the add form, the settings popover including focus return, the ink (the pen variables per K3a), and the
+  theme: the `dark` class following the OS (with a stubbed `matchMedia`), the theme control and
+  its persistence. Also the weight and sets fields, the edit dialog (found by `role="dialog"` on
   `document.body`, where Reka's portal renders it), normal mode hiding every editing control, export (with
   `URL.createObjectURL` stubbed) and import through the file input (summary, confirm, cancel,
   errors), copying the plan to
@@ -145,13 +261,26 @@ listed in [api.md](api.md) §10):
   pasted into a running tab), sign-out (with unsynced changes, and refused offline), and the sync
   status messages and triggers (loading, offline with and without a copy, retry, the conflict
   notice, focus, visibility and the minute tick).
+- `src/components/__tests__/Planner.spec.ts`: the planner on the design system's marks, in the
+  mounted app: the Picked row ("one extra" in words and underlined, en dashes for days to come, no
+  empty focusable cell), today (full-date names with "today", `aria-current`, the band), totals
+  and section figures ("N of M", a check when met, zero quiet), row headers in Edit plan (Stepper
+  and IconButtons, stable row height, focus after a removal), the keyboard (one tab stop per grid,
+  arrows, the skip link, Edit plan's controls), headings and print attributes, and the phone width
+  (the sticky names, Edit plan's name column scrolling away, opening scrolled to today).
+- `src/components/__tests__/TodayList.spec.ts`: the phone's Today view (K5): the list on its own
+  (the date on the band, the summary in words, groups and rows, the empty state, toggles by kind
+  and id) and in the app below `sm` (the Today | Week switch, the same store actions as the grid,
+  the remembered view, the breakpoint, another week and Edit plan showing the week, the skip link).
 - `src/components/__tests__/DietSection.spec.ts`: the diet section in the mounted app: default
-  foods, ticking, footer and goals-met counts, shared week navigation, add/remove and the goal
-  stepper (in config mode), cross-tab sync.
+  foods, ticking, row totals and the goals-met figure, shared week navigation, add and remove (after
+  a confirmation) and the goal Stepper (in config mode), cross-tab sync.
 
 `vitest.config.ts` sets coverage thresholds (100% lines and functions, 99% statements, 98%
-branches), so `npm run test:coverage` and CI fail when coverage drops below them.
+branches), so `npm run test:coverage` and CI fail when coverage drops below them. Coverage covers
+`src/` except `src/main.ts`, the tests themselves and the development-only `src/styleguide/`. The
+copied shadcn-vue source in `src/components/ui/` counts like any other code.
 
 Every test that depends on the date pins the clock with `vi.useFakeTimers({ toFake: ['Date'] })`
 (the minute-tick test also fakes `setInterval`), and all tests build dates with local-time
-constructors, so they pass in any timezone. No end-to-end browser tests run in CI.
+constructors, so they pass in any timezone. The browser checks are in §3.3.

@@ -19,11 +19,45 @@ jobs:
       # npm 10.9 (bundled with Node 22) crashes resolving this tree; see docs/development.md.
       - run: npm install -g npm@11
       - run: npm ci
+      # ESLint carries the Tailwind class rules (no palette or arbitrary colours) and the template
+      # accessibility rules (eslint.config.ts).
       - run: npm run lint
       - run: npm run format:check
       - run: npm run type-check
       - run: npm run test:coverage
       - run: npm run build-only
+      # The design system's own gate: token shape, every contrast pair in every theme, the
+      # forbidden words, and every required component card (ubuntu-latest's python3; stdlib only).
+      - name: Design-system gate
+        run: python3 scripts/check_design_system.py brand/design-system --complete
+      # tokens.css is generated from tokens.json; a hand edit, or a tokens.json change without
+      # `npm run tokens`, fails here.
+      - name: tokens.css is current
+        run: npm run tokens && git diff --exit-code src/styles/tokens.css
+
+  # The browser checks (e2e/): axe in both themes and every ink, no sideways scroll at 375px, the
+  # focus ring, and focus clear of the sticky name column, against the dev server with /api mocked.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install -g npm@11
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
 
   api:
     runs-on: ubuntu-latest

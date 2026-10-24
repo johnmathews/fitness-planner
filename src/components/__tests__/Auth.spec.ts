@@ -111,8 +111,8 @@ describe('signing in', () => {
       undefined,
       'Wrong username or password. Check both and try again.',
     ],
-    ['a locked account', 'locked', 600, 'Too many attempts. Try again in 10 minutes.'],
-    ['a lock about to end', 'locked', 30, 'Too many attempts. Try again in 1 minute.'],
+    ['a locked account', 'locked', 600, 'Too many attempts. Try again in ten minutes.'],
+    ['a lock about to end', 'locked', 30, 'Too many attempts. Try again in one minute.'],
     ['a busy server', 'busy', 1, 'The server is busy. Try again in a moment.'],
   ])('explains %s', async (_, code, retryAfter, message) => {
     api = signedOut()

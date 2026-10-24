@@ -11,7 +11,9 @@ export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
-    vueDevTools(),
+    // The e2e suite (playwright.config.ts) sets PLAYWRIGHT: the DevTools overlay is UI the app
+    // doesn't have, and axe and the 375px check would measure it.
+    process.env.PLAYWRIGHT ? null : vueDevTools(),
     // The page title is the app's one name (src/lib/app.ts), written into index.html.
     {
       name: 'app-name',

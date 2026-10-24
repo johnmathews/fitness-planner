@@ -71,6 +71,9 @@ function neighbours(): HTMLElement[] {
 async function remove(event: MouseEvent): Promise<void> {
   // Back to this Remove button on Cancel; to a neighbour once the row has gone.
   const targets = [event.currentTarget as HTMLElement, ...neighbours()]
+  // "This week" in the question is the week showing now (its Monday's key); if the week changes
+  // while it is open (midnight on Sunday), Remove would take the item off another week instead.
+  const week = props.days[0]!.key
   const yes = await confirm({
     title: `Remove ${props.item.name}?`,
     message:
@@ -78,7 +81,7 @@ async function remove(event: MouseEvent): Promise<void> {
     confirmLabel: 'Remove',
     returnFocus: () => targets.find((el) => el.isConnected) ?? null,
   })
-  if (yes) emit('remove')
+  if (yes && props.days[0]!.key === week) emit('remove')
 }
 
 /** The Stepper reports a new goal (only ever a changed one); the stores take a step. */

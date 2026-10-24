@@ -10,8 +10,9 @@ const store = usePlannerStore()
 const diet = useDietStore()
 
 const { confirm } = useConfirm()
+// The store's clock, so the year appears once it turns (the week of 21 December 2026).
 const label = (key: string | null) =>
-  key ? `the week of ${weekOf(fromKey(key), new Date())}` : null
+  key ? `the week of ${weekOf(fromKey(key), store.now)}` : null
 
 /**
  * Says where a plan this week hasn't changed comes from. Exercises and foods get their own plans
@@ -30,12 +31,15 @@ const carriedNote = computed(() => {
 async function copyToNextWeek(): Promise<void> {
   // Asks only when next week has a plan of its own (exercises or foods), which the copy replaces.
   if (store.nextWeekHasPlan || diet.nextWeekHasPlan) {
+    // The question names a week; if the week changes while it is open (the clock passing midnight
+    // on Sunday), Replace would act on another one, so it does nothing (as ExerciseGrid's edit).
+    const week = store.weekKey
     const yes = await confirm({
       title: 'Replace next week’s plan?',
       message: `The week of ${dayMonth(addDays(store.monday, 7))} already has its own plan. Copying replaces it with this week’s exercises and foods.`,
       confirmLabel: 'Replace',
     })
-    if (!yes) return
+    if (!yes || store.weekKey !== week) return
   }
   store.copyToNextWeek()
   diet.copyToNextWeek()

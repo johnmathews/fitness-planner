@@ -3,6 +3,7 @@ import { DOMWrapper, flushPromises, mount, type VueWrapper } from '@vue/test-uti
 import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
 import { usePlannerStore } from '@/stores/planner'
+import { SESSION_KEY } from '@/stores/session'
 import { CACHE_PREFIX, type SyncState } from '@/stores/sync'
 import { readFixture } from '@/lib/__tests__/fixtures'
 import type { FakeApi } from '@/lib/__tests__/fakeApi'
@@ -567,7 +568,7 @@ describe('export and import', () => {
     // The tick gave this week its own plan, so only last week's exercise plan and this week's food
     // plan are new. Picking Ink blue saved settings, so the file's accent and daily pick don't apply.
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds 2 weekly plans and 3 ticks. Existing plans and ticks stay as they are.',
+      'Adds two weekly plans and three ticks. Existing plans and ticks stay as they are.',
     )
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('false')
 
@@ -586,7 +587,7 @@ describe('export and import', () => {
     await openSettings()
     await choose(jsonFile(EXPORT))
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds 3 weekly plans and 3 ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
+      'Adds three weekly plans and three ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
     )
     await button('Import').trigger('click')
     await flushPromises()
@@ -609,7 +610,7 @@ describe('export and import', () => {
       }),
     )
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds 1 weekly plan and 1 tick. Existing plans and ticks stay as they are.',
+      'Adds one weekly plan and one tick. Existing plans and ticks stay as they are.',
     )
   })
 
@@ -782,7 +783,7 @@ describe('export and import with the sample data', () => {
     await input.trigger('change')
     await flushPromises()
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds 6 weekly plans and 102 ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
+      'Adds six weekly plans and 102 ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
     )
     await button('Import').trigger('click')
     await flushPromises()
@@ -1119,6 +1120,75 @@ describe('config mode and weekly plans', () => {
     await rowCells('Squats')[0]!.trigger('click')
     expect(wrapper.get('[data-testid="carried-from"]').text()).toBe(
       'Uses the plan for foods from the week of 19 October until you change them this week.',
+    )
+  })
+
+  /** Next week gets a plan of its own (a tick), so copying asks before replacing it. */
+  async function giveNextWeekAPlan(): Promise<void> {
+    await wrapper.get('button[aria-label="Next week"]').trigger('click')
+    await rowCells('Squats')[0]!.trigger('click')
+    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
+  }
+
+  it('closes an open question when another tab signs in as someone else', async () => {
+    await mountConfig()
+    await giveNextWeekAPlan()
+    await button('Copy plan to next week')!.trigger('click')
+    await settle()
+    expect(confirmation()).not.toBeNull()
+
+    // Bob has a copy on this device, so his data shows at once, with no reload in between.
+    api.addUser('bob')
+    api.signedIn = 'bob'
+    localStorage.setItem(CACHE_PREFIX + 'bob', JSON.stringify(emptyState()))
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ user: 'bob' }))
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: SESSION_KEY, storageArea: localStorage }),
+    )
+    await flushPromises()
+    await settle()
+    expect(confirmation()).toBeNull()
+    expect(wrapper.find('h1').text()).toBe('19–25 October')
+  })
+
+  it('does not replace a plan if the week changed while it asked', async () => {
+    await mountConfig()
+    await giveNextWeekAPlan()
+    await button('Copy plan to next week')!.trigger('click')
+    await settle()
+    // Midnight on Sunday: the question named the week of 26 October, which is now this week.
+    vi.setSystemTime(new Date(2026, 9, 26, 0, 5))
+    usePlannerStore().refreshNow()
+    await flushPromises()
+    await answer('Replace')
+    expect(wrapper.find('h1').text()).toBe('26 Oct – 1 Nov')
+    expect(usePlannerStore().plans['2026-11-02']).toBeUndefined()
+  })
+
+  it('does not remove a row if the week changed while it asked', async () => {
+    await mountConfig()
+    await wrapper.get('button[aria-label="Remove Squats"]').trigger('click')
+    await settle()
+    vi.setSystemTime(new Date(2026, 9, 26, 0, 5))
+    usePlannerStore().refreshNow()
+    await flushPromises()
+    await answer('Remove')
+    expect(wrapper.find('h1').text()).toBe('26 Oct – 1 Nov')
+    expect(rowCells('Squats')).toHaveLength(7)
+  })
+
+  it('adds the year to where a plan comes from once the year turns', async () => {
+    vi.setSystemTime(new Date(2026, 11, 30, 18, 0))
+    await mountConfig()
+    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
+    await wrapper.get('button[aria-label="Raise Squats goal"]').trigger('click')
+    await wrapper.get('button[aria-label="Next week"]').trigger('click')
+    expect(wrapper.get('[data-testid="carried-from"]').text()).toContain('the week of 21 December')
+    vi.setSystemTime(new Date(2027, 0, 1, 0, 5))
+    usePlannerStore().refreshNow()
+    await flushPromises()
+    expect(wrapper.get('[data-testid="carried-from"]').text()).toContain(
+      'the week of 21 December 2026',
     )
   })
 

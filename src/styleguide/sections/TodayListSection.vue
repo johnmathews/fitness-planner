@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, type Directive } from 'vue'
 import { todaySummary, type TodayItem } from '@/lib/tracker'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import TodayList from '@/components/TodayList.vue'
@@ -39,6 +39,18 @@ const VIEWS = [
 
 /** The card's summary table, done today against a pick of three. */
 const SUMMARIES = computed(() => [0, 2, 3, 4].map((n) => [n, todaySummary(n, PICK)] as const))
+
+/**
+ * In the app TodayList is the page: the date is its h1 and Exercises and Diet are h2s. Here it
+ * sits under this section's h2, so `v-nested-headings` moves its headings two levels down
+ * (aria-level 3 and 4) and the page's outline stays in order (axe heading-order).
+ */
+function nestHeadings(frame: HTMLElement): void {
+  for (const h of frame.querySelectorAll('h1, h2')) {
+    h.setAttribute('aria-level', String(Number(h.tagName.slice(1)) + 2))
+  }
+}
+const vNestedHeadings: Directive<HTMLElement> = { mounted: nestHeadings, updated: nestHeadings }
 </script>
 
 <!-- The card's phone column, drawn by the app's own TodayList inside a 390px frame: the view switch,
@@ -49,6 +61,7 @@ const SUMMARIES = computed(() => [0, 2, 3, 4].map((n) => [n, todaySummary(n, PIC
     <StateExample state="On a phone. Today is Thursday; the pick is three a day.">
       <div
         id="sg-today-list-screen"
+        v-nested-headings
         class="w-full max-w-[390px] overflow-hidden rounded-lg border border-line bg-canvas px-4"
       >
         <div class="flex justify-end pt-3">
@@ -66,6 +79,7 @@ const SUMMARIES = computed(() => [0, 2, 3, 4].map((n) => [n, todaySummary(n, PIC
     <StateExample state="Nothing planned this week">
       <div
         id="sg-today-list-empty"
+        v-nested-headings
         class="w-full max-w-[390px] overflow-hidden rounded-lg border border-line bg-canvas px-4"
       >
         <TodayList :date="DATE" :pick="PICK" :exercises="[]" :foods="[]" />
