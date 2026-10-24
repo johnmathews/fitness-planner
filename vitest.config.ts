@@ -12,7 +12,8 @@ export default mergeConfig(
       coverage: {
         provider: 'v8',
         include: ['src/**/*.{ts,vue}'],
-        exclude: ['src/main.ts', 'src/**/__tests__/**'],
+        // The style guide is development-only; W13's browser suite covers it.
+        exclude: ['src/main.ts', 'src/**/__tests__/**', 'src/styleguide/**'],
         reporter: ['text', 'html'],
         // Floors at the level the suite holds; CI fails if coverage drops below them.
         thresholds: { lines: 100, functions: 100, statements: 99, branches: 98 },
