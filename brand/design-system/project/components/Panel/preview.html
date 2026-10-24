@@ -15,8 +15,8 @@
   .panel h2 { margin: 0 0 var(--space-1); }
   .panel p { margin: 0; }
   .muted { color: var(--ink-secondary); }
-  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
-  .actions.tight { margin-top: var(--space-2); }
+  .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-4); }
+  .actions.tight { justify-content: flex-start; margin-top: var(--space-2); }
   .rule { border: 0; border-top: 1px solid var(--line); margin: var(--space-3) 0; }
   .line { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
 
@@ -25,7 +25,6 @@
   .primary { background: var(--ink); color: var(--on-ink); }
   .secondary { background: transparent; color: var(--ink); border-color: var(--control-border); }
   .quiet { background: transparent; color: var(--ink); }
-  .sm { height: 36px; padding: 0 var(--space-3); font-size: 14px; line-height: 20px; }
 </style>
 </head>
 <body>
@@ -36,22 +35,22 @@
       <h2 class="title-2" id="import-title">Data from before accounts</h2>
       <p class="body muted">This browser holds a log saved before accounts existed. If it's yours, add it to your account. Adds 12 weekly plans and 140 ticks. Existing plans and ticks stay as they are.</p>
       <div class="actions">
-        <button class="btn primary" type="button">Add to my account</button>
-        <button class="btn secondary" type="button">Not mine</button>
         <button class="btn quiet" type="button">Later</button>
+        <button class="btn secondary" type="button">Not mine</button>
+        <button class="btn primary" type="button">Add to my account</button>
       </div>
     </section>
   </div>
   <div class="cell">
-    <p class="caption state">Popover body, padding space-4</p>
+    <p class="caption state">Popover body, padding space-4, 44px buttons</p>
     <div class="panel compact" role="group" aria-label="Settings">
       <p class="label">Account</p>
-      <div class="line"><span class="caption"><span class="muted">Signed in as</span> anna</span><button class="btn secondary sm" type="button">Sign out</button></div>
+      <div class="line"><span class="caption"><span class="muted">Signed in as</span> anna</span><button class="btn secondary" type="button">Sign out</button></div>
       <hr class="rule">
       <p class="label">Data</p>
       <div class="actions tight">
-        <button class="btn secondary sm" type="button">Export</button>
-        <button class="btn secondary sm" type="button">Import…</button>
+        <button class="btn secondary" type="button">Export</button>
+        <button class="btn secondary" type="button">Import…</button>
       </div>
     </div>
   </div>

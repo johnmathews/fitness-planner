@@ -2,7 +2,7 @@ The phone's first view: today's exercises and foods as one list, each with a sin
 
 ## Use
 
-- **Below 640px the app opens here** (K5); a Today | Week SegmentedControl at the top right switches to the WeekGrid. On wider screens the WeekGrid is the main view and TodayList isn't shown.
+- **Below 640px the app opens here** (K5); a Today | Week SegmentedControl at the top right, drawn exactly as its card (44px, `label` type on both segments), switches to the WeekGrid. On wider screens the WeekGrid is the main view and TodayList isn't shown.
 - **Day heading** on the `highlight` band, which runs edge to edge: the date in `title-2` ("Thursday 22 October"), then the summary in `body-large`. The band is today's column turned sideways; nothing else in the list is highlighted.
 - **Summary**, counting exercises against the daily pick, in words:
 
@@ -35,7 +35,7 @@ The phone's first view: today's exercises and foods as one list, each with a sin
 - The heading is the page's `<h1>`, with a visually hidden "Today, " in front of the date.
 - Each DayMark is a `<button aria-pressed>` named "Squats, today" (or "Squats, today, has a note"); the note text is linked with `aria-describedby`, so it is read after the name. The row's caption is plain text before the button.
 - The rows are an ordinary list: Tab moves from mark to mark, about ten stops for the whole day.
-- The view switch is a `role="group"` labelled "View", with `aria-pressed` on each segment.
+- The view switch is a SegmentedControl: a `role="group"` with `aria-label="View"` and `aria-pressed` on each segment, single choice (pressing the chosen segment keeps it chosen). Its label is visually omitted because the two segment words, Today and Week, name the view themselves; this is the SegmentedControl's one stated exception. Tab enters the group and arrow keys move between the segments (Reka's roving focus).
 - `ink` and `ink-secondary` on `highlight` are measured by the gate.
 
 ## You provide

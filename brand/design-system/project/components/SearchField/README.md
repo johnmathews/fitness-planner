@@ -5,7 +5,7 @@ The one search box: a field with a search icon, a placeholder that says what it 
 - TextField's skin (44px, `panel` fill, 1px `control-border`, `radius-sm`, `body` text), with a 20px Lucide `search` icon in `ink-secondary` at the left and, once there is text, a 44px clear IconButton (`x`, "Clear search") at the right.
 - Inside a `role="search"` landmark. The label "Search notes" is in the markup but visually hidden: the icon and the placeholder make the purpose plain, and this is the only field where the label may hide.
 - Placeholder names what is searched: "Search notes". Plain search over chronological records is enough (the Apple Notes lesson): no filters, no suggestions, no ranking chips.
-- The status line below, `caption` in `ink-secondary`, `aria-live="polite"`, says the count in words with the query: "Two notes mention “shoulder”.", "No notes mention “knee”." Results follow as SearchResult rows.
+- The status line below, `caption` in `ink-secondary`, `aria-live="polite"`, says the count in words with the query, in one wording: "No notes mention “knee”.", "One note mentions “knee”.", "Three notes mention “shoulder”." It is the only count and the only live region for search: the SearchResult rows that follow show no count of their own.
 
 ## States
 

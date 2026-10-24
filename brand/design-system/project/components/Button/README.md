@@ -5,9 +5,9 @@ The text button in three weights: primary for the one action a step exists for, 
 - **Primary:** `ink` fill, `on-ink` text (K8: one colour for "act"). One per form or panel: "Sign in", "Set password", "Add to my account", "Save".
 - **Secondary:** transparent, 1px `control-border`, `ink` text. Alternatives next to a primary, or a row of equals: "Not mine", "Export", "Import…", "Retry".
 - **Quiet:** no border, `ink` text, a `tile` fill on hover. The least likely choice or a way out: "Later", "Cancel", "This week".
-- Shape: `radius-md`, the `body` size at weight 600, padding `space-4` (md) or `space-3` (sm). **md** is 44px tall and the default; **sm** is 36px for dense rows on desktop (the settings popover, the week toolbar). On the phone layout use md, so every target stays 44px.
+- Shape: `radius-md`, the `body` size at weight 600, padding `space-4` (md) or `space-3` (sm). **md** is 44px tall and the default; **sm** is 36px for dense rows on desktop only (the Header's "This week", the Banner's action), and those become md (44px) below 640px, so every target on a phone stays 44px. The settings Popover uses md everywhere, because it is used on phones.
 - Never the `pen` colour, never a brand blue, never `highlight`. An icon on its own belongs in an IconButton.
-- Order: the primary comes first in reading order, then secondary, then quiet.
+- Order, everywhere: the secondary or cancel choice first, the primary last, at the right end of the row (quiet, then secondary, then primary when all three appear). Reading order follows the same sequence.
 
 ## States
 

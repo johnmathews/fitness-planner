@@ -13,7 +13,7 @@
   .dot { fill: var(--pen); }
   .ring { fill: none; stroke: var(--control-border); stroke-width: 1.5; }
   .slab { fill: var(--ink); }
-  .pen { fill: var(--pen); }
+  .disc { fill: var(--ink); }
   .words { position: absolute; left: 48px; bottom: 40px; max-width: 440px; }
   .name { margin: 0; font-family: var(--font-serif); font-weight: 600; font-size: 88px; line-height: .95; letter-spacing: -0.01em; }
   .tagline { margin: 16px 0 0; font-family: var(--font-sans); font-size: 14px; line-height: 20px; color: var(--ink-secondary); }
@@ -23,8 +23,8 @@
 <svg class="art" viewBox="0 0 960 288" width="960" height="288" aria-hidden="true">
   <!--
     blocks: tile 256x240 (space-16 x4, space-12 x5) radius-lg; ink slab 144x168 (space-12 x3) bleeding off the top, square;
-            pen disc 64 (space-16) radius-full; highlight band 32x208 (space-8) radius-sm down the today column.
-    arrangement: one tile slab holding the pattern, the ink slab and the pen disc as satellites, all right of x = 480.
+            ink disc 64 (space-16) radius-full; highlight band 32x208 (space-8) radius-sm down the today column.
+    arrangement: one tile slab holding the pattern, the ink slab and the ink disc as satellites, all right of x = 480.
     pattern: the brand's own mark, a done dot and an empty ring (radius-full), 28 of them as four weeks of seven days;
              chosen because "a mark per session, read at a glance" is the one shape only this system has.
     steps and radii: pitch space-8 across, space-12 down, mark 24px (the DayMark size), radius-sm, radius-lg, radius-full.
@@ -33,7 +33,7 @@
   <rect class="band" x="640" y="40" width="32" height="208"/>
   <circle class="dot" cx="560" cy="72" r="12"/><circle class="dot" cx="592" cy="72" r="12"/><circle class="ring" cx="624" cy="72" r="11.25"/><circle class="dot" cx="656" cy="72" r="12"/><circle class="ring" cx="688" cy="72" r="11.25"/><circle class="dot" cx="720" cy="72" r="12"/><circle class="ring" cx="752" cy="72" r="11.25"/><circle class="dot" cx="560" cy="120" r="12"/><circle class="ring" cx="592" cy="120" r="11.25"/><circle class="dot" cx="624" cy="120" r="12"/><circle class="dot" cx="656" cy="120" r="12"/><circle class="ring" cx="688" cy="120" r="11.25"/><circle class="dot" cx="720" cy="120" r="12"/><circle class="ring" cx="752" cy="120" r="11.25"/><circle class="ring" cx="560" cy="168" r="11.25"/><circle class="ring" cx="592" cy="168" r="11.25"/><circle class="ring" cx="624" cy="168" r="11.25"/><circle class="ring" cx="656" cy="168" r="11.25"/><circle class="ring" cx="688" cy="168" r="11.25"/><circle class="ring" cx="720" cy="168" r="11.25"/><circle class="ring" cx="752" cy="168" r="11.25"/><circle class="dot" cx="560" cy="216" r="12"/><circle class="dot" cx="592" cy="216" r="12"/><circle class="ring" cx="624" cy="216" r="11.25"/><circle class="dot" cx="656" cy="216" r="12"/><circle class="ring" cx="688" cy="216" r="11.25"/><circle class="ring" cx="720" cy="216" r="11.25"/><circle class="ring" cx="752" cy="216" r="11.25"/>
   <rect class="slab" x="816" y="0" width="144" height="168"/>
-  <circle class="pen" cx="888" cy="224" r="32"/>
+  <circle class="disc" cx="888" cy="224" r="32"/>
 </svg>
 <div class="words">
   <h1 class="name">Fitness Planner</h1>

@@ -4,7 +4,7 @@ A multi-line input that follows TextField's label, hint and error rules, for tex
 
 - Same skin as TextField: `panel` fill, 1px `control-border`, `radius-sm`, `body` text in `ink`, padding `space-3`. At least 104px tall (four lines), resizable vertically only.
 - Label in `label` style, always visible, `space-1` above. Hint and character count in `caption` `ink-secondary` below, the count in `tabular-nums`.
-- For free text the person writes, such as a note on an exercise or a set. The NoteEditor card wraps it for notes; elsewhere use it as is.
+- For free text the person writes, such as a note on an exercise or a set. NoteEditor restyles it for notes: a `tile` fill, the `note` style (Source Serif 4 italic, 16/24) and a 120px minimum height. Elsewhere use it as is.
 - Never pre-fill it with a prompt or a question, and no placeholder: notes belong to the person and are never asked for.
 - Not for short values (a name, a number): use a TextField.
 

@@ -2,7 +2,7 @@ A small modal question before something that can't be undone: what will happen, 
 
 ## Use
 
-- A Dialog without a close button or fields: `panel`, `radius-lg`, `shadow-overlay`, `space-6` padding, at most 400px wide, on the `scrim` at 40%.
+- A Dialog without a close button or fields: `panel`, 1px `line` border, `radius-lg`, `shadow-overlay`, `space-6` padding, at most 400px wide, on the `scrim` at 40%.
 - **Title** in `title-2`: the question, naming the thing ("Remove Push-ups?").
 - **Body** in `body`: the facts, briefly, then what stays. No "Are you sure", no warning icon, no capitals.
 - **Buttons:** secondary "Cancel", then primary with the verb from the title ("Remove", "Replace", "Sign out"). Never "OK" or "Yes".

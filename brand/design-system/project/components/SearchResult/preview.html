@@ -8,7 +8,7 @@
   * { box-sizing: border-box; }
   body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
   .note { font-style: italic; }
-  .count { margin: 0 0 var(--space-2); color: var(--ink-secondary); }
+  .state { margin: 0 0 var(--space-2); color: var(--ink-secondary); }
   .results { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); max-width: 560px; }
   .results li { border-bottom: 1px solid var(--line); }
 
@@ -30,7 +30,7 @@
 </style>
 </head>
 <body>
-<p class="count caption" role="status">Two notes mention “knee”</p>
+<p class="caption state">Note results (the count above them is SearchField’s)</p>
 <ul class="results">
   <li>
     <a class="result" href="#week-2026-10-19">
@@ -45,7 +45,7 @@
     </a>
   </li>
 </ul>
-<p class="count caption second">One exercise matches “plank”</p>
+<p class="caption state second">An exercise result</p>
 <ul class="results">
   <li>
     <a class="result" href="#week-2026-10-12">

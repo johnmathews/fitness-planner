@@ -12,14 +12,14 @@
 
   /* The scroller: the grid scrolls sideways inside it on a phone, never the page. */
   .scroller { overflow-x: auto; scroll-padding-left: 136px; }
-  .grid { width: 100%; min-width: 600px; border-collapse: collapse; table-layout: fixed; }
+  .grid { position: relative; width: 100%; min-width: 600px; border-collapse: collapse; table-layout: fixed; }
   .c-name { width: 200px; }
   .c-total { width: 88px; }
   th, td { padding: 0; font-weight: inherit; }
 
   /* Header: day names in label, dates in caption, an ink rule beneath. */
   thead tr { border-bottom: 1px solid var(--ink); }
-  thead th.d { padding: var(--space-2) 0; text-align: center; }
+  thead th.d { position: relative; padding: var(--space-2) 0; text-align: center; }
   thead th.d .label, thead th.d .date { display: block; }
   thead th.d .date { font-size: 14px; line-height: 20px; color: var(--ink-secondary); }
   thead th.today .date { color: var(--ink); font-weight: 600; }
@@ -46,6 +46,8 @@
   .mark[aria-pressed="true"]::before { background: var(--pen); border-color: var(--pen); }
   .mark[aria-pressed="false"]:hover::before { border-color: var(--ink); }
   .mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  /* Cells without a mark take focus themselves; their ring sits inside the cell so the scroller never clips it. */
+  th[role="rowheader"]:focus-visible, td[role="gridcell"]:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
   @media (prefers-reduced-motion: no-preference) {
     .mark::before { transition: background-color 120ms, border-color 120ms; }
   }
@@ -60,7 +62,7 @@
   /* The picked row: how many exercises each day, against the daily pick. */
   tfoot th[scope="row"] { padding-top: var(--space-3); padding-bottom: var(--space-3); }
   tfoot .name { font-weight: 400; }
-  td.p { text-align: center; vertical-align: top; padding: var(--space-3) 2px; }
+  td.p { position: relative; text-align: center; vertical-align: top; padding: var(--space-3) 2px; }
   td.p .fig { display: block; font-size: 16px; line-height: 24px; font-weight: 600; }
   td.p .fig.under, td.p .fig.future { color: var(--ink-secondary); font-weight: 400; }
   td.p .fig.over { color: var(--caution-ink); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
@@ -94,63 +96,63 @@
   <table class="grid" role="grid" aria-label="Exercises, week of 19 October">
     <colgroup><col class="c-name"><col span="7"><col class="c-total"></colgroup>
     <thead>
-      <tr>
-        <th scope="col" class="corner"><span class="vh">Exercise</span></th>
-        <th scope="col" class="d"><span class="label">Mon</span><span class="date">19</span></th><th scope="col" class="d"><span class="label">Tue</span><span class="date">20</span></th><th scope="col" class="d"><span class="label">Wed</span><span class="date">21</span></th><th scope="col" class="d today" aria-current="date"><span class="label">Thu</span><span class="date">22</span><span class="vh">, today</span></th><th scope="col" class="d"><span class="label">Fri</span><span class="date">23</span></th><th scope="col" class="d"><span class="label">Sat</span><span class="date">24</span></th><th scope="col" class="d"><span class="label">Sun</span><span class="date">25</span></th>
-        <th scope="col" class="total-h label">Week</th>
+      <tr role="row">
+        <th scope="col" role="columnheader" class="corner"><span class="vh">Exercise</span></th>
+        <th scope="col" role="columnheader" class="d"><span class="label">Mon</span><span class="date">19</span></th><th scope="col" role="columnheader" class="d"><span class="label">Tue</span><span class="date">20</span></th><th scope="col" role="columnheader" class="d"><span class="label">Wed</span><span class="date">21</span></th><th scope="col" role="columnheader" class="d today" aria-current="date"><span class="label">Thu</span><span class="date">22</span><span class="vh">, today</span></th><th scope="col" role="columnheader" class="d"><span class="label">Fri</span><span class="date">23</span></th><th scope="col" role="columnheader" class="d"><span class="label">Sat</span><span class="date">24</span></th><th scope="col" role="columnheader" class="d"><span class="label">Sun</span><span class="date">25</span></th>
+        <th scope="col" role="columnheader" class="total-h label">Week</th>
       </tr>
     </thead>
     <tbody>
-      <tr data-goal="4">
-        <th scope="row"><span class="name">Push-ups</span><span class="meta"><span class="chip label">3 × 12</span><span class="caption goal">4 a week</span></span></th>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Wednesday 21 October"></button></div></td>
-        <td class="d today"><div class="day"><button type="button" class="mark" tabindex="0" aria-pressed="true" aria-label="Push-ups, Thursday 22 October, today"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Friday 23 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Saturday 24 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Sunday 25 October"></button></div></td>
-        <td class="total"><span class="fig">3</span> <span class="of">of 4</span></td>
+      <tr role="row" data-goal="4">
+        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Push-ups</span><span class="meta"><span class="chip label">3 × 12</span><span class="caption goal">4 a week</span></span></th>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Wednesday 21 October"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" class="mark" tabindex="0" aria-pressed="true" aria-label="Push-ups, Thursday 22 October, today"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Friday 23 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Saturday 24 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Sunday 25 October"></button></div></td>
+        <td role="gridcell" class="total" tabindex="-1"><span class="fig">3</span> <span class="of">of 4</span></td>
       </tr>
-      <tr data-goal="3">
-        <th scope="row"><span class="name">Pull-ups</span><span class="meta"><span class="chip label">3 × 5</span><span class="caption goal">3 a week</span></span></th>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Monday 19 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Tuesday 20 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Wednesday 21 October"></button></div></td>
-        <td class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Thursday 22 October, today"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Friday 23 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Saturday 24 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Sunday 25 October"></button></div></td>
-        <td class="total"><span class="fig">2</span> <span class="of">of 3</span></td>
+      <tr role="row" data-goal="3">
+        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Pull-ups</span><span class="meta"><span class="chip label">3 × 5</span><span class="caption goal">3 a week</span></span></th>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Tuesday 20 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Wednesday 21 October"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Thursday 22 October, today"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Friday 23 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Saturday 24 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Sunday 25 October"></button></div></td>
+        <td role="gridcell" class="total" tabindex="-1"><span class="fig">2</span> <span class="of">of 3</span></td>
       </tr>
-      <tr data-goal="3">
-        <th scope="row"><span class="name">Squats</span><span class="meta"><span class="chip label">3 × 15</span><span class="chip label">16 kg</span><span class="caption goal">3 a week</span></span></th>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Monday 19 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Tuesday 20 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Wednesday 21 October"></button></div></td>
-        <td class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Thursday 22 October, today, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Friday 23 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Saturday 24 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Sunday 25 October"></button></div></td>
-        <td class="total"><span class="fig met">3</span> <span class="of">of 3</span></td>
+      <tr role="row" data-goal="3">
+        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Squats</span><span class="meta"><span class="chip label">3 × 15</span><span class="chip label">16 kg</span><span class="caption goal">3 a week</span></span></th>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Tuesday 20 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Wednesday 21 October"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Thursday 22 October, today, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Friday 23 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Saturday 24 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Sunday 25 October"></button></div></td>
+        <td role="gridcell" class="total" tabindex="-1"><span class="fig met">3</span> <span class="of">of 3</span></td>
       </tr>
-      <tr data-goal="2">
-        <th scope="row"><span class="name">Kettlebell halos</span><span class="meta"><span class="chip label">8 each side</span><span class="caption goal">2 a week</span></span></th>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Monday 19 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Wednesday 21 October"></button></div></td>
-        <td class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Friday 23 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Saturday 24 October"></button></div></td>
-        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Sunday 25 October"></button></div></td>
-        <td class="total"><span class="fig met">2</span> <span class="of">of 2</span></td>
+      <tr role="row" data-goal="2">
+        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Kettlebell halos</span><span class="meta"><span class="chip label">8 each side</span><span class="caption goal">2 a week</span></span></th>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Wednesday 21 October"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Friday 23 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Saturday 24 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Sunday 25 October"></button></div></td>
+        <td role="gridcell" class="total" tabindex="-1"><span class="fig met">2</span> <span class="of">of 2</span></td>
       </tr>
     </tbody>
     <tfoot>
-      <tr>
-        <th scope="row"><span class="name">Picked</span><span class="meta"><span class="caption goal">3 a day</span></span></th>
-        <td class="p"><span class="fig under">2</span></td><td class="p"><span class="fig under">2</span></td><td class="p"><span class="fig under">2</span></td><td class="p today"><span class="fig over">4</span><span class="extra">one extra</span></td><td class="p"><span class="fig future" aria-label="Not yet">–</span></td><td class="p"><span class="fig future" aria-label="Not yet">–</span></td><td class="p"><span class="fig future" aria-label="Not yet">–</span></td>
-        <td></td>
+      <tr role="row">
+        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Picked</span><span class="meta"><span class="caption goal">3 a day</span></span></th>
+        <td role="gridcell" tabindex="-1" class="p"><span class="fig under">2</span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig under">2</span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig under">2</span></td><td role="gridcell" tabindex="-1" class="p today"><span class="fig over">4</span><span class="extra">one extra</span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig future"><span aria-hidden="true">–</span><span class="vh">Not yet</span></span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig future"><span aria-hidden="true">–</span><span class="vh">Not yet</span></span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig future"><span aria-hidden="true">–</span><span class="vh">Not yet</span></span></td>
+        <td role="gridcell" tabindex="-1"></td>
       </tr>
     </tfoot>
   </table>
@@ -163,38 +165,53 @@
 
 <script>
 (() => {
-  // Roving tabindex: the grid is one tab stop; arrows move by cell, Home and End by row.
+  // WAI-ARIA grid, roving tabindex: the grid is one tab stop (today's cell in the first row).
+  // Every cell takes part: names, days, week totals and the whole Picked row. Arrows move cell by
+  // cell, Home and End to the ends of the row, Ctrl+Home and Ctrl+End to the ends of the grid.
+  // Only the day cells act on Space and Enter (they are buttons).
   const table = document.querySelector('#screen .grid');
   const rows = [...table.tBodies[0].rows];
+  const navRows = [...rows, ...table.tFoot.rows];
   const PICK = 3;
   const TODAY = 3;
   const WORDS = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
   const marksIn = (tr) => [...tr.querySelectorAll('.mark')];
+  const target = (cell) => cell.querySelector('.mark') || cell;
+  const stops = () => navRows.map((tr) => [...tr.cells].map(target));
 
-  function focusMark(mark) {
-    if (!mark) return;
-    table.querySelectorAll('.mark').forEach((m) => (m.tabIndex = -1));
-    mark.tabIndex = 0;
-    mark.focus();
+  function focusCell(el) {
+    if (!el) return;
+    stops().flat().forEach((t) => (t.tabIndex = -1));
+    el.tabIndex = 0;
+    el.focus();
   }
 
   table.addEventListener('keydown', (e) => {
-    const mark = e.target.closest('.mark');
-    if (!mark) return;
-    const r = rows.indexOf(mark.closest('tr'));
-    const c = marksIn(rows[r]).indexOf(mark);
-    const to = { ArrowRight: [r, c + 1], ArrowLeft: [r, c - 1], ArrowDown: [r + 1, c], ArrowUp: [r - 1, c], Home: [r, 0], End: [r, 6] }[e.key];
-    if (!to) return;
+    const grid = stops();
+    const r = grid.findIndex((row) => row.includes(e.target));
+    if (r < 0) return;
+    const c = grid[r].indexOf(e.target);
+    const last = grid[r].length - 1;
+    const end = grid.length - 1;
+    let to;
+    if (e.ctrlKey && e.key === 'Home') to = [0, 0];
+    else if (e.ctrlKey && e.key === 'End') to = [end, grid[end].length - 1];
+    else to = { ArrowRight: [r, c + 1], ArrowLeft: [r, c - 1], ArrowDown: [r + 1, c], ArrowUp: [r - 1, c], Home: [r, 0], End: [r, last] }[e.key];
+    if (!to) {
+      // Space and Enter belong to the day buttons; on any other cell they do nothing.
+      if ((e.key === ' ' || e.key === 'Enter') && !e.target.classList.contains('mark')) e.preventDefault();
+      return;
+    }
     e.preventDefault();
-    const row = rows[to[0]];
-    if (row) focusMark(marksIn(row)[to[1]]);
+    const row = grid[to[0]];
+    if (row) focusCell(row[to[1]]);
   });
 
   table.addEventListener('click', (e) => {
     const mark = e.target.closest('.mark');
     if (!mark) return;
     mark.setAttribute('aria-pressed', String(mark.getAttribute('aria-pressed') !== 'true'));
-    focusMark(mark);
+    focusCell(mark);
     recount();
   });
 
@@ -210,7 +227,7 @@
     cells.forEach((td, i) => {
       const n = rows.filter((tr) => marksIn(tr)[i].getAttribute('aria-pressed') === 'true').length;
       if (i > TODAY && n === 0) {
-        td.innerHTML = '<span class="fig future" aria-label="Not yet">–</span>';
+        td.innerHTML = '<span class="fig future"><span aria-hidden="true">–</span><span class="vh">Not yet</span></span>';
       } else if (n > PICK) {
         td.innerHTML = `<span class="fig over">${n}</span><span class="extra">${WORDS[n - PICK]} extra</span>`;
       } else {
@@ -220,6 +237,8 @@
     // The print specimen is a copy of the grid above.
     const copy = table.cloneNode(true);
     copy.removeAttribute('role');
+    copy.querySelectorAll('[role]').forEach((el) => el.removeAttribute('role'));
+    copy.querySelectorAll('[tabindex]').forEach((el) => el.removeAttribute('tabindex'));
     copy.setAttribute('aria-label', 'Exercises, week of 19 October, as printed');
     document.getElementById('print').replaceChildren(Object.assign(document.createElement('div'), { className: 'scroller' }));
     document.querySelector('#print .scroller').append(copy);

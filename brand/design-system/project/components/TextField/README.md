@@ -3,7 +3,7 @@ A single-line input with its label always visible above it, an optional hint bel
 ## Use
 
 - Field: 44px tall, `panel` fill, 1px `control-border`, `radius-sm`, `body` text in `ink`, padding `space-3`. Numbers (sets, reps, weight) add `tabular-nums` and the right `inputmode`.
-- Label: `label` style in `ink`, `space-1` above the field. Always visible; a placeholder never stands in for it. Mark optional fields in the label ("Weight (kg, optional)"), not required ones.
+- Label: `label` style in `ink`, `space-1` above the field. Always visible; a placeholder never stands in for it. The label names the thing and its unit only ("Weight in kg"); an optional field says so in its hint, never in the label: "Optional. Leave empty for bodyweight." Required fields are not marked.
 - Hint: `caption` in `ink-secondary`, `space-1` below, tied with `aria-describedby` ("At least 10 characters.").
 - Error: `caption` in `error-ink` with the 16px `circle-alert` icon and words, tied with `aria-describedby`, the field set to `aria-invalid="true"` and its border to `error-ink`. The message replaces the hint and is announced (`role="alert"`) when it appears after a submit.
 - Placeholder text, when used at all, is an example in `ink-secondary` ("e.g. 12"), never an instruction.

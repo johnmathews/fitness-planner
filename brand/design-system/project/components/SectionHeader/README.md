@@ -18,7 +18,7 @@ The heading over a WeekGrid: the section's name in serif, one line of hint, and 
 
 ## Accessibility
 
-- The title is a real heading (`<h2>`; the week's date in the Header is the page's `<h1>`) and labels its section: `<section aria-labelledby>`. The WeekGrid's `aria-label` repeats the section and week.
+- The title is a real heading, an `<h2>`, and labels its section: `<section aria-labelledby>`. The page's one `<h1>` is the week date ("19–25 October"), set in `display` by the page above the sections; the Header (the app bar) holds no heading. The WeekGrid's `aria-label` repeats the section and week.
 - The StatFigure is plain text after the heading, read in order.
 
 ## You provide

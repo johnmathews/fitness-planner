@@ -39,9 +39,10 @@
   <div class="cell"><p class="caption state">Hover</p>
     <div class="field"><label class="label" for="f3">Name</label>
       <input class="input is-hover" id="f3" value="Push-ups"></div></div>
-  <div class="cell"><p class="caption state">Focus</p>
-    <div class="field"><label class="label" for="f4">Weight (kg, optional)</label>
-      <input class="input num is-focus" id="f4" inputmode="decimal" value="12.5"></div></div>
+  <div class="cell"><p class="caption state">Focus; optional, said in the hint</p>
+    <div class="field"><label class="label" for="f4">Weight in kg</label>
+      <input class="input num is-focus" id="f4" inputmode="decimal" value="12.5" aria-describedby="f4-hint">
+      <p class="caption hint" id="f4-hint">Optional. Leave empty for bodyweight.</p></div></div>
   <div class="cell"><p class="caption state">Error</p>
     <div class="field"><label class="label" for="f5">Repeat password</label>
       <input class="input" id="f5" type="password" value="correct-horse" aria-invalid="true" aria-describedby="f5-err">

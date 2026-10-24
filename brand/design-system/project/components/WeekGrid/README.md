@@ -27,11 +27,11 @@ One week, Monday to Sunday, as a grid: a row per exercise or food, a DayMark per
 
 ## Accessibility
 
-- A `<table role="grid">` with an `aria-label` naming the section and week ("Exercises, week of 19 October"). Day headers are `<th scope="col">`; today's has `aria-current="date"` and a visually hidden ", today". Row names are `<th scope="row">`, so a screen reader reads "Push-ups" with each cell.
-- **One tab stop per grid** (roving tabindex): Tab lands on today's cell in the first row (or the last cell used); Tab again leaves the grid. Inside: Left and Right move by day, Up and Down by row, Home and End to Monday and Sunday of the row; Enter and Space toggle. Focus never wraps to another row. This brings the planner from about 77 tab stops to two (F15).
+- A `<table role="grid">` (the WAI-ARIA grid pattern) with an `aria-label` naming the section and week ("Exercises, week of 19 October"). Every `<tr>` is `role="row"`. Day headers are `<th scope="col" role="columnheader">`; today's has `aria-current="date"` and a visually hidden ", today". Row names are `<th scope="row" role="rowheader">`, so a screen reader reads "Push-ups" with each cell. Day cells, week totals and every cell of the Picked row are `<td role="gridcell">`.
+- **One tab stop per grid** (roving tabindex): today's cell in the first row is the single tab stop (`tabindex="0"`); every other cell is `tabindex="-1"`. Tab lands there (or on the last cell used); Tab again leaves the grid. Every cell joins the navigation: the row names, the day cells, the week totals and the whole Picked row. Arrow keys move cell by cell across all of them; Home and End go to the first and last cell in the row; Ctrl+Home and Ctrl+End to the first and last cell of the grid. Only the day cells act on Space and Enter (they toggle the mark); on any other cell those keys do nothing. Focus never wraps to another row. In a day cell the focus lands on its DayMark button (the cell's one widget); other cells take focus themselves. This brings the planner from about 77 tab stops to two (F15).
 - Each DayMark is a `<button aria-pressed>` named "Push-ups, Thursday 22 October, today"; see DayMark for the full pattern.
-- Week totals read as "3 of 4". A picked count over the pick reads "4, one extra"; an en dash reads "Not yet".
-- The focus ring is a solid 2px `focus` outline at 2px offset, never clipped: the 44px mark sits inside a 56 × 60px cell.
+- Week totals read as "3 of 4". A picked count over the pick reads "4, one extra"; an en dash is `aria-hidden` and a visually hidden "Not yet" is read in its place.
+- The focus ring is a solid 2px `focus` outline at 2px offset, never clipped: the 44px mark sits inside a 56 × 60px cell. Cells without a mark (names, totals, the Picked row) draw the same ring inset by 2px, so the scroller never clips it.
 
 ## You provide
 
