@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 // The browser checks (e2e/): axe, phone width and focus, against the Vite dev server, because the
 // style guide (/styleguide) exists only in development. The app's /api is mocked per test
-// (e2e/app.ts), so no API server runs. PLAYWRIGHT=1 keeps the Vue DevTools overlay out
+// (e2e/support.ts), so no API server runs. PLAYWRIGHT=1 keeps the Vue DevTools overlay out
 // (vite.config.ts).
 const PORT = 5179
 

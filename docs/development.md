@@ -29,22 +29,25 @@
 
 ## 2. Scripts
 
-| Script                            | Does                                                               |
-| --------------------------------- | ------------------------------------------------------------------ |
-| `npm run dev`                     | Vite dev server with Vue devtools                                  |
-| `npm run build`                   | `type-check` and `build-only` in parallel; either failing fails it |
-| `npm run build-only`              | `vite build` into `dist/` without type-checking (CI runs it last)  |
-| `npm run preview`                 | serve `dist/`                                                      |
-| `npm test`                        | run the Vitest suite once                                          |
-| `npm run test:watch`              | Vitest in watch mode                                               |
-| `npm run test:coverage`           | suite plus v8 coverage (per-file text table, HTML in `coverage/`)  |
-| `npm run type-check`              | `vue-tsc --build` across the app, node and test configs            |
-| `npm run lint`                    | `lint:oxlint` then `lint:eslint`, read-only (CI runs this)         |
-| `npm run lint-fix`                | both linters with `--fix`                                          |
-| `npm run format` / `format:check` | Prettier over `src/` and `fixtures/`                               |
-| `npm run tokens`                  | regenerate `src/styles/tokens.css` from the design system's tokens |
+| Script                            | Does                                                                        |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `npm run dev`                     | Vite dev server with Vue devtools                                           |
+| `npm run build`                   | `type-check` and `build-only` in parallel; either failing fails it          |
+| `npm run build-only`              | `vite build` into `dist/` without type-checking (CI runs it last)           |
+| `npm run preview`                 | serve `dist/`                                                               |
+| `npm test`                        | run the Vitest suite once                                                   |
+| `npm run test:watch`              | Vitest in watch mode                                                        |
+| `npm run test:coverage`           | suite plus v8 coverage (per-file text table, HTML in `coverage/`)           |
+| `npm run type-check`              | `vue-tsc --build` across the app, node and test configs                     |
+| `npm run lint`                    | `lint:oxlint` then `lint:eslint`, read-only (CI runs this)                  |
+| `npm run lint-fix`                | both linters with `--fix`                                                   |
+| `npm run format` / `format:check` | Prettier over `src/`, `fixtures/`, `e2e/` and `playwright.config.ts`        |
+| `npm run tokens`                  | regenerate `src/styles/tokens.css` from the design system's tokens          |
+| `npm run test:e2e`                | the Playwright browser checks in `e2e/` against their own dev server (§3.3) |
 
-The linters ignore `design_handoff_exercise_planner/`, which holds vendored prototype code.
+The linters ignore `design_handoff_exercise_planner/`, which holds vendored prototype code, and
+build and coverage output. ESLint also ignores Playwright's `playwright-report/` and
+`test-results/`.
 
 ## 3. Conventions
 
@@ -62,8 +65,8 @@ The linters ignore `design_handoff_exercise_planner/`, which holds vendored prot
   `caution-ink` for over the pick, nothing else.
 - **Type-style classes for text.** Set text with `display`, `title-1`, `title-2`, `body-large`,
   `body`, `caption`, `label` or `note`, rather than font-size and line-height utilities. The type
-  classes sit in Tailwind's `components` layer, so a utility beside one wins as it reads (`caption
-font-semibold` is semibold): add one only where a card asks for it. Numbers take
+  classes sit in Tailwind's `components` layer, so a utility beside one wins as it reads
+  (`caption font-semibold` is semibold): add one only where a card asks for it. Numbers take
   `tabular-nums`.
 - **Primitives before raw elements.** Use the components in `src/components/ui/` (Button,
   IconButton, TextField, Dialog, `useConfirm`) rather than a raw `<button>`, `<input>` or
@@ -115,6 +118,9 @@ hand.
   on `tr` and `th` are allowed, since `gridNav` and the specs find cells by role. Two lines disable a
   rule with a reason: the hidden username field password managers use (`PasswordForm.vue`) and the
   Stepper's live-region `<output>`.
+- **Single-word names** are kept where the design system or shadcn-vue gives them: Banner, Button,
+  Chip, Dialog, Popover, Stepper and Switch in `src/components/ui/` each open with a comment that
+  disables `vue/multi-word-component-names` and says whose name it is.
 - **No `<style>` blocks** in components (`vue/no-restricted-block`): styling is utilities on roles.
 
 `npm run test:e2e` runs the Playwright suite in `e2e/` against its own dev server (port 5179, with
@@ -123,15 +129,19 @@ clock is fixed to Wednesday 21 October 2026, so every run sees the same week.
 
 - `a11y.spec.ts`: axe (WCAG 2.0–2.2 A and AA plus best practice) on the style guide in both themes and
   all four inks, and on the app's week view, Edit plan, open Settings, the phone Today view and
-  sign-in, in light and dark; and the focus ring's shape, a solid 2px outline at 2px offset.
+  sign-in, in light and dark; and the focus ring's shape, a solid 2px outline at 2px offset. Two
+  "dark really is dark" tests guard the audit: on the style guide and on the app, the `.dark` class
+  must be set and `--canvas` must differ from light, so a dark audit can never quietly re-run
+  light.
 - `phone.spec.ts`: no sideways scroll at 375px on the style guide and in the Today, Week and Edit plan
   views, and a focused grid cell never sits under the sticky name column.
 
-CI (`.github/workflows/ci.yml`) runs three jobs on every pull request. `check` runs lint, format,
-types, unit tests with coverage, the build, the design gate and "tokens.css is current" (`npm run
-tokens` followed by `git diff --exit-code src/styles/tokens.css`). `e2e` installs Chromium and runs
-`npm run test:e2e`, keeping traces of a failure. `api` checks the Python service. One convention has
-no check yet: unit tests should not query styling classes.
+CI (`.github/workflows/ci.yml`) runs three jobs on every pull request and every push to `main`.
+`check` runs lint, format, types, unit tests with coverage, the build, the design gate and
+"tokens.css is current" (`npm run tokens` followed by
+`git diff --exit-code src/styles/tokens.css`). `e2e` installs Chromium and runs `npm run test:e2e`,
+keeping traces of a failure. `api` checks the Python service. One convention has no check yet: unit
+tests should not query styling classes.
 
 ## 4. Tests
 
@@ -181,7 +191,10 @@ listed in [api.md](api.md) §10):
 - `src/lib/__tests__/utils.spec.ts`: `cn` (conflicting utilities, role colours kept apart from text
   sizes) and `joinIds`.
 - `src/composables/__tests__/useConfirm.spec.ts`: the question, its verb and Cancel, true and false
-  answers, Escape, focus returned, a newer question answering an older one false.
+  answers, Escape, focus returned, a newer question answering an older one false, and an open
+  question answered false when the component that asked goes away or `dismissConfirm()` runs.
+- `src/composables/__tests__/useMediaQuery.spec.ts`: the media query's match, its updates, the
+  listener removed with the scope, and a browser without `matchMedia`.
 - `src/composables/__tests__/gridNav.spec.ts`: the grid keyboard model on a small table: the one
   tab stop (today, the first day, the last cell focused), arrows, Home and End with and without
   Ctrl, the hidden Picked cell never landed on, Space and Enter left to the DayMark, Edit plan's

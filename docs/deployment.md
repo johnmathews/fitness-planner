@@ -66,8 +66,13 @@ on `http://localhost:8000`, with the API's data in the `api-data` volume. Mint a
   Unknown paths fall back to `index.html`.
 - `/healthz` returns `200 ok`; the image's `HEALTHCHECK` polls it with BusyBox `wget`.
 - Every response carries `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and a
-  Content-Security-Policy of `default-src 'self'`. `style-src` allows `'unsafe-inline'` because Vue
-  binds the accent and swatch colours as inline styles.
+  Content-Security-Policy of `default-src 'self'`. `style-src` also allows `'unsafe-inline'`, which
+  the production bundle no longer needs: it writes no `style` attribute into markup and adds no
+  `<style>` element. Its inline styles all go through the CSSOM, which CSP does not govern:
+  `App.vue` sets `--user-pen-light` and `--user-pen-dark` with `style.setProperty`, Reka UI
+  positions the popover through a Vue `:style` binding (which writes `element.style`), and a dialog
+  locks scrolling through `document.body.style`. Dropping it is a change to `nginx.conf` and to
+  `nginx.spec.ts`, which pins the policy.
 - gzip compresses HTML, CSS, JavaScript and SVG.
 
 All headers are set once at server level; `Cache-Control` varies through a `map` on `$uri`. A
@@ -75,10 +80,12 @@ All headers are set once at server level; `Cache-Control` varies through a `map`
 
 ## 3. CI and publishing
 
-| Workflow                       | Trigger                      | Does                                                                                                           |
-| ------------------------------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `.github/workflows/ci.yml`     | pull request, push to `main` | `check`: lint, format, types, tests with coverage, build. `api`: ruff, mypy, pytest with coverage, `pip-audit` |
-| `.github/workflows/docker.yml` | pull request, push to `main` | `build` and `compose` on PRs; `publish` on `main`; build and publish run once per image                        |
+| Workflow                           | Trigger                      | Does                                                                                                                                                                                                                                                        |
+| ---------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/workflows/ci.yml` `check` | pull request, push to `main` | lint, format, types, tests with coverage, build, the design-system gate, and "tokens.css is current" (`npm run tokens`, then `git diff --exit-code src/styles/tokens.css`)                                                                                  |
+| `.github/workflows/ci.yml` `e2e`   | pull request, push to `main` | installs Chromium and runs `npm run test:e2e` (Playwright with axe, §3.3 of [development.md](development.md)): a 10-minute timeout, one retry for a failing test, and `test-results/` uploaded as the `playwright-traces` artifact (kept 7 days) on failure |
+| `.github/workflows/ci.yml` `api`   | pull request, push to `main` | ruff, mypy, pytest with coverage, `pip-audit`                                                                                                                                                                                                               |
+| `.github/workflows/docker.yml`     | pull request, push to `main` | `build` and `compose` on PRs; `publish` on `main`; build and publish run once per image                                                                                                                                                                     |
 
 `build` and `publish` build `linux/amd64` and `linux/arm64` for each image, so a PR proves the
 multi-arch build before `main` publishes it; `compose` builds for the runner's own architecture. For the API, the PR build also smoke-tests each architecture: the amd64

@@ -13,11 +13,14 @@ the app syncs with it through the same origin (§7). Two Pinia stores hold what 
 `planner` (exercise plans, the log, the visible week, settings, the mode) and `diet` (food plans and
 their log), which takes its week from `planner`. Two more run the account: `session` (who is signed
 in) and `sync` (the per-user cache, the outbox of unsent writes, and reads). Both data stores track
-the same thing, a tick
-per day against a weekly goal, through the pure helpers in `src/lib/tracker.ts`. `src/lib/plans.ts`
-decides which week's plan a week shows; `src/lib/dates.ts` holds the week maths (Monday of a week,
-`YYYY-MM-DD` keys and back, labels, `DAY_NAMES`); `src/lib/theme.ts` holds the theme names and
-`isDark`.
+the same thing, a tick per day against a weekly goal, through the pure helpers in
+`src/lib/tracker.ts`. The same module words the counts: `pickedCount` gives each Picked cell its
+tone (at the pick, over it with "one extra", under it, or a day to come shown as an en dash), and
+`todaySummary` writes the Today list's line ("Two of three. One to go."). `src/lib/words.ts` writes
+small counts as words: `numberWord` ("two", or "Two" to open a sentence, figures from 11 up) and
+`countOf` ("one change", "two changes"). `src/lib/plans.ts` decides which week's plan a week
+shows; `src/lib/dates.ts` holds the week maths (Monday of a week, `YYYY-MM-DD` keys and back,
+labels, `DAY_NAMES`); `src/lib/theme.ts` holds the theme names and `isDark`.
 
 Every screen is built from the primitives in `src/components/ui/` (§6.3), which follow the design
 system's cards ([brand.md](brand.md)). `TrackerGrid` and `TrackerRow` (on the `DayMark`, `Chip`,
@@ -95,11 +98,12 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 The stores start empty (showing the defaults) and never write the user's data themselves. The sync
 store fills them with `adopt` and saves their changes (§7).
 
-**Derived:** `monday`, `weekKey`, `currentWeekKey`, `nextWeekKey`, `label`, `days` (name, date, key,
-`isToday`), `exercises` (the visible week's plan, see §2), `carriedFrom` (the source week, or null
-when the week has its own plan), `nextWeekHasPlan`, `dayCounts`, `grandTotal`, and the helpers
-`isDone(id, day)` and `totalFor(id)`. Totals count only the week's exercises, so a removed
-exercise's history stays in `log` without inflating the numbers.
+**Derived:** `monday`, `weekKey`, `currentWeekKey`, `nextWeekKey`, `label`, `days` (`name` "Thu",
+`date` "22", `full` "Thursday 22 October" for the DayMarks' names, `key`, `isToday`, and
+`isFuture` for days still to come), `exercises` (the visible week's plan, see §2), `carriedFrom`
+(the source week, or null when the week has its own plan), `nextWeekHasPlan`, `dayCounts`,
+`grandTotal`, and the helpers `isDone(id, day)` and `totalFor(id)`. Totals count only the week's
+exercises, so a removed exercise's history stays in `log` without inflating the numbers.
 
 **Actions** (plan edits apply to the visible week only): `toggle`, `changeTarget` (clamps 0–7),
 `addExercise` (returns `false` for an empty name; new exercises get goal 3), `updateExercise`
@@ -125,15 +129,16 @@ with storage blocked or full the app keeps working in memory.
 
 ## 4. Storage format and validation
 
-| Key                                | Holds                                                           | Written |
-| ---------------------------------- | --------------------------------------------------------------- | ------- |
-| `fitness-planner-session-v1`       | `{ user }`: the last signed-in user                             | yes     |
-| `fitness-planner-cache-v1:<user>`  | the user's state as `GET /api/state` returns it, with `revs`    | yes     |
-| `fitness-planner-outbox-v1:<user>` | writes not yet sent (§7)                                        | yes     |
-| `fitness-planner-import-v1:<user>` | the first-login prompt's answer, `imported` or `dismissed` (§7) | yes     |
-| `fitness-planner-settings-v1`      | `theme`, read before first paint by `public/theme-init.js`      | theme   |
-| `fitness-planner-v2`, `-diet-v2`   | exercise and food `{ plans, log }` from before accounts         | never   |
-| `fitness-planner-v1`, `-diet-v1`   | the single-list format from before weekly plans                 | never   |
+| Key                                | Holds                                                                                                | Written |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------- | ------- |
+| `fitness-planner-session-v1`       | `{ user }`: the last signed-in user                                                                  | yes     |
+| `fitness-planner-cache-v1:<user>`  | the user's state as `GET /api/state` returns it, with `revs`                                         | yes     |
+| `fitness-planner-outbox-v1:<user>` | writes not yet sent (§7)                                                                             | yes     |
+| `fitness-planner-import-v1:<user>` | the first-login prompt's answer, `imported` or `dismissed` (§7)                                      | yes     |
+| `fitness-planner-settings-v1`      | `theme`, read before first paint by `public/theme-init.js`                                           | theme   |
+| `fitness-planner-view-v1`          | the phone's Today or Week choice, `today` or `week` (§5); the device's own, never synced or exported | yes     |
+| `fitness-planner-v2`, `-diet-v2`   | exercise and food `{ plans, log }` from before accounts                                              | never   |
+| `fitness-planner-v1`, `-diet-v1`   | the single-list format from before weekly plans                                                      | never   |
 
 Since accounts, nothing writes the keys from before them. They stay because they hold what a browser
 recorded locally, which the first-login import (§7) reads with the parsing, migration and
@@ -266,14 +271,17 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **Diet sits below the exercises** on the same page, sharing the week navigation and the print
   sheet. It has no daily target, so its grid has no Picked row.
 - **Print is black on white in either theme** (§6.7).
-- **Narrow screens.** Below 640px the navbar drops the app name and Print… and shortens the switch
-  label to "Edit"; below 380px a gear replaces the word Settings (still its accessible name), so the
-  controls fit a 320px screen. Below 640px the app opens on the **Today list** (brand spec K5):
-  today's exercises and foods, each with one DayMark, ticked through the same store actions as the
-  grid, with no sideways scroll down to 320px. A Today | Week switch leads to the grids; the choice
-  is remembered on the device (`fitness-planner-view-v1`, like the theme, never synced). Another
-  week and Edit plan always show the grids, since the list only ever shows today and the plan is
-  edited in the week; choosing Today returns to this week and turns Edit plan off. The grids keep a
+- **Narrow screens.** Below 640px the navbar drops Print…, shortens the switch's visible label to
+  "Edit" (its accessible name stays "Edit plan"), and wraps "This week" and the switch to a second
+  row at the right, leaving the brand mark, the arrows, the week and Settings on the first; below
+  480px the wordmark becomes the "FP" monogram. Settings is a gear IconButton named "Settings" at
+  every width. The markup keeps the desktop order, which is the tab order. Below 640px the app
+  opens on the **Today list** (brand spec K5): today's exercises and foods, each with one DayMark,
+  ticked through the same store actions as the grid, with no sideways scroll down to 320px. A
+  Today | Week switch leads to the grids; the choice is remembered on the device
+  (`fitness-planner-view-v1`, like the theme, never synced). Another week and Edit plan always show
+  the grids, since the list only ever shows today and the plan is edited in the week; choosing
+  Today returns to this week and turns Edit plan off. The grids keep a
   600px minimum and scroll sideways inside their own container, with the **name column sticky** at
   the left on the canvas, `scroll-padding-left` at its width so keyboard focus never lands under
   it, and the scroller opening with the day before today beside the names (another week opens at
@@ -358,6 +366,11 @@ one false. `returnFocus` names where focus goes on closing when the control that
 after a removal. Removing a row (`TrackerRow`) and copying over next week's plan (`WeekHeader`) ask
 this way. Sign out uses a ConfirmDialog of its own in the Settings popover, because it shows the
 unsynced count, a busy state and an error.
+
+A question never outlives what it asked about. It is answered false when the component that asked
+goes away, and `App.vue` closes any open question (`dismissConfirm()`) when the signed-in user
+changes, as when another tab signs in as someone else. Remove and Replace also note the week before
+asking and do nothing if the week changed while the question was open (past midnight on Sunday).
 
 ### 6.5 Keyboard in the grids
 

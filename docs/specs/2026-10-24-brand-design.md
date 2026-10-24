@@ -7,6 +7,8 @@
 > directions (https://claude.ai/artifact/QVRjZWL2C6ymQrTcVvgTeJ). Nothing gets built before this
 > document is approved; the calls in §10 are open to veto by ID.
 
+**Status:** approved 2026-10-24 (calls K1–K8 accepted; see [decisions](../decisions.md)).
+
 ## 1. Intent
 
 In the owner's words:

@@ -99,7 +99,8 @@ Six units, each its own pull request with a journal entry:
 | W4   | The first-login import prompt     | #10              | `journal/261024-import-prompt.md`           |
 | W5   | The infra-vm deployment           | home-server #245 | home-server `journal/261024-fitness-api.md` |
 
-The design system followed in its own run of units, numbered afresh from W1:
+The design system followed in its own run of units, numbered afresh from W1, with one journal entry
+for the whole run (`journal/261024-design-system.md`):
 
 | Units   | What                                                           | PR  |
 | ------- | -------------------------------------------------------------- | --- |

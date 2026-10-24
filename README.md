@@ -78,8 +78,11 @@ Day-to-day commands:
 ```bash
 npm test                   # Vitest suite (jsdom)
 npm run test:coverage      # suite + coverage report in coverage/
+npm run test:e2e           # Playwright browser checks: axe, phone width, focus
 npm run lint               # oxlint + ESLint
+npm run format             # Prettier
 npm run type-check         # vue-tsc
+npm run tokens             # regenerate src/styles/tokens.css from the design system
 npm run build              # type-check + production build into dist/
 npm run preview            # serve dist/ locally
 ```
@@ -147,14 +150,15 @@ end to end.
 
 ## 4. Documentation
 
-| Doc                                                                           | Covers                                                              |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| [docs/architecture.md](docs/architecture.md)                                  | Components, stores, storage format, design decisions                |
-| [docs/development.md](docs/development.md)                                    | Toolchain, scripts, conventions, tests                              |
-| [docs/deployment.md](docs/deployment.md)                                      | Docker images, nginx, CI, GHCR publishing                           |
-| [docs/api.md](docs/api.md)                                                    | The API service: endpoints, accounts, CLI, backups                  |
-| [docs/brand.md](docs/brand.md)                                                | The brand, the design system and how to change them                 |
-| [docs/decisions.md](docs/decisions.md)                                        | Why accounts, sync and the design system are built the way they are |
-| [design_handoff_exercise_planner/](design_handoff_exercise_planner/README.md) | The original design spec and HTML prototype                         |
+| Doc                                                                            | Covers                                                              |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| [docs/architecture.md](docs/architecture.md)                                   | Components, stores, storage format, design decisions                |
+| [docs/development.md](docs/development.md)                                     | Toolchain, scripts, conventions, tests                              |
+| [docs/deployment.md](docs/deployment.md)                                       | Docker images, nginx, CI, GHCR publishing                           |
+| [docs/api.md](docs/api.md)                                                     | The API service: endpoints, accounts, CLI, backups                  |
+| [docs/brand.md](docs/brand.md)                                                 | The brand, the design system and how to change them                 |
+| [docs/decisions.md](docs/decisions.md)                                         | Why accounts, sync and the design system are built the way they are |
+| [docs/specs/2026-10-24-brand-design.md](docs/specs/2026-10-24-brand-design.md) | The approved brand spec (Notebook): intent, rules and calls K1–K8   |
+| [design_handoff_exercise_planner/](design_handoff_exercise_planner/README.md)  | The original design spec and HTML prototype                         |
 
 Development history lives in [`journal/`](journal/).
