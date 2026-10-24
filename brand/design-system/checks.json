@@ -93,11 +93,6 @@
     ],
     [
       "pen",
-      "canvas",
-      3.0
-    ],
-    [
-      "pen",
       "highlight",
       3.0
     ],
@@ -149,6 +144,16 @@
     [
       "error-ink",
       "tile",
+      4.5
+    ],
+    [
+      "pen",
+      "canvas",
+      4.5
+    ],
+    [
+      "pen",
+      "panel",
       4.5
     ]
   ],

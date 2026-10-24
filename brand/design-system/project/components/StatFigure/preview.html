@@ -1,0 +1,44 @@
+<!-- @dsCard group="Planner" height=250 subtitle="The one number per section: met, not met, zero" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>StatFigure — preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+  .list { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-4); }
+  .list li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-1) var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--line); }
+  .state { color: var(--ink-secondary); }
+
+  /* The figure: title-2 weight and size, tabular; the words after it in body-large ink-secondary. */
+  .stat { margin: 0; display: flex; align-items: baseline; gap: var(--space-2); }
+  .stat .fig { font-size: 20px; line-height: 26px; font-weight: 600; }
+  .stat .rest { color: var(--ink-secondary); }
+  .stat.met .fig { color: var(--pen); }
+  .stat.zero .fig { color: var(--ink-secondary); font-weight: 400; }
+  @media (max-width: 639px) { body { padding: var(--space-4); } }
+</style>
+</head>
+<body>
+<ul class="list">
+  <li>
+    <span class="label state">Met</span>
+    <p class="stat met"><span class="fig">12</span><span class="rest body-large">of 12 this week</span></p>
+  </li>
+  <li>
+    <span class="label state">Not met yet</span>
+    <p class="stat"><span class="fig">10</span><span class="rest body-large">of 12 this week</span></p>
+  </li>
+  <li>
+    <span class="label state">Zero</span>
+    <p class="stat zero"><span class="fig">0</span><span class="rest body-large">of 12 this week</span></p>
+  </li>
+  <li>
+    <span class="label state">Diet, not met yet</span>
+    <p class="stat"><span class="fig">2</span><span class="rest body-large">of 4 goals met</span></p>
+  </li>
+</ul>
+<script></script>
+</body>
+</html>

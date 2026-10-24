@@ -1,0 +1,59 @@
+<!-- @dsCard group="Planner" height=440 subtitle="A note or exercise found by search, the match in bold and underlined" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SearchResult — preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .note { font-style: italic; }
+  .count { margin: 0 0 var(--space-2); color: var(--ink-secondary); }
+  .results { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); max-width: 560px; }
+  .results li { border-bottom: 1px solid var(--line); }
+
+  /* The whole result is one link to that week. */
+  .result { display: block; padding: var(--space-3) var(--space-2); color: inherit; text-decoration: none; border-radius: var(--radius-sm); }
+  .result:hover { background: var(--tile); }
+  .result:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) { .result { transition: background-color 120ms; } }
+  .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-2); }
+  .name { font-weight: 600; }
+  .date { color: var(--ink-secondary); }
+  .excerpt { margin: var(--space-1) 0 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .kind { margin: var(--space-1) 0 0; color: var(--ink-secondary); }
+  .second { margin-top: var(--space-6); }
+
+  /* The match: weight and underline, never the highlight colour (that means today). */
+  mark { background: transparent; color: inherit; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  @media (max-width: 639px) { body { padding: var(--space-4); } }
+</style>
+</head>
+<body>
+<p class="count caption" role="status">Two notes mention “knee”</p>
+<ul class="results">
+  <li>
+    <a class="result" href="#week-2026-10-19">
+      <span class="top"><span class="name">Squats</span><span class="date caption">Thursday 22 October</span></span>
+      <p class="excerpt note">Left <mark>knee</mark> twinge. Went to 3 × 10, no jumps.</p>
+    </a>
+  </li>
+  <li>
+    <a class="result" href="#week-2026-08-31">
+      <span class="top"><span class="name">Squats</span><span class="date caption">Monday 31 August</span></span>
+      <p class="excerpt note">…after two weeks of lighter sets the <mark>knee</mark> feels fine going down, still a little stiff on the last few reps of the third set, so staying at 12 kg until it settles.</p>
+    </a>
+  </li>
+</ul>
+<p class="count caption second">One exercise matches “plank”</p>
+<ul class="results">
+  <li>
+    <a class="result" href="#week-2026-10-12">
+      <span class="top"><span class="name"><mark>Plank</mark></span></span>
+      <p class="kind caption">Exercise · in your plan since 12 October</p>
+    </a>
+  </li>
+</ul>
+<script></script>
+</body>
+</html>

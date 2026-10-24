@@ -1,0 +1,180 @@
+<!-- @dsCard group="Overlays" height=680 subtitle="Settings, anchored under its button: theme, ink, daily pick, data" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Popover — preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+
+  .stage { position: relative; border: 1px solid var(--line); border-radius: var(--radius-lg); min-height: 620px; }
+  .bar { display: flex; align-items: center; justify-content: space-between; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4); border-bottom: 1px solid var(--line); }
+  .wordmark { font-family: var(--font-serif); font-weight: 600; font-size: 20px; line-height: 26px; }
+  .anchor { position: relative; }
+
+  .icon-btn { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--ink); cursor: pointer; }
+  .icon-btn:hover, .icon-btn[aria-expanded="true"] { background: var(--tile); }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  /* The popover: panel, radius-lg, overlay shadow; 8px under its button, right edges aligned. */
+  .popover { position: absolute; top: calc(100% + var(--space-2)); right: 0; z-index: 2; width: 296px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-overlay); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+  .popover h2 { margin: 0; }
+  .group { display: flex; flex-direction: column; gap: var(--space-2); }
+  .group + .group.ruled { border-top: 1px solid var(--line); padding-top: var(--space-4); }
+  .group-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
+  .current { color: var(--ink-secondary); }
+  .account { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .account .who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .account .who span { color: var(--ink-secondary); }
+
+  /* SegmentedControl. */
+  .seg { display: flex; border: 1px solid var(--control-border); border-radius: var(--radius-md); padding: 2px; gap: 2px; }
+  .seg button { flex: 1; height: 38px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); font-weight: 600; }
+
+  /* InkPicker: four swatches, a ring around the chosen one, its name beside the label. */
+  .inks { display: flex; gap: var(--space-1); margin-left: -8px; }
+  .swatch { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: var(--radius-full); background: transparent; cursor: pointer; }
+  .swatch::before { content: ""; width: 28px; height: 28px; border-radius: var(--radius-full); background: var(--sw); }
+  .swatch[aria-checked="true"]::before { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--ink); }
+  .sw-ink-blue { --sw: var(--ink-blue); }
+  .sw-forest { --sw: var(--forest); }
+  .sw-violet { --sw: var(--violet); }
+  .sw-graphite { --sw: var(--graphite); }
+
+  /* Stepper: minus, value, plus in one bordered control. */
+  .stepper-row { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .stepper { display: inline-flex; align-items: stretch; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+  .stepper button { width: 44px; height: 42px; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+  .stepper button:first-child { border-radius: calc(var(--radius-md) - 1px) 0 0 calc(var(--radius-md) - 1px); }
+  .stepper button:last-child { border-radius: 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0; }
+  .stepper button:hover { background: var(--tile); }
+  .stepper button[aria-disabled="true"] { color: var(--ink-secondary); cursor: default; }
+  .stepper svg { width: 20px; height: 20px; }
+  .stepper output { width: 44px; display: grid; place-items: center; border-left: 1px solid var(--line); border-right: 1px solid var(--line); font-weight: 600; font-size: 17px; }
+
+  .btns { display: flex; gap: var(--space-2); }
+  .btn { height: 44px; padding: 0 var(--space-3); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border-radius: var(--radius-md); font: inherit; font-weight: 600; cursor: pointer; background: transparent; color: var(--ink); border: 1px solid var(--control-border); }
+  .btns .btn { flex: 1; }
+  .btn:hover { background: var(--tile); }
+  .btn svg { width: 20px; height: 20px; }
+
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) { button { transition: background-color 120ms, color 120ms; } }
+  @media (max-width: 639px) {
+    body { padding: var(--space-4); }
+    .stage { min-height: 640px; }
+    .popover { right: 0; width: min(296px, calc(100vw - 2 * var(--space-4) - var(--space-4))); }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="bar">
+    <span class="wordmark">Fitness Planner</span>
+    <div class="anchor">
+      <button type="button" class="icon-btn" aria-label="Settings" aria-expanded="true" aria-controls="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
+      </button>
+
+      <div class="popover" id="settings" role="dialog" aria-labelledby="settings-title">
+        <h2 class="title-2" id="settings-title">Settings</h2>
+
+        <div class="group">
+          <span class="label" id="g-theme">Theme</span>
+          <div class="seg" role="group" aria-labelledby="g-theme">
+            <button type="button" aria-pressed="true">System</button>
+            <button type="button" aria-pressed="false">Light</button>
+            <button type="button" aria-pressed="false">Dark</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group-head"><span class="label" id="g-ink">Ink</span><span class="current caption" id="ink-name">Ink blue</span></div>
+          <div class="inks" role="radiogroup" aria-labelledby="g-ink">
+            <button type="button" class="swatch sw-ink-blue" role="radio" aria-checked="true" aria-label="Ink blue" tabindex="0"></button>
+            <button type="button" class="swatch sw-forest" role="radio" aria-checked="false" aria-label="Forest" tabindex="-1"></button>
+            <button type="button" class="swatch sw-violet" role="radio" aria-checked="false" aria-label="Violet" tabindex="-1"></button>
+            <button type="button" class="swatch sw-graphite" role="radio" aria-checked="false" aria-label="Graphite" tabindex="-1"></button>
+          </div>
+        </div>
+
+        <div class="group stepper-row">
+          <span class="label" id="g-pick">Exercises a day</span>
+          <div class="stepper" role="group" aria-labelledby="g-pick">
+            <button type="button" aria-label="Fewer exercises a day" data-step="-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /></svg>
+            </button>
+            <output aria-live="polite" id="pick">3</output>
+            <button type="button" aria-label="More exercises a day" data-step="1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="group ruled">
+          <span class="label" id="g-data">Your data</span>
+          <div class="btns" role="group" aria-labelledby="g-data">
+            <button type="button" class="btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+              Export
+            </button>
+            <button type="button" class="btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg>
+              Import…
+            </button>
+          </div>
+        </div>
+
+        <div class="group ruled account">
+          <span class="who caption"><span>Signed in as</span> alex</span>
+          <button type="button" class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const MIN = 1, MAX = 8;
+  const pick = document.getElementById('pick');
+  document.addEventListener('click', (e) => {
+    const seg = e.target.closest('.seg button');
+    if (seg) seg.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === seg)));
+    const sw = e.target.closest('.swatch');
+    if (sw) {
+      sw.parentElement.querySelectorAll('.swatch').forEach((b) => {
+        b.setAttribute('aria-checked', String(b === sw));
+        b.tabIndex = b === sw ? 0 : -1;
+      });
+      document.getElementById('ink-name').textContent = sw.getAttribute('aria-label');
+    }
+    const step = e.target.closest('[data-step]');
+    if (step) {
+      const next = Number(pick.textContent) + Number(step.dataset.step);
+      if (next >= MIN && next <= MAX) pick.textContent = next;
+      document.querySelectorAll('[data-step]').forEach((b) => {
+        const v = Number(pick.textContent);
+        b.setAttribute('aria-disabled', String(b.dataset.step === '-1' ? v <= MIN : v >= MAX));
+      });
+    }
+  });
+  // The swatches are one radio group: arrows move and choose, as a native radio group does.
+  document.querySelector('.inks').addEventListener('keydown', (e) => {
+    const all = [...e.currentTarget.querySelectorAll('.swatch')];
+    const i = all.indexOf(e.target);
+    const to = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    const next = all[(to + all.length) % all.length];
+    next.focus();
+    next.click();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!-- @dsCard group="Planner" height=980 subtitle="One week Mon–Sun: today's band, totals, the picked row, phone scroll and print" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WeekGrid — preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .variant { margin: 0 0 var(--space-3); color: var(--ink-secondary); }
+
+  /* The scroller: the grid scrolls sideways inside it on a phone, never the page. */
+  .scroller { overflow-x: auto; scroll-padding-left: 136px; }
+  .grid { width: 100%; min-width: 600px; border-collapse: collapse; table-layout: fixed; }
+  .c-name { width: 200px; }
+  .c-total { width: 88px; }
+  th, td { padding: 0; font-weight: inherit; }
+
+  /* Header: day names in label, dates in caption, an ink rule beneath. */
+  thead tr { border-bottom: 1px solid var(--ink); }
+  thead th.d { padding: var(--space-2) 0; text-align: center; }
+  thead th.d .label, thead th.d .date { display: block; }
+  thead th.d .date { font-size: 14px; line-height: 20px; color: var(--ink-secondary); }
+  thead th.today .date { color: var(--ink); font-weight: 600; }
+  .total-h { color: var(--ink-secondary); text-align: center; }
+
+  /* Rows: hairline rules between them. */
+  tbody tr { border-bottom: 1px solid var(--line); }
+  th[scope="row"] { text-align: left; padding: var(--space-2) var(--space-3) var(--space-2) 0; vertical-align: middle; }
+  .name { display: block; font-size: 16px; line-height: 24px; font-weight: 600; }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+  .goal { color: var(--ink-secondary); }
+  .chip { background: var(--tile); color: var(--ink-secondary); border-radius: var(--radius-sm); padding: 0 var(--space-2); white-space: nowrap; }
+
+  /* The name column stays put while the days scroll (K5). */
+  th[scope="row"], th.corner { position: sticky; left: 0; z-index: 1; background: var(--canvas); }
+
+  /* Today: the highlight band down the whole column. */
+  .today { background: var(--highlight); }
+
+  /* DayMark: 44px button, 24px dot or ring, in a 60px cell. */
+  .day { position: relative; width: 56px; height: 60px; margin: 0 auto; display: grid; place-items: center; }
+  .mark { width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; }
+  .mark::before { content: ""; width: 24px; height: 24px; border-radius: var(--radius-full); border: 1.5px solid var(--control-border); }
+  .mark[aria-pressed="true"]::before { background: var(--pen); border-color: var(--pen); }
+  .mark[aria-pressed="false"]:hover::before { border-color: var(--ink); }
+  .mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .mark::before { transition: background-color 120ms, border-color 120ms; }
+  }
+  .note-mark { position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: var(--ink-secondary); clip-path: polygon(0 0, 100% 0, 100% 100%); pointer-events: none; }
+
+  /* Week total: the figure turns pen when the goal is met. */
+  .total { text-align: center; white-space: nowrap; font-size: 17px; line-height: 24px; }
+  .total .fig { font-weight: 600; }
+  .total .fig.met { color: var(--pen); }
+  .total .of { color: var(--ink-secondary); }
+
+  /* The picked row: how many exercises each day, against the daily pick. */
+  tfoot th[scope="row"] { padding-top: var(--space-3); padding-bottom: var(--space-3); }
+  tfoot .name { font-weight: 400; }
+  td.p { text-align: center; vertical-align: top; padding: var(--space-3) 2px; }
+  td.p .fig { display: block; font-size: 16px; line-height: 24px; font-weight: 600; }
+  td.p .fig.under, td.p .fig.future { color: var(--ink-secondary); font-weight: 400; }
+  td.p .fig.over { color: var(--caution-ink); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  td.p .extra { display: block; font-size: 14px; line-height: 18px; color: var(--caution-ink); }
+
+  /* Print: black on white in either theme (spec 4.1). The one place this system allows literal
+     colours: the tokens are re-pointed at black, white and greys inside .print only. In the app the
+     same overrides sit under @media print. */
+  .print {
+    --canvas: #ffffff; --panel: #ffffff; --tile: #ffffff; --line: #b3b3b3;
+    --ink: #000000; --ink-secondary: #3d3d3d; --pen: #000000; --control-border: #767676;
+    --caution-ink: #000000; --highlight: transparent;
+    background: var(--canvas); color: var(--ink); padding: var(--space-4); border-radius: var(--radius-sm);
+  }
+  .print .chip { border: 1px solid var(--line); }
+  .sheet-note { margin: var(--space-2) 0 0; color: var(--ink-secondary); }
+  .gap { height: var(--space-8); }
+
+  @media (max-width: 639px) {
+    body { padding: var(--space-4); }
+    .c-name { width: 136px; }
+    .c-total { width: 72px; }
+    th[scope="row"], th.corner { border-right: 1px solid var(--line); }
+    .print { padding: var(--space-2); }
+  }
+</style>
+</head>
+<body>
+<p class="variant label">On screen. Today is Thursday; the pick is three a day.</p>
+<div class="scroller" id="screen">
+  <table class="grid" role="grid" aria-label="Exercises, week of 19 October">
+    <colgroup><col class="c-name"><col span="7"><col class="c-total"></colgroup>
+    <thead>
+      <tr>
+        <th scope="col" class="corner"><span class="vh">Exercise</span></th>
+        <th scope="col" class="d"><span class="label">Mon</span><span class="date">19</span></th><th scope="col" class="d"><span class="label">Tue</span><span class="date">20</span></th><th scope="col" class="d"><span class="label">Wed</span><span class="date">21</span></th><th scope="col" class="d today" aria-current="date"><span class="label">Thu</span><span class="date">22</span><span class="vh">, today</span></th><th scope="col" class="d"><span class="label">Fri</span><span class="date">23</span></th><th scope="col" class="d"><span class="label">Sat</span><span class="date">24</span></th><th scope="col" class="d"><span class="label">Sun</span><span class="date">25</span></th>
+        <th scope="col" class="total-h label">Week</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-goal="4">
+        <th scope="row"><span class="name">Push-ups</span><span class="meta"><span class="chip label">3 × 12</span><span class="caption goal">4 a week</span></span></th>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Wednesday 21 October"></button></div></td>
+        <td class="d today"><div class="day"><button type="button" class="mark" tabindex="0" aria-pressed="true" aria-label="Push-ups, Thursday 22 October, today"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Friday 23 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Saturday 24 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Sunday 25 October"></button></div></td>
+        <td class="total"><span class="fig">3</span> <span class="of">of 4</span></td>
+      </tr>
+      <tr data-goal="3">
+        <th scope="row"><span class="name">Pull-ups</span><span class="meta"><span class="chip label">3 × 5</span><span class="caption goal">3 a week</span></span></th>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Monday 19 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Tuesday 20 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Wednesday 21 October"></button></div></td>
+        <td class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Thursday 22 October, today"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Friday 23 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Saturday 24 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Sunday 25 October"></button></div></td>
+        <td class="total"><span class="fig">2</span> <span class="of">of 3</span></td>
+      </tr>
+      <tr data-goal="3">
+        <th scope="row"><span class="name">Squats</span><span class="meta"><span class="chip label">3 × 15</span><span class="chip label">16 kg</span><span class="caption goal">3 a week</span></span></th>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Monday 19 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Tuesday 20 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Wednesday 21 October"></button></div></td>
+        <td class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Thursday 22 October, today, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Friday 23 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Saturday 24 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Sunday 25 October"></button></div></td>
+        <td class="total"><span class="fig met">3</span> <span class="of">of 3</span></td>
+      </tr>
+      <tr data-goal="2">
+        <th scope="row"><span class="name">Kettlebell halos</span><span class="meta"><span class="chip label">8 each side</span><span class="caption goal">2 a week</span></span></th>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Monday 19 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Wednesday 21 October"></button></div></td>
+        <td class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Friday 23 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Saturday 24 October"></button></div></td>
+        <td class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Sunday 25 October"></button></div></td>
+        <td class="total"><span class="fig met">2</span> <span class="of">of 2</span></td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <th scope="row"><span class="name">Picked</span><span class="meta"><span class="caption goal">3 a day</span></span></th>
+        <td class="p"><span class="fig under">2</span></td><td class="p"><span class="fig under">2</span></td><td class="p"><span class="fig under">2</span></td><td class="p today"><span class="fig over">4</span><span class="extra">one extra</span></td><td class="p"><span class="fig future" aria-label="Not yet">–</span></td><td class="p"><span class="fig future" aria-label="Not yet">–</span></td><td class="p"><span class="fig future" aria-label="Not yet">–</span></td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<div class="gap"></div>
+<p class="variant label">Printed, from either theme</p>
+<div class="print" id="print" inert></div>
+<p class="sheet-note caption">Dots black, rings grey, no band. “One extra” keeps its words; the hint line and buttons don't print.</p>
+
+<script>
+(() => {
+  // Roving tabindex: the grid is one tab stop; arrows move by cell, Home and End by row.
+  const table = document.querySelector('#screen .grid');
+  const rows = [...table.tBodies[0].rows];
+  const PICK = 3;
+  const TODAY = 3;
+  const WORDS = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+  const marksIn = (tr) => [...tr.querySelectorAll('.mark')];
+
+  function focusMark(mark) {
+    if (!mark) return;
+    table.querySelectorAll('.mark').forEach((m) => (m.tabIndex = -1));
+    mark.tabIndex = 0;
+    mark.focus();
+  }
+
+  table.addEventListener('keydown', (e) => {
+    const mark = e.target.closest('.mark');
+    if (!mark) return;
+    const r = rows.indexOf(mark.closest('tr'));
+    const c = marksIn(rows[r]).indexOf(mark);
+    const to = { ArrowRight: [r, c + 1], ArrowLeft: [r, c - 1], ArrowDown: [r + 1, c], ArrowUp: [r - 1, c], Home: [r, 0], End: [r, 6] }[e.key];
+    if (!to) return;
+    e.preventDefault();
+    const row = rows[to[0]];
+    if (row) focusMark(marksIn(row)[to[1]]);
+  });
+
+  table.addEventListener('click', (e) => {
+    const mark = e.target.closest('.mark');
+    if (!mark) return;
+    mark.setAttribute('aria-pressed', String(mark.getAttribute('aria-pressed') !== 'true'));
+    focusMark(mark);
+    recount();
+  });
+
+  // Week totals per row, and the picked count per day.
+  function recount() {
+    rows.forEach((tr) => {
+      const n = marksIn(tr).filter((m) => m.getAttribute('aria-pressed') === 'true').length;
+      const fig = tr.querySelector('.total .fig');
+      fig.textContent = n;
+      fig.classList.toggle('met', n >= Number(tr.dataset.goal));
+    });
+    const cells = [...table.tFoot.rows[0].querySelectorAll('td.p')];
+    cells.forEach((td, i) => {
+      const n = rows.filter((tr) => marksIn(tr)[i].getAttribute('aria-pressed') === 'true').length;
+      if (i > TODAY && n === 0) {
+        td.innerHTML = '<span class="fig future" aria-label="Not yet">–</span>';
+      } else if (n > PICK) {
+        td.innerHTML = `<span class="fig over">${n}</span><span class="extra">${WORDS[n - PICK]} extra</span>`;
+      } else {
+        td.innerHTML = `<span class="fig${n < PICK ? ' under' : ''}">${n}</span>`;
+      }
+    });
+    // The print specimen is a copy of the grid above.
+    const copy = table.cloneNode(true);
+    copy.removeAttribute('role');
+    copy.setAttribute('aria-label', 'Exercises, week of 19 October, as printed');
+    document.getElementById('print').replaceChildren(Object.assign(document.createElement('div'), { className: 'scroller' }));
+    document.querySelector('#print .scroller').append(copy);
+  }
+  recount();
+
+  // On a phone the grid opens scrolled so today's column sits in view, one day after the names.
+  const scroller = document.getElementById('screen');
+  const head = table.tHead.rows[0].cells;
+  if (scroller.scrollWidth > scroller.clientWidth) {
+    scroller.scrollLeft = Math.max(0, head[TODAY + 1].offsetLeft - head[0].offsetWidth - head[TODAY].offsetWidth);
+  }
+})();
+</script>
+</body>
+</html>

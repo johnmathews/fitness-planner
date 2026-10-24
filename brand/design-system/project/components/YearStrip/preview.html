@@ -1,0 +1,111 @@
+<!-- @dsCard group="Planner" height=330 subtitle="A year of weeks, one quiet mark each; a week off is an empty ring" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>YearStrip — preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); margin-bottom: var(--space-3); }
+  h2 { margin: 0; }
+  .summary { margin: 0; color: var(--ink-secondary); }
+
+  /* Two half-years side by side; on a phone they stack. */
+  .halves { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-6); }
+  .half { flex: 1 1 300px; min-width: 0; }
+  .weeks { display: grid; grid-template-columns: repeat(26, 1fr); margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .weeks li { height: 28px; display: grid; place-items: center; position: relative; }
+  .weeks li::before { content: ""; border-radius: var(--radius-full); }
+  .weeks .s::before { width: 5px; height: 5px; background: var(--pen); }
+  .weeks .m::before { width: 8px; height: 8px; background: var(--pen); }
+  .weeks .l::before { width: 11px; height: 11px; background: var(--pen); }
+  .weeks .off::before { width: 9px; height: 9px; border: 1.5px solid var(--control-border); }
+  .weeks .now::after { content: ""; position: absolute; bottom: 2px; left: 50%; width: 9px; height: 2px; margin-left: -4.5px; background: var(--ink); }
+  .months { position: relative; height: 20px; margin-top: var(--space-1); color: var(--ink-secondary); }
+  .months span { position: absolute; top: 0; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; color: var(--ink-secondary); }
+  .legend li { display: flex; align-items: center; gap: var(--space-2); }
+  .legend i { display: inline-block; border-radius: var(--radius-full); background: var(--pen); }
+  .legend .l i { width: 11px; height: 11px; }
+  .legend .m i { width: 8px; height: 8px; }
+  .legend .s i { width: 5px; height: 5px; }
+  .legend .off i { width: 9px; height: 9px; background: transparent; border: 1.5px solid var(--control-border); }
+  .legend .now i { width: 9px; height: 2px; border-radius: 0; background: var(--ink); }
+  @media (max-width: 639px) { body { padding: var(--space-4); } }
+</style>
+</head>
+<body>
+<section aria-labelledby="y-h">
+  <div class="head">
+    <h2 class="title-2" id="y-h">2026</h2>
+    <p class="summary caption">One mark per week, oldest first.</p>
+  </div>
+  <div class="halves" id="halves"></div>
+  <ul class="legend caption" aria-hidden="true">
+    <li class="l"><i></i>12 or more</li>
+    <li class="m"><i></i>6 to 11</li>
+    <li class="s"><i></i>1 to 5</li>
+    <li class="off"><i></i>None</li>
+    <li class="now"><i></i>This week</li>
+  </ul>
+</section>
+<script>
+(() => {
+  // Sessions per week of 2026, Monday 29 December 2025 onwards; this week is the 43rd (19 October).
+  const SESSIONS = [6, 14, 11, 15, 16, 13, 0, 12, 15, 17, 16, 14, 15, 18, 13, 12, 16, 17, 15, 14, 16, 9, 0, 11,
+    14, 15, 17, 16, 18, 15, 4, 0, 14, 16, 17, 15, 13, 16, 18, 17, 15, 16, 10];
+  const NOW = SESSIONS.length - 1;
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const SHORT = { 3: 'Apr', 6: 'Jul', 9: 'Oct' };
+  const start = new Date(2025, 11, 29);
+  const monday = (i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7 * i);
+  const size = (n) => (n === 0 ? 'off' : n >= 12 ? 'l' : n >= 6 ? 'm' : 's');
+
+  const halves = document.getElementById('halves');
+  for (let h = 0; h < 2; h++) {
+    const half = document.createElement('div');
+    half.className = 'half';
+    const ol = document.createElement('ol');
+    ol.className = 'weeks';
+    ol.setAttribute('aria-label', h === 0 ? 'January to June' : 'July to December');
+    const months = document.createElement('div');
+    months.className = 'months caption';
+    months.setAttribute('aria-hidden', 'true');
+    for (let k = 0; k < 26; k++) {
+      const i = h * 26 + k;
+      const d = monday(i);
+      const li = document.createElement('li');
+      const label = `Week of ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+      if (i <= NOW) {
+        const n = SESSIONS[i];
+        li.className = size(n) + (i === NOW ? ' now' : '');
+        li.innerHTML = `<span class="vh">${label}${i === NOW ? ', this week' : ''}: ${n === 0 ? 'none' : n === 1 ? '1 session' : n + ' sessions'}</span>`;
+        ol.append(li);
+      } else {
+        ol.append(li); // Weeks still to come: an empty slot, nothing to read.
+        li.setAttribute('aria-hidden', 'true');
+      }
+      // A month label where the first Monday of April, July and October falls; January starts the strip.
+      if (d.getDate() <= 7 && d.getMonth() in SHORT) {
+        const s = document.createElement('span');
+        s.textContent = SHORT[d.getMonth()];
+        s.style.left = `${(k / 26) * 100}%`;
+        months.append(s);
+      }
+      if (i === 0) {
+        const s = document.createElement('span');
+        s.textContent = 'Jan';
+        s.style.left = '0';
+        months.append(s);
+      }
+    }
+    half.append(ol, months);
+    halves.append(half);
+  }
+})();
+</script>
+</body>
+</html>
