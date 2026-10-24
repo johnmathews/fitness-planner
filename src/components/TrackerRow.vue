@@ -24,7 +24,7 @@ const emit = defineEmits<{
   remove: []
   edit: []
 }>()
-const ICON_BUTTON = 'size-6 shrink-0 rounded-md text-faint hover:bg-subtle hover:text-fg'
+const ICON_BUTTON = 'size-6 shrink-0 rounded-md text-ink-secondary hover:bg-tile hover:text-ink'
 
 const met = computed(() => goalMet(props.total, props.item.target))
 
@@ -38,7 +38,7 @@ function remove(): void {
   <div role="row" class="contents">
     <div
       role="rowheader"
-      class="flex min-h-11 items-center gap-2 border-b border-line-subtle py-2.5 pr-2.5 pl-4"
+      class="flex min-h-11 items-center gap-2 border-b border-line py-2.5 pr-2.5 pl-4"
     >
       <div class="flex min-w-0 flex-1 flex-col gap-1">
         <div class="text-sm font-semibold tracking-tight" data-testid="item-name">
@@ -48,7 +48,7 @@ function remove(): void {
           <span
             v-for="d in details"
             :key="d"
-            class="rounded border border-line bg-subtle px-1.5 py-px font-mono text-[11px] whitespace-nowrap text-muted"
+            class="rounded border border-line bg-tile px-1.5 py-px text-[11px] whitespace-nowrap text-ink-secondary tabular-nums"
             data-testid="item-detail"
           >
             {{ d }}
@@ -88,15 +88,15 @@ function remove(): void {
     />
     <div
       role="cell"
-      class="flex flex-col items-center justify-center gap-1.5 border-b border-l border-b-line-subtle border-l-line-strong p-2"
+      class="flex flex-col items-center justify-center gap-1.5 border-b border-l border-b-line border-l-control-border p-2"
     >
       <div
-        class="font-mono text-xl font-semibold whitespace-nowrap"
-        :class="met ? 'text-accent-fg' : 'text-fg'"
+        class="text-xl font-semibold whitespace-nowrap tabular-nums"
+        :class="met ? 'text-pen' : 'text-ink'"
         :data-met="met"
         data-testid="row-total"
       >
-        {{ total }}<span class="text-xs text-faint"> / {{ item.target }}</span>
+        {{ total }}<span class="text-xs text-ink-secondary"> / {{ item.target }}</span>
       </div>
       <NumberStepper
         v-if="configMode"

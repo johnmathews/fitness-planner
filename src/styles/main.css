@@ -1,77 +1,73 @@
 @import 'tailwindcss';
+/*
+ * The design system's roles, scales and type styles, generated from
+ * brand/design-system/project/tokens.json by `npm run tokens`; never edit it by hand. That script
+ * drops the generated @font-face rules: the fonts come from the Fontsource packages imported in
+ * src/main.ts, which Vite bundles under /assets/ (the CSP allows only 'self').
+ */
+@import './tokens.css';
 
-/* Dark mode follows a `.dark` class on <html>, set from the theme setting (System, Light or Dark). */
+/* Dark mode follows a `.dark` class on <html>, set from the theme setting (System, Light or Dark)
+   by public/theme-init.js before first paint and by App.vue after. tokens.css matches it. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Semantic colours. Components use `bg-surface`, `text-muted` and so on, and each theme supplies the
- * values here, so templates rarely need a `dark:` variant.
+ * The pen is the person's chosen ink (src/lib/inks.ts). App.vue sets its two values on <html>,
+ * and each theme picks its own; before that, or without them, it is the default ink, Ink blue
+ * (the `pen` token's own value). Everything reads `--pen`, never the user variables.
  */
 :root {
-  /* Overridden at runtime from the accent setting. */
-  --accent: #30d158;
-  /* The bright accents are hard to read as text on white, so light mode darkens them for text. */
-  --accent-fg: color-mix(in oklab, var(--accent) 62%, black);
-
-  --page: #f7f7f8;
-  --surface: #ffffff;
-  --subtle: #f4f4f5;
-  --well: #fafafa;
-  --selected: #ffffff;
-  --field: #ffffff;
-  --line: #e4e4e7;
-  --line-subtle: #ededf0;
-  --line-strong: #d4d4d8;
-  --fg: #18181b;
-  --muted: #52525b;
-  --faint: #6b6b73;
-  --warn: #c2410c;
-  --primary: #007aff;
-  --primary-hover: #0062cc;
-
+  --pen: var(--user-pen-light, var(--ink-blue));
   color-scheme: light;
 }
 
 .dark {
-  --accent-fg: var(--accent);
-
-  --page: #141416;
-  --surface: #1c1c1e;
-  --subtle: #2a2a2c;
-  --well: #161618;
-  --selected: #48484a;
-  --field: #2c2c2e;
-  --line: #3a3a3c;
-  --line-subtle: #313134;
-  --line-strong: #48484a;
-  --fg: #f5f5f7;
-  --muted: #aeaeb2;
-  --faint: #909095;
-  --warn: #ff9f0a;
-  --primary: #0a84ff;
-  --primary-hover: #409cff;
-
+  --pen: var(--user-pen-dark, var(--ink-blue));
   color-scheme: dark;
 }
 
+/* Type-style details tokens.css does not emit: the note is italic, the display smaller on phones. */
+.note {
+  font-style: italic;
+}
+
+@media (width < 40rem) {
+  .display {
+    font-size: 32px;
+    line-height: 36px;
+  }
+}
+
+/*
+ * Tailwind utilities named after the roles (bg-canvas, text-ink-secondary, border-control-border…).
+ * The default palette is switched off (no red-500, no white or black), so a palette class
+ * generates nothing: every colour on screen comes from a role and follows the theme.
+ */
 @theme inline {
-  --color-accent: var(--accent);
-  --color-accent-fg: var(--accent-fg);
-  --color-page: var(--page);
-  --color-surface: var(--surface);
-  --color-subtle: var(--subtle);
-  --color-well: var(--well);
-  --color-selected: var(--selected);
-  --color-field: var(--field);
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-tile: var(--tile);
   --color-line: var(--line);
-  --color-line-subtle: var(--line-subtle);
-  --color-line-strong: var(--line-strong);
-  --color-fg: var(--fg);
-  --color-muted: var(--muted);
-  --color-faint: var(--faint);
-  --color-warn: var(--warn);
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
+  --color-control-border: var(--control-border);
+  --color-ink: var(--ink);
+  --color-on-ink: var(--on-ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-error-ink: var(--error-ink);
+  --color-focus: var(--focus);
+  --color-pen: var(--pen);
+  --color-highlight: var(--highlight);
+  --color-caution-ink: var(--caution-ink);
+  --color-scrim: var(--scrim);
+}
+
+/* tokens.css already declares --font-sans/--font-serif and --radius-sm/md/lg as unlayered :root
+   rules, so font-sans and rounded-lg follow the tokens without mapping (a self-map is a cycle). */
+@utility shadow-overlay {
+  box-shadow: var(--shadow-overlay);
 }
 
 @layer base {
@@ -81,43 +77,46 @@
   }
 
   body {
-    @apply bg-page text-fg antialiased;
+    @apply bg-canvas font-sans text-ink antialiased;
   }
 
   button:not(:disabled) {
     cursor: pointer;
   }
 
-  /* Keyboard focus only; mouse clicks get no ring. */
-  button:focus-visible {
-    @apply outline-2 outline-offset-2 outline-primary;
+  /* Keyboard focus on every interactive element: a solid 2px ring at a 2px offset. */
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* Neutral toolbar button, used in the navbar. */
+  /* Outlined button: the navbar, settings and secondary actions. */
   .btn {
-    @apply inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-sm font-medium whitespace-nowrap text-fg shadow-xs hover:bg-subtle sm:px-3;
+    @apply inline-flex h-8 items-center gap-1.5 rounded-md border border-control-border bg-panel px-2.5 text-sm font-medium whitespace-nowrap text-ink hover:bg-tile sm:px-3;
   }
 
+  /* The primary action is ink, not a brand colour (K8): one colour means "act". */
   .btn-primary {
-    @apply inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold whitespace-nowrap text-white hover:bg-primary-hover;
+    @apply inline-flex h-9 items-center rounded-md bg-ink px-4 text-sm font-semibold whitespace-nowrap text-on-ink hover:bg-ink/85;
   }
 
-  /* Text inputs in the add-exercise and add-food forms. */
-  /* One option in a segmented control (a track of aria-pressed buttons). */
+  /* One option in a segmented control (a track of aria-pressed buttons); the chosen one is ink. */
   .segment {
-    @apply rounded-md text-xs font-medium text-muted aria-pressed:bg-selected aria-pressed:text-fg aria-pressed:shadow-xs aria-pressed:ring-1 aria-pressed:ring-line;
+    @apply rounded-md text-xs font-medium text-ink-secondary hover:text-ink aria-pressed:bg-ink aria-pressed:text-on-ink;
   }
 
+  /* Text inputs in the forms; keyboard and pointer focus both show the focus ring. */
   .field {
-    @apply h-9 rounded-lg border border-line bg-field px-3 text-sm text-fg placeholder:text-faint focus:border-primary focus:ring-3 focus:ring-primary/30 focus:outline-none;
+    @apply h-9 rounded-sm border border-control-border bg-panel px-3 text-sm text-ink placeholder:text-ink-secondary;
   }
 }
 
 /*
- * Printing gives a plain black-on-white sheet in either theme: the tokens switch to print values, so
- * only done cells stay filled (black). `!important` on --accent beats the inline style the app sets.
+ * Printing gives a plain black-on-white sheet in either theme: the roles switch to print values,
+ * so done marks print solid black, empty cells keep a grey ring and today's highlight disappears.
+ * The user's ink cannot leak through: --pen is set here, and App.vue only sets --user-pen-*.
  */
 @media print {
   @page {
@@ -127,19 +126,19 @@
 
   :root,
   .dark {
-    --accent: #000 !important;
-    --accent-fg: #000;
-    --page: #fff;
-    --surface: #fff;
-    --subtle: #fff;
-    --well: #fff;
+    --canvas: #fff;
+    --panel: #fff;
+    --tile: #fff;
     --line: #bbb;
-    --line-subtle: #ccc;
-    --line-strong: #999;
-    --fg: #000;
-    --muted: #000;
-    --faint: #555;
-    --warn: #000;
+    --control-border: #999;
+    --ink: #000;
+    --on-ink: #fff;
+    --ink-secondary: #555;
+    --error-ink: #000;
+    --caution-ink: #000;
+    --pen: #000;
+    --highlight: transparent;
+    --shadow-overlay: none;
     color-scheme: light;
   }
 
@@ -151,11 +150,9 @@
     display: none !important;
   }
 
-  [data-today='true'] {
-    background: transparent !important;
-  }
-
+  /* No shadows, and no colour transition caught halfway when the print colours switch in. */
   * {
     box-shadow: none !important;
+    transition: none !important;
   }
 }

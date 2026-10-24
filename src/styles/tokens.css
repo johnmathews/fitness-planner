@@ -1,0 +1,67 @@
+/* Fitness Planner — generated from tokens.json */
+:root, [data-theme="light"] {
+  --canvas: #faf8f3;
+  --panel: #fffefb;
+  --tile: #f1ede4;
+  --line: #e4dfd5;
+  --control-border: #8c8579;
+  --ink: #1f1d1a;
+  --on-ink: #faf8f3;
+  --ink-secondary: #5f5a52;
+  --error-ink: #9f1d1d;
+  --focus: #2b4c7e;
+  --pen: #2b4c7e;
+  --highlight: #f6ebb8;
+  --caution-ink: #a0461a;
+  --ink-blue: #2b4c7e;
+  --forest: #2f5d46;
+  --violet: #4b3b7a;
+  --graphite: #3d3d3d;
+  --scrim: #1f1d1a;
+  --shadow-overlay: 0 1px 2px rgba(31,29,26,.06), 0 8px 24px rgba(31,29,26,.08);
+}
+.dark {
+  --canvas: #1b1a18;
+  --panel: #23221f;
+  --tile: #2b2926;
+  --line: #3a3733;
+  --control-border: #8f887c;
+  --ink: #ede9e2;
+  --on-ink: #1b1a18;
+  --ink-secondary: #b3ac9f;
+  --error-ink: #f08a7e;
+  --focus: #9db8e8;
+  --pen: #9db8e8;
+  --highlight: #3b3524;
+  --caution-ink: #e3a06b;
+  --ink-blue: #9db8e8;
+  --forest: #8fcbaa;
+  --violet: #b9a9e8;
+  --graphite: #cfcfcf;
+  --scrim: #000000;
+  --shadow-overlay: none;
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-full: 999px;
+  --font-serif: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
+  --font-sans: "Source Sans 3 Variable", "Source Sans 3", -apple-system, system-ui, sans-serif;
+}
+.display { font-family: var(--font-serif); font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: 0; }
+.title-1 { font-family: var(--font-serif); font-size: 26px; line-height: 32px; font-weight: 600; letter-spacing: 0; }
+.title-2 { font-family: var(--font-sans); font-size: 20px; line-height: 26px; font-weight: 600; letter-spacing: 0; }
+.body-large { font-family: var(--font-sans); font-size: 17px; line-height: 24px; font-weight: 400; letter-spacing: 0; }
+.body { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 400; letter-spacing: 0; }
+.caption { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0; }
+.label { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: 0; }
+.note { font-family: var(--font-serif); font-size: 16px; line-height: 24px; font-weight: 400; letter-spacing: 0; }

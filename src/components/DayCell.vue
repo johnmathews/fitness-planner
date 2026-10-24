@@ -6,8 +6,8 @@ defineEmits<{ toggle: [] }>()
 <template>
   <div
     role="cell"
-    class="flex border-b border-l border-line-subtle"
-    :class="{ 'bg-accent/5': today }"
+    class="flex border-b border-l border-line"
+    :class="{ 'bg-highlight': today }"
     :data-today="today"
   >
     <!-- A real button, so the grid works from the keyboard (the prototype used a clickable div). -->
@@ -19,12 +19,8 @@ defineEmits<{ toggle: [] }>()
       @click="$emit('toggle')"
     >
       <span
-        class="flex min-h-[38px] flex-1 items-center justify-center rounded-md border text-[15px] font-bold text-white transition-colors"
-        :class="
-          on
-            ? 'border-accent bg-accent'
-            : 'border-line bg-well shadow-inner group-hover:border-line-strong'
-        "
+        class="flex min-h-[38px] flex-1 items-center justify-center rounded-md border text-[15px] font-bold text-on-ink transition-colors"
+        :class="on ? 'border-pen bg-pen' : 'border-control-border group-hover:bg-tile'"
         :data-on="on"
       >
         {{ on ? '✓' : '' }}

@@ -73,7 +73,7 @@ async function addToAccount(log: ExportData): Promise<void> {
 <template>
   <section
     v-if="show"
-    class="mt-4 rounded-xl border border-line bg-surface p-4 shadow-xs"
+    class="mt-4 rounded-xl border border-line bg-panel p-4 shadow-xs"
     aria-labelledby="import-prompt-title"
     data-testid="import-prompt"
     data-noprint
@@ -82,17 +82,17 @@ async function addToAccount(log: ExportData): Promise<void> {
       {{ added ? 'Added to your account' : 'Data from before accounts' }}
     </h2>
     <template v-if="added">
-      <p class="mt-1 text-sm text-muted" role="status">
+      <p class="mt-1 text-sm text-ink-secondary" role="status">
         This browser’s earlier log is now part of your account, on every device.
       </p>
       <button type="button" class="btn mt-3" @click="added = false">Close</button>
     </template>
     <template v-else-if="data">
-      <p class="mt-1 text-sm text-muted">
+      <p class="mt-1 text-sm text-ink-secondary">
         This browser holds a log saved before accounts existed. If it’s yours, add it to your
         account. {{ summary.describe(data) }}
       </p>
-      <p v-if="problem" role="alert" class="mt-2 text-sm text-warn">{{ problem }}</p>
+      <p v-if="problem" role="alert" class="mt-2 text-sm text-error-ink">{{ problem }}</p>
       <div class="mt-3 flex flex-wrap gap-2">
         <button type="button" class="btn-primary" :aria-busy="busy" @click="addToAccount(data)">
           {{ busy ? 'Adding…' : 'Add to my account' }}

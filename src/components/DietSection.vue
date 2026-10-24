@@ -8,7 +8,7 @@ import AddFoodForm from '@/components/AddFoodForm.vue'
 const planner = usePlannerStore()
 const diet = useDietStore()
 
-// No daily target for foods, so counts are neutral: muted at zero, plain otherwise.
+// No daily target for foods, so counts are neutral: secondary at zero, plain ink otherwise.
 const counts = computed(() =>
   diet.dayCounts.map((n) => ({
     text: String(n),
@@ -28,14 +28,15 @@ function flagsFor(id: string): boolean[] {
   >
     <div class="flex flex-wrap items-end justify-between gap-3 pt-8 pb-2 print:pt-0">
       <div class="flex flex-col gap-1">
-        <h2 id="diet-heading" class="text-xl font-bold tracking-tight">Diet</h2>
-        <p class="text-sm text-muted">Click a cell on each day you ate it.</p>
+        <h2 id="diet-heading" class="title-1">Diet</h2>
+        <p class="text-sm text-ink-secondary">Click a cell on each day you ate it.</p>
       </div>
       <div class="flex items-baseline gap-1.5">
-        <div class="font-mono text-xl font-semibold text-accent-fg" data-testid="diet-goals-met">
-          {{ diet.goalsMet }}<span class="text-sm text-faint"> / {{ diet.foods.length }}</span>
+        <div class="text-xl font-semibold text-pen tabular-nums" data-testid="diet-goals-met">
+          {{ diet.goalsMet
+          }}<span class="text-sm text-ink-secondary"> / {{ diet.foods.length }}</span>
         </div>
-        <div class="text-sm text-muted">goals met</div>
+        <div class="text-sm text-ink-secondary">goals met</div>
       </div>
     </div>
     <TrackerGrid

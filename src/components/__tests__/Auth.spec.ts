@@ -328,7 +328,7 @@ describe('signing out', () => {
     await flushPromises()
     api.offline = true
     await openSettings()
-    await wrapper.get('button[aria-label="Blue"]').trigger('click')
+    await wrapper.get('button[aria-label="Ink blue"]').trigger('click')
     await flushPromises()
     api.offline = false
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)

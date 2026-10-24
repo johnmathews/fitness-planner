@@ -17,7 +17,7 @@ const message = computed(() => {
     ? `Offline. ${n} change${n === 1 ? '' : 's'} will sync when the connection is back.`
     : 'Offline. Showing the data saved on this device.'
 })
-const BAR = 'mt-4 flex items-center gap-3 rounded-lg border border-line bg-subtle px-3 py-2 text-sm'
+const BAR = 'mt-4 flex items-center gap-3 rounded-lg border border-line bg-tile px-3 py-2 text-sm'
 </script>
 
 <template>
@@ -29,7 +29,7 @@ const BAR = 'mt-4 flex items-center gap-3 rounded-lg border border-line bg-subtl
       data-testid="sync-status"
       :data-state="sync.loaded ? sync.status : 'loading'"
     >
-      <span class="flex-1 text-muted">{{ message }}</span>
+      <span class="flex-1 text-ink-secondary">{{ message }}</span>
       <button v-if="sync.status === 'offline'" type="button" class="btn" @click="sync.refresh()">
         Retry
       </button>

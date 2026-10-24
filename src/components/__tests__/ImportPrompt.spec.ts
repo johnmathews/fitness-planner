@@ -99,7 +99,10 @@ describe('the first-login import prompt', () => {
     expect(wrapper.findAll('button[aria-label^="Squats,"]')[0]!.attributes('aria-pressed')).toBe(
       'true',
     )
-    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#bf5af2')
+    // The saved purple accent shows as the Violet ink, light and dark.
+    const style = document.documentElement.style
+    expect(style.getPropertyValue('--user-pen-light')).toBe('#4b3b7a')
+    expect(style.getPropertyValue('--user-pen-dark')).toBe('#b9a9e8')
     await button('Close').trigger('click')
     expect(prompt().exists()).toBe(false)
     expect(marker()).toBe('"imported"')
