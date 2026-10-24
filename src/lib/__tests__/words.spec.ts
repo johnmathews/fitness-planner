@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countOf, numberWord } from '../words'
+import { countOf, durationText, numberWord } from '../words'
 import { APP_MONOGRAM, APP_NAME } from '../app'
 
 describe('numberWord', () => {
@@ -28,5 +28,14 @@ describe('the app name', () => {
   it('is the working name, with its initials as the monogram', () => {
     expect(APP_NAME).toBe('Fitness Planner')
     expect(APP_MONOGRAM).toBe('FP')
+  })
+})
+
+describe('durationText', () => {
+  it('reads seconds under a minute, whole minutes, and minutes with seconds', () => {
+    expect(durationText(5)).toBe('5 s')
+    expect(durationText(60)).toBe('1 min')
+    expect(durationText(90)).toBe('1 min 30 s')
+    expect(durationText(3600)).toBe('60 min')
   })
 })

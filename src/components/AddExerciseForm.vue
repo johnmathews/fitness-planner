@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { usePlannerStore } from '@/stores/planner'
-import { useExerciseForm } from '@/composables/exerciseForm'
+import { MEASURE_OPTIONS, useExerciseForm } from '@/composables/exerciseForm'
 import PerSideToggle from '@/components/PerSideToggle.vue'
 import { Button } from '@/components/ui/button'
+import { SegmentedControl } from '@/components/ui/segmented-control'
 import { TextField } from '@/components/ui/text-field'
 
 const store = usePlannerStore()
 const form = useExerciseForm()
-const { name, sets, reps, weight, perSide } = form
+const { name, sets, reps, weight, perSide, measure, measureChoice, amountLabel } = form
 
 function submit(): void {
   if (store.addExercise(form.value())) form.load()
@@ -39,15 +40,17 @@ function submit(): void {
       class="w-20"
       @input="form.onSetsInput"
     />
+    <SegmentedControl v-model="measureChoice" label="Measure" :options="MEASURE_OPTIONS" />
     <TextField
       id="add-exercise-reps"
       :model-value="reps"
-      label="Reps"
+      :label="amountLabel"
       inputmode="numeric"
+      maxlength="4"
       class="w-20"
       @input="form.onRepsInput"
     />
-    <PerSideToggle v-model="perSide" />
+    <PerSideToggle v-model="perSide" :timed="measure === 'time'" />
     <TextField
       id="add-exercise-weight"
       :model-value="weight"

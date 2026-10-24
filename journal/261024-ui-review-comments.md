@@ -35,3 +35,21 @@ name with a -10px vertical margin, so the name line keeps its height while the b
 name block widens by the button and its gap (176px, 240px from 640px up), so the column is exactly
 as wide as before and the WeekGrid card's 384px and 448px still hold. Enter on a name cell now
 reaches the edit button first, in reading order.
+
+## Reps or time, the stepper edits the amount, and the totals can hide
+
+The last round of comments:
+
+- **The Edit plan Stepper edits the amount, not the goal.** Reps per set change far more often than
+  the weekly goal. An exercise row's Stepper now edits its reps (1–999) or, for a timed exercise,
+  its seconds per set (5–3600, in steps of 5). A food's Stepper still edits its goal, since a food
+  has no amount. The goal moved into the Edit exercise dialog as **Times a week** (0–7).
+- **An exercise counts reps or time.** `Exercise` gains an optional `duration` in whole seconds; a
+  timed exercise stores `reps: 0`. The forms gain a **Measure** choice (Reps | Time) that relabels
+  the amount field "Seconds" and the per-side control "Timed". Chips read "3 × 45 s",
+  "1 min 30 s each side" (`durationText`). Both validators, `src/lib/storage.ts` and the API's
+  `validate.py`, keep `duration` as a whole number above 0 capped at 3600, and
+  `fixtures/transfer/parse/duration.json` holds them to it.
+- **Show weekly totals** in Settings hides both sections' StatFigures. It is stored on the device
+  with the theme (`showTotals` in `fitness-planner-settings-v1`), not synced or exported, because it
+  is a display preference like the theme; so the API, sync and export formats did not change for it.

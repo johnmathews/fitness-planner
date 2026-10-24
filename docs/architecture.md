@@ -43,7 +43,8 @@ App.vue                 picks the screen (link, planner or sign-in), the pen var
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
 │   │                   the Edit plan Switch, Settings and Print…
 │   └── SettingsPopover.vue   Popover: theme (SegmentedControl), Ink (InkPicker), Exercises a day
-│                             (Stepper), Export and Import… (see §4), who is signed in, Sign out
+│                             (Stepper), Show weekly totals (Switch), Export and Import… (see §4),
+│                             who is signed in, Sign out
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
 ├── TodayList.vue       phones only (below 640px), the first view: today's exercises and foods,
@@ -56,8 +57,9 @@ App.vue                 picks the screen (link, planner or sign-in), the pen var
 │   │   │               highlight band, and the Picked row ("4", "one extra" over the pick)
 │   │   └── TrackerRow.vue  name and chips; 7 × DayMark; "3 of 4" total; in config
 │   │                       mode the goal Stepper and edit/remove IconButtons in the row header
-│   ├── AddExerciseForm.vue config mode only: name, sets, reps, PerSideToggle, weight (kg)
-│   └── EditExerciseDialog.vue  Dialog: name, sets, reps, PerSideToggle, weight
+│   ├── AddExerciseForm.vue config mode only: name, sets, Measure (Reps or Time), reps or
+│   │                       seconds, PerSideToggle, weight (kg)
+│   └── EditExerciseDialog.vue  Dialog: the add form's fields, then Times a week (the goal)
 └── DietSection.vue     the Food section: SectionHeader ("2 of 4 goals met"), kept with its grid
     ├── TrackerGrid.vue wired to diet: no chips and no Picked row (foods have no daily pick)
     └── AddFoodForm.vue config mode only: name, Add food
@@ -65,7 +67,7 @@ App.vue                 picks the screen (link, planner or sign-in), the pen var
 
 ## 2. Weekly plans
 
-Each week has its own **plan**: the exercises (with sets, reps, per-side, weight and goal) and the
+Each week has its own **plan**: the exercises (with sets, reps or a duration, per-side, weight and goal) and the
 foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 
 - **Carry forward.** A week without a plan of its own shows the plan of the latest earlier week that
@@ -87,10 +89,11 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 
 | State                 | Kept by                                    | Notes                                                            |
 | --------------------- | ------------------------------------------ | ---------------------------------------------------------------- |
-| `plans`               | the sync store: server and per-user cache  | week → `{ id, name, sets?, reps, perSide?, weight?, target }[]`  |
+| `plans`               | the sync store: server and per-user cache  | week → `{ id, name, sets?, reps, duration?, perSide?, weight?, target }[]` |
 | `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven booleans          |
 | `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is drawn as an ink (§6.2) |
 | `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                            |
+| `showTotals`          | `fitness-planner-settings-v1` (the device) | `true` (default): the sections' StatFigures show                 |
 | `configMode`          | no                                         | `false` (normal mode) on every load                              |
 | `weekOffset`          | no                                         | `0` is the current week                                          |
 | `now`                 | no                                         | a ref so "today" can move; see §5                                |
@@ -106,15 +109,19 @@ store fills them with `adopt` and saves their changes (§7).
 exercises, so a removed exercise's history stays in `log` without inflating the numbers.
 
 **Actions** (plan edits apply to the visible week only): `toggle`, `changeTarget` (clamps 0–7),
-`addExercise` (returns `false` for an empty name; new exercises get goal 3), `updateExercise`
-(replaces name, sets, reps, per-side and weight, keeping the id, goal and history; `false` for an
-empty name or an id not in the week), `removeExercise`, `copyToNextWeek`, `setConfigMode`,
+`changeAmount` (Edit plan's row Stepper: a timed exercise's seconds, clamped 5–3600, else its reps,
+1–999), `addExercise` (returns `false` for an empty name; new exercises get goal 3 unless the input
+names one), `updateExercise` (replaces name, sets, reps or duration, per-side, weight and, when
+given, the goal, keeping the id and history; `false` for an empty name or an id not in the week).
+An exercise counts reps or time, never both: a duration stores reps as 0. Then `removeExercise`, `copyToNextWeek`, `setConfigMode`,
 `prevWeek`, `nextWeek`, `thisWeek`, `refreshNow`, `setAccent`, `changeDailyPick` (clamps 1–8),
 `setTheme`, `savedSettings` (the accent and daily pick, or null while the user has none of their own), `adopt`
 (replace the data and settings wholesale), `adoptWeek` (replace one week's plan) and `clear` (forget
 the user on sign-out, keeping the theme). The module also exports `exerciseDetails`, which gives the chips under a name:
 "3 × 12" or "3 × 8 each side" (or "10 reps a set" and "8 each side" without sets, "3 sets" without
-reps), then "16 kg" when weighted, and no chip at all for none of these (the Chip card's words).
+reps), "3 × 45 s" or "1 min 30 s each side" for a timed exercise (`durationText` in
+`src/lib/words.ts`), then "16 kg" when weighted, and no chip at all for none of these (the Chip
+card's words).
 
 `useDietStore` holds `plans` of foods (`{ id, name, target }`) and its own `log`, kept by the sync
 store like the planner's. It reads `planner.weekKey`, so week navigation moves both
@@ -123,7 +130,8 @@ offers `isEaten`, `totalFor`, `toggle`, `changeTarget` (0–7), `addFood` (goal 
 empty name), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
 like exercise goals (met once the count reaches a non-zero goal); foods have no daily target.
 
-The planner writes only the theme, merged into whatever `fitness-planner-settings-v1` already holds.
+The planner writes only the theme and `showTotals`, each merged into whatever
+`fitness-planner-settings-v1` already holds.
 `writeKey` skips the write when the stored string already matches, and swallows storage errors, so
 with storage blocked or full the app keeps working in memory.
 
@@ -135,7 +143,7 @@ with storage blocked or full the app keeps working in memory.
 | `fitness-planner-cache-v1:<user>`  | the user's state as `GET /api/state` returns it, with `revs`                                         | yes     |
 | `fitness-planner-outbox-v1:<user>` | writes not yet sent (§7)                                                                             | yes     |
 | `fitness-planner-import-v1:<user>` | the first-login prompt's answer, `imported` or `dismissed` (§7)                                      | yes     |
-| `fitness-planner-settings-v1`      | `theme`, read before first paint by `public/theme-init.js`                                           | theme   |
+| `fitness-planner-settings-v1`      | `theme`, read before first paint by `public/theme-init.js`, and `showTotals`                         | both    |
 | `fitness-planner-view-v1`          | the phone's Today or Week choice, `today` or `week` (§5); the device's own, never synced or exported | yes     |
 | `fitness-planner-v2`, `-diet-v2`   | exercise and food `{ plans, log }` from before accounts                                              | never   |
 | `fitness-planner-v1`, `-diet-v1`   | the single-list format from before weekly plans                                                      | never   |
@@ -165,6 +173,7 @@ v2; now the conversion only feeds the import.
 - Plans whose week key is not `YYYY-MM-DD`, or whose value is not an array, drop out.
 - Items without a string `id` and `name` drop out; `reps` rounds and floors at 0; `target` rounds
   and clamps to 0–7, defaulting to 3.
+- `duration` (seconds per set) is kept only as a whole number above 0, capped at 3600.
 - `sets` is kept only as a whole number from 1 to 20 (larger values cap at 20); `weight` (kg) only
   as a positive number, rounded to 2 decimals and capped at 500. Otherwise the key is left out.
 - Log weeks whose key is not `YYYY-MM-DD`, and entries that are not arrays, drop out; the rest

@@ -24,6 +24,7 @@ NEW_EXERCISE_TARGET = 3
 NEW_FOOD_TARGET = 3
 MAX_WEIGHT = 500
 MAX_SETS = 20
+MAX_DURATION = 3600
 DEFAULT_ACCENT = "#30d158"
 DEFAULT_DAILY_PICK = 3
 
@@ -129,6 +130,9 @@ def normalise_exercise(v: object) -> Item | None:
     if sets > 0:
         out["sets"] = min(MAX_SETS, sets)
     out["reps"] = max(0, to_int(v.get("reps"), 0))
+    duration = to_int(v.get("duration"), 0)
+    if duration > 0:
+        out["duration"] = min(MAX_DURATION, duration)
     if isinstance(v.get("perSide"), bool):
         out["perSide"] = v["perSide"]
     weight = normalise_weight(v.get("weight"))

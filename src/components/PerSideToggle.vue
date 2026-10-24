@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 
 const perSide = defineModel<boolean>({ required: true })
+/** A timed exercise: the control reads "Timed" rather than "Reps count". */
+const props = defineProps<{ timed?: boolean }>()
 
 // The Dialog card's words; the chip under the exercise then reads "8 each side".
 const OPTIONS = [
@@ -17,5 +19,9 @@ const choice = computed({
 </script>
 
 <template>
-  <SegmentedControl v-model="choice" label="Reps count" :options="OPTIONS" />
+  <SegmentedControl
+    v-model="choice"
+    :label="props.timed ? 'Timed' : 'Reps count'"
+    :options="OPTIONS"
+  />
 </template>

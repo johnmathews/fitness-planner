@@ -29,6 +29,7 @@ function flagsFor(id: string): boolean[] {
     <div class="print:break-inside-avoid" data-print-keep>
       <SectionHeader title="Food" hint="Mark each day you ate it." heading-id="diet-heading">
         <StatFigure
+          v-if="planner.showTotals"
           :figure="diet.goalsMet"
           :total="diet.foods.length"
           words="goals met"

@@ -1,4 +1,4 @@
-A small quiet tag under an exercise name that says how much: sets × reps, each side, or the weight.
+A small quiet tag under an exercise name that says how much: sets × reps or time, each side, or the weight.
 
 ## Use
 
@@ -12,6 +12,8 @@ A small quiet tag under an exercise name that says how much: sets × reps, each 
   | reps only | "10 reps a set" |
   | reps only, each side | "8 each side" |
   | sets only | "3 sets" |
+  | sets and time | "3 × 45 s", "3 × 2 min" |
+  | time only, each side | "1 min 30 s each side" |
   | weight | "16 kg" (a second chip) |
   | nothing | no chip (not a dash) |
 

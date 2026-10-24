@@ -10,6 +10,8 @@ const FORMS = [
   { state: 'Reps only', text: '10 reps a set', id: 'reps' },
   { state: 'Reps only, each side', text: '8 each side', id: 'reps-side' },
   { state: 'Sets only', text: '3 sets', id: 'sets' },
+  { state: 'Sets and time', text: '3 × 45 s', id: 'sets-time' },
+  { state: 'Time only, each side', text: '1 min 30 s each side', id: 'time-side' },
   { state: 'Weight', text: '16 kg', id: 'weight' },
 ]
 </script>

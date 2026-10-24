@@ -25,14 +25,22 @@ import { DayMark } from '@/components/ui/day-mark'
 import { IconButton } from '@/components/ui/icon-button'
 import { Stepper } from '@/components/ui/stepper'
 
+/**
+ * What an exercise row's Edit plan Stepper edits instead of the goal: its reps per set, or its
+ * seconds per set when timed. `noun` names it in the Stepper's labels ("Squats reps").
+ */
+export type Amount = { value: number; min: number; max: number; step: number; noun: string }
+
 const props = defineProps<{
   item: Tracked
   /** The chips under the name, already in the Chip card's words ("3 × 12", "16 kg"). */
   details?: string[]
   /** Shows an edit button (in config mode) that emits `edit`. */
   editable?: boolean
-  /** Config mode shows the goal Stepper and the edit and remove buttons in the row header. */
+  /** Config mode shows the Stepper and the edit and remove buttons in the row header. */
   configMode: boolean
+  /** The Stepper edits this rather than the weekly goal (exercises); foods leave it out. */
+  amount?: Amount
   days: Day[]
   flags: boolean[]
   total: number
@@ -40,6 +48,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggle: [day: number]
   changeTarget: [delta: number]
+  changeAmount: [delta: number]
   remove: []
   edit: []
 }>()
@@ -89,16 +98,33 @@ async function remove(event: MouseEvent): Promise<void> {
   if (yes && props.days[0]!.key === week) emit('remove')
 }
 
-/** The Stepper reports a new goal (only ever a changed one); the stores take a step. */
-function setTarget(value: number): void {
-  emit('changeTarget', value - props.item.target)
+/** The Stepper reports a new value (only ever a changed one); the stores take a step. */
+function setStepper(value: number): void {
+  if (props.amount) emit('changeAmount', value - props.amount.value)
+  else emit('changeTarget', value - props.item.target)
 }
+
+/** The Stepper's value, range and names: the exercise's amount, else the food's weekly goal. */
+const stepper = computed(() => {
+  const a = props.amount
+  const noun = a?.noun ?? 'goal'
+  return {
+    value: a?.value ?? props.item.target,
+    min: a?.min ?? MIN_TARGET,
+    max: a?.max ?? MAX_TARGET,
+    step: a?.step ?? 1,
+    label: `${props.item.name} ${noun}`,
+    lower: `Lower ${props.item.name} ${noun}`,
+    raise: `Raise ${props.item.name} ${noun}`,
+  }
+})
 </script>
 
 <!--
   One row of the WeekGrid card: the name in body 600, then the chips; a DayMark per day; the
   week's total as "3 of 4", the only place the goal shows. In Edit plan the edit IconButton follows
-  the name, and the goal Stepper and the remove IconButton sit beside the name block; the edit
+  the name, and the Stepper (an exercise's reps or seconds per set, a food's weekly goal) and the
+  remove IconButton sit beside the name block; the edit
   button's negative margin keeps the name line's height, and the header is at least the Stepper's
   44px tall in both modes, so the row keeps its height (F25).
   Those controls stay out of the Tab order until Enter (or F2) on the name cell lets them in, and
@@ -136,14 +162,15 @@ function setTarget(value: number): void {
         </div>
         <div v-if="configMode" class="flex shrink-0 items-center gap-2" data-noprint>
           <Stepper
-            :model-value="item.target"
-            :label="`${item.name} goal`"
+            :model-value="stepper.value"
+            :label="stepper.label"
             hide-label
-            :lower-label="`Lower ${item.name} goal`"
-            :raise-label="`Raise ${item.name} goal`"
-            :min="MIN_TARGET"
-            :max="MAX_TARGET"
-            @update:model-value="setTarget"
+            :lower-label="stepper.lower"
+            :raise-label="stepper.raise"
+            :min="stepper.min"
+            :max="stepper.max"
+            :step="stepper.step"
+            @update:model-value="setStepper"
           />
           <IconButton :label="`Remove ${item.name}`" data-action="remove" @click="remove">
             <Trash2 />

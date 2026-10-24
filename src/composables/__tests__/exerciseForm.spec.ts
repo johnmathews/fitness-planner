@@ -33,6 +33,7 @@ describe('useExerciseForm', () => {
       reps: 8,
       perSide: true,
       weight: 8,
+      target: 3,
     })
     expect(form.sets.value).toBe('3')
     form.load()
@@ -42,6 +43,28 @@ describe('useExerciseForm', () => {
       reps: 0,
       perSide: false,
       weight: undefined,
+      target: 3,
     })
+  })
+
+  it('loads a timed exercise as Time and reports seconds as its duration, never reps', () => {
+    const form = useExerciseForm()
+    form.load({ id: 'pl', name: 'Plank', sets: 3, reps: 0, duration: 45, target: 2 })
+    expect(form.measure.value).toBe('time')
+    expect(form.amountLabel.value).toBe('Seconds')
+    expect(form.reps.value).toBe('45')
+    expect(form.value()).toEqual({
+      name: 'Plank',
+      sets: 3,
+      reps: 0,
+      duration: 45,
+      perSide: false,
+      weight: undefined,
+      target: 2,
+    })
+    form.measureChoice.value = 'reps'
+    expect(form.amountLabel.value).toBe('Reps')
+    expect(form.value()).toMatchObject({ reps: 45 })
+    expect(form.value()).not.toHaveProperty('duration')
   })
 })

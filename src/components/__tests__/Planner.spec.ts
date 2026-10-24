@@ -387,9 +387,9 @@ describe('the planner grids (W10)', () => {
       expect(inHeader[0]).toBe(header)
       expect(inHeader.slice(1).map((el) => el.getAttribute('aria-label') ?? el.tagName)).toEqual([
         'Edit Squats',
-        'Lower Squats goal',
+        'Lower Squats reps',
         'INPUT',
-        'Raise Squats goal',
+        'Raise Squats reps',
         'Remove Squats',
       ])
       await press('Escape')

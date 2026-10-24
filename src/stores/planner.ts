@@ -4,9 +4,12 @@ import { DAY_NAMES, addDays, dateKey, fullDate, mondayOf, weekDates, weekTitle }
 import {
   DEFAULT_SETTINGS,
   MAX_DAILY_PICK,
+  MAX_DURATION,
+  MAX_REPS,
   MAX_SETS,
   MAX_TARGET,
   MIN_DAILY_PICK,
+  MIN_DURATION,
   MIN_TARGET,
   NEW_EXERCISE_TARGET,
   SETTINGS_KEY,
@@ -24,6 +27,7 @@ import {
   type PortableSettings,
 } from '@/lib/storage'
 import * as tracker from '@/lib/tracker'
+import { durationText } from '@/lib/words'
 import type { Theme } from '@/lib/theme'
 import { copyPlan, planSource, type Plans } from '@/lib/plans'
 
@@ -43,9 +47,14 @@ export type Day = {
 export type NewExercise = {
   name: string
   sets?: number
+  /** Reps per set; ignored when `duration` is set. */
   reps: number
+  /** Seconds per set for a timed exercise. */
+  duration?: number
   perSide: boolean
   weight?: number
+  /** The weekly goal; the add form leaves it out and gets NEW_EXERCISE_TARGET. */
+  target?: number
 }
 
 /**
@@ -56,24 +65,36 @@ export type NewExercise = {
 export function exerciseDetails(e: Exercise): string[] {
   const chips: string[] = []
   const side = e.perSide ? ' each side' : ''
-  if (e.reps && e.sets) chips.push(`${e.sets} × ${e.reps}${side}`)
+  if (e.duration) {
+    const time = durationText(e.duration)
+    chips.push(e.sets ? `${e.sets} × ${time}${side}` : `${time}${side}`)
+  } else if (e.reps && e.sets) chips.push(`${e.sets} × ${e.reps}${side}`)
   else if (e.reps) chips.push(e.perSide ? `${e.reps} each side` : `${e.reps} reps a set`)
   else if (e.sets) chips.push(`${e.sets} sets`)
   if (e.weight) chips.push(`${e.weight} kg`)
   return chips
 }
 
-/** Cleans form input into the stored fields; null when the trimmed name is empty. */
+/**
+ * Cleans form input into the stored fields; null when the trimmed name is empty. An exercise
+ * counts reps or time, never both: a duration keeps reps at 0.
+ */
 function exerciseFields(input: NewExercise): Omit<Exercise, 'id' | 'target'> | null {
   const name = input.name.trim()
   if (!name) return null
-  const reps = Number.isFinite(input.reps) && input.reps > 0 ? Math.floor(input.reps) : 0
+  const duration =
+    input.duration !== undefined && Number.isFinite(input.duration) && input.duration > 0
+      ? Math.min(MAX_DURATION, Math.floor(input.duration))
+      : 0
+  const reps =
+    !duration && Number.isFinite(input.reps) && input.reps > 0 ? Math.floor(input.reps) : 0
   const sets = Math.min(MAX_SETS, Math.floor(input.sets ?? 0))
   const weight = normaliseWeight(input.weight)
   return {
     name,
     ...(sets > 0 ? { sets } : {}),
     reps,
+    ...(duration ? { duration } : {}),
     perSide: input.perSide,
     ...(weight !== undefined ? { weight } : {}),
   }
@@ -86,13 +107,15 @@ export const usePlannerStore = defineStore('planner', () => {
   const currentWeekKey = computed(() => dateKey(mondayOf(now.value, 0)))
 
   // Plans, the log, accent and daily pick are the signed-in user's: the sync store fills them
-  // through `adopt` and saves them. Only the theme belongs to the device and is stored here.
+  // through `adopt` and saves them. Only the theme and whether the weekly totals show belong to
+  // the device, and are stored here.
   const plans = ref<Plans<Exercise>>({})
   const log = ref<Log>({})
   const weekOffset = ref(0)
   const accent = ref(DEFAULT_SETTINGS.accent)
   const dailyPick = ref(DEFAULT_SETTINGS.dailyPick)
   const theme = ref<Theme>(parseSettings(readKey(SETTINGS_KEY)).theme)
+  const showTotals = ref(parseSettings(readKey(SETTINGS_KEY)).showTotals)
   /** Whether the user has settings of their own (from the server, a change, or an import). */
   const settingsSaved = ref(false)
   /** Config mode shows the plan-editing controls; normal mode only ticks cells. Not persisted. */
@@ -155,11 +178,20 @@ export const usePlannerStore = defineStore('planner', () => {
     if (e) e.target = clamp(e.target + delta, MIN_TARGET, MAX_TARGET)
   }
 
+  /** The Edit plan stepper: a timed exercise's seconds per set, otherwise its reps per set. */
+  function changeAmount(id: string, delta: number): void {
+    const e = own().find((x) => x.id === id)
+    if (!e) return
+    if (e.duration) e.duration = clamp(e.duration + delta, MIN_DURATION, MAX_DURATION)
+    else e.reps = clamp(e.reps + delta, 1, MAX_REPS)
+  }
+
   /** Returns false (and adds nothing) when the trimmed name is empty. */
   function addExercise(input: NewExercise): boolean {
     const fields = exerciseFields(input)
     if (!fields) return false
-    own().push({ id: tracker.newId(), ...fields, target: NEW_EXERCISE_TARGET })
+    const target = clamp(input.target ?? NEW_EXERCISE_TARGET, MIN_TARGET, MAX_TARGET)
+    own().push({ id: tracker.newId(), ...fields, target })
     return true
   }
 
@@ -169,7 +201,8 @@ export const usePlannerStore = defineStore('planner', () => {
     if (!fields || !exercises.value.some((e) => e.id === id)) return false
     const list = own()
     const i = list.findIndex((e) => e.id === id)
-    list[i] = { id, ...fields, target: list[i]!.target }
+    const target = clamp(input.target ?? list[i]!.target, MIN_TARGET, MAX_TARGET)
+    list[i] = { id, ...fields, target }
     return true
   }
 
@@ -250,8 +283,13 @@ export const usePlannerStore = defineStore('planner', () => {
     const stored = parseJson(readKey(SETTINGS_KEY))
     writeKey(SETTINGS_KEY, { ...(isRecord(stored) ? stored : {}), theme: next })
   })
+  watch(showTotals, (next) => {
+    const stored = parseJson(readKey(SETTINGS_KEY))
+    writeKey(SETTINGS_KEY, { ...(isRecord(stored) ? stored : {}), showTotals: next })
+  })
 
   return {
+    showTotals,
     plans,
     exercises,
     carriedFrom,
@@ -273,6 +311,7 @@ export const usePlannerStore = defineStore('planner', () => {
     totalFor,
     toggle,
     changeTarget,
+    changeAmount,
     addExercise,
     updateExercise,
     removeExercise,
