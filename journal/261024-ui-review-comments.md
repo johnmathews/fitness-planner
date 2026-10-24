@@ -26,3 +26,12 @@ heading, the grid's table label ("Food, week of 19 October"), the Today list's g
 the design-system cards and style guide that show them. Code names (`useDietStore`, `DietSection`,
 `diet-heading`, the `diet` key in stored and synced data) stay as they are, so stored data, the
 API and the transfer format do not change.
+
+## The edit button follows the name
+
+A fourth comment moved the pencil next to the exercise's name in Edit plan. It sits 4px after the
+name with a -10px vertical margin, so the name line keeps its height while the button keeps its
+44px target. The goal Stepper and the remove button stay beside the name block. An editable row's
+name block widens by the button and its gap (176px, 240px from 640px up), so the column is exactly
+as wide as before and the WeekGrid card's 384px and 448px still hold. Enter on a name cell now
+reaches the edit button first, in reading order.

@@ -45,6 +45,11 @@ const emit = defineEmits<{
 }>()
 
 const met = computed(() => goalMet(props.total, props.item.target))
+/** The name block's width: in Edit plan an editable row's block takes the edit button's 44px and
+ * its gap beside the name, so the column is as wide as when the button sat with the others. */
+const nameWidth = computed(() =>
+  props.configMode && props.editable ? 'w-44 sm:w-60' : 'w-31 sm:w-47',
+)
 
 const { confirm } = useConfirm()
 const row = ref<HTMLTableRowElement | null>(null)
@@ -92,9 +97,10 @@ function setTarget(value: number): void {
 
 <!--
   One row of the WeekGrid card: the name in body 600, then the chips; a DayMark per day; the
-  week's total as "3 of 4", the only place the goal shows. In Edit plan the goal Stepper and the
-  edit and remove IconButtons sit beside the name block, which keeps its width, and the header is
-  at least the Stepper's 44px tall in both modes, so the row keeps its height (F25).
+  week's total as "3 of 4", the only place the goal shows. In Edit plan the edit IconButton follows
+  the name, and the goal Stepper and the remove IconButton sit beside the name block; the edit
+  button's negative margin keeps the name line's height, and the header is at least the Stepper's
+  44px tall in both modes, so the row keeps its height (F25).
   Those controls stay out of the Tab order until Enter (or F2) on the name cell lets them in, and
   Escape leaves them (gridNav), so each grid stays one tab stop in Edit plan too.
 -->
@@ -107,12 +113,23 @@ function setTarget(value: number): void {
       :class="stickyName(configMode)"
     >
       <div class="flex min-h-11 items-center gap-2">
-        <div class="flex w-31 shrink-0 flex-col sm:w-47">
-          <span
-            class="block text-base font-semibold break-words text-ink"
-            data-testid="item-name"
-            >{{ item.name }}</span
-          >
+        <div class="flex shrink-0 flex-col" :class="nameWidth">
+          <span class="flex items-center gap-1">
+            <span
+              class="block min-w-0 text-base font-semibold break-words text-ink"
+              data-testid="item-name"
+              >{{ item.name }}</span
+            >
+            <IconButton
+              v-if="configMode && editable"
+              :label="`Edit ${item.name}`"
+              class="-my-2.5 shrink-0"
+              data-noprint
+              @click="emit('edit')"
+            >
+              <Pencil />
+            </IconButton>
+          </span>
           <span v-if="details?.length" class="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Chip v-for="d in details" :key="d" data-testid="item-detail">{{ d }}</Chip>
           </span>
@@ -128,9 +145,6 @@ function setTarget(value: number): void {
             :max="MAX_TARGET"
             @update:model-value="setTarget"
           />
-          <IconButton v-if="editable" :label="`Edit ${item.name}`" @click="emit('edit')">
-            <Pencil />
-          </IconButton>
           <IconButton :label="`Remove ${item.name}`" data-action="remove" @click="remove">
             <Trash2 />
           </IconButton>

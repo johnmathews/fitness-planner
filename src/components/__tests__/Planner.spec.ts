@@ -380,16 +380,16 @@ describe('the planner grids (W10)', () => {
       await press('Home')
       expect(focused().getAttribute('role')).toBe('rowheader')
       await press('Enter')
-      expect(name(focused())).toBe('Lower Squats goal')
+      expect(name(focused())).toBe('Edit Squats')
       const header = focused().closest('th')!
       // The name cell keeps the tab stop (Shift+Tab returns to it), then its controls in order.
       const inHeader = tabStops().filter((el) => header.contains(el))
       expect(inHeader[0]).toBe(header)
       expect(inHeader.slice(1).map((el) => el.getAttribute('aria-label') ?? el.tagName)).toEqual([
+        'Edit Squats',
         'Lower Squats goal',
         'INPUT',
         'Raise Squats goal',
-        'Edit Squats',
         'Remove Squats',
       ])
       await press('Escape')
