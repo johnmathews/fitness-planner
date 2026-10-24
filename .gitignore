@@ -34,3 +34,6 @@ __pycache__/
 .coverage
 htmlcov/
 api/.data/
+
+# Design system gallery (scripts/design_preview.py)
+brand/design-system/preview/
