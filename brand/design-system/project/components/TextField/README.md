@@ -3,9 +3,10 @@ A single-line input with its label always visible above it, an optional hint bel
 ## Use
 
 - Field: 44px tall, `panel` fill, 1px `control-border`, `radius-sm`, `body` text in `ink`, padding `space-3`. Numbers (sets, reps, weight) add `tabular-nums` and the right `inputmode`.
-- Label: `label` style in `ink`, `space-1` above the field. Always visible; a placeholder never stands in for it. The label names the thing and its unit only ("Weight in kg"); an optional field says so in its hint, never in the label: "Optional. Leave empty for bodyweight." Required fields are not marked.
+- Label: `label` style in `ink`, `space-1` above the field. Always visible; a placeholder never stands in for it. The label names the thing and its unit only ("Weight in kg"); an optional field says so in its hint, never in the label: "Optional." under Sets, "Optional. Leave empty for bodyweight." under Weight in kg. Required fields are not marked.
 - Hint: `caption` in `ink-secondary`, `space-1` below, tied with `aria-describedby` ("At least 10 characters.").
-- Error: `caption` in `error-ink` with the 16px `circle-alert` icon and words, tied with `aria-describedby`, the field set to `aria-invalid="true"` and its border to `error-ink`. The message replaces the hint and is announced (`role="alert"`) when it appears after a submit.
+- Error: `caption` in `error-ink` with the 16px `circle-alert` icon and words, tied with `aria-describedby`, the field set to `aria-invalid="true"` and its border to `error-ink`. The message replaces the hint and is announced (`role="alert"`) when it appears after a submit. Use it only when the problem belongs to that one field: "The passwords don't match. Type the same password in both fields." on Repeat password.
+- Form-level error: when the problem belongs to more than one field and nobody can say which, the message appears once, below the fields, as an InlineMessage (error), and every field it concerns is marked `aria-invalid="true"` with its border in `error-ink` and is described by that one message (`aria-describedby` pointing at it). Sign-in works this way, because the server doesn't say whether the username or the password was wrong: "Wrong username or password. Check both and try again." under both fields, never on one of them.
 - Placeholder text, when used at all, is an example in `ink-secondary` ("e.g. 12"), never an instruction.
 
 ## States
@@ -16,5 +17,5 @@ A single-line input with its label always visible above it, an optional hint bel
 
 ## You provide
 
-- `label` (required), `id`, `type`, `autocomplete`, `inputmode`, the value (`v-model`), and optionally `hint` and `error` strings. The component wires `for`, `aria-describedby` and `aria-invalid`.
-- Error copy that names the problem and the next step. The app's "The passwords don't match." becomes "The passwords don't match. Type the same password in both fields."; "Wrong username or password." becomes "Wrong username or password. Check both and try again."
+- `label` (required), `id`, `type`, `autocomplete`, `inputmode`, the value (`v-model`), and optionally `hint` and `error` strings. The component wires `for`, `aria-describedby` and `aria-invalid`. For a form-level error, leave `error` empty and pass `invalid` plus an `aria-describedby` naming the shared message; the field adds its own hint to that.
+- Error copy that names the problem and the next step: "The passwords don't match. Type the same password in both fields." (one field), "Wrong username or password. Check both and try again." (form-level, under both fields).

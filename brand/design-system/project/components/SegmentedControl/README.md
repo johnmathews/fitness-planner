@@ -5,7 +5,7 @@ A row of two or three toggle buttons, exactly one chosen, for a setting whose op
 - The canonical drawing, used unchanged wherever a SegmentedControl appears (Settings Popover, Edit exercise Dialog, TodayList's view switch): a 1px `control-border` outline with `radius-md`, 44px tall overall, no inset between the outline and the segments; each segment 42px tall, padding `space-4`, `radius-sm`, in `label` style (14px/20px, weight 600) in `ink`. Chosen and unchosen segments use the same type, so the width never jumps when the choice changes.
 - **Single choice.** The chosen segment is filled `ink` with `on-ink` text (the same "act" colour as the primary Button), and carries `aria-pressed="true"`; the others `aria-pressed="false"`. Pressing the chosen segment keeps it chosen: a segment never un-presses itself, so there is always exactly one choice. Never `pen`: pen means done.
 - **Label:** the `role="group"` has a visible label above it in `label` style, tied with `aria-labelledby`. The one exception: when the segment words name the choice by themselves (Today | Week), the visible label may be left out, and the group then takes an `aria-label` ("View") instead.
-- Real uses: **Theme** (System, Light, Dark; System first, as the default), **Reps count** (Per set, Each side, per set) and the phone's **View** switch (Today, Week).
+- Real uses: **Theme** (System, Light, Dark; System first, as the default), **Reps count** (Per set, Each side) and the phone's **View** switch (Today, Week).
 - At most three short options. Four or more, or long labels, take a list of radio buttons. A single on/off choice is a Switch.
 
 ## States
@@ -23,4 +23,4 @@ A row of two or three toggle buttons, exactly one chosen, for a setting whose op
 ## You provide
 
 - `label` (required; an `aria-label` only under the exception above), the options as `{ value, label }`, and the chosen value (`v-model`).
-- Option labels in sentence case. The app's "per set" and "each side, per set" become "Per set" and "Each side, per set": sentence case, same meaning.
+- Option labels in sentence case. Keep them short enough to sit side by side on a phone: the reps count reads "Per set" and "Each side", not "Each side, per set".

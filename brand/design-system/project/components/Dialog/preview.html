@@ -28,7 +28,7 @@
   .field { display: flex; flex-direction: column; gap: var(--space-1); }
   .hint { color: var(--ink-secondary); }
   input { height: 44px; width: 100%; padding: 0 var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--panel); color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
-  .row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-start; }
   .narrow { width: 88px; }
   .weight { width: 128px; }
 
@@ -83,7 +83,8 @@
       <div class="row">
         <div class="field narrow">
           <label class="label" for="f-sets">Sets</label>
-          <input id="f-sets" value="3" inputmode="numeric" maxlength="2">
+          <input id="f-sets" value="3" inputmode="numeric" maxlength="2" aria-describedby="f-sets-hint">
+          <span class="hint caption" id="f-sets-hint">Optional.</span>
         </div>
         <div class="field narrow">
           <label class="label" for="f-reps">Reps</label>
