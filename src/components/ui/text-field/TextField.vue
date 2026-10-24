@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs, useId, type HTMLAttributes } from 'vue'
-import { CircleAlert } from '@lucide/vue'
 import { cn, joinIds } from '@/lib/utils'
+import { InlineMessage } from '@/components/ui/inline-message'
 import { textFieldVariants } from '.'
 
 // Every attribute but `class` (inputmode, autocomplete, name, type, required, data-*, …) belongs
@@ -17,6 +17,9 @@ const props = defineProps<{
   hint?: string
   /** What happened and what to do. Replaces the hint and marks the input invalid. */
   error?: string
+  /** Marks the input invalid when the message lives elsewhere, such as one message for two
+   * fields ("Wrong username or password…"); tie it with `aria-describedby`. */
+  invalid?: boolean
   /** Classes for the wrapper, for layout. */
   class?: HTMLAttributes['class']
 }>()
@@ -48,18 +51,10 @@ const describedBy = computed(() =>
       v-model="model"
       data-slot="text-field-input"
       :class="textFieldVariants()"
-      :aria-invalid="error ? 'true' : undefined"
+      :aria-invalid="error || invalid ? 'true' : undefined"
       :aria-describedby="describedBy"
     />
-    <p
-      v-if="error"
-      :id="errorId"
-      role="alert"
-      class="caption mt-1 flex items-start gap-1 text-error-ink"
-    >
-      <CircleAlert :size="16" :stroke-width="1.5" class="mt-0.5 shrink-0" />
-      <span>{{ error }}</span>
-    </p>
+    <InlineMessage v-if="error" :id="errorId" tone="error" class="mt-1">{{ error }}</InlineMessage>
     <p v-else-if="hint" :id="hintId" class="caption text-ink-secondary">{{ hint }}</p>
   </div>
 </template>

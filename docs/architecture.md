@@ -232,8 +232,8 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   ×, the goal steppers, the add forms and "Copy plan to next week". The mode is not saved, so the
   app always opens ready for ticking.
 - **Exercises are editable.** The handoff had no way to change an exercise after adding it. A ✎
-  button on each exercise row (not foods) opens `EditExerciseDialog`, a native `<dialog>` opened
-  with `showModal()`, which traps focus, closes on Escape and returns focus to the button. Sets and
+  button on each exercise row (not foods) opens `EditExerciseDialog`, on the Dialog primitive (Reka UI),
+  which traps focus, closes on Escape and returns focus to the button. Sets and
   weight are optional, weight in kg; the sets/reps chip and the weight chip are separate so they
   wrap in the narrow name column.
 - **Steppers mark their bounds** (goal 0/7, daily pick 1/8) with `aria-disabled` and ignore the
@@ -271,8 +271,11 @@ their templates and have no `<style>` blocks. Everything global is in `src/style
   `text-accent-fg`, which light mode darkens (the swatches are too bright to read on white).
 - **Dark variant.** `@custom-variant dark` keys `dark:` to the `.dark` class rather than the media
   query, so the Light and Dark settings can override the OS.
-- **Shared classes.** `.btn` (navbar buttons), `.segment` (the theme and per-set toggles),
-  `.btn-primary` and `.field` (the add forms) live in the components layer.
+- **Shared classes.** `.btn` (navbar and other secondary buttons), `.segment` (the theme toggle)
+  and `.btn-primary` (the import prompt) still live in the components layer, until those screens
+  move onto the primitives in `src/components/ui/`. The forms, the sign-in and link screens and
+  the edit dialog already use Button, TextField, TextLink, Dialog, SegmentedControl and
+  InlineMessage.
 - **Sticky navbar.** `scroll-padding-top` on `<html>` keeps keyboard-focused content from scrolling
   under it.
 - **Print.** The `@media print` block described in §5.

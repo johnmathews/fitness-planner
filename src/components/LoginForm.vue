@@ -3,21 +3,24 @@ import { computed, nextTick, ref } from 'vue'
 import { useSessionStore, type AuthProblem } from '@/stores/session'
 import { describeProblem } from '@/lib/problems'
 import AuthCard from '@/components/AuthCard.vue'
+import { Button } from '@/components/ui/button'
+import { InlineMessage } from '@/components/ui/inline-message'
+import { TextField } from '@/components/ui/text-field'
 
 const session = useSessionStore()
 const username = ref(session.user ?? '')
 const password = ref('')
 const busy = ref(false)
 const problem = ref<AuthProblem | null>(null)
-const passwordInput = ref<HTMLInputElement | null>(null)
-const LABEL = 'mb-1 block text-sm font-medium'
 
 const intro = computed(() =>
   session.expired
     ? 'Your session has ended. Sign in again to keep syncing; changes made on this device are kept.'
     : 'Sign in to see your plans and log on any device.',
 )
+// One message covers both fields: the server doesn't say which of the two was wrong.
 const wrong = computed(() => problem.value?.code === 'invalid')
+const describedBy = computed(() => (problem.value ? 'login-problem' : undefined))
 
 async function submit(): Promise<void> {
   if (busy.value) return
@@ -30,56 +33,44 @@ async function submit(): Promise<void> {
   }
   // Back to the password, ready for another try; the error is announced by its role.
   await nextTick()
-  passwordInput.value?.focus()
-  passwordInput.value?.select()
+  const input = document.getElementById('login-password') as HTMLInputElement | null
+  input?.focus()
+  input?.select()
 }
 </script>
 
 <template>
   <AuthCard title="Sign in">
-    <p class="mb-5 text-sm text-ink-secondary">{{ intro }}</p>
+    <p class="body mb-6 text-ink-secondary">{{ intro }}</p>
     <form class="flex flex-col gap-4" @submit.prevent="submit">
-      <div>
-        <label for="login-username" :class="LABEL">Username</label>
-        <input
-          id="login-username"
-          v-model="username"
-          class="field w-full"
-          autocomplete="username"
-          autocapitalize="none"
-          spellcheck="false"
-          required
-          :aria-invalid="wrong"
-          :aria-describedby="problem ? 'login-problem' : undefined"
-        />
-      </div>
-      <div>
-        <label for="login-password" :class="LABEL">Password</label>
-        <input
-          id="login-password"
-          ref="passwordInput"
-          v-model="password"
-          class="field w-full"
-          type="password"
-          autocomplete="current-password"
-          required
-          :aria-invalid="wrong"
-          :aria-describedby="problem ? 'login-problem' : undefined"
-        />
-      </div>
-      <p
-        v-if="problem"
-        id="login-problem"
-        role="alert"
-        class="text-sm text-error-ink"
-        data-testid="login-problem"
-      >
+      <TextField
+        id="login-username"
+        v-model="username"
+        label="Username"
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false"
+        required
+        :invalid="wrong"
+        :aria-describedby="describedBy"
+      />
+      <TextField
+        id="login-password"
+        v-model="password"
+        label="Password"
+        type="password"
+        autocomplete="current-password"
+        required
+        :invalid="wrong"
+        :aria-describedby="describedBy"
+      />
+      <InlineMessage v-if="problem" id="login-problem" tone="error" data-testid="login-problem">
         {{ describeProblem(problem) }}
-      </p>
-      <button type="submit" class="btn-primary justify-center" :aria-busy="busy">
+      </InlineMessage>
+      <Button type="submit" variant="primary" class="mt-2" :busy="busy">
         {{ busy ? 'Signing in…' : 'Sign in' }}
-      </button>
+      </Button>
     </form>
-    <p class="mt-5 text-xs text-ink-secondary">Accounts are by invitation.</p>
+    <p class="caption mt-6 text-ink-secondary">Accounts are by invitation.</p>
   </AuthCard>
 </template>

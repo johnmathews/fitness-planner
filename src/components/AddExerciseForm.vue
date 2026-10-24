@@ -2,6 +2,8 @@
 import { usePlannerStore } from '@/stores/planner'
 import { useExerciseForm } from '@/composables/exerciseForm'
 import PerSideToggle from '@/components/PerSideToggle.vue'
+import { Button } from '@/components/ui/button'
+import { TextField } from '@/components/ui/text-field'
 
 const store = usePlannerStore()
 const form = useExerciseForm()
@@ -12,40 +14,49 @@ function submit(): void {
 }
 </script>
 
+<!-- Labels above every field (F17); the numbers are cleaned as they're typed, so they take
+     :model-value and an input handler rather than v-model. The button drops by a label's height
+     (space-6) to line up with the fields. -->
 <template>
-  <form class="flex flex-wrap items-center gap-2 pt-4" data-noprint @submit.prevent="submit">
-    <input
+  <form
+    class="flex flex-wrap items-start gap-x-3 gap-y-4 pt-6"
+    data-noprint
+    @submit.prevent="submit"
+  >
+    <TextField
+      id="add-exercise-name"
       v-model="name"
-      class="field min-w-0 flex-[1_1_220px]"
-      placeholder="New exercise"
-      aria-label="New exercise name"
+      label="New exercise"
+      class="min-w-0 flex-[1_1_100%] sm:flex-[1_1_220px]"
     />
-    <input
-      :value="sets"
+    <TextField
+      id="add-exercise-sets"
+      :model-value="sets"
+      label="Sets"
+      hint="Optional."
       maxlength="2"
-      class="field w-16"
-      placeholder="Sets"
       inputmode="numeric"
-      aria-label="Sets (optional)"
+      class="w-20"
       @input="form.onSetsInput"
     />
-    <input
-      :value="reps"
-      class="field w-20"
-      placeholder="Reps"
+    <TextField
+      id="add-exercise-reps"
+      :model-value="reps"
+      label="Reps"
       inputmode="numeric"
-      aria-label="Reps"
+      class="w-20"
       @input="form.onRepsInput"
     />
     <PerSideToggle v-model="perSide" />
-    <input
-      :value="weight"
-      class="field w-24"
-      placeholder="Weight kg"
+    <TextField
+      id="add-exercise-weight"
+      :model-value="weight"
+      label="Weight in kg"
+      hint="Optional. Leave empty for bodyweight."
       inputmode="decimal"
-      aria-label="Weight in kg (optional)"
+      class="w-44"
       @input="form.onWeightInput"
     />
-    <button type="submit" class="btn-primary">Add Exercise</button>
+    <Button type="submit" variant="primary" class="mt-6">Add exercise</Button>
   </form>
 </template>

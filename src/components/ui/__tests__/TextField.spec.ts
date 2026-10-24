@@ -141,6 +141,17 @@ describe('TextField', () => {
     expect(wrapper.get('input').attributes('aria-describedby')).toBe('pw-rules pw-error')
   })
 
+  it('marks the input invalid for a message shown elsewhere, without an error line of its own', () => {
+    const wrapper = mountField(
+      { label: 'Username', id: 'u', invalid: true },
+      { 'aria-describedby': 'login-problem' },
+    )
+    const input = wrapper.get('input')
+    expect(input.attributes('aria-invalid')).toBe('true')
+    expect(input.attributes('aria-describedby')).toBe('login-problem')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+  })
+
   it('fades the whole field only when the input is disabled', () => {
     const wrapper = mountField({ label: 'Username', id: 'u' }, { disabled: true })
     expect(wrapper.get('input').attributes('disabled')).toBeDefined()

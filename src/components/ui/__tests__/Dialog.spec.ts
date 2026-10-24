@@ -132,6 +132,39 @@ describe('Dialog', () => {
     expect(document.activeElement).toBe(byId('opener'))
   })
 
+  it('returns focus to the control that had it when the dialog mounts already open', async () => {
+    // As a list does: the Edit button sets the item, and the dialog appears open with it.
+    const Mounted = defineComponent({
+      setup() {
+        const editing = ref(false)
+        return () =>
+          h('div', [
+            h(
+              'button',
+              { id: 'edit', type: 'button', onClick: () => (editing.value = true) },
+              'Edit',
+            ),
+            editing.value
+              ? h(Dialog, {
+                  title: 'Edit exercise',
+                  open: true,
+                  'onUpdate:open': (value: boolean) => (editing.value = value),
+                })
+              : null,
+          ])
+      },
+    })
+    mount(Mounted, { attachTo: document.body })
+    byId('edit').focus()
+    byId('edit').click()
+    await settle()
+    expect(dialog()).not.toBeNull()
+    pressEscape()
+    await settle()
+    expect(dialog()).toBeNull()
+    expect(document.activeElement).toBe(byId('edit'))
+  })
+
   it('draws the panel and scrim from the roles, with actions at the end', async () => {
     await openFrom('trigger')
     const el = dialog()!

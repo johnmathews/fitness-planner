@@ -92,12 +92,10 @@ describe('DietSection', () => {
 
   it('adds a food, syncs it, and removes one after confirmation', async () => {
     await mountConfig()
-    await wrapper.get('input[aria-label="New food name"]').setValue('Beans')
-    await wrapper.get('input[aria-label="New food name"]').trigger('submit')
+    await wrapper.get('#add-food-name').setValue('Beans')
+    await wrapper.get('#add-food-name').trigger('submit')
     expect(diet().findAll('[data-testid="item-name"]').at(-1)!.text()).toBe('Beans')
-    expect(
-      (wrapper.get('input[aria-label="New food name"]').element as HTMLInputElement).value,
-    ).toBe('')
+    expect((wrapper.get('#add-food-name').element as HTMLInputElement).value).toBe('')
     await flushPromises()
     const plan = api.accounts.get(USER)!.plans.diet['2026-10-19']!.items as { name: string }[]
     expect(plan.at(-1)!.name).toBe('Beans')
@@ -109,8 +107,8 @@ describe('DietSection', () => {
 
   it('ignores an empty food name', async () => {
     await mountConfig()
-    await wrapper.get('input[aria-label="New food name"]').setValue('   ')
-    await wrapper.get('input[aria-label="New food name"]').trigger('submit')
+    await wrapper.get('#add-food-name').setValue('   ')
+    await wrapper.get('#add-food-name').trigger('submit')
     expect(cells('Vegetables')).toHaveLength(7)
     expect(diet().findAll('[role="row"]')).toHaveLength(6)
   })

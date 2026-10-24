@@ -38,11 +38,16 @@ const open = defineModel<boolean>('open', { default: false })
 
 const body = useTemplateRef<HTMLElement>('body')
 
-// Opened from code rather than the trigger slot, the dialog returns focus to whatever had it.
+// Opened from code rather than the trigger slot, the dialog returns focus to whatever had it,
+// including when it mounts already open (an Edit button that shows the dialog with its item).
 let opener: HTMLElement = document.body
-watch(open, (isOpen) => {
-  if (isOpen) opener = document.activeElement as HTMLElement
-})
+watch(
+  open,
+  (isOpen) => {
+    if (isOpen) opener = document.activeElement as HTMLElement
+  },
+  { immediate: true },
+)
 
 // The card: on open, focus goes to the first field, not the Close button that comes before it.
 function onOpenAutoFocus(event: Event): void {

@@ -9,10 +9,10 @@ const THEMES = [
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
 ]
-// The card's sentence-case options (the app's "per set" and "each side, per set").
+// The app's per-side wording, the Dialog card's (PerSideToggle.vue).
 const REPS_COUNT = [
   { value: 'per-set', label: 'Per set' },
-  { value: 'each-side', label: 'Each side, per set' },
+  { value: 'each-side', label: 'Each side' },
 ]
 
 const theme = ref('system')

@@ -131,8 +131,8 @@ listed in [api.md](api.md) §10):
   navigation, confirm-before-remove, print, the visibility and one-minute clock refresh, another
   tab's writes to the cache, the add form, the settings popover including focus return, and the theme: the
   `dark` class following the OS (with a stubbed `matchMedia`), the theme buttons and their
-  persistence. Also the weight and sets fields, the edit dialog (with `showModal`/`close` stubbed,
-  as jsdom has no modal dialogs), normal mode hiding every editing control, export (with
+  persistence. Also the weight and sets fields, the edit dialog (found by `role="dialog"` on
+  `document.body`, where Reka's portal renders it), normal mode hiding every editing control, export (with
   `URL.createObjectURL` stubbed) and import through the file input (summary, confirm, cancel,
   errors), copying the plan to
   the next week (with and without the replace confirmation), and the carried-over note. Tests that

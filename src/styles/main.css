@@ -91,6 +91,8 @@
   }
 }
 
+/* The last of the old component classes, until the navbar, settings popover, import prompt, sync
+   banner and week header move onto Button and SegmentedControl; then this layer goes. */
 @layer components {
   /* Outlined button: the navbar, settings and secondary actions. */
   .btn {
@@ -105,11 +107,6 @@
   /* One option in a segmented control (a track of aria-pressed buttons); the chosen one is ink. */
   .segment {
     @apply rounded-md text-xs font-medium text-ink-secondary hover:text-ink aria-pressed:bg-ink aria-pressed:text-on-ink;
-  }
-
-  /* Text inputs in the forms; keyboard and pointer focus both show the focus ring. */
-  .field {
-    @apply h-9 rounded-sm border border-control-border bg-panel px-3 text-sm text-ink placeholder:text-ink-secondary;
   }
 }
 

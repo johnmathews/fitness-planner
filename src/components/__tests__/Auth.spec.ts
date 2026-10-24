@@ -77,7 +77,12 @@ describe('signing in', () => {
   })
 
   it.each([
-    ['a wrong password', 'invalid', undefined, 'Wrong username or password.'],
+    [
+      'a wrong password',
+      'invalid',
+      undefined,
+      'Wrong username or password. Check both and try again.',
+    ],
     ['a locked account', 'locked', 600, 'Too many attempts. Try again in 10 minutes.'],
     ['a lock about to end', 'locked', 30, 'Too many attempts. Try again in 1 minute.'],
     ['a busy server', 'busy', 1, 'The server is busy. Try again in a moment.'],
@@ -183,13 +188,25 @@ describe('invite and reset links', () => {
     await wrapper.get('#new-password').setValue('a long new password')
     await wrapper.get('#confirm-password').setValue('something else')
     await wrapper.get('form').trigger('submit')
-    expect(wrapper.get('[role="alert"]').text()).toBe('The passwords don’t match.')
+    expect(wrapper.get('[role="alert"]').text()).toBe(
+      'The passwords don’t match. Type the same password in both fields.',
+    )
+    expect(wrapper.get('#confirm-password').attributes('aria-describedby')).toBe(
+      'confirm-password-error',
+    )
     expect(api.paths('/invites/redeem')).toEqual([])
     await wrapper.get('#new-password').setValue('short')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false) // gone once the value changes
     await wrapper.get('#confirm-password').setValue('short')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
-    expect(wrapper.get('[data-testid="link-problem"]').text()).toBe('Use 10 to 256 characters.')
+    // The server's length rule is the password field's own error, in place of its hint.
+    expect(wrapper.get('#new-password-error').text()).toBe('Use 10 to 256 characters.')
+    expect(wrapper.get('#new-password').attributes('aria-invalid')).toBe('true')
+    expect(wrapper.find('#new-password-hint').exists()).toBe(false)
+    await wrapper.get('#new-password').setValue('a long new password')
+    expect(wrapper.find('#new-password-error').exists()).toBe(false)
+    expect(wrapper.get('#new-password').attributes('aria-describedby')).toBe('new-password-hint')
   })
 
   it('names the user on a reset link', async () => {
@@ -213,7 +230,13 @@ describe('invite and reset links', () => {
       'This link has expired or was already used. Ask for a new one.',
     )
     expect(location.hash).toBe('')
+    // F19: the card is not a dead end; its one way on is a link to sign in.
     expect(wrapper.find('button').exists()).toBe(false)
+    const links = wrapper.findAll('a')
+    expect(links.map((a) => a.text())).toEqual(['Go to sign in'])
+    await links[0]!.trigger('click')
+    await flushPromises()
+    expect(heading()).toBe('Sign in')
   })
 
   it('offers to try again when the link could not be checked', async () => {
@@ -244,6 +267,30 @@ describe('invite and reset links', () => {
     await flushPromises()
     expect(wrapper.get('[data-testid="link-problem"]').text()).toContain('expired')
     expect(location.hash).toBe('')
+    // The form gives way to the spent-link card, with its way on.
+    expect(heading()).toBe('Link not valid')
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Go to sign in'])
+  })
+
+  it('keeps the form and its input when the redeem cannot reach the server', async () => {
+    api = signedOut()
+    api.links.set('tok_10', { kind: 'invite', username: 'ivy' })
+    history.replaceState(null, '', '/#/invite/tok_10')
+    mountApp()
+    await flushPromises()
+    await wrapper.get('#new-password').setValue('a long new password')
+    await wrapper.get('#confirm-password').setValue('a long new password')
+    api.offline = true
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(heading()).toBe('Welcome, ivy')
+    expect(wrapper.get('form [data-testid="link-problem"]').text()).toBe(
+      'Can’t reach the server. Check the connection and try again.',
+    )
+    expect((wrapper.get('#new-password').element as HTMLInputElement).value).toBe(
+      'a long new password',
+    )
+    expect(location.hash).toBe('#/invite/tok_10')
   })
 
   it('starts afresh when a second link arrives in the same tab', async () => {

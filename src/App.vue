@@ -105,7 +105,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <PasswordForm v-if="link" :key="link" :token="link" @done="closeLink" @spent="forgetToken" />
+  <PasswordForm
+    v-if="link"
+    :key="link"
+    :token="link"
+    @done="closeLink"
+    @spent="forgetToken"
+    @leave="closeLink"
+  />
   <template v-else-if="session.status === 'signed-in'">
     <AppNavbar />
     <main class="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 print:max-w-none print:p-0">

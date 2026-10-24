@@ -12,6 +12,7 @@ import StepperSection from './sections/StepperSection.vue'
 import PopoverSection from './sections/PopoverSection.vue'
 import DialogSection from './sections/DialogSection.vue'
 import ConfirmDialogSection from './sections/ConfirmDialogSection.vue'
+import InlineMessageSection from './sections/InlineMessageSection.vue'
 
 /**
  * One section of the style guide. StyleGuide.vue renders each as
@@ -125,5 +126,12 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     summary:
       "A small modal question before something that can't be undone: what will happen, then two buttons.",
     component: ConfirmDialogSection,
+  },
+  {
+    id: 'sg-inline-message',
+    title: 'InlineMessage',
+    summary:
+      'A one- or two-line message next to the thing it is about, in one of four tones, always an icon and words together.',
+    component: InlineMessageSection,
   },
 ]
