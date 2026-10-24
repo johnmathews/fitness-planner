@@ -1,0 +1,206 @@
+{
+  "v": 3,
+  "layout": "files",
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-24T16:03:37Z"
+  },
+  "title": "Fitness Planner",
+  "namespace": "FitnessPlanner",
+  "libraries": [],
+  "sections": {},
+  "groups": [
+    "Wordmark",
+    "Icons"
+  ],
+  "assetGroups": {
+    "Wordmark": {
+      "name": "Wordmark",
+      "tile": "l",
+      "order": [
+        "fitness-planner-wordmark-ink.svg",
+        "fitness-planner-wordmark-light.svg"
+      ],
+      "files": {
+        "fitness-planner-wordmark-ink.svg": {
+          "name": "fitness-planner-wordmark-ink.svg",
+          "blob": "a208160d040149b1f3c58d330142d55b",
+          "size": 9896,
+          "type": "image/svg+xml"
+        },
+        "fitness-planner-wordmark-light.svg": {
+          "name": "fitness-planner-wordmark-light.svg",
+          "blob": "3567d7499b95894b40ea18d80dcc9fb7",
+          "size": 9896,
+          "type": "image/svg+xml"
+        }
+      }
+    },
+    "Icons": {
+      "name": "Icons",
+      "tile": "xs",
+      "order": [
+        "check.svg",
+        "circle-alert.svg",
+        "triangle-alert.svg",
+        "info.svg",
+        "chevron-left.svg",
+        "chevron-right.svg",
+        "settings.svg",
+        "x.svg",
+        "plus.svg",
+        "minus.svg",
+        "pencil.svg",
+        "trash-2.svg",
+        "search.svg",
+        "cloud-off.svg",
+        "refresh-cw.svg",
+        "sun.svg",
+        "moon.svg",
+        "monitor.svg",
+        "calendar-days.svg",
+        "list.svg",
+        "sticky-note.svg"
+      ],
+      "files": {
+        "check.svg": {
+          "name": "check.svg",
+          "blob": "baff1d9149c8dac6ac209a476d288704",
+          "size": 312,
+          "type": "image/svg+xml"
+        },
+        "circle-alert.svg": {
+          "name": "circle-alert.svg",
+          "blob": "e2f02abc59181f3d5717b76526fdc4f1",
+          "size": 412,
+          "type": "image/svg+xml"
+        },
+        "triangle-alert.svg": {
+          "name": "triangle-alert.svg",
+          "blob": "8d41fbfd46e054802dd170dc3f0f675c",
+          "size": 427,
+          "type": "image/svg+xml"
+        },
+        "info.svg": {
+          "name": "info.svg",
+          "blob": "4270ca924a3c6a9628c06f0b62c1494c",
+          "size": 366,
+          "type": "image/svg+xml"
+        },
+        "chevron-left.svg": {
+          "name": "chevron-left.svg",
+          "blob": "3d9aeffc9528c47cbbd02e197ed8a5f4",
+          "size": 318,
+          "type": "image/svg+xml"
+        },
+        "chevron-right.svg": {
+          "name": "chevron-right.svg",
+          "blob": "163297f1f5f006dddcff1d15d3ae1743",
+          "size": 318,
+          "type": "image/svg+xml"
+        },
+        "settings.svg": {
+          "name": "settings.svg",
+          "blob": "bf6c32e8d6841be38befe201ba3b432e",
+          "size": 662,
+          "type": "image/svg+xml"
+        },
+        "x.svg": {
+          "name": "x.svg",
+          "blob": "23ad7fd6b4463105c657956e8e6ba884",
+          "size": 329,
+          "type": "image/svg+xml"
+        },
+        "plus.svg": {
+          "name": "plus.svg",
+          "blob": "c9f167dfb95a96063a298edaf15b036b",
+          "size": 328,
+          "type": "image/svg+xml"
+        },
+        "minus.svg": {
+          "name": "minus.svg",
+          "blob": "a889a1f0ad49baf2a1eee161cc6b02f6",
+          "size": 305,
+          "type": "image/svg+xml"
+        },
+        "pencil.svg": {
+          "name": "pencil.svg",
+          "blob": "070a5c9a138aa8c7af6f1773eeff7895",
+          "size": 451,
+          "type": "image/svg+xml"
+        },
+        "trash-2.svg": {
+          "name": "trash-2.svg",
+          "blob": "546686eae25c6afe935b206bf6f2e8e9",
+          "size": 464,
+          "type": "image/svg+xml"
+        },
+        "search.svg": {
+          "name": "search.svg",
+          "blob": "09b4277268d7754ea8b718e50a7da489",
+          "size": 349,
+          "type": "image/svg+xml"
+        },
+        "cloud-off.svg": {
+          "name": "cloud-off.svg",
+          "blob": "0c04dcf8705616f689d66d5615d573a7",
+          "size": 462,
+          "type": "image/svg+xml"
+        },
+        "refresh-cw.svg": {
+          "name": "refresh-cw.svg",
+          "blob": "6d6d0badaf0bbe62ff26b5aafdb36cd3",
+          "size": 470,
+          "type": "image/svg+xml"
+        },
+        "sun.svg": {
+          "name": "sun.svg",
+          "blob": "f07697c086c7507eda2710ac72810a85",
+          "size": 556,
+          "type": "image/svg+xml"
+        },
+        "moon.svg": {
+          "name": "moon.svg",
+          "blob": "458bcfacbf824318ecd7f300674f006f",
+          "size": 406,
+          "type": "image/svg+xml"
+        },
+        "monitor.svg": {
+          "name": "monitor.svg",
+          "blob": "eac3a5894310471f6b0c5ba2135f8043",
+          "size": 421,
+          "type": "image/svg+xml"
+        },
+        "calendar-days.svg": {
+          "name": "calendar-days.svg",
+          "blob": "b62664c905b8057d6fae2e889ac60f5e",
+          "size": 564,
+          "type": "image/svg+xml"
+        },
+        "list.svg": {
+          "name": "list.svg",
+          "blob": "00f76dd5a50a47317a71ac18e107b196",
+          "size": 425,
+          "type": "image/svg+xml"
+        },
+        "sticky-note.svg": {
+          "name": "sticky-note.svg",
+          "blob": "45bd006f99d53aa84790f10cf9a2e6e5",
+          "size": 455,
+          "type": "image/svg+xml"
+        }
+      }
+    }
+  },
+  "blobs": {},
+  "docs": {
+    "readme": "project/README.md",
+    "sections": []
+  },
+  "lastChange": {
+    "by": "John Mathews",
+    "at": "2026-10-24T16:03:37Z",
+    "via": "Claude Code",
+    "note": "First version: the Notebook direction"
+  }
+}

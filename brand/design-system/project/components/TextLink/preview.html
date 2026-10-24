@@ -1,0 +1,35 @@
+<!-- @dsCard group="Basics" height=260 subtitle="Ink and underlined, inside a sentence and on its own" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TextLink — preview</title>
+<style>
+  body { margin: 0; padding: var(--space-6) var(--space-4); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .stack { display: flex; flex-direction: column; gap: var(--space-4); max-width: 520px; }
+  .cell { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+  .state { margin: 0; color: var(--ink-secondary); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-8); }
+  p { margin: 0; }
+  .muted { color: var(--ink-secondary); }
+
+  a { color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; border-radius: 2px; }
+  a:hover, a.is-hover { text-decoration-thickness: 2px; }
+  a:focus-visible, a.is-focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="stack">
+  <div class="cell"><p class="caption state">In a sentence</p>
+    <p class="body">This invite has already been used. <a href="#">Go to sign in</a>.</p></div>
+  <div class="cell"><p class="caption state">In a caption, the link stays ink</p>
+    <p class="caption muted">Your session has ended. <a href="#">Sign in again</a> to keep syncing; changes made on this device are kept.</p></div>
+  <div class="row">
+    <div class="cell"><p class="caption state">Default</p><a class="body" href="#">Go to sign in</a></div>
+    <div class="cell"><p class="caption state">Hover</p><a class="body is-hover" href="#">Go to sign in</a></div>
+    <div class="cell"><p class="caption state">Focus</p><a class="body is-focus" href="#">Go to sign in</a></div>
+  </div>
+</div>
+<script></script>
+</body>
+</html>
