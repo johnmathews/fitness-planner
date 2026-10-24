@@ -37,7 +37,7 @@ async function submit(): Promise<void> {
 
 <template>
   <AuthCard title="Sign in">
-    <p class="mb-5 text-sm text-muted">{{ intro }}</p>
+    <p class="mb-5 text-sm text-ink-secondary">{{ intro }}</p>
     <form class="flex flex-col gap-4" @submit.prevent="submit">
       <div>
         <label for="login-username" :class="LABEL">Username</label>
@@ -71,7 +71,7 @@ async function submit(): Promise<void> {
         v-if="problem"
         id="login-problem"
         role="alert"
-        class="text-sm text-warn"
+        class="text-sm text-error-ink"
         data-testid="login-problem"
       >
         {{ describeProblem(problem) }}
@@ -80,6 +80,6 @@ async function submit(): Promise<void> {
         {{ busy ? 'Signing in…' : 'Sign in' }}
       </button>
     </form>
-    <p class="mt-5 text-xs text-faint">Accounts are by invitation.</p>
+    <p class="mt-5 text-xs text-ink-secondary">Accounts are by invitation.</p>
   </AuthCard>
 </template>

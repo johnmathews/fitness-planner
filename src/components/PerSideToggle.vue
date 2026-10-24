@@ -4,7 +4,7 @@ const perSide = defineModel<boolean>({ required: true })
 
 <template>
   <div
-    class="flex h-9 rounded-lg border border-line bg-subtle p-0.5"
+    class="flex h-9 rounded-lg border border-line bg-tile p-0.5"
     role="group"
     aria-label="Reps count"
   >

@@ -40,6 +40,14 @@ function rowCells(name: string) {
   return wrapper.findAll(`button[aria-label^="${name},"]`)
 }
 
+/** The pen the app applied: the chosen ink's light and dark values. */
+function pen(): [string, string] {
+  const style = document.documentElement.style
+  return [style.getPropertyValue('--user-pen-light'), style.getPropertyValue('--user-pen-dark')]
+}
+const VIOLET: [string, string] = ['#4b3b7a', '#b9a9e8']
+const INK_BLUE: [string, string] = ['#2b4c7e', '#9db8e8']
+
 describe('App', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
@@ -255,15 +263,19 @@ describe('SettingsPopover', () => {
     return wrapper.findAll('button').find((b) => b.text().endsWith('Settings'))!
   }
 
-  it('opens, changes accent and daily pick live, and closes on Escape', async () => {
+  it('opens, changes the ink and daily pick live, and closes on Escape', async () => {
     mountApp()
     expect(wrapper.find(PANEL).exists()).toBe(false)
     await trigger().trigger('click')
     expect(trigger().attributes('aria-expanded')).toBe('true')
+    // Nothing saved yet: Ink blue, although the stored default accent is the old green.
+    expect(wrapper.get('button[aria-label="Ink blue"]').attributes('aria-pressed')).toBe('true')
+    expect(pen()).toEqual(INK_BLUE)
 
-    await wrapper.get('button[aria-label="Purple"]').trigger('click')
-    expect(wrapper.get('button[aria-label="Purple"]').attributes('aria-pressed')).toBe('true')
-    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#bf5af2')
+    await wrapper.get('button[aria-label="Violet"]').trigger('click')
+    expect(wrapper.get('button[aria-label="Violet"]').attributes('aria-pressed')).toBe('true')
+    expect(usePlannerStore().accent).toBe('#4b3b7a')
+    expect(pen()).toEqual(VIOLET)
 
     await wrapper.get('button[aria-label="More exercises per day"]').trigger('click')
     expect(wrapper.find('[data-testid="pick-hint"]').text()).toBe(
@@ -271,7 +283,7 @@ describe('SettingsPopover', () => {
     )
     expect(ex().findAll('[data-testid="day-count"]')[0]!.text()).toBe('0/4')
 
-    ;(wrapper.get('button[aria-label="Purple"]').element as HTMLElement).focus()
+    ;(wrapper.get('button[aria-label="Violet"]').element as HTMLElement).focus()
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     await wrapper.vm.$nextTick()
     expect(wrapper.find(PANEL).exists()).toBe(false)
@@ -299,6 +311,21 @@ describe('SettingsPopover', () => {
     expect(fewer.attributes('aria-disabled')).toBe('true')
     await fewer.trigger('click')
     expect(wrapper.get('[data-testid="daily-pick"]').text()).toBe('1')
+  })
+
+  it('shows a saved legacy accent as its ink, without rewriting it', async () => {
+    mountApp({ ...emptyState(), settings: { accent: '#ff9f0a', dailyPick: 3 } })
+    await trigger().trigger('click')
+    // Orange was too close to the over-the-pick colour, so it becomes Ink blue (K3).
+    expect(wrapper.get('button[aria-label="Ink blue"]').attributes('aria-pressed')).toBe('true')
+    expect(pen()).toEqual(INK_BLUE)
+    expect(usePlannerStore().accent).toBe('#ff9f0a')
+    wrapper.unmount()
+
+    mountApp({ ...emptyState(), settings: { accent: '#30d158', dailyPick: 3 } })
+    await trigger().trigger('click')
+    expect(wrapper.get('button[aria-label="Forest"]').attributes('aria-pressed')).toBe('true')
+    expect(pen()).toEqual(['#2f5d46', '#8fcbaa'])
   })
 })
 
@@ -396,10 +423,10 @@ describe('export and import', () => {
     mountApp()
     await rowCells('Push-ups')[4]!.trigger('click')
     await openSettings()
-    await wrapper.get('button[aria-label="Blue"]').trigger('click')
+    await wrapper.get('button[aria-label="Ink blue"]').trigger('click')
     await choose(jsonFile(EXPORT))
     // The tick gave this week its own plan, so only last week's exercise plan and this week's food
-    // plan are new. Picking Blue saved settings, so the file's accent and daily pick don't apply.
+    // plan are new. Picking Ink blue saved settings, so the file's accent and daily pick don't apply.
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
       'Adds 2 weekly plans and 3 ticks. Existing plans and ticks stay as they are.',
     )
@@ -412,7 +439,7 @@ describe('export and import', () => {
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('true')
     expect(rowCells('Push-ups')[4]!.attributes('aria-pressed')).toBe('true')
     expect(rowCells('Eggs')[2]!.attributes('aria-pressed')).toBe('true')
-    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#0a84ff')
+    expect(pen()).toEqual(INK_BLUE)
   })
 
   it('applies the file’s settings when this browser has none saved', async () => {
@@ -424,14 +451,14 @@ describe('export and import', () => {
     )
     await button('Import').trigger('click')
     await flushPromises()
-    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#bf5af2')
+    expect(pen()).toEqual(VIOLET)
     expect(wrapper.get('[data-testid="daily-pick"]').text()).toBe('2')
   })
 
   it('uses the singular for one plan and one tick', async () => {
     mountApp()
     await openSettings()
-    await wrapper.get('button[aria-label="Blue"]').trigger('click')
+    await wrapper.get('button[aria-label="Ink blue"]').trigger('click')
     await choose(
       jsonFile({
         format: 'fitness-planner-export',
@@ -452,11 +479,11 @@ describe('export and import', () => {
     await openSettings()
     await choose(jsonFile(EXPORT))
     expect(wrapper.get('[data-testid="import-summary"]').text()).toContain('plus the accent')
-    await wrapper.get('button[aria-label="Blue"]').trigger('click')
+    await wrapper.get('button[aria-label="Ink blue"]').trigger('click')
     expect(wrapper.get('[data-testid="import-summary"]').text()).not.toContain('plus the accent')
     await button('Import').trigger('click')
     await flushPromises()
-    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#0a84ff')
+    expect(pen()).toEqual(INK_BLUE)
   })
 
   it('says so, and keeps the file, when the server cannot be reached', async () => {

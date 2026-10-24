@@ -11,6 +11,7 @@ import PasswordForm from '@/components/PasswordForm.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ImportPrompt from '@/components/ImportPrompt.vue'
 import { isDark } from '@/lib/theme'
+import { inkFor } from '@/lib/inks'
 import { useSessionStore } from '@/stores/session'
 import { useSyncStore } from '@/stores/sync'
 
@@ -38,8 +39,14 @@ function closeLink(): void {
   link.value = null
 }
 
-// The accent is a user setting, so it lives in a CSS variable rather than in the stylesheets.
-watchEffect(() => document.documentElement.style.setProperty('--accent', store.accent))
+// The ink is a user setting, so it lives in CSS variables rather than in the stylesheets: one value
+// per theme, from which main.css picks the pen. The stored accent keeps its old format (K3a).
+watchEffect(() => {
+  const ink = inkFor(store.accent, store.savedSettings() !== null)
+  const style = document.documentElement.style
+  style.setProperty('--user-pen-light', ink.light)
+  style.setProperty('--user-pen-dark', ink.dark)
+})
 
 // matchMedia is missing in some environments (jsdom), so "System" falls back to light there.
 const colorScheme = window.matchMedia?.('(prefers-color-scheme: dark)')

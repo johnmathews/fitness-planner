@@ -17,9 +17,12 @@
     "lint:eslint": "eslint . --cache",
     "lint-fix": "oxlint . --fix && eslint . --fix --cache",
     "format": "prettier --write src/ fixtures/",
-    "format:check": "prettier --check src/ fixtures/"
+    "format:check": "prettier --check src/ fixtures/",
+    "tokens": "python3 scripts/design_preview.py brand/design-system --tokens-css src/styles/tokens.css --dark-selector .dark && grep -v '^@font-face' src/styles/tokens.css > src/styles/tokens.css.tmp && mv src/styles/tokens.css.tmp src/styles/tokens.css"
   },
   "dependencies": {
+    "@fontsource-variable/source-sans-3": "^5.3.1",
+    "@fontsource-variable/source-serif-4": "^5.3.1",
     "pinia": "^4.0.3",
     "vue": "^3.5.42"
   },

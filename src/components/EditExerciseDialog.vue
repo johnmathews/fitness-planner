@@ -15,7 +15,7 @@ form.load(props.exercise)
 
 const dialog = ref<HTMLDialogElement | null>(null)
 const titleId = useId()
-const LABEL = 'flex flex-col gap-1 text-xs font-medium text-muted'
+const LABEL = 'flex flex-col gap-1 text-xs font-medium text-ink-secondary'
 
 // A native modal dialog: it traps focus, closes on Escape and returns focus to the opener.
 onMounted(() => dialog.value?.showModal())
@@ -29,12 +29,12 @@ function save(): void {
   <dialog
     ref="dialog"
     data-noprint
-    class="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-xl border border-line bg-surface p-5 text-fg shadow-xl backdrop:bg-black/40"
+    class="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-xl border border-line bg-panel p-5 text-ink shadow-overlay backdrop:bg-scrim/40"
     :aria-labelledby="titleId"
     @close="emit('close')"
   >
     <form class="flex flex-col gap-4" @submit.prevent="save">
-      <h2 :id="titleId" class="text-lg font-semibold tracking-tight">Edit exercise</h2>
+      <h2 :id="titleId" class="title-2">Edit exercise</h2>
       <label :class="LABEL">
         Name
         <input v-model="name" class="field" required pattern=".*\S.*" title="Enter a name" />

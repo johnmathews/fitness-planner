@@ -70,12 +70,12 @@ async function submit(): Promise<void> {
 <template>
   <AuthCard :title="title">
     <template v-if="link">
-      <p class="mb-5 text-sm text-muted">
+      <p class="mb-5 text-sm text-ink-secondary">
         <template v-if="link.kind === 'invite'">
           Choose a password to finish setting up your account.
         </template>
         <template v-else>
-          For <strong class="text-fg">{{ link.username }}</strong
+          For <strong class="text-ink">{{ link.username }}</strong
           >. This signs you out on every other device.
         </template>
       </p>
@@ -103,7 +103,7 @@ async function submit(): Promise<void> {
             aria-describedby="new-password-hint"
             :aria-invalid="problem?.code === 'password'"
           />
-          <p id="new-password-hint" class="mt-1 text-xs text-faint">
+          <p id="new-password-hint" class="mt-1 text-xs text-ink-secondary">
             At least {{ MIN }} characters.
           </p>
         </div>
@@ -120,8 +120,15 @@ async function submit(): Promise<void> {
             :aria-invalid="mismatch"
           />
         </div>
-        <p v-if="mismatch" role="alert" class="text-sm text-warn">The passwords don’t match.</p>
-        <p v-else-if="problem" role="alert" class="text-sm text-warn" data-testid="link-problem">
+        <p v-if="mismatch" role="alert" class="text-sm text-error-ink">
+          The passwords don’t match.
+        </p>
+        <p
+          v-else-if="problem"
+          role="alert"
+          class="text-sm text-error-ink"
+          data-testid="link-problem"
+        >
           {{ describeProblem(problem) }}
         </p>
         <button type="submit" class="btn-primary justify-center" :aria-busy="busy">
@@ -130,7 +137,7 @@ async function submit(): Promise<void> {
       </form>
     </template>
     <template v-else-if="problem">
-      <p role="alert" class="text-sm text-warn" data-testid="link-problem">
+      <p role="alert" class="text-sm text-error-ink" data-testid="link-problem">
         {{ describeProblem(problem) }}
       </p>
       <button v-if="canRetry" type="button" class="btn mt-4" @click="check">Try again</button>

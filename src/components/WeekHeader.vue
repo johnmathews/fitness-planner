@@ -38,8 +38,8 @@ function copyToNextWeek(): void {
 <template>
   <section class="flex flex-wrap items-end justify-between gap-3 pt-8 pb-2 print:pt-0">
     <div class="flex flex-col gap-1">
-      <h1 class="text-3xl font-bold tracking-tight">{{ store.label }}</h1>
-      <p class="text-sm text-muted" data-testid="pick-hint">
+      <h1 class="display">{{ store.label }}</h1>
+      <p class="text-sm text-ink-secondary" data-testid="pick-hint">
         Pick {{ store.dailyPick }} exercises a day. Click a cell when it’s done.
       </p>
       <div
@@ -48,16 +48,16 @@ function copyToNextWeek(): void {
         data-noprint
       >
         <button type="button" class="btn" @click="copyToNextWeek">Copy plan to next week</button>
-        <span v-if="carriedNote" class="text-xs text-muted" data-testid="carried-from">
+        <span v-if="carriedNote" class="text-xs text-ink-secondary" data-testid="carried-from">
           {{ carriedNote }}
         </span>
       </div>
     </div>
     <div class="flex items-baseline gap-1.5">
-      <div class="font-mono text-3xl font-semibold text-accent-fg" data-testid="grand-total">
+      <div class="text-3xl font-semibold text-pen tabular-nums" data-testid="grand-total">
         {{ store.grandTotal }}
       </div>
-      <div class="text-sm text-muted">sessions this week</div>
+      <div class="text-sm text-ink-secondary">sessions this week</div>
     </div>
   </section>
 </template>

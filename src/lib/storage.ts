@@ -43,7 +43,6 @@ export const SETTINGS_KEY = 'fitness-planner-settings-v1'
 export const LEGACY_DATA_KEY = 'fitness-planner-v1'
 export const LEGACY_DIET_KEY = 'fitness-planner-diet-v1'
 
-export const ACCENTS = ['#0a84ff', '#30d158', '#ff9f0a', '#bf5af2'] as const
 export const MIN_TARGET = 0
 export const MAX_TARGET = 7
 export const MIN_DAILY_PICK = 1

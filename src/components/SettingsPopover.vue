@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import { useSessionStore } from '@/stores/session'
 import { useSyncStore } from '@/stores/sync'
 import { describeProblem } from '@/lib/problems'
 import { useImportSummary } from '@/composables/importSummary'
-import { ACCENTS, MAX_DAILY_PICK, MIN_DAILY_PICK } from '@/lib/storage'
+import { MAX_DAILY_PICK, MIN_DAILY_PICK } from '@/lib/storage'
+import { INKS, inkFor } from '@/lib/inks'
 import { THEMES, type Theme } from '@/lib/theme'
 import {
   buildExport,
@@ -16,13 +17,6 @@ import {
   type ParseError,
 } from '@/lib/transfer'
 import NumberStepper from '@/components/NumberStepper.vue'
-
-const ACCENT_NAMES: Record<string, string> = {
-  '#0a84ff': 'Blue',
-  '#30d158': 'Green',
-  '#ff9f0a': 'Orange',
-  '#bf5af2': 'Purple',
-}
 
 const THEME_NAMES: Record<Theme, string> = { system: 'System', light: 'Light', dark: 'Dark' }
 
@@ -41,7 +35,7 @@ const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLButtonElement | null>(null)
 const panelId = useId()
-const LABEL = 'text-[11px] font-semibold tracking-wider text-muted uppercase'
+const LABEL = 'text-[11px] font-semibold tracking-wider text-ink-secondary uppercase'
 
 const fileInput = ref<HTMLInputElement | null>(null)
 /** A parsed file waiting for "Import". */
@@ -49,6 +43,8 @@ const pending = ref<ExportData | null>(null)
 const notice = ref<{ tone: 'error' | 'done'; text: string } | null>(null)
 const signOutProblem = ref<string | null>(null)
 const summary = useImportSummary()
+// The ink the stored accent shows as (K3a): a legacy accent shows as its ink until one is chosen.
+const ink = computed(() => inkFor(store.accent, store.savedSettings() !== null))
 
 // Each opening starts clean, rather than showing the last import's or sign-out's outcome.
 watch(open, () => {
@@ -149,12 +145,12 @@ onBeforeUnmount(() => {
     <button
       ref="trigger"
       type="button"
-      class="btn aria-expanded:bg-subtle"
+      class="btn aria-expanded:bg-tile"
       :aria-expanded="open"
       :aria-controls="panelId"
       @click="open = !open"
     >
-      <span class="size-2 rounded-full bg-accent" aria-hidden="true" />
+      <span class="size-2 rounded-full bg-pen" aria-hidden="true" />
       <!-- Below 380px a gear stands in for the word, so the navbar fits a 320px screen. -->
       <span class="hidden max-[379px]:inline" aria-hidden="true">⚙&#xFE0E;</span>
       <span class="max-[379px]:sr-only">Settings</span>
@@ -162,28 +158,28 @@ onBeforeUnmount(() => {
     <div
       v-if="open"
       :id="panelId"
-      class="absolute top-full right-0 z-30 mt-2 flex w-60 flex-col gap-2 rounded-xl border border-line bg-surface p-3 shadow-lg"
+      class="absolute top-full right-0 z-30 mt-2 flex w-60 flex-col gap-2 rounded-xl border border-line bg-panel p-3 shadow-overlay"
       role="group"
       aria-label="Settings"
     >
       <div :class="LABEL">Account</div>
       <div class="mb-1 flex items-center justify-between gap-2">
         <span class="truncate text-sm" data-testid="signed-in-as">
-          <span class="text-muted">Signed in as</span> {{ session.user }}
+          <span class="text-ink-secondary">Signed in as</span> {{ session.user }}
         </span>
         <button type="button" class="btn shrink-0" @click="signOut">Sign out</button>
       </div>
       <p
         v-if="signOutProblem"
         role="alert"
-        class="text-sm text-warn"
+        class="text-sm text-error-ink"
         data-testid="sign-out-problem"
       >
         {{ signOutProblem }}
       </p>
       <div :class="LABEL">Appearance</div>
       <div
-        class="mb-1 flex rounded-lg border border-line bg-subtle p-0.5"
+        class="mb-1 flex rounded-lg border border-line bg-tile p-0.5"
         role="group"
         aria-label="Theme"
       >
@@ -198,23 +194,28 @@ onBeforeUnmount(() => {
           {{ THEME_NAMES[t] }}
         </button>
       </div>
-      <div :class="LABEL">Accent</div>
-      <div class="flex gap-2.5 px-0.5 pt-0.5 pb-1.5" role="group" aria-label="Accent colour">
+      <div :class="LABEL">Ink</div>
+      <div class="flex gap-2.5 px-0.5 pt-0.5 pb-1.5" role="group" aria-label="Ink colour">
+        <!-- Each swatch is its ink's token, so it shows the value for the current theme. -->
         <button
-          v-for="c in ACCENTS"
-          :key="c"
+          v-for="i in INKS"
+          :key="i.id"
           type="button"
-          class="size-5.5 rounded-full ring-offset-2 ring-offset-surface aria-pressed:ring-2 aria-pressed:ring-fg"
-          :style="{ background: c }"
-          :aria-pressed="store.accent === c"
-          :aria-label="ACCENT_NAMES[c]"
-          :title="ACCENT_NAMES[c]"
-          @click="store.setAccent(c)"
+          class="size-5.5 rounded-full ring-offset-2 ring-offset-panel aria-pressed:ring-2 aria-pressed:ring-ink"
+          :style="{ background: `var(--${i.id})` }"
+          :aria-pressed="ink.id === i.id"
+          :aria-label="i.name"
+          :title="i.name"
+          @click="store.setAccent(i.light)"
         />
       </div>
       <div :class="LABEL">Exercises per day</div>
       <div class="flex items-center justify-between">
-        <span class="font-mono text-xl font-semibold" aria-live="polite" data-testid="daily-pick">
+        <span
+          class="text-xl font-semibold tabular-nums"
+          aria-live="polite"
+          data-testid="daily-pick"
+        >
           {{ store.dailyPick }}
         </span>
         <NumberStepper
@@ -245,7 +246,7 @@ onBeforeUnmount(() => {
         />
       </div>
       <div v-if="pending" class="flex flex-col gap-2" role="group" aria-label="Confirm import">
-        <p class="text-sm text-fg" data-testid="import-summary">{{ summary.describe(pending) }}</p>
+        <p class="text-sm text-ink" data-testid="import-summary">{{ summary.describe(pending) }}</p>
         <div class="flex gap-2">
           <button
             type="button"
@@ -264,7 +265,7 @@ onBeforeUnmount(() => {
         v-if="notice"
         :role="notice.tone === 'error' ? 'alert' : 'status'"
         :data-tone="notice.tone"
-        class="text-sm data-[tone=done]:text-muted data-[tone=error]:text-warn"
+        class="text-sm data-[tone=done]:text-ink-secondary data-[tone=error]:text-error-ink"
       >
         {{ notice.text }}
       </p>
