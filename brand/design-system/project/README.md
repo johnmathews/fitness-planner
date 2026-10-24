@@ -13,7 +13,7 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 
 | Layer | Where | How it behaves |
 | --- | --- | --- |
-| 1. Now | The week header, the Exercises and Diet grids, today's band, the phone's Today list | One obvious thing to do. Bold date, generous cells, 44px targets. |
+| 1. Now | The week header, the Exercises and Food grids, today's band, the phone's Today list | One obvious thing to do. Bold date, generous cells, 44px targets. |
 | 2. Record | The year strip, notes, search | Quiet and dense: `caption` type, `ink-secondary`, small marks. |
 
 ## How to use this system

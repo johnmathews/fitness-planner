@@ -26,3 +26,11 @@ export function numberWord(n: number, start = false): string {
 export function countOf(n: number, singular: string, start = false): string {
   return `${numberWord(n, start)} ${n === 1 ? singular : `${singular}s`}`
 }
+
+/** A timed set in the Chip card's words: "45 s", "2 min", "1 min 30 s". */
+export function durationText(seconds: number): string {
+  const min = Math.floor(seconds / 60)
+  const s = seconds % 60
+  if (!min) return `${s} s`
+  return s ? `${min} min ${s} s` : `${min} min`
+}

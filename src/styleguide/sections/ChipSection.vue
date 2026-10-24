@@ -10,6 +10,8 @@ const FORMS = [
   { state: 'Reps only', text: '10 reps a set', id: 'reps' },
   { state: 'Reps only, each side', text: '8 each side', id: 'reps-side' },
   { state: 'Sets only', text: '3 sets', id: 'sets' },
+  { state: 'Sets and time', text: '3 × 45 s', id: 'sets-time' },
+  { state: 'Time only, each side', text: '1 min 30 s each side', id: 'time-side' },
   { state: 'Weight', text: '16 kg', id: 'weight' },
 ]
 </script>
@@ -28,19 +30,16 @@ const FORMS = [
           <span class="body block font-semibold">Squats</span>
           <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Chip>3 × 15</Chip><Chip>16 kg</Chip>
-            <span class="caption text-ink-secondary">3 a week</span>
           </span>
         </li>
         <li class="border-b border-line py-2">
           <span class="body block font-semibold">Plank</span>
           <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Chip>3 sets</Chip>
-            <span class="caption text-ink-secondary">2 a week</span>
           </span>
         </li>
         <li class="border-b border-line py-2">
           <span class="body block font-semibold">Back extensions</span>
-          <span class="caption text-ink-secondary">3 a week</span>
         </li>
       </ul>
     </ExampleGroup>

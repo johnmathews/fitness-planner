@@ -1,11 +1,11 @@
-The heading over a WeekGrid: the section's name in serif, one line of hint, and the section's one StatFigure.
+The heading over a WeekGrid: the section's name in serif, an optional line of hint, and the section's one StatFigure.
 
 ## Use
 
-- The title in `title-1` (Source Serif 4, 26/32, 600): "Exercises", "Diet". Sentence case, no icon.
-- The hint beneath in `caption` `ink-secondary`, one line, plain instructions: "Pick three a day. Mark each one when it's done." / "Mark each day you ate it." Small numbers as words. The hint doesn't print.
-- The StatFigure on the right, baseline-aligned with the title. Below 640px it wraps under the hint, still left-aligned.
-- `space-6` between the header and its grid; `space-8` and a `line` rule between the Exercises and Diet sections.
+- The title in `title-1` (Source Serif 4, 26/32, 600): "Exercises", "Food". Sentence case, no icon.
+- An optional hint beneath in `caption` `ink-secondary`, one line, plain instructions: "Mark each day you ate it." Small numbers as words. The hint doesn't print. Exercises has none: the Picked row's caption ("3 a day") already states the daily pick.
+- The StatFigure on the right, baseline-aligned with the title. Below 640px it wraps under the title and hint, still left-aligned.
+- `space-6` between the header and its grid; `space-8` and a `line` rule between the Exercises and Food sections.
 - One StatFigure per section. No subtitle counts, no badges, no "This week's progress" eyebrow.
 
 ## States

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 defineProps<{
-  /** "Exercises", "Diet": sentence case, no icon. */
+  /** "Exercises", "Food": sentence case, no icon. */
   title: string
-  /** One line of plain instructions; small numbers as words. It doesn't print. */
-  hint: string
+  /** One optional line of plain instructions; small numbers as words. It doesn't print. */
+  hint?: string
   /** The h2's id, for the section's aria-labelledby. */
   headingId: string
 }>()
@@ -11,7 +11,7 @@ defineProps<{
 
 <!--
   The heading over a WeekGrid (brand/design-system/project/components/SectionHeader): the title in
-  title-1, the hint beneath in caption ink-secondary, and the section's one StatFigure (the slot)
+  title-1, the optional hint beneath in caption ink-secondary, and the section's one StatFigure (the slot)
   on the title's baseline, wrapping under the hint below 640px. On paper the heading never ends a
   page without its grid (F20) and the hint stays off the sheet (F24).
 -->
@@ -22,7 +22,9 @@ defineProps<{
   >
     <div class="flex min-w-0 flex-col gap-1">
       <h2 :id="headingId" class="title-1 text-ink">{{ title }}</h2>
-      <p data-slot="section-hint" class="caption text-ink-secondary" data-noprint>{{ hint }}</p>
+      <p v-if="hint" data-slot="section-hint" class="caption text-ink-secondary" data-noprint>
+        {{ hint }}
+      </p>
     </div>
     <slot />
   </header>

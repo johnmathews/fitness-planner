@@ -56,6 +56,12 @@
     .stage { padding: var(--space-4); min-height: 640px; }
     .dialog { top: var(--space-12); padding: var(--space-4); }
   }
+  .stepper { display: inline-flex; align-items: stretch; box-sizing: border-box; height: 44px; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+  .stepper button { display: inline-flex; align-items: center; justify-content: center; width: 44px; padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); cursor: pointer; }
+  .stepper button svg { width: 20px; height: 20px; }
+  .stepper button:hover { background: var(--tile); }
+  .stepper button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .value { display: flex; align-items: center; justify-content: center; min-width: 48px; padding: 0 var(--space-1); font: 600 17px/24px var(--font-sans); font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -86,6 +92,13 @@
           <input id="f-sets" value="3" inputmode="numeric" maxlength="2" aria-describedby="f-sets-hint">
           <span class="hint caption" id="f-sets-hint">Optional.</span>
         </div>
+        <div class="seg-wrap">
+          <span class="label" id="f-measure">Measure</span>
+          <div class="seg" role="group" aria-labelledby="f-measure">
+            <button type="button" tabindex="0" aria-pressed="true">Reps</button>
+            <button type="button" tabindex="-1" aria-pressed="false">Time</button>
+          </div>
+        </div>
         <div class="field narrow">
           <label class="label" for="f-reps">Reps</label>
           <input id="f-reps" value="8" inputmode="numeric">
@@ -102,6 +115,14 @@
         <label class="label" for="f-weight">Weight in kg</label>
         <input id="f-weight" class="weight" value="8" inputmode="decimal" aria-describedby="f-weight-hint">
         <span class="hint caption" id="f-weight-hint">Optional. Leave empty for bodyweight.</span>
+      </div>
+      <div class="field">
+        <span class="label" id="f-target">Times a week</span>
+        <div class="stepper" role="group" aria-labelledby="f-target">
+          <button type="button" aria-label="Fewer times a week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <output class="value" aria-live="polite">2</output>
+          <button type="button" aria-label="More times a week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+        </div>
       </div>
       <div class="actions">
         <button type="button" class="btn secondary">Cancel</button>

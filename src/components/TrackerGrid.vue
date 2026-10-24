@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import type { Day } from '@/stores/planner'
 import type { CountTone, PickedCount, Tracked } from '@/lib/tracker'
 import { useGridNav } from '@/composables/gridNav'
-import TrackerRow, { stickyName } from '@/components/TrackerRow.vue'
+import TrackerRow, { stickyName, type Amount } from '@/components/TrackerRow.vue'
 
 const props = defineProps<{
   /** The rows' kind, for the name column's hidden header: "Exercise" or "Food". */
@@ -15,6 +15,8 @@ const props = defineProps<{
   flagsFor: (id: string) => boolean[]
   totalFor: (id: string) => number
   detailsFor?: (item: Tracked) => string[]
+  /** What each row's Edit plan Stepper edits instead of the goal (exercises' reps or seconds). */
+  amountFor?: (item: Tracked) => Amount | undefined
   /** Adds an edit button to each row, which emits `edit`. */
   editable?: boolean
   configMode: boolean
@@ -25,6 +27,7 @@ const props = defineProps<{
 defineEmits<{
   toggle: [id: string, day: number]
   changeTarget: [id: string, delta: number]
+  changeAmount: [id: string, delta: number]
   remove: [id: string]
   edit: [id: string]
 }>()
@@ -153,6 +156,7 @@ function reveal(ev: FocusEvent): void {
           :key="it.id"
           :item="it"
           :details="detailsFor?.(it)"
+          :amount="amountFor?.(it)"
           :editable="editable"
           :config-mode="configMode"
           :days="days"
@@ -160,6 +164,7 @@ function reveal(ev: FocusEvent): void {
           :total="totalFor(it.id)"
           @toggle="$emit('toggle', it.id, $event)"
           @change-target="$emit('changeTarget', it.id, $event)"
+          @change-amount="$emit('changeAmount', it.id, $event)"
           @remove="$emit('remove', it.id)"
           @edit="$emit('edit', it.id)"
         />

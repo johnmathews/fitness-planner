@@ -6,7 +6,10 @@ export type Exercise = {
   name: string
   /** Sets per session; absent when not set. */
   sets?: number
+  /** Reps per set; 0 for a timed exercise, which has a `duration` instead. */
   reps: number
+  /** Seconds per set for a timed exercise (a plank); absent when it counts reps. */
+  duration?: number
   perSide?: boolean
   /** Load in kg (e.g. a 12 kg kettlebell); absent for bodyweight exercises. */
   weight?: number
@@ -28,7 +31,13 @@ export type PlannerData = { plans: Plans<Exercise>; log: Log }
 
 export type DietData = { plans: Plans<Food>; log: Log }
 
-export type Settings = { accent: string; dailyPick: number; theme: Theme }
+export type Settings = {
+  accent: string
+  dailyPick: number
+  theme: Theme
+  /** Whether the sections show their weekly totals ("6 of 15 this week"); the device's choice. */
+  showTotals: boolean
+}
 
 /** Exercise plans per week plus the log: `{ plans, log }`. */
 export const DATA_KEY = 'fitness-planner-v2'
@@ -50,9 +59,18 @@ export const MAX_DAILY_PICK = 8
 export const NEW_EXERCISE_TARGET = 3
 export const MAX_WEIGHT = 500
 export const MAX_SETS = 20
+export const MAX_REPS = 999
+export const MIN_DURATION = 5
+export const MAX_DURATION = 3600
+export const DURATION_STEP = 5
 export const NEW_FOOD_TARGET = 3
 
-export const DEFAULT_SETTINGS: Settings = { accent: '#30d158', dailyPick: 3, theme: 'system' }
+export const DEFAULT_SETTINGS: Settings = {
+  accent: '#30d158',
+  dailyPick: 3,
+  theme: 'system',
+  showTotals: true,
+}
 
 export function defaultExercises(): Exercise[] {
   return [
@@ -106,11 +124,13 @@ export function normaliseExercise(v: unknown): Exercise | null {
   if (!isRecord(v) || typeof v.id !== 'string' || typeof v.name !== 'string') return null
   const weight = normaliseWeight(v.weight)
   const sets = toInt(v.sets, 0)
+  const duration = toInt(v.duration, 0)
   return {
     id: v.id,
     name: v.name,
     ...(sets > 0 ? { sets: Math.min(MAX_SETS, sets) } : {}),
     reps: Math.max(0, toInt(v.reps, 0)),
+    ...(duration > 0 ? { duration: Math.min(MAX_DURATION, duration) } : {}),
     ...(typeof v.perSide === 'boolean' ? { perSide: v.perSide } : {}),
     ...(weight !== undefined ? { weight } : {}),
     target: clamp(toInt(v.target, NEW_EXERCISE_TARGET), MIN_TARGET, MAX_TARGET),
@@ -201,7 +221,7 @@ export function parseDietData(
   return parseTracked(raw, legacyRaw, currentWeek, 'foods', normaliseFood, defaultFoods)
 }
 
-/** The settings that belong to the person rather than the device: everything but the theme. */
+/** The settings that belong to the person rather than the device: not the theme or totals. */
 export type PortableSettings = Pick<Settings, 'accent' | 'dailyPick'>
 
 /** Any `#rrggbb` accent and a daily pick clamped to 1–8, each falling back to its default. */
@@ -222,7 +242,9 @@ export function parseSettings(raw: string | null): Settings {
   const parsed = parseJson(raw)
   if (!isRecord(parsed)) return { ...DEFAULT_SETTINGS }
   const theme = isTheme(parsed.theme) ? parsed.theme : DEFAULT_SETTINGS.theme
-  return { ...normalisePortableSettings(parsed), theme }
+  const showTotals =
+    typeof parsed.showTotals === 'boolean' ? parsed.showTotals : DEFAULT_SETTINGS.showTotals
+  return { ...normalisePortableSettings(parsed), theme, showTotals }
 }
 
 /** `localStorage` can throw (private mode, blocked site data); the app must still run. */

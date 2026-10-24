@@ -117,6 +117,31 @@ describe('planner store', () => {
     s.changeTarget('missing', 1)
   })
 
+  it('steps reps (1 or more) or, for a timed exercise, seconds (5 to 3600)', () => {
+    const s = usePlannerStore()
+    for (let i = 0; i < 20; i++) s.changeAmount('pl', -1)
+    expect(s.exercises.find((e) => e.id === 'pl')!.reps).toBe(1)
+    s.addExercise({ name: 'Plank', reps: 0, duration: 30, perSide: false })
+    const plank = () => s.exercises.at(-1)!
+    s.changeAmount(plank().id, 5)
+    expect(plank()).toMatchObject({ reps: 0, duration: 35 })
+    s.changeAmount(plank().id, -100)
+    expect(plank().duration).toBe(5)
+    s.changeAmount(plank().id, 10_000)
+    expect(plank().duration).toBe(3600)
+    s.changeAmount('missing', 1)
+  })
+
+  it('keeps a duration over reps, and takes a goal from the form', () => {
+    const s = usePlannerStore()
+    s.addExercise({ name: 'Wall sit', reps: 12, duration: 60.7, perSide: false, target: 5 })
+    const added = s.exercises.at(-1)!
+    expect(added).toMatchObject({ name: 'Wall sit', reps: 0, duration: 60, target: 5 })
+    expect(s.updateExercise(added.id, { name: 'Wall sit', reps: 12, perSide: false })).toBe(true)
+    expect(s.exercises.at(-1)).toMatchObject({ reps: 12, target: 5 })
+    expect(s.exercises.at(-1)).not.toHaveProperty('duration')
+  })
+
   it('adds an exercise with goal 3 and ignores an empty name', () => {
     const s = usePlannerStore()
     expect(s.addExercise({ name: '   ', reps: 5, perSide: false })).toBe(false)
@@ -230,6 +255,18 @@ describe('exerciseDetails', () => {
     ])
     // Nothing to say gives no chip, not a dash.
     expect(exerciseDetails({ id: 'a', name: 'A', reps: 0, target: 3 })).toEqual([])
+  })
+
+  it('formats a timed set in seconds and minutes, with sets and each side', () => {
+    const timed = (duration: number, more = {}) =>
+      exerciseDetails({ id: 'a', name: 'A', reps: 0, duration, target: 3, ...more })
+    expect(timed(45)).toEqual(['45 s'])
+    expect(timed(120, { sets: 3 })).toEqual(['3 × 2 min'])
+    expect(timed(90, { perSide: true })).toEqual(['1 min 30 s each side'])
+    expect(timed(30, { sets: 2, perSide: true, weight: 10 })).toEqual([
+      '2 × 30 s each side',
+      '10 kg',
+    ])
   })
 
   it('appends the weight, or shows it alone without reps', () => {

@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import type { Exercise } from '@/lib/storage'
 import { usePlannerStore } from '@/stores/planner'
-import { useExerciseForm } from '@/composables/exerciseForm'
+import { MAX_TARGET, MIN_TARGET, type Exercise } from '@/lib/storage'
+import { MEASURE_OPTIONS, useExerciseForm } from '@/composables/exerciseForm'
 import PerSideToggle from '@/components/PerSideToggle.vue'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
+import { SegmentedControl } from '@/components/ui/segmented-control'
+import { Stepper } from '@/components/ui/stepper'
 import { TextField } from '@/components/ui/text-field'
 
 const props = defineProps<{ exercise: Exercise }>()
@@ -12,7 +14,7 @@ const emit = defineEmits<{ close: [] }>()
 
 const store = usePlannerStore()
 const form = useExerciseForm()
-const { name, sets, reps, weight, perSide } = form
+const { name, sets, reps, weight, perSide, measure, measureChoice, amountLabel, target } = form
 form.load(props.exercise)
 
 function save(): void {
@@ -46,16 +48,18 @@ function save(): void {
           class="w-20"
           @input="form.onSetsInput"
         />
+        <SegmentedControl v-model="measureChoice" label="Measure" :options="MEASURE_OPTIONS" />
         <TextField
           id="edit-exercise-reps"
           :model-value="reps"
-          label="Reps"
+          :label="amountLabel"
           inputmode="numeric"
+          maxlength="4"
           data-field="reps"
           class="w-20"
           @input="form.onRepsInput"
         />
-        <PerSideToggle v-model="perSide" />
+        <PerSideToggle v-model="perSide" :timed="measure === 'time'" />
       </div>
       <TextField
         id="edit-exercise-weight"
@@ -66,6 +70,15 @@ function save(): void {
         placeholder="e.g. 12"
         class="w-44"
         @input="form.onWeightInput"
+      />
+      <Stepper
+        id="edit-exercise-target"
+        v-model="target"
+        label="Times a week"
+        lower-label="Fewer times a week"
+        raise-label="More times a week"
+        :min="MIN_TARGET"
+        :max="MAX_TARGET"
       />
     </form>
     <template #actions>

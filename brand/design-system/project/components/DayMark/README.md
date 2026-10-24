@@ -7,7 +7,7 @@ One day of one exercise or food: a filled `pen` dot when it's done, an empty rin
 - The mark is a 44 × 44px button centred in a cell at least 44px tall (56 × 60px in the grid, 48 × 48px in TodayList). The rest of the cell is quiet space, so the focus ring never touches a neighbour or the edge of a scrolling grid.
 - **Today:** the cell sits on the `highlight` band that runs down today's column; the mark itself doesn't change. The band is the only use of `highlight`.
 - **Note:** a NoteMark (a 10px folded corner in `ink-secondary`) in the cell's top-right corner, flush to the corner. It never covers the dot.
-- Use one size: 24px. The same DayMark sits in WeekGrid, in the phone's TodayList and in the Diet grid.
+- Use one size: 24px. The same DayMark sits in WeekGrid, in the phone's TodayList and in the Food grid.
 - **Inks:** the dot takes `pen`, which the app sets from the person's ink: `ink-blue` (default), `forest`, `violet` or `graphite`. Set `--pen` once, high in the page; never paint two inks on one screen.
 - **Print:** the dot prints solid black, the ring grey; the band disappears. See WeekGrid.
 

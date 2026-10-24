@@ -14,7 +14,7 @@ The phone's first view: today's exercises and foods as one list, each with a sin
   | 4 | "Four today, one extra." |
 
   No praise, no exclamation marks, no guilt. With no exercises in the plan there is nothing to count, and the summary line is left out.
-- **Groups:** "Exercises" then "Diet", each a `label` heading in `ink-secondary` over a list with `line` hairlines between rows.
+- **Groups:** "Exercises" then "Food", each a `label` heading in `ink-secondary` over a list with `line` hairlines between rows.
 - **Rows:** the name in `body` at 600; beneath it the Chip(s) and the week so far in `caption` `ink-secondary` ("3 of 4 this week"); the DayMark on the right. Foods have no chips.
 - **DayMark:** the grid's own DayMark, unchanged: the same 24px dot or ring in the same 44 × 44px button, centred in a 48 × 48px cell at the row's right. The row itself is not a button, so a scroll never marks a day by accident.
 - **Notes:** a day's note shows under its row in the `note` style (serif italic, `ink`), the person's words without quotation marks. The list never invites one: no "Add a note" in a row.
@@ -29,7 +29,7 @@ The phone's first view: today's exercises and foods as one list, each with a sin
 | Row | not done / done | see DayMark |
 | Row | has a note | the note's text beneath the row |
 | Summary | under, at or over the pick | see the table above |
-| Diet | any | no effect on the summary; foods have no pick |
+| Food | any | no effect on the summary; foods have no pick |
 | Another week | the week has no today | the switch opens the WeekGrid; TodayList always shows today |
 | Edit plan | the plan is edited in the week | the WeekGrid shows; choosing Today turns Edit plan off and returns to this week |
 | Nothing planned | no exercises, no foods | the band, then the empty-state sentence above |

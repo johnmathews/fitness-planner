@@ -186,7 +186,7 @@ describe('the planner grids (W10)', () => {
   })
 
   describe('rows', () => {
-    it('shows the goal in the row header and the chips in the card’s words', () => {
+    it('shows the chips in the card’s words, and the goal only in the week total', () => {
       mountApp()
       const row = ex()
         .findAll('[role="rowheader"]')
@@ -194,7 +194,10 @@ describe('the planner grids (W10)', () => {
       expect(row.findAll('[data-testid="item-detail"]').map((c) => c.text())).toEqual([
         '8 each side',
       ])
-      expect(row.get('[data-testid="item-goal"]').text()).toBe('3 a week')
+      expect(row.text()).not.toContain('a week')
+      expect(
+        row.element.closest('tr')!.querySelector('[data-testid="row-total"]')!.textContent,
+      ).toBe('0 of 3')
     })
 
     it('puts the edit, remove and goal controls in the row header, as IconButtons (F28)', async () => {
@@ -213,12 +216,12 @@ describe('the planner grids (W10)', () => {
       )
     })
 
-    it('keeps the goal caption’s space in edit mode, so the row keeps its height (F25)', async () => {
+    it('holds the row header at the Stepper’s height in both modes, so rows keep their height (F25)', async () => {
       await mountConfig()
-      const goal = ex().findAll('[data-testid="item-goal"]')[0]!
-      expect(goal.classes()).toContain('invisible')
+      const block = () => ex().findAll('[role="rowheader"]')[0]!.get('div')
+      expect(block().classes()).toContain('min-h-11')
       await wrapper.get('button[role="switch"]').trigger('click')
-      expect(ex().findAll('[data-testid="item-goal"]')[0]!.classes()).not.toContain('invisible')
+      expect(block().classes()).toContain('min-h-11')
     })
 
     /** Press a row's Remove, then answer the ConfirmDialog with `answer`. */
@@ -345,7 +348,7 @@ describe('the planner grids (W10)', () => {
       expect(name(focused())).toBe('Push-ups, Friday 23 October, today')
     })
 
-    it('skips to the Diet grid when there are no exercises', async () => {
+    it('skips to the Food grid when there are no exercises', async () => {
       const state = emptyState()
       state.exercise.plans = { [WEEK]: [] }
       mountApp(state)
@@ -377,16 +380,16 @@ describe('the planner grids (W10)', () => {
       await press('Home')
       expect(focused().getAttribute('role')).toBe('rowheader')
       await press('Enter')
-      expect(name(focused())).toBe('Lower Squats goal')
+      expect(name(focused())).toBe('Edit Squats')
       const header = focused().closest('th')!
       // The name cell keeps the tab stop (Shift+Tab returns to it), then its controls in order.
       const inHeader = tabStops().filter((el) => header.contains(el))
       expect(inHeader[0]).toBe(header)
       expect(inHeader.slice(1).map((el) => el.getAttribute('aria-label') ?? el.tagName)).toEqual([
-        'Lower Squats goal',
-        'INPUT',
-        'Raise Squats goal',
         'Edit Squats',
+        'Lower Squats reps',
+        'INPUT',
+        'Raise Squats reps',
         'Remove Squats',
       ])
       await press('Escape')
@@ -401,19 +404,16 @@ describe('the planner grids (W10)', () => {
       expect(wrapper.get('h1').text()).toBe('19–25 October')
     })
 
-    it('gives each section an h2, its one figure and a hint that does not print', () => {
+    it('gives each section an h2 and its one figure, and Food a hint that does not print', () => {
       mountApp()
       const sections = wrapper.findAll('section[aria-labelledby]')
-      expect(sections.map((s) => s.get('h2').text())).toEqual(['Exercises', 'Diet'])
+      expect(sections.map((s) => s.get('h2').text())).toEqual(['Exercises', 'Food'])
       const hints = wrapper.findAll('[data-slot="section-hint"]')
-      expect(hints.map((h) => h.text())).toEqual([
-        'Pick three a day. Mark each one when it’s done.',
-        'Mark each day you ate it.',
-      ])
+      expect(hints.map((h) => h.text())).toEqual(['Mark each day you ate it.'])
       for (const hint of hints) expect(hint.attributes('data-noprint')).toBeDefined()
     })
 
-    it('keeps the Diet heading with its grid on paper', () => {
+    it('keeps the Food heading with its grid on paper', () => {
       mountApp()
       const header = wrapper.get('#diet-heading').element.closest('[data-slot="section-header"]')!
       expect(header.classList).toContain('print:break-after-avoid')

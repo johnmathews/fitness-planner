@@ -23,7 +23,7 @@ const summary = computed(() =>
 const groups = computed(() =>
   [
     { kind: 'exercise' as const, title: 'Exercises', items: props.exercises },
-    { kind: 'food' as const, title: 'Diet', items: props.foods },
+    { kind: 'food' as const, title: 'Food', items: props.foods },
   ].filter((g) => g.items.length > 0),
 )
 </script>
@@ -31,7 +31,7 @@ const groups = computed(() =>
 <!--
   The phone's first view (brand/design-system/project/components/TodayList, K5): the day's heading
   on the highlight band, which runs edge to edge (the band is today's column turned sideways), the
-  summary in words, then Exercises and Diet as ordinary lists with line hairlines. Each row is the
+  summary in words, then Exercises and Food as ordinary lists with line hairlines. Each row is the
   name, its chips and the week so far, and one DayMark on the right; the row itself isn't a
   button, so a scroll never marks a day. Marks go through the same store actions as the grid (the
   parent's `toggle`). Nothing here is a grid: Tab moves mark to mark, and the skip link finds the

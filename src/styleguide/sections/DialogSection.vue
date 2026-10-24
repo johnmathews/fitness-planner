@@ -3,8 +3,13 @@ import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { SegmentedControl } from '@/components/ui/segmented-control'
+import { Stepper } from '@/components/ui/stepper'
 import { TextField } from '@/components/ui/text-field'
 
+const MEASURE = [
+  { value: 'reps', label: 'Reps' },
+  { value: 'time', label: 'Time' },
+]
 const REPS_COUNT = [
   { value: 'per-set', label: 'Per set' },
   { value: 'each-side', label: 'Each side' },
@@ -14,7 +19,9 @@ const open = ref(false)
 const name = ref('Kettlebell halos')
 const sets = ref('3')
 const reps = ref('8')
+const measure = ref('reps')
 const repsCount = ref('each-side')
+const target = ref(2)
 const weight = ref('8')
 </script>
 
@@ -35,17 +42,23 @@ const weight = ref('8')
         inputmode="numeric"
         class="w-20"
       />
+      <SegmentedControl
+        id="sg-dialog-edit-measure"
+        v-model="measure"
+        label="Measure"
+        :options="MEASURE"
+      />
       <TextField
         id="sg-dialog-edit-reps"
         v-model="reps"
-        label="Reps"
+        :label="measure === 'time' ? 'Seconds' : 'Reps'"
         inputmode="numeric"
         class="w-20"
       />
       <SegmentedControl
         id="sg-dialog-edit-reps-count"
         v-model="repsCount"
-        label="Reps count"
+        :label="measure === 'time' ? 'Timed' : 'Reps count'"
         :options="REPS_COUNT"
       />
     </div>
@@ -55,6 +68,15 @@ const weight = ref('8')
       label="Weight in kg"
       inputmode="decimal"
       hint="Optional. Leave empty for bodyweight."
+    />
+    <Stepper
+      id="sg-dialog-edit-target"
+      v-model="target"
+      label="Times a week"
+      lower-label="Fewer times a week"
+      raise-label="More times a week"
+      :min="0"
+      :max="7"
     />
     <template #actions>
       <Button @click="open = false">Cancel</Button>

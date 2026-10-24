@@ -13,21 +13,25 @@
   **Week** column counts sessions against a weekly goal of 0–7 days, and turns to your ink with a
   check once a non-zero goal is met. The **Picked** row counts each day's exercises against the
   daily pick and says so in words when a day goes over ("one extra").
-- **Diet.** Below the exercises, foods work the same way: tick each day you ate one, and its Week
+- **Food.** Below the exercises, foods work the same way: tick each day you ate one, and its Week
   column counts days against a goal. The section header shows how many food goals are met. Defaults
   are Vegetables (7), Fruit (5), Fish (2) and Nuts (3).
 - **Normal mode and config mode.** The app opens in normal mode, where you only tick cells. The
   **Edit plan** switch in the top bar turns on config mode for changing the plan:
-  - add an exercise with a name, optional sets, reps, "Per set" or "Each side", and an
-    optional weight in kg (e.g. squats with a 12 kg kettlebell); add a food by name;
-  - the pencil edits an exercise, the bin removes an item after a confirmation (its ticks stay
-    stored), and the goal's `−` / `+` change it. New items start with a goal of 3.
+  - add an exercise with a name, optional sets, reps or a time in seconds (a plank), "Per set" or
+    "Each side", and an optional weight in kg (e.g. squats with a 12 kg kettlebell); add a food by
+    name;
+  - each exercise's `−` / `+` change its reps (or seconds, in steps of 5), and each food's change
+    its goal; the pencil beside an exercise's name edits it, its goal ("Times a week") included;
+    the bin removes an item after a confirmation (its ticks stay stored). New items start with a
+    goal of 3.
 - **Weekly plans.** Each week has its own plan, so reps, sets, weights and goals can change from week
   to week. A week you haven't changed carries over the latest earlier week's plan; it gets its own
   copy the first time you change it or tick a cell. In config mode, **Copy plan to next week**
   copies this week's exercises and foods over the next week's.
 - `‹` / `›` move between weeks for both sections; past weeks persist. **Print…** produces a
-  black-on-white sheet.
+  black-on-white sheet. **Show weekly totals** in Settings hides or shows each section's total on
+  this device.
 - **On a phone** the app opens on **Today**: today's exercises and foods, one mark each. A Today |
   Week switch leads to the week's grids, whose names stay put while the days scroll.
 - **Settings** sets the theme (System, Light or Dark), the ink that marks a day done (Ink blue,

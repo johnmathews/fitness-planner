@@ -9,6 +9,7 @@ A small panel attached to the control that opened it; the app has one, Settings,
   2. **Theme:** a SegmentedControl, System | Light | Dark, drawn exactly as its card (44px, `label` type on every segment).
   3. **Ink:** an InkPicker, drawn exactly as its card: the label "Ink", the hint "The colour of a done mark.", then four 44px rows (Ink blue, Forest, Violet, Graphite), each a 24px dot, the name and a `check` slot; the chosen row has the `ink` ring round its dot, the check and its name at 600. In the 296px panel the rows stack in one column. Replaces "Accent" and its four iOS colours (K3).
   4. **Exercises a day:** a Stepper, 1 to 8, the daily pick, drawn as its card (one outline, no separators), with its label beside it.
+     Then **Show weekly totals:** a Switch, on by default, that shows or hides both sections' StatFigures on this device.
   5. **Your data**, after a `line` rule: secondary buttons "Export" (Lucide `download`) and "Import…" (Lucide `upload`). Import's summary and its own Cancel then Import (secondary first, primary last) appear here, inline, beneath.
   6. **Account**, after a `line` rule: "Signed in as alex" in `caption` and a secondary "Sign out" (Lucide `log-out`). Sign out with unsynced changes asks first with a ConfirmDialog.
 - Every button in the panel is md (44px), on desktop as on a phone: the popover is used on phones.

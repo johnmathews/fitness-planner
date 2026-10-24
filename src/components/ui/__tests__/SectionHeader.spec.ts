@@ -4,13 +4,9 @@ import { mount } from '@vue/test-utils'
 import { SectionHeader } from '@/components/ui/section-header'
 import { StatFigure } from '@/components/ui/stat-figure'
 
-function header() {
+function header(hint?: string) {
   return mount(SectionHeader, {
-    props: {
-      title: 'Exercises',
-      hint: 'Pick three a day. Mark each one when it’s done.',
-      headingId: 'exercises-heading',
-    },
+    props: { title: 'Exercises', hint, headingId: 'exercises-heading' },
     slots: {
       default: () => h(StatFigure, { figure: 10, total: 12, words: 'this week', met: false }),
     },
@@ -26,10 +22,14 @@ describe('SectionHeader', () => {
   })
 
   it('puts the hint under the title in caption ink-secondary, off paper (F24)', () => {
-    const hint = header().get('[data-slot="section-hint"]')
-    expect(hint.text()).toBe('Pick three a day. Mark each one when it’s done.')
+    const hint = header('Mark each day you ate it.').get('[data-slot="section-hint"]')
+    expect(hint.text()).toBe('Mark each day you ate it.')
     expect(hint.classes()).toEqual(expect.arrayContaining(['caption', 'text-ink-secondary']))
     expect(hint.attributes('data-noprint')).toBeDefined()
+  })
+
+  it('leaves the hint out when there is none', () => {
+    expect(header().find('[data-slot="section-hint"]').exists()).toBe(false)
   })
 
   it('sets the one figure on the title’s baseline, and keeps the heading with what follows on paper (F20)', () => {

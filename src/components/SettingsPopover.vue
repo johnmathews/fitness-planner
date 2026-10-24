@@ -27,6 +27,7 @@ import { InlineMessage } from '@/components/ui/inline-message'
 import { Popover } from '@/components/ui/popover'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Stepper } from '@/components/ui/stepper'
+import { Switch } from '@/components/ui/switch'
 
 const THEME_NAMES: Record<Theme, string> = { system: 'System', light: 'Light', dark: 'Dark' }
 const THEME_OPTIONS = THEMES.map((t) => ({ value: t, label: THEME_NAMES[t] }))
@@ -199,6 +200,7 @@ async function confirmSignOut(): Promise<void> {
           :min="MIN_DAILY_PICK"
           :max="MAX_DAILY_PICK"
         />
+        <Switch v-model="store.showTotals" label="Show weekly totals" class="-ml-2 self-start" />
 
         <div class="flex flex-col gap-2 border-t border-line pt-4">
           <span :id="dataLabelId" class="label text-ink">Your data</span>
