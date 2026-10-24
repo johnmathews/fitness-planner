@@ -77,7 +77,7 @@ describe('the first-login import prompt', () => {
     await mountApp()
     expect(prompt().get('h2').text()).toBe('Data from before accounts')
     expect(prompt().text()).toContain(
-      'Adds 1 weekly plan and 3 ticks, plus the accent and exercises per day. Existing plans and ticks stay as they are.',
+      'Adds 1 weekly plan and 3 ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
     )
   })
 

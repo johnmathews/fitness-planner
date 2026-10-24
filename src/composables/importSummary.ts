@@ -35,7 +35,8 @@ export function useImportSummary() {
 
   function describe(data: ExportData): string {
     const { plans, ticks, settings } = additions(data)
-    const extra = settings ? ', plus the accent and exercises per day' : ''
+    // The settings as Settings names them: the Ink and Exercises a day (the accent is now an ink).
+    const extra = settings ? ', plus the ink and the number of exercises a day' : ''
     return `Adds ${plural(plans, 'weekly plan')} and ${plural(ticks, 'tick')}${extra}. Existing plans and ticks stay as they are.`
   }
 

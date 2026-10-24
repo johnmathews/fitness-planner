@@ -2,20 +2,25 @@
 import { computed, ref, watch } from 'vue'
 import { exerciseDetails, usePlannerStore } from '@/stores/planner'
 import type { Exercise } from '@/lib/storage'
-import type { CountTone, Tracked } from '@/lib/tracker'
+import { goalMet, pickedCount, type Tracked } from '@/lib/tracker'
+import { dayMonth } from '@/lib/dates'
+import { numberWord } from '@/lib/words'
+import { SectionHeader } from '@/components/ui/section-header'
+import { StatFigure } from '@/components/ui/stat-figure'
 import TrackerGrid from '@/components/TrackerGrid.vue'
+import AddExerciseForm from '@/components/AddExerciseForm.vue'
 import EditExerciseDialog from '@/components/EditExerciseDialog.vue'
 
 const store = usePlannerStore()
 
-function tone(n: number): CountTone {
-  if (n === store.dailyPick) return 'met'
-  return n > store.dailyPick ? 'over' : 'under'
-}
+/** The Picked row: each day's count against the daily pick, "one extra" over it (F3). */
+const picked = computed(() => ({
+  caption: `${store.dailyPick} a day`,
+  counts: store.dayCounts.map((n, i) => pickedCount(n, store.dailyPick, store.days[i]!.isFuture)),
+}))
 
-const counts = computed(() =>
-  store.dayCounts.map((n) => ({ text: `${n}/${store.dailyPick}`, tone: tone(n) })),
-)
+/** The section's one figure: sessions done this week of the sum of the weekly goals. */
+const goal = computed(() => store.exercises.reduce((sum, e) => sum + e.target, 0))
 
 function flagsFor(id: string): boolean[] {
   return store.days.map((_, i) => store.isDone(id, i))
@@ -48,25 +53,41 @@ watch(
 )
 </script>
 
+<!-- The Exercises section (SectionHeader, StatFigure and WeekGrid cards): its heading, hint and
+     one figure, the week, and in Edit plan the add form. -->
 <template>
-  <TrackerGrid
-    label="Exercise"
-    table-label="Exercises this week"
-    :items="store.exercises"
-    :days="store.days"
-    :flags-for="flagsFor"
-    :total-for="store.totalFor"
-    :details-for="detailsFor"
-    editable
-    :config-mode="store.configMode"
-    :footer-label="`Picked / ${store.dailyPick}`"
-    :counts="counts"
-    :grand-total="store.grandTotal"
-    data-testid="exercise-grid"
-    @toggle="store.toggle"
-    @change-target="store.changeTarget"
-    @remove="store.removeExercise"
-    @edit="edit"
-  />
-  <EditExerciseDialog v-if="editing" :exercise="editing" @close="editing = null" />
+  <section aria-labelledby="exercises-heading" class="pt-8 print:pt-4">
+    <SectionHeader
+      title="Exercises"
+      :hint="`Pick ${numberWord(store.dailyPick)} a day. Mark each one when it’s done.`"
+      heading-id="exercises-heading"
+    >
+      <StatFigure
+        :figure="store.grandTotal"
+        :total="goal"
+        words="this week"
+        :met="goalMet(store.grandTotal, goal)"
+        data-testid="grand-total"
+      />
+    </SectionHeader>
+    <TrackerGrid
+      label="Exercise"
+      :table-label="`Exercises, week of ${dayMonth(store.monday)}`"
+      :items="store.exercises"
+      :days="store.days"
+      :flags-for="flagsFor"
+      :total-for="store.totalFor"
+      :details-for="detailsFor"
+      editable
+      :config-mode="store.configMode"
+      :picked="picked"
+      data-testid="exercise-grid"
+      @toggle="store.toggle"
+      @change-target="store.changeTarget"
+      @remove="store.removeExercise"
+      @edit="edit"
+    />
+    <AddExerciseForm v-if="store.configMode" />
+    <EditExerciseDialog v-if="editing" :exercise="editing" @close="editing = null" />
+  </section>
 </template>

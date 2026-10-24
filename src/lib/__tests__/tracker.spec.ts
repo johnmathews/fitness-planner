@@ -6,6 +6,8 @@ import {
   goalsMet,
   grandTotal,
   isDone,
+  pickedCount,
+  todaySummary,
   newId,
   toggleDay,
   totalFor,
@@ -75,5 +77,44 @@ describe('toggleDay on a reactive log', () => {
     toggleDay(log, '2026-10-19', 'sq', 0)
     // Creating the flags is a change too (undefined → false), then each flip.
     expect(seen).toEqual([false, true, false])
+  })
+})
+
+describe('pickedCount', () => {
+  it('says how far over the pick in words', () => {
+    expect(pickedCount(4, 3, false)).toEqual({ n: 4, tone: 'over', extra: 'one extra' })
+    expect(pickedCount(5, 3, false)).toEqual({ n: 5, tone: 'over', extra: 'two extra' })
+  })
+
+  it('is met at the pick and under below it, today or before', () => {
+    expect(pickedCount(3, 3, false)).toEqual({ n: 3, tone: 'met', extra: null })
+    expect(pickedCount(0, 3, false)).toEqual({ n: 0, tone: 'under', extra: null })
+  })
+
+  it('leaves a day still to come blank until something is marked on it', () => {
+    expect(pickedCount(0, 3, true)).toEqual({ n: 0, tone: 'future', extra: null })
+    expect(pickedCount(1, 3, true)).toEqual({ n: 1, tone: 'under', extra: null })
+  })
+})
+
+describe('todaySummary', () => {
+  it('counts today against the pick in words: what is done, then what is left', () => {
+    expect(todaySummary(2, 3)).toBe('Two of three. One to go.')
+    expect(todaySummary(1, 3)).toBe('One of three. Two to go.')
+  })
+
+  it('says plainly when nothing is done yet, without guilt', () => {
+    expect(todaySummary(0, 3)).toBe('None yet. Three to go.')
+    expect(todaySummary(0, 1)).toBe('None yet. One to go.')
+  })
+
+  it('stops at the pick, and says how far over it, never praising', () => {
+    expect(todaySummary(3, 3)).toBe('Three of three.')
+    expect(todaySummary(4, 3)).toBe('Four today, one extra.')
+    expect(todaySummary(5, 3)).toBe('Five today, two extra.')
+  })
+
+  it('uses figures from 11 up, as the voice does', () => {
+    expect(todaySummary(12, 8)).toBe('12 today, four extra.')
   })
 })

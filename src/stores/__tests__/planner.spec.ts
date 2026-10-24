@@ -34,9 +34,11 @@ describe('planner store', () => {
       'Kettlebell halos',
     ])
     expect(s.weekKey).toBe('2026-10-19')
-    expect(s.label).toBe('Oct 19 – Oct 25, 2026')
+    expect(s.label).toBe('19–25 October')
     expect(s.days.map((d) => d.date)).toEqual(['19', '20', '21', '22', '23', '24', '25'])
+    expect(s.days[3]!.full).toBe('Thursday 22 October')
     expect(s.days.findIndex((d) => d.isToday)).toBe(4)
+    expect(s.days.map((d) => d.isFuture)).toEqual([false, false, false, false, false, true, true])
   })
 
   it('never reads or writes the keys from before accounts', async () => {
@@ -221,17 +223,18 @@ describe('planner store', () => {
 })
 
 describe('exerciseDetails', () => {
-  it('formats per set, per side and missing reps', () => {
-    expect(exerciseDetails({ id: 'a', name: 'A', reps: 10, target: 3 })).toEqual(['10 reps / set'])
+  it('formats per set, per side and missing reps in the Chip card’s words', () => {
+    expect(exerciseDetails({ id: 'a', name: 'A', reps: 10, target: 3 })).toEqual(['10 reps a set'])
     expect(exerciseDetails({ id: 'a', name: 'A', reps: 8, perSide: true, target: 3 })).toEqual([
-      '8 each side / set',
+      '8 each side',
     ])
-    expect(exerciseDetails({ id: 'a', name: 'A', reps: 0, target: 3 })).toEqual(['—'])
+    // Nothing to say gives no chip, not a dash.
+    expect(exerciseDetails({ id: 'a', name: 'A', reps: 0, target: 3 })).toEqual([])
   })
 
   it('appends the weight, or shows it alone without reps', () => {
     expect(exerciseDetails({ id: 'a', name: 'A', reps: 15, weight: 12, target: 3 })).toEqual([
-      '15 reps / set',
+      '15 reps a set',
       '12 kg',
     ])
     expect(exerciseDetails({ id: 'a', name: 'A', reps: 0, weight: 2.5, target: 3 })).toEqual([
@@ -392,7 +395,7 @@ describe('exercise sets', () => {
 
   it('formats sets with reps, per side, or alone', () => {
     const e = { id: 'a', name: 'A', target: 3 }
-    expect(exerciseDetails({ ...e, sets: 3, reps: 10 })).toEqual(['3 × 10 reps'])
+    expect(exerciseDetails({ ...e, sets: 3, reps: 10 })).toEqual(['3 × 10'])
     expect(exerciseDetails({ ...e, sets: 3, reps: 8, perSide: true })).toEqual(['3 × 8 each side'])
     expect(exerciseDetails({ ...e, sets: 4, reps: 0 })).toEqual(['4 sets'])
   })

@@ -18,8 +18,10 @@ decides which week's plan a week shows; `src/lib/dates.ts` holds the week maths 
 `YYYY-MM-DD` keys and back, labels, `DAY_NAMES`); `src/lib/theme.ts` holds the theme names and
 `isDark`.
 
-`TrackerGrid`, `TrackerRow`, `DayCell` and `NumberStepper` take props, emit events, and serve both
-sections; `TrackerRow` also asks `window.confirm` before emitting `remove`. `ExerciseGrid` and
+`TrackerGrid` and `TrackerRow` (on the `DayMark`, `Chip`, `Stepper` and `IconButton` primitives in
+`src/components/ui/`) take props, emit events, and serve both sections; `TrackerRow` also asks the
+`ConfirmDialog` (through `useConfirm`) before emitting `remove`, and names where focus goes once the
+row has gone. `ExerciseGrid` and
 `DietSection` wire them to their store. `AddExerciseForm` and `EditExerciseDialog` share their field
 state and input cleaning through `useExerciseForm` (`src/composables/exerciseForm.ts`) and the
 `PerSideToggle` segmented control. `src/lib/problems.ts` turns a sign-in, link or sign-out refusal
@@ -37,17 +39,21 @@ App.vue                 picks the screen (link, planner or sign-in), --accent va
 │                             swatches, exercises-per-day stepper, Export and Import… (see §4)
 ├── SyncStatus.vue      loading, offline and conflict messages above the planner
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
-├── WeekHeader.vue      H1 week label, daily-pick hint, grand total; in config mode "Copy plan to
+├── TodayList.vue       phones only (below 640px), the first view: today's exercises and foods,
+│                       one DayMark each, "Two of three. One to go."; a Today | Week switch above
+│                       it (usePhoneView, src/composables/phoneView.ts) leads to the week below
+├── WeekHeader.vue      the page's h1, the week ("19–25 October"); in config mode "Copy plan to
 │                       next week" and a note when the plan is carried over
-├── ExerciseGrid.vue    wires planner to a TrackerGrid: sets/reps/weight chips, edit, "Picked / N"
-│   ├── TrackerGrid.vue CSS grid: header row, one TrackerRow per item, footer counts
-│   │   └── TrackerRow.vue  name (+ optional chips), 7 × DayCell, total; in config mode also
-│   │                       ✎ edit (if editable), × remove (confirms), goal NumberStepper
-│   └── EditExerciseDialog.vue  native modal: name, sets, reps, PerSideToggle, weight
-├── AddExerciseForm.vue config mode only: name, sets, reps, PerSideToggle, weight (kg)
-└── DietSection.vue     "Diet" heading with goals met
-    ├── TrackerGrid.vue wired to diet: no chips, neutral "Eaten" footer
-    └── AddFoodForm.vue config mode only: name, Add Food
+├── ExerciseGrid.vue    the Exercises section: SectionHeader (hint, "10 of 12 this week" StatFigure)
+│   ├── TrackerGrid.vue a <table> (WeekGrid card): day header, one TrackerRow per item, today's
+│   │   │               highlight band, and the Picked row ("4", "one extra" over the pick)
+│   │   └── TrackerRow.vue  name, chips and "3 a week"; 7 × DayMark; "3 of 4" total; in config
+│   │                       mode the goal Stepper and edit/remove IconButtons in the row header
+│   ├── AddExerciseForm.vue config mode only: name, sets, reps, PerSideToggle, weight (kg)
+│   └── EditExerciseDialog.vue  Dialog: name, sets, reps, PerSideToggle, weight
+└── DietSection.vue     the Diet section: SectionHeader ("2 of 4 goals met"), kept with its grid
+    ├── TrackerGrid.vue wired to diet: no chips and no Picked row (foods have no daily pick)
+    └── AddFoodForm.vue config mode only: name, Add food
 ```
 
 ## 2. Weekly plans
@@ -99,8 +105,8 @@ empty name or an id not in the week), `removeExercise`, `copyToNextWeek`, `setCo
 `setTheme`, `savedSettings` (the accent and daily pick, or null while the user has none of their own), `adopt`
 (replace the data and settings wholesale), `adoptWeek` (replace one week's plan) and `clear` (forget
 the user on sign-out, keeping the theme). The module also exports `exerciseDetails`, which gives the chips under a name:
-"3 × 10 reps" (or "10 reps / set" without sets, "3 sets" without reps, "8 each side" in place of
-"10 reps" when per side), then "12 kg" when weighted, or "—" for none of these.
+"3 × 12" or "3 × 8 each side" (or "10 reps a set" and "8 each side" without sets, "3 sets" without
+reps), then "16 kg" when weighted, and no chip at all for none of these (the Chip card's words).
 
 `useDietStore` holds `plans` of foods (`{ id, name, target }`) and its own `log`, kept by the sync
 store like the planner's. It reads `planner.weekKey`, so week navigation moves both
@@ -211,9 +217,10 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 
 ## 5. Decisions beyond the design
 
-- **Cells are buttons.** The prototype's cells were clickable `div`s. `DayCell` renders a `button`
-  with `aria-pressed` and a label such as "Squats, Fri 23", so the grid works from the keyboard and
-  with a screen reader. The grid carries ARIA `table`/`row`/`cell` roles.
+- **Cells are buttons.** The prototype's cells were clickable `div`s. Each day is a `DayMark`: a
+  `button` with `aria-pressed` and a name such as "Squats, Friday 23 October, today" (today also
+  carries `aria-current="date"`), so the grid works from the keyboard and with a screen reader. The
+  grid is a `<table>` with ARIA `table`/`row`/`cell` roles.
 - **A normal web page, not a window.** The handoff drew the app as a macOS window (traffic lights, a
   framed window on a backdrop). The app is an SPA, so it uses a full-width sticky navbar and a
   centred content column instead; the navbar keeps the week controls, Settings and Print….
@@ -257,7 +264,17 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   (`data-noprint`), and each grid avoids splitting across pages.
 - **Narrow screens.** Below 640px the navbar drops the app name and Print… and shortens the switch
   label to "Edit"; below 380px a gear replaces the word Settings (still its accessible name), so the
-  controls fit a 320px screen. The grid scrolls sideways at its 780px minimum width, as designed.
+  controls fit a 320px screen. Below 640px the app opens on the **Today list** (brand spec K5):
+  today's exercises and foods, each with one DayMark, ticked through the same store actions as the
+  grid, with no sideways scroll down to 320px. A Today | Week switch leads to the grids; the choice
+  is remembered on the device (`fitness-planner-view-v1`, like the theme, never synced). Another
+  week and Edit plan always show the grids, since the list only ever shows today and the plan is
+  edited in the week; choosing Today returns to this week and turns Edit plan off. The grids keep a
+  600px minimum and scroll sideways inside their own container, with the **name column sticky** at
+  the left on the canvas, `scroll-padding-left` at its width so keyboard focus never lands under
+  it, and the scroller opening with the day before today beside the names. In Edit plan the name
+  column is 384px, wider than the room a phone leaves for it, so there it scrolls with the days
+  instead of sticking. This reverses the earlier "the grid scrolls sideways, as designed" (F1).
 
 ## 6. Styling
 

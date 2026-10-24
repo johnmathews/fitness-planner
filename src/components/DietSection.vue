@@ -1,60 +1,55 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
+import { dayMonth } from '@/lib/dates'
+import { SectionHeader } from '@/components/ui/section-header'
+import { StatFigure } from '@/components/ui/stat-figure'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import AddFoodForm from '@/components/AddFoodForm.vue'
 
 const planner = usePlannerStore()
 const diet = useDietStore()
 
-// No daily target for foods, so counts are neutral: secondary at zero, plain ink otherwise.
-const counts = computed(() =>
-  diet.dayCounts.map((n) => ({
-    text: String(n),
-    tone: n > 0 ? ('plain' as const) : ('under' as const),
-  })),
-)
-
 function flagsFor(id: string): boolean[] {
   return planner.days.map((_, i) => diet.isEaten(id, i))
 }
 </script>
 
+<!--
+  The Diet section: the same WeekGrid without chips and without the Picked row (foods have no
+  daily pick), under its own SectionHeader whose figure counts the foods whose goal is met. A
+  line rule and space-8 set it apart from Exercises. On paper the heading and the grid stay on
+  one page (F20): the header avoids a break after it, and the pair avoids a break inside.
+-->
 <template>
   <section
-    class="mt-10 border-t border-line print:mt-6 print:border-0"
+    class="mt-8 border-t border-line pt-8 print:mt-4 print:border-0 print:pt-4"
     aria-labelledby="diet-heading"
   >
-    <div class="flex flex-wrap items-end justify-between gap-3 pt-8 pb-2 print:pt-0">
-      <div class="flex flex-col gap-1">
-        <h2 id="diet-heading" class="title-1">Diet</h2>
-        <p class="text-sm text-ink-secondary">Click a cell on each day you ate it.</p>
-      </div>
-      <div class="flex items-baseline gap-1.5">
-        <div class="text-xl font-semibold text-pen tabular-nums" data-testid="diet-goals-met">
-          {{ diet.goalsMet
-          }}<span class="text-sm text-ink-secondary"> / {{ diet.foods.length }}</span>
-        </div>
-        <div class="text-sm text-ink-secondary">goals met</div>
-      </div>
+    <div class="print:break-inside-avoid" data-print-keep>
+      <SectionHeader title="Diet" hint="Mark each day you ate it." heading-id="diet-heading">
+        <StatFigure
+          :figure="diet.goalsMet"
+          :total="diet.foods.length"
+          words="goals met"
+          :met="diet.foods.length > 0 && diet.goalsMet === diet.foods.length"
+          data-testid="diet-goals-met"
+        />
+      </SectionHeader>
+      <TrackerGrid
+        label="Food"
+        :table-label="`Diet, week of ${dayMonth(planner.monday)}`"
+        :items="diet.foods"
+        :days="planner.days"
+        :flags-for="flagsFor"
+        :total-for="diet.totalFor"
+        :config-mode="planner.configMode"
+        data-testid="diet-grid"
+        @toggle="diet.toggle"
+        @change-target="diet.changeTarget"
+        @remove="diet.removeFood"
+      />
     </div>
-    <TrackerGrid
-      label="Food"
-      table-label="Foods this week"
-      :items="diet.foods"
-      :days="planner.days"
-      :flags-for="flagsFor"
-      :total-for="diet.totalFor"
-      footer-label="Eaten"
-      :config-mode="planner.configMode"
-      :counts="counts"
-      :grand-total="diet.grandTotal"
-      data-testid="diet-grid"
-      @toggle="diet.toggle"
-      @change-target="diet.changeTarget"
-      @remove="diet.removeFood"
-    />
     <AddFoodForm v-if="planner.configMode" />
   </section>
 </template>

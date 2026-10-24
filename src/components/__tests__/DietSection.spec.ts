@@ -62,23 +62,21 @@ describe('DietSection', () => {
     expect(diet().findAll('[data-testid="day-head"]')[4]!.attributes('data-today')).toBe('true')
   })
 
-  it('ticks a food, updating its total, the footer, and goals met', async () => {
+  it('ticks a food, updating its total and goals met', async () => {
     mountApp()
     const goals = () => wrapper.get('[data-testid="diet-goals-met"]').text()
-    expect(goals()).toBe('0 / 4')
+    expect(goals()).toBe('0 of 4 goals met')
     await cells('Fish')[0]!.trigger('click')
     await cells('Fish')[2]!.trigger('click')
     expect(cells('Fish')[2]!.attributes('aria-pressed')).toBe('true')
     const total = diet().findAll('[data-testid="row-total"]')[2]!
-    expect(total.text()).toBe('2 / 2')
+    expect(total.text()).toBe('2 of 2')
     expect(total.attributes('data-met')).toBe('true')
-    const counts = diet().findAll('[data-testid="day-count"]')
-    expect(counts.map((c) => c.text())).toEqual(['1', '0', '1', '0', '0', '0', '0'])
-    expect(counts[0]!.attributes('data-tone')).toBe('plain')
-    expect(counts[1]!.attributes('data-tone')).toBe('under')
-    expect(goals()).toBe('1 / 4')
+    // Foods have no daily pick, so the diet grid has no Picked row (WeekGrid card).
+    expect(diet().findAll('[data-testid="day-count"]')).toHaveLength(0)
+    expect(goals()).toBe('1 of 4 goals met')
     // The exercise totals are untouched.
-    expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('0')
+    expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('0 of 18 this week')
   })
 
   it('moves with the shared week navigation', async () => {
@@ -115,13 +113,14 @@ describe('DietSection', () => {
     await wrapper.get('#add-food-name').setValue('   ')
     await wrapper.get('#add-food-name').trigger('submit')
     expect(cells('Vegetables')).toHaveLength(7)
-    expect(diet().findAll('[role="row"]')).toHaveLength(6)
+    // The header row and the four foods; foods have no Picked row (WeekGrid card).
+    expect(diet().findAll('[role="row"]')).toHaveLength(5)
   })
 
   it('adjusts a food goal with the stepper', async () => {
     await mountConfig()
     await diet().get('button[aria-label="Lower Fish goal"]').trigger('click')
-    expect(diet().findAll('[data-testid="row-total"]')[2]!.text()).toBe('0 / 1')
+    expect(diet().findAll('[data-testid="row-total"]')[2]!.text()).toBe('0 of 1')
   })
 
   it('adopts another tab’s diet changes', async () => {

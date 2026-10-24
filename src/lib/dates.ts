@@ -32,17 +32,6 @@ export function weekDates(monday: Date): Date[] {
   return DAY_NAMES.map((_, i) => addDays(monday, i))
 }
 
-/** "Oct 19" */
-export function formatShort(d: Date): string {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-/** "Oct 19 – Oct 25, 2026" — the year is the Sunday's, so a week spanning New Year reads correctly. */
-export function weekLabel(monday: Date): string {
-  const sunday = addDays(monday, 6)
-  return `${formatShort(monday)} – ${formatShort(sunday)}, ${sunday.getFullYear()}`
-}
-
 /** "26 October": a date as the app's sentences write it (voice.md). */
 export function dayMonth(d: Date): string {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
@@ -57,4 +46,27 @@ export function weekRange(monday: Date): string {
   if (sunday.getMonth() === monday.getMonth()) return `${monday.getDate()}–${dayMonth(sunday)}`
   const short = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   return `${short(monday)} – ${short(sunday)}`
+}
+
+/** The year, after a space, when `d` is not in `now`'s year; otherwise nothing. */
+function otherYear(d: Date, now: Date): string {
+  return d.getFullYear() === now.getFullYear() ? '' : ` ${d.getFullYear()}`
+}
+
+/**
+ * The page heading: the Header's week label, plus the year when the week ends in another year
+ * than today's ("19–25 October", "28 Dec – 3 Jan 2027"). The year is the Sunday's.
+ */
+export function weekTitle(monday: Date, now: Date): string {
+  return weekRange(monday) + otherYear(addDays(monday, 6), now)
+}
+
+/** "19 October" for a week's Monday, with its year when that is not this year's. */
+export function weekOf(monday: Date, now: Date): string {
+  return dayMonth(monday) + otherYear(monday, now)
+}
+
+/** "Thursday 22 October": a day written in full, as DayMark's accessible name says it. */
+export function fullDate(d: Date): string {
+  return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 }

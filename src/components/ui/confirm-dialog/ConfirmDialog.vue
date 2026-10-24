@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { dialogPanelVariants, scrimVariants } from '@/components/ui/dialog'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     /** The question, naming the thing: "Remove Push-ups?". */
     title: string
@@ -26,8 +26,14 @@ withDefaults(
     busy?: boolean
     /** What went wrong and what to do, shown above the buttons. */
     error?: string
+    /**
+     * Where focus goes on closing, asked a moment after the answer so the confirmed action has
+     * happened: removing a row removes the button that asked, so the row's owner names a
+     * neighbour and focus never drops to the page. Defaults to the control focused on opening.
+     */
+    returnFocus?: () => HTMLElement | null
   }>(),
-  { cancelLabel: 'Cancel', busy: false, error: undefined },
+  { cancelLabel: 'Cancel', busy: false, error: undefined, returnFocus: undefined },
 )
 
 const emit = defineEmits<{
@@ -57,7 +63,8 @@ function onDismiss(): void {
 
 function onCloseAutoFocus(event: Event): void {
   event.preventDefault()
-  opener.focus()
+  // Reka closes before the answer's work renders, so wait a task before choosing the target.
+  setTimeout(() => (props.returnFocus?.() ?? opener).focus(), 0)
 }
 </script>
 

@@ -1,22 +1,26 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
-import { usePlannerStore } from '@/stores/planner'
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
+import { exerciseDetails, usePlannerStore } from '@/stores/planner'
+import { useDietStore } from '@/stores/diet'
 import AppNavbar from '@/components/AppNavbar.vue'
 import WeekHeader from '@/components/WeekHeader.vue'
 import ExerciseGrid from '@/components/ExerciseGrid.vue'
-import AddExerciseForm from '@/components/AddExerciseForm.vue'
 import DietSection from '@/components/DietSection.vue'
+import TodayList from '@/components/TodayList.vue'
 import LoginForm from '@/components/LoginForm.vue'
 import PasswordForm from '@/components/PasswordForm.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ImportPrompt from '@/components/ImportPrompt.vue'
 import { ConfirmHost } from '@/components/ui/confirm-dialog'
+import { SegmentedControl } from '@/components/ui/segmented-control'
+import { usePhoneView } from '@/composables/phoneView'
 import { isDark } from '@/lib/theme'
 import { inkFor } from '@/lib/inks'
 import { useSessionStore } from '@/stores/session'
 import { useSyncStore } from '@/stores/sync'
 
 const store = usePlannerStore()
+const diet = useDietStore()
 const session = useSessionStore()
 const sync = useSyncStore()
 // Started before the first render: a remembered user is signed in synchronously, so the app
@@ -38,6 +42,41 @@ function forgetToken(): void {
 function closeLink(): void {
   forgetToken()
   link.value = null
+}
+
+// The phone opens on today (K5): the Today list below sm, with a Today | Week switch.
+const { phone, view, showToday } = usePhoneView()
+const VIEWS = [
+  { value: 'today', label: 'Today' },
+  { value: 'week', label: 'Week' },
+]
+function chooseView(next: string): void {
+  view.value = next === 'week' ? 'week' : 'today'
+}
+/** Today's column, which the Today list only ever shows (usePhoneView keeps it to this week). */
+const todayIndex = computed(() => store.days.findIndex((d) => d.isToday))
+const today = computed(() => {
+  const i = todayIndex.value
+  return {
+    date: store.days[i]!.full,
+    pick: store.dailyPick,
+    exercises: store.exercises.map((e) => ({
+      ...e,
+      chips: exerciseDetails(e),
+      done: store.isDone(e.id, i),
+      total: store.totalFor(e.id),
+    })),
+    foods: diet.foods.map((f) => ({
+      ...f,
+      done: diet.isEaten(f.id, i),
+      total: diet.totalFor(f.id),
+    })),
+  }
+})
+/** A mark in the Today list: the same store actions the week's grids call. */
+function markToday(kind: 'exercise' | 'food', id: string): void {
+  if (kind === 'exercise') store.toggle(id, todayIndex.value)
+  else diet.toggle(id, todayIndex.value)
 }
 
 // The ink is a user setting, so it lives in CSS variables rather than in the stylesheets: one value
@@ -120,10 +159,20 @@ onBeforeUnmount(() => {
       <SyncStatus />
       <ImportPrompt v-if="session.user" :key="session.user" :user="session.user" />
       <template v-if="sync.loaded">
-        <WeekHeader />
-        <ExerciseGrid />
-        <AddExerciseForm v-if="store.configMode" />
-        <DietSection />
+        <div v-if="phone" class="flex justify-end pt-3" data-noprint>
+          <SegmentedControl
+            :model-value="view"
+            ariaLabel="View"
+            :options="VIEWS"
+            @update:model-value="chooseView"
+          />
+        </div>
+        <TodayList v-if="showToday" v-bind="today" @toggle="markToday" />
+        <template v-else>
+          <WeekHeader />
+          <ExerciseGrid />
+          <DietSection />
+        </template>
       </template>
     </main>
   </template>

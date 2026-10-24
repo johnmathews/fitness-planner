@@ -10,6 +10,8 @@ export interface ConfirmOptions {
   confirmLabel: string
   /** Defaults to "Cancel". */
   cancelLabel?: string
+  /** Where focus goes on closing, when not the control that asked (ConfirmDialog). */
+  returnFocus?: () => HTMLElement | null
 }
 
 interface ConfirmRequest extends ConfirmOptions {
