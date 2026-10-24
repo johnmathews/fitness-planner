@@ -15,7 +15,7 @@ export const buttonVariants = cva(
     'inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-transparent',
     'font-sans font-semibold whitespace-nowrap select-none',
     'aria-busy:cursor-progress disabled:cursor-not-allowed disabled:opacity-40',
-    'motion-safe:transition-colors motion-safe:duration-120 motion-safe:ease-out',
+    'motion-safe:transition-[color,background-color,border-color] motion-safe:duration-120 motion-safe:ease-out',
     '[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0',
   ],
   {

@@ -11,5 +11,5 @@ export const textFieldVariants = cva([
   'h-11 w-full min-w-0 rounded-sm border border-control-border bg-panel px-3',
   'font-sans text-base text-ink tabular-nums placeholder:text-ink-secondary',
   'hover:not-aria-invalid:border-ink aria-invalid:border-error-ink disabled:cursor-not-allowed',
-  'motion-safe:transition-colors motion-safe:duration-120 motion-safe:ease-out',
+  'motion-safe:transition-[color,background-color,border-color] motion-safe:duration-120 motion-safe:ease-out',
 ])

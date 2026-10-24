@@ -106,7 +106,7 @@ describe('Button', () => {
       for (const size of ['sm', 'md'] as const) {
         const value = buttonVariants({ variant, size })
         expect(value).not.toMatch(/ring|outline-none/)
-        expect(value).toContain('motion-safe:transition-colors')
+        expect(value).toContain('motion-safe:transition-[color,background-color,border-color]')
         expect(value).toContain('motion-safe:duration-120')
       }
     }

@@ -13,7 +13,7 @@ export const iconButtonVariants = cva(
     'inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-transparent',
     'bg-transparent p-0 text-ink hover:not-disabled:bg-tile aria-expanded:bg-tile',
     'disabled:cursor-not-allowed disabled:opacity-40',
-    'motion-safe:transition-colors motion-safe:duration-120 motion-safe:ease-out',
+    'motion-safe:transition-[color,background-color,border-color] motion-safe:duration-120 motion-safe:ease-out',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0',
   ],
   {
