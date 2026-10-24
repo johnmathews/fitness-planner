@@ -108,6 +108,8 @@ function onValue(value: number | undefined): void {
         <Plus :size="20" :stroke-width="1.5" />
       </button>
     </NumberFieldRoot>
+    <!-- A live region, not a field: a label would be read in place of the announcement. -->
+    <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
     <output aria-live="polite" class="sr-only">{{ announcement }}</output>
   </div>
 </template>

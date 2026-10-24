@@ -1,0 +1,130 @@
+// Accessibility gate (from the design-system skill's a11y.spec.ts): axe (WCAG 2.2 A and AA, and
+// its best practices) on the style guide in both themes and all four inks, and on the app (signed
+// in, /api mocked) in both themes at desktop and phone width; and the focus ring's shape.
+//
+// The theme is the app's own `.dark` class on <html>, which tokens.css's dark block matches
+// (`npm run tokens` passes --dark-selector .dark). The first two tests fail if switching it
+// changes nothing, so a "dark" audit can never quietly re-run light.
+import { expect, test, type Page } from '@playwright/test'
+import {
+  INKS,
+  THEMES,
+  canvasToken,
+  expectNoAxeViolations,
+  openApp,
+  openSignIn,
+  openStyleGuide,
+  settle,
+} from './support'
+
+test.describe('dark really is dark', () => {
+  test('the style guide', async ({ page }) => {
+    await openStyleGuide(page, { theme: 'light' })
+    const light = await canvasToken(page)
+    await openStyleGuide(page, { theme: 'dark' })
+    expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(
+      true,
+    )
+    expect(await canvasToken(page), '--canvas is identical in both themes').not.toBe(light)
+  })
+
+  test('the app', async ({ page, context }) => {
+    await openApp(page, { theme: 'light' })
+    const light = await canvasToken(page)
+    const dark = await context.newPage()
+    await openApp(dark, { theme: 'dark' })
+    expect(await dark.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(
+      true,
+    )
+    expect(await canvasToken(dark), '--canvas is identical in both themes').not.toBe(light)
+  })
+})
+
+test.describe('the style guide passes axe', () => {
+  for (const theme of THEMES) {
+    for (const ink of INKS) {
+      test(`${theme}, ${ink}`, async ({ page }) => {
+        await openStyleGuide(page, { theme, ink })
+        await expectNoAxeViolations(page)
+      })
+    }
+  }
+})
+
+test.describe('the app passes axe', () => {
+  for (const theme of THEMES) {
+    test(`week view, desktop, ${theme}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 })
+      await openApp(page, { theme })
+      await expectNoAxeViolations(page)
+    })
+
+    test(`week view in Edit plan, desktop, ${theme}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 })
+      await openApp(page, { theme })
+      await page.getByRole('switch', { name: /Edit/ }).click()
+      await settle(page)
+      await expectNoAxeViolations(page)
+    })
+
+    test(`settings open, desktop, ${theme}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 })
+      await openApp(page, { theme })
+      await page.getByRole('button', { name: /Settings/ }).click()
+      await page.waitForSelector('[role="dialog"]')
+      await settle(page)
+      await expectNoAxeViolations(page)
+    })
+
+    test(`Today view, 375px, ${theme}`, async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 800 })
+      await openApp(page, { theme, view: 'today' })
+      await expect(page.locator('[data-slot="today-list"]')).toBeVisible()
+      await expectNoAxeViolations(page)
+    })
+
+    test(`sign-in, ${theme}`, async ({ page }) => {
+      await openSignIn(page, theme)
+      await expectNoAxeViolations(page)
+    })
+  }
+})
+
+/** The focused element's outline, read after the ring's transition has settled. */
+async function focusRing(page: Page) {
+  await settle(page)
+  return page.evaluate(() => {
+    const el = document.activeElement as HTMLElement
+    const s = getComputedStyle(el)
+    return {
+      element: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}`,
+      ring: `${s.outlineStyle} ${s.outlineWidth} ${s.outlineOffset}`,
+    }
+  })
+}
+
+test.describe('the focus ring is a solid 2px outline at a 2px offset', () => {
+  test('on a style guide button', async ({ page }) => {
+    await openStyleGuide(page)
+    // Reached by the keyboard, so :focus-visible applies as it does for a person tabbing.
+    await page.locator('#sg-button-primary-default').focus()
+    await page.keyboard.press('Shift+Tab')
+    await page.keyboard.press('Tab')
+    expect(await focusRing(page)).toEqual({
+      element: 'button#sg-button-primary-default',
+      ring: 'solid 2px 2px',
+    })
+  })
+
+  test('on the app navbar button', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await openApp(page)
+    // Tab past the skip link to the first button.
+    for (let i = 0; i < 10; i++) {
+      await page.keyboard.press('Tab')
+      if (await page.evaluate(() => document.activeElement?.tagName === 'BUTTON')) break
+    }
+    const { ring } = await focusRing(page)
+    expect(ring).toBe('solid 2px 2px')
+  })
+})
