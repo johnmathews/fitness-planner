@@ -10,6 +10,7 @@ import LoginForm from '@/components/LoginForm.vue'
 import PasswordForm from '@/components/PasswordForm.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ImportPrompt from '@/components/ImportPrompt.vue'
+import { ConfirmHost } from '@/components/ui/confirm-dialog'
 import { isDark } from '@/lib/theme'
 import { inkFor } from '@/lib/inks'
 import { useSessionStore } from '@/stores/session'
@@ -105,7 +106,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <PasswordForm v-if="link" :key="link" :token="link" @done="closeLink" @spent="forgetToken" />
+  <PasswordForm
+    v-if="link"
+    :key="link"
+    :token="link"
+    @done="closeLink"
+    @spent="forgetToken"
+    @leave="closeLink"
+  />
   <template v-else-if="session.status === 'signed-in'">
     <AppNavbar />
     <main class="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 print:max-w-none print:p-0">
@@ -120,4 +128,6 @@ onBeforeUnmount(() => {
     </main>
   </template>
   <LoginForm v-else-if="session.status === 'signed-out'" />
+  <!-- The one host for useConfirm(): removing a row and copying over next week's plan ask here. -->
+  <ConfirmHost />
 </template>

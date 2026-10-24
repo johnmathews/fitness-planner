@@ -84,33 +84,36 @@ describe('DietSection', () => {
   it('moves with the shared week navigation', async () => {
     mountApp()
     await cells('Fruit')[0]!.trigger('click')
-    await wrapper.get('button[title="Previous week"]').trigger('click')
+    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
     expect(cells('Fruit')[0]!.attributes('aria-pressed')).toBe('false')
-    await wrapper.get('button[title="Next week"]').trigger('click')
+    await wrapper.get('button[aria-label="Next week"]').trigger('click')
     expect(cells('Fruit')[0]!.attributes('aria-pressed')).toBe('true')
   })
 
   it('adds a food, syncs it, and removes one after confirmation', async () => {
     await mountConfig()
-    await wrapper.get('input[aria-label="New food name"]').setValue('Beans')
-    await wrapper.get('input[aria-label="New food name"]').trigger('submit')
+    await wrapper.get('#add-food-name').setValue('Beans')
+    await wrapper.get('#add-food-name').trigger('submit')
     expect(diet().findAll('[data-testid="item-name"]').at(-1)!.text()).toBe('Beans')
-    expect(
-      (wrapper.get('input[aria-label="New food name"]').element as HTMLInputElement).value,
-    ).toBe('')
+    expect((wrapper.get('#add-food-name').element as HTMLInputElement).value).toBe('')
     await flushPromises()
     const plan = api.accounts.get(USER)!.plans.diet['2026-10-19']!.items as { name: string }[]
     expect(plan.at(-1)!.name).toBe('Beans')
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     await diet().get('button[aria-label="Remove Nuts"]').trigger('click')
+    await flushPromises()
+    // Reka renders the ConfirmDialog in a portal on document.body.
+    const dialog = document.querySelector<HTMLElement>('[role="alertdialog"]')!
+    expect(dialog.querySelector('h2')!.textContent).toBe('Remove Nuts?')
+    ;[...dialog.querySelectorAll('button')].find((b) => b.textContent === 'Remove')!.click()
+    await flushPromises()
     expect(cells('Nuts')).toHaveLength(0)
   })
 
   it('ignores an empty food name', async () => {
     await mountConfig()
-    await wrapper.get('input[aria-label="New food name"]').setValue('   ')
-    await wrapper.get('input[aria-label="New food name"]').trigger('submit')
+    await wrapper.get('#add-food-name').setValue('   ')
+    await wrapper.get('#add-food-name').trigger('submit')
     expect(cells('Vegetables')).toHaveLength(7)
     expect(diet().findAll('[role="row"]')).toHaveLength(6)
   })

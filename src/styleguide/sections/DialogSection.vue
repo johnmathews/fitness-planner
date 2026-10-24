@@ -7,7 +7,7 @@ import { TextField } from '@/components/ui/text-field'
 
 const REPS_COUNT = [
   { value: 'per-set', label: 'Per set' },
-  { value: 'each-side', label: 'Each side, per set' },
+  { value: 'each-side', label: 'Each side' },
 ]
 
 const open = ref(false)

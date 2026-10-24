@@ -3,15 +3,19 @@ import ColourSection from './sections/ColourSection.vue'
 import TypeSection from './sections/TypeSection.vue'
 import ButtonSection from './sections/ButtonSection.vue'
 import IconButtonSection from './sections/IconButtonSection.vue'
+import BrandMarkSection from './sections/BrandMarkSection.vue'
 import TextLinkSection from './sections/TextLinkSection.vue'
 import TextFieldSection from './sections/TextFieldSection.vue'
 import TextAreaSection from './sections/TextAreaSection.vue'
 import SegmentedControlSection from './sections/SegmentedControlSection.vue'
 import SwitchSection from './sections/SwitchSection.vue'
 import StepperSection from './sections/StepperSection.vue'
+import InkPickerSection from './sections/InkPickerSection.vue'
 import PopoverSection from './sections/PopoverSection.vue'
 import DialogSection from './sections/DialogSection.vue'
 import ConfirmDialogSection from './sections/ConfirmDialogSection.vue'
+import InlineMessageSection from './sections/InlineMessageSection.vue'
+import BannerSection from './sections/BannerSection.vue'
 
 /**
  * One section of the style guide. StyleGuide.vue renders each as
@@ -65,6 +69,13 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     component: IconButtonSection,
   },
   {
+    id: 'sg-brand-mark',
+    title: 'BrandMark',
+    summary:
+      'The product’s name as a mark: the “Fitness Planner” wordmark in Source Serif 4 600, and an “FP” monogram for small spaces.',
+    component: BrandMarkSection,
+  },
+  {
     id: 'sg-text-link',
     title: 'TextLink',
     summary:
@@ -107,6 +118,13 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     component: StepperSection,
   },
   {
+    id: 'sg-ink-picker',
+    title: 'InkPicker',
+    summary:
+      'The setting that chooses the pen: four inks as named dots in a radio group, the chosen one marked by a ring, a check and its name, never by colour alone.',
+    component: InkPickerSection,
+  },
+  {
     id: 'sg-popover',
     title: 'Popover',
     summary:
@@ -125,5 +143,19 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     summary:
       "A small modal question before something that can't be undone: what will happen, then two buttons.",
     component: ConfirmDialogSection,
+  },
+  {
+    id: 'sg-inline-message',
+    title: 'InlineMessage',
+    summary:
+      'A one- or two-line message next to the thing it is about, in one of four tones, always an icon and words together.',
+    component: InlineMessageSection,
+  },
+  {
+    id: 'sg-banner',
+    title: 'Banner',
+    summary:
+      'A full-width bar above the week that says how the data stands with the server, in words, with the one action that helps.',
+    component: BannerSection,
   },
 ]

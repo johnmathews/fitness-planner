@@ -95,7 +95,7 @@ describe('the first-login import prompt', () => {
     expect(prompt().get('h2').text()).toBe('Added to your account')
     expect(prompt().get('[role="status"]').text()).toContain('now part of your account')
     // The earlier week and the accent show at once, from the server's merged state.
-    await wrapper.get('button[title="Previous week"]').trigger('click')
+    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
     expect(wrapper.findAll('button[aria-label^="Squats,"]')[0]!.attributes('aria-pressed')).toBe(
       'true',
     )
@@ -156,7 +156,7 @@ describe('the first-login import prompt', () => {
     await button('Add to my account').trigger('click')
     await flushPromises()
     expect(prompt().get('[role="alert"]').text()).toContain('Something went wrong')
-    expect(button('Add to my account').attributes('aria-busy')).toBe('false')
+    expect(button('Add to my account').attributes('aria-busy')).toBeUndefined()
   })
 
   it('sends one import however often “Add” is pressed', async () => {

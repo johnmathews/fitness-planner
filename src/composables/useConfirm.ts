@@ -20,8 +20,8 @@ interface ConfirmRequest extends ConfirmOptions {
 const current = shallowRef<ConfirmRequest | null>(null)
 
 /**
- * Asks a yes-or-no question before something that can't be undone, in place of
- * `window.confirm`. The answer is true for the verb, false for Cancel or Escape. Needs
+ * Asks a yes-or-no question before something that can't be undone, in place of the browser's
+ * own confirm box. The answer is true for the verb, false for Cancel or Escape. Needs
  * <ConfirmHost /> mounted once in the app.
  */
 export function useConfirm(): { confirm: (options: ConfirmOptions) => Promise<boolean> } {

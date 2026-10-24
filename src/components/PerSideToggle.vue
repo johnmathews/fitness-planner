@@ -1,18 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { SegmentedControl } from '@/components/ui/segmented-control'
+
 const perSide = defineModel<boolean>({ required: true })
+
+// The Dialog card's words; the chip under the exercise then reads "8 each side".
+const OPTIONS = [
+  { value: 'per-set', label: 'Per set' },
+  { value: 'each-side', label: 'Each side' },
+]
+
+const choice = computed({
+  get: () => (perSide.value ? 'each-side' : 'per-set'),
+  set: (value: string) => (perSide.value = value === 'each-side'),
+})
 </script>
 
 <template>
-  <div
-    class="flex h-9 rounded-lg border border-line bg-tile p-0.5"
-    role="group"
-    aria-label="Reps count"
-  >
-    <button type="button" class="segment px-2.5" :aria-pressed="!perSide" @click="perSide = false">
-      per set
-    </button>
-    <button type="button" class="segment px-2.5" :aria-pressed="perSide" @click="perSide = true">
-      each side, per set
-    </button>
-  </div>
+  <SegmentedControl v-model="choice" label="Reps count" :options="OPTIONS" />
 </template>

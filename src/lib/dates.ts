@@ -42,3 +42,19 @@ export function weekLabel(monday: Date): string {
   const sunday = addDays(monday, 6)
   return `${formatShort(monday)} – ${formatShort(sunday)}, ${sunday.getFullYear()}`
 }
+
+/** "26 October": a date as the app's sentences write it (voice.md). */
+export function dayMonth(d: Date): string {
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
+}
+
+/**
+ * The Header's week label (components/Header): "19–25 October" within a month, and
+ * "28 Sep – 4 Oct" across one, short enough for a 320px screen.
+ */
+export function weekRange(monday: Date): string {
+  const sunday = addDays(monday, 6)
+  if (sunday.getMonth() === monday.getMonth()) return `${monday.getDate()}–${dayMonth(sunday)}`
+  const short = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  return `${short(monday)} – ${short(sunday)}`
+}

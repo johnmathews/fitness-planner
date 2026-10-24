@@ -178,6 +178,9 @@ describe('Popover', () => {
         'border-line',
         'rounded-lg',
         'shadow-overlay',
+        // Never taller than the screen allows: it scrolls instead (Sign out on a 667px phone).
+        'max-h-(--reka-popover-content-available-height)',
+        'overflow-y-auto',
         'p-4',
         'w-74',
       ]),

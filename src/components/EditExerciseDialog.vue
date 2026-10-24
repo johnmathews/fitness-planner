@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref, useId } from 'vue'
 import type { Exercise } from '@/lib/storage'
 import { usePlannerStore } from '@/stores/planner'
 import { useExerciseForm } from '@/composables/exerciseForm'
 import PerSideToggle from '@/components/PerSideToggle.vue'
+import { Button } from '@/components/ui/button'
+import { Dialog } from '@/components/ui/dialog'
+import { TextField } from '@/components/ui/text-field'
 
 const props = defineProps<{ exercise: Exercise }>()
 const emit = defineEmits<{ close: [] }>()
@@ -13,70 +15,62 @@ const form = useExerciseForm()
 const { name, sets, reps, weight, perSide } = form
 form.load(props.exercise)
 
-const dialog = ref<HTMLDialogElement | null>(null)
-const titleId = useId()
-const LABEL = 'flex flex-col gap-1 text-xs font-medium text-ink-secondary'
-
-// A native modal dialog: it traps focus, closes on Escape and returns focus to the opener.
-onMounted(() => dialog.value?.showModal())
-
 function save(): void {
-  if (store.updateExercise(props.exercise.id, form.value())) dialog.value?.close()
+  if (store.updateExercise(props.exercise.id, form.value())) emit('close')
 }
 </script>
 
+<!-- Open for as long as it is mounted: Escape, Close, Cancel and a good Save all ask the list to
+     drop it, and the Dialog returns focus to the Edit button that opened it. The actions sit
+     outside the form in the Dialog's own row, so Save names the form. -->
 <template>
-  <dialog
-    ref="dialog"
-    data-noprint
-    class="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-xl border border-line bg-panel p-5 text-ink shadow-overlay backdrop:bg-scrim/40"
-    :aria-labelledby="titleId"
-    @close="emit('close')"
-  >
-    <form class="flex flex-col gap-4" @submit.prevent="save">
-      <h2 :id="titleId" class="title-2">Edit exercise</h2>
-      <label :class="LABEL">
-        Name
-        <input v-model="name" class="field" required pattern=".*\S.*" title="Enter a name" />
-      </label>
-      <div class="flex flex-wrap items-end gap-2">
-        <label :class="LABEL">
-          Sets
-          <input
-            :value="sets"
-            maxlength="2"
-            class="field w-16"
-            inputmode="numeric"
-            data-field="sets"
-            @input="form.onSetsInput"
-          />
-        </label>
-        <label :class="LABEL">
-          Reps
-          <input
-            :value="reps"
-            class="field w-20"
-            inputmode="numeric"
-            data-field="reps"
-            @input="form.onRepsInput"
-          />
-        </label>
+  <Dialog :open="true" title="Edit exercise" @update:open="emit('close')">
+    <form id="edit-exercise-form" class="flex flex-col gap-4" @submit.prevent="save">
+      <TextField
+        id="edit-exercise-name"
+        v-model="name"
+        label="Name"
+        required
+        pattern=".*\S.*"
+        title="Enter a name"
+      />
+      <div class="flex flex-wrap items-start gap-4">
+        <TextField
+          id="edit-exercise-sets"
+          :model-value="sets"
+          label="Sets"
+          hint="Optional."
+          maxlength="2"
+          inputmode="numeric"
+          data-field="sets"
+          class="w-20"
+          @input="form.onSetsInput"
+        />
+        <TextField
+          id="edit-exercise-reps"
+          :model-value="reps"
+          label="Reps"
+          inputmode="numeric"
+          data-field="reps"
+          class="w-20"
+          @input="form.onRepsInput"
+        />
         <PerSideToggle v-model="perSide" />
       </div>
-      <label :class="LABEL">
-        Weight (kg, optional)
-        <input
-          :value="weight"
-          class="field w-28"
-          inputmode="decimal"
-          placeholder="e.g. 12"
-          @input="form.onWeightInput"
-        />
-      </label>
-      <div class="flex justify-end gap-2 pt-1">
-        <button type="button" class="btn h-9" @click="dialog?.close()">Cancel</button>
-        <button type="submit" class="btn-primary">Save</button>
-      </div>
+      <TextField
+        id="edit-exercise-weight"
+        :model-value="weight"
+        label="Weight in kg"
+        hint="Optional. Leave empty for bodyweight."
+        inputmode="decimal"
+        placeholder="e.g. 12"
+        class="w-44"
+        @input="form.onWeightInput"
+      />
     </form>
-  </dialog>
+    <template #actions>
+      <Button @click="emit('close')">Cancel</Button>
+      <Button type="submit" form="edit-exercise-form" variant="primary">Save</Button>
+    </template>
+  </Dialog>
 </template>

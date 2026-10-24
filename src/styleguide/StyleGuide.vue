@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watchEffect } from 'vue'
 import { INKS } from '@/lib/inks'
+import { APP_NAME } from '@/lib/app'
 import { TextLink } from '@/components/ui/text-link'
 import { ConfirmHost } from '@/components/ui/confirm-dialog'
 import { SECTIONS } from './sections'
@@ -25,7 +26,7 @@ watchEffect(() => {
   )
 })
 
-document.title = 'Style guide · Fitness Planner'
+document.title = `Style guide · ${APP_NAME}`
 
 // The page mounts after the browser has looked for the address's #section, so go to it now.
 onMounted(() => {
@@ -41,7 +42,7 @@ const SELECT =
     <div
       class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 sm:px-6 lg:px-8"
     >
-      <p class="label mr-auto hidden text-ink-secondary sm:block">Fitness Planner · Style guide</p>
+      <p class="label mr-auto hidden text-ink-secondary sm:block">{{ APP_NAME }} · Style guide</p>
       <div class="flex items-center gap-2">
         <label for="sg-theme" class="label">Theme</label>
         <select id="sg-theme" v-model="look.theme" :class="SELECT">

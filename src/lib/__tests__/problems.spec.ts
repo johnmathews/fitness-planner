@@ -3,7 +3,7 @@ import { describeProblem } from '@/lib/problems'
 
 describe('describeProblem', () => {
   it.each([
-    [{ code: 'invalid' }, 'Wrong username or password.'],
+    [{ code: 'invalid' }, 'Wrong username or password. Check both and try again.'],
     [{ code: 'locked', retryAfter: 900 }, 'Too many attempts. Try again in 15 minutes.'],
     [{ code: 'locked' }, 'Too many attempts. Try again in 15 minutes.'],
     [{ code: 'locked', retryAfter: 61 }, 'Too many attempts. Try again in 2 minutes.'],

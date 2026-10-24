@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
+import { DOMWrapper, flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
 import { usePlannerStore } from '@/stores/planner'
@@ -47,6 +47,61 @@ function pen(): [string, string] {
 }
 const VIOLET: [string, string] = ['#4b3b7a', '#b9a9e8']
 const INK_BLUE: [string, string] = ['#2b4c7e', '#9db8e8']
+
+/** The open dialog, by role: Reka renders it in a portal on document.body, outside the wrapper. */
+function dialog(): DOMWrapper<HTMLElement> | null {
+  const el = document.querySelector<HTMLElement>('[role="dialog"]')
+  return el ? new DOMWrapper(el) : null
+}
+
+/** Lets Reka's queued work (focus-outside checks, presence, nextTick chains) settle. */
+async function settle(): Promise<void> {
+  for (let i = 0; i < 4; i++) await new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+/** The open ConfirmDialog, by role; Reka renders it in a portal on document.body. */
+function confirmation(): DOMWrapper<HTMLElement> | null {
+  const el = document.querySelector<HTMLElement>('[role="alertdialog"]')
+  return el ? new DOMWrapper(el) : null
+}
+
+/** Answer the open ConfirmDialog with the button of this name ("Cancel", "Remove"…). */
+async function answer(name: string): Promise<void> {
+  await confirmation()!
+    .findAll('button')
+    .find((b) => b.text() === name)!
+    .trigger('click')
+  await settle()
+}
+
+/** The Settings IconButton in the Header, and opening the popover from it. */
+function settingsButton() {
+  return wrapper.get('button[aria-label="Settings"]')
+}
+async function openSettings(): Promise<void> {
+  await settingsButton().trigger('click')
+  await settle()
+}
+
+/** The Settings popover's panel: a dialog (Reka Popover), rendered in place after the button. */
+const PANEL = '[role="dialog"][data-slot="popover-content"]'
+
+/** An ink in the InkPicker: a radio named by its visible name. */
+function inkRadio(name: string) {
+  return wrapper.findAll('[role="radio"]').find((r) => r.text() === name)!
+}
+
+/** The daily pick as the Settings Stepper shows it. */
+function dailyPick(): string | undefined {
+  return wrapper.get(PANEL).get('[role="spinbutton"]').attributes('aria-valuenow')
+}
+
+/** Press an exercise's Edit button and return its dialog, once Reka has opened it. */
+async function openEdit(name: string): Promise<DOMWrapper<HTMLElement>> {
+  await wrapper.get(`button[aria-label="Edit ${name}"]`).trigger('click')
+  await flushPromises()
+  return dialog()!
+}
 
 describe('App', () => {
   beforeEach(() => {
@@ -131,28 +186,57 @@ describe('App', () => {
     expect(total().text()).toBe('1 / 1')
   })
 
+  it('takes a typed goal, and leaves the plan alone when the goal does not change', async () => {
+    await mountConfig()
+    const goal = ex().get('[role="spinbutton"][aria-valuenow="4"]')
+    expect(document.getElementById(goal.attributes('aria-labelledby')!)!.textContent!.trim()).toBe(
+      'Push-ups goal',
+    )
+    await goal.setValue('6')
+    await goal.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+    expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('0 / 6')
+    const plans = () => JSON.stringify(usePlannerStore().plans)
+    const before = plans()
+    await goal.setValue('6')
+    await goal.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+    expect(plans()).toBe(before)
+  })
+
   it('navigates weeks and returns to this week', async () => {
     mountApp()
-    await wrapper.get('button[title="Previous week"]').trigger('click')
+    const thisWeek = () => wrapper.findAll('button').find((b) => b.text() === 'This week')
+    // "This week" shows only while another week is on screen (Header card).
+    expect(thisWeek()).toBeUndefined()
+    expect(wrapper.get('[data-testid="week-label"]').text()).toBe('19–25 October')
+    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
     expect(wrapper.find('h1').text()).toBe('Oct 12 – Oct 18, 2026')
-    await wrapper.get('button[title="Next week"]').trigger('click')
-    await wrapper.get('button[title="Next week"]').trigger('click')
+    expect(wrapper.get('[data-testid="week-label"]').text()).toBe('12–18 October')
+    await wrapper.get('button[aria-label="Next week"]').trigger('click')
+    await wrapper.get('button[aria-label="Next week"]').trigger('click')
     expect(wrapper.find('h1').text()).toBe('Oct 26 – Nov 1, 2026')
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === 'This Week')!
-      .trigger('click')
+    expect(wrapper.get('[data-testid="week-label"]').text()).toBe('26 Oct – 1 Nov')
+    await thisWeek()!.trigger('click')
     expect(wrapper.find('h1').text()).toBe('Oct 19 – Oct 25, 2026')
+    expect(thisWeek()).toBeUndefined()
   })
 
   it('removes an exercise only after confirmation', async () => {
     await mountConfig()
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
     const remove = wrapper.get('button[aria-label="Remove Squats"]')
     await remove.trigger('click')
-    expect(confirm).toHaveBeenCalledWith('Remove Squats?')
+    await settle()
+    expect(confirmation()!.get('h2').text()).toBe('Remove Squats?')
+    expect(confirmation()!.text()).toContain(
+      'It comes off this week’s plan. Weeks with their own plan keep it, and its marks stay.',
+    )
+    await answer('Cancel')
+    expect(confirmation()).toBeNull()
     expect(rowCells('Squats')).toHaveLength(7)
     await remove.trigger('click')
+    await settle()
+    await answer('Remove')
     expect(rowCells('Squats')).toHaveLength(0)
   })
 
@@ -217,35 +301,56 @@ describe('AddExerciseForm', () => {
 
   it('adds an exercise on submit, keeping only digits in reps, then resets', async () => {
     await mountConfig()
-    await wrapper.get('input[aria-label="New exercise name"]').setValue('Lunges')
-    const reps = wrapper.get('input[aria-label="Reps"]')
+    await wrapper.get('#add-exercise-name').setValue('Lunges')
+    const reps = wrapper.get('#add-exercise-reps')
     await reps.setValue('1a2')
     expect((reps.element as HTMLInputElement).value).toBe('12')
     await wrapper
       .findAll('button[aria-pressed]')
-      .find((b) => b.text() === 'each side, per set')!
+      .find((b) => b.text() === 'Each side')!
       .trigger('click')
     await wrapper.get('form').trigger('submit')
     expect(wrapper.findAll('[data-testid="item-detail"]').at(-1)!.text()).toBe('12 each side / set')
     expect(ex().findAll('[data-testid="row-total"]').at(-1)!.text()).toBe('0 / 3')
-    expect(
-      (wrapper.get('input[aria-label="New exercise name"]').element as HTMLInputElement).value,
-    ).toBe('')
+    expect((wrapper.get('#add-exercise-name').element as HTMLInputElement).value).toBe('')
     expect((reps.element as HTMLInputElement).value).toBe('')
-    const perSet = wrapper.findAll('button[aria-pressed]').find((b) => b.text() === 'per set')!
+    const perSet = wrapper.findAll('button[aria-pressed]').find((b) => b.text() === 'Per set')!
     expect(perSet.attributes('aria-pressed')).toBe('true')
+  })
+
+  it('labels every field of the add forms visibly, not by placeholder (F17)', async () => {
+    await mountConfig()
+    const labelFor = (id: string) => wrapper.find(`label[for="${id}"]`)
+    const inputs = wrapper.findAll('form[data-noprint] input')
+    expect(inputs.map((i) => i.attributes('id'))).toEqual([
+      'add-exercise-name',
+      'add-exercise-sets',
+      'add-exercise-reps',
+      'add-exercise-weight',
+      'add-food-name',
+    ])
+    expect(inputs.map((i) => labelFor(i.attributes('id')!).text())).toEqual([
+      'New exercise',
+      'Sets',
+      'Reps',
+      'Weight in kg',
+      'New food',
+    ])
+    for (const input of inputs) expect(input.attributes('aria-label')).toBeUndefined()
+    const group = wrapper.get('form[data-noprint] [role="group"]')
+    expect(wrapper.get(`#${group.attributes('aria-labelledby')}`).text()).toBe('Reps count')
   })
 
   it('does nothing for an empty name', async () => {
     await mountConfig()
-    await wrapper.get('input[aria-label="New exercise name"]').setValue('   ')
+    await wrapper.get('#add-exercise-name').setValue('   ')
     await wrapper.get('form').trigger('submit')
     expect(ex().findAll('[data-testid="item-name"]')).toHaveLength(5)
   })
 
   it('shows an em dash when no reps are given', async () => {
     await mountConfig()
-    await wrapper.get('input[aria-label="New exercise name"]').setValue('Plank')
+    await wrapper.get('#add-exercise-name').setValue('Plank')
     await wrapper.get('form').trigger('submit')
     expect(wrapper.findAll('[data-testid="item-detail"]').at(-1)!.text()).toBe('—')
   })
@@ -257,74 +362,112 @@ describe('SettingsPopover', () => {
   })
   afterEach(() => wrapper?.unmount())
 
-  const PANEL = '[role="group"][aria-label="Settings"]'
-
-  function trigger() {
-    return wrapper.findAll('button').find((b) => b.text().endsWith('Settings'))!
-  }
-
   it('opens, changes the ink and daily pick live, and closes on Escape', async () => {
     mountApp()
     expect(wrapper.find(PANEL).exists()).toBe(false)
-    await trigger().trigger('click')
-    expect(trigger().attributes('aria-expanded')).toBe('true')
+    await openSettings()
+    expect(settingsButton().attributes('aria-expanded')).toBe('true')
+    expect(wrapper.get(PANEL).get('h2').text()).toBe('Settings')
     // Nothing saved yet: Ink blue, although the stored default accent is the old green.
-    expect(wrapper.get('button[aria-label="Ink blue"]').attributes('aria-pressed')).toBe('true')
+    expect(inkRadio('Ink blue').attributes('aria-checked')).toBe('true')
     expect(pen()).toEqual(INK_BLUE)
 
-    await wrapper.get('button[aria-label="Violet"]').trigger('click')
-    expect(wrapper.get('button[aria-label="Violet"]').attributes('aria-pressed')).toBe('true')
+    await inkRadio('Violet').trigger('click')
+    expect(inkRadio('Violet').attributes('aria-checked')).toBe('true')
+    expect(inkRadio('Ink blue').attributes('aria-checked')).toBe('false')
     expect(usePlannerStore().accent).toBe('#4b3b7a')
     expect(pen()).toEqual(VIOLET)
 
-    await wrapper.get('button[aria-label="More exercises per day"]').trigger('click')
+    await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
+    expect(dailyPick()).toBe('4')
     expect(wrapper.find('[data-testid="pick-hint"]').text()).toBe(
       'Pick 4 exercises a day. Click a cell when it’s done.',
     )
     expect(ex().findAll('[data-testid="day-count"]')[0]!.text()).toBe('0/4')
 
-    ;(wrapper.get('button[aria-label="Violet"]').element as HTMLElement).focus()
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-    await wrapper.vm.$nextTick()
+    const violet = inkRadio('Violet').element as HTMLElement
+    violet.focus()
+    violet.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await settle()
     expect(wrapper.find(PANEL).exists()).toBe(false)
-    expect(document.activeElement).toBe(trigger().element)
+    expect(document.activeElement).toBe(settingsButton().element)
+  })
+
+  it('closes when Tab moves focus out of it, onto the next control on the page (F14)', async () => {
+    mountApp()
+    await openSettings()
+    const panel = document.getElementById(settingsButton().attributes('aria-controls')!)!
+    const tabbable = [
+      ...document.querySelectorAll<HTMLElement>('button, input, [tabindex="0"]'),
+    ].filter((el) => !el.hasAttribute('disabled'))
+    const last = tabbable.filter((el) => panel.contains(el)).at(-1)!
+    // The first control after the panel in the page's order: where Tab goes from its last one.
+    const next = tabbable.find(
+      (el) =>
+        !panel.contains(el) && panel.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING,
+    )!
+    last.focus()
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })
+    last.dispatchEvent(tab)
+    if (!tab.defaultPrevented) next.focus()
+    await settle()
+    expect(settingsButton().attributes('aria-expanded')).toBe('false')
+    expect(wrapper.find(PANEL).exists()).toBe(false)
+    // Focus stays where Tab sent it: the next control in the Header, not back in the panel.
+    expect(document.activeElement).toBe(next)
+    expect(next.textContent).toBe('Print…')
   })
 
   it('closes on an outside pointerdown but not on one inside', async () => {
     mountApp()
-    await trigger().trigger('click')
-    const panel = wrapper.get(PANEL).element
-    panel.dispatchEvent(new Event('pointerdown', { bubbles: true }))
-    await wrapper.vm.$nextTick()
+    await openSettings()
+    const press = () => new PointerEvent('pointerdown', { bubbles: true, button: 0 })
+    wrapper.get(PANEL).get('h2').element.dispatchEvent(press())
+    await settle()
     expect(wrapper.find(PANEL).exists()).toBe(true)
-    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }))
-    await wrapper.vm.$nextTick()
+    document.body.dispatchEvent(press())
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await settle()
     expect(wrapper.find(PANEL).exists()).toBe(false)
   })
 
   it('disables the daily-pick buttons at the 1–8 bounds', async () => {
     mountApp()
-    await trigger().trigger('click')
-    const fewer = wrapper.get('button[aria-label="Fewer exercises per day"]')
+    await openSettings()
+    const fewer = wrapper.get('button[aria-label="Fewer exercises a day"]')
     await fewer.trigger('click')
     await fewer.trigger('click')
     expect(fewer.attributes('aria-disabled')).toBe('true')
     await fewer.trigger('click')
-    expect(wrapper.get('[data-testid="daily-pick"]').text()).toBe('1')
+    expect(dailyPick()).toBe('1')
+    expect(usePlannerStore().dailyPick).toBe(1)
+    const more = wrapper.get('button[aria-label="More exercises a day"]')
+    for (let i = 0; i < 8; i++) await more.trigger('click')
+    expect(more.attributes('aria-disabled')).toBe('true')
+    expect(dailyPick()).toBe('8')
   })
 
+  /** Mount with these settings saved on the server as well as cached, so loading keeps them. */
+  function mountWithSettings(settings: { accent: string; dailyPick: number }): void {
+    api = signedIn({ ...emptyState(), settings })
+    api.accounts.get(USER)!.settings = settings
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    wrapper = mount(App, { global: { plugins: [pinia] }, attachTo: document.body })
+  }
+
   it('shows a saved legacy accent as its ink, without rewriting it', async () => {
-    mountApp({ ...emptyState(), settings: { accent: '#ff9f0a', dailyPick: 3 } })
-    await trigger().trigger('click')
+    mountWithSettings({ accent: '#ff9f0a', dailyPick: 3 })
+    await openSettings()
     // Orange was too close to the over-the-pick colour, so it becomes Ink blue (K3).
-    expect(wrapper.get('button[aria-label="Ink blue"]').attributes('aria-pressed')).toBe('true')
+    expect(inkRadio('Ink blue').attributes('aria-checked')).toBe('true')
     expect(pen()).toEqual(INK_BLUE)
     expect(usePlannerStore().accent).toBe('#ff9f0a')
     wrapper.unmount()
 
-    mountApp({ ...emptyState(), settings: { accent: '#30d158', dailyPick: 3 } })
-    await trigger().trigger('click')
-    expect(wrapper.get('button[aria-label="Forest"]').attributes('aria-pressed')).toBe('true')
+    mountWithSettings({ accent: '#30d158', dailyPick: 3 })
+    await openSettings()
+    expect(inkRadio('Forest').attributes('aria-checked')).toBe('true')
     expect(pen()).toEqual(['#2f5d46', '#8fcbaa'])
   })
 })
@@ -356,13 +499,6 @@ describe('export and import', () => {
       log: { '2026-10-19': { eggs: [false, false, true, false, false, false, false] } },
     },
     settings: { accent: '#bf5af2', dailyPick: 2 },
-  }
-
-  async function openSettings(): Promise<void> {
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text().endsWith('Settings'))!
-      .trigger('click')
   }
 
   function button(name: string) {
@@ -423,7 +559,7 @@ describe('export and import', () => {
     mountApp()
     await rowCells('Push-ups')[4]!.trigger('click')
     await openSettings()
-    await wrapper.get('button[aria-label="Ink blue"]').trigger('click')
+    await inkRadio('Ink blue').trigger('click')
     await choose(jsonFile(EXPORT))
     // The tick gave this week its own plan, so only last week's exercise plan and this week's food
     // plan are new. Picking Ink blue saved settings, so the file's accent and daily pick don't apply.
@@ -452,13 +588,13 @@ describe('export and import', () => {
     await button('Import').trigger('click')
     await flushPromises()
     expect(pen()).toEqual(VIOLET)
-    expect(wrapper.get('[data-testid="daily-pick"]').text()).toBe('2')
+    expect(dailyPick()).toBe('2')
   })
 
   it('uses the singular for one plan and one tick', async () => {
     mountApp()
     await openSettings()
-    await wrapper.get('button[aria-label="Ink blue"]').trigger('click')
+    await inkRadio('Ink blue').trigger('click')
     await choose(
       jsonFile({
         format: 'fitness-planner-export',
@@ -479,7 +615,7 @@ describe('export and import', () => {
     await openSettings()
     await choose(jsonFile(EXPORT))
     expect(wrapper.get('[data-testid="import-summary"]').text()).toContain('plus the accent')
-    await wrapper.get('button[aria-label="Ink blue"]').trigger('click')
+    await inkRadio('Ink blue').trigger('click')
     expect(wrapper.get('[data-testid="import-summary"]').text()).not.toContain('plus the accent')
     await button('Import').trigger('click')
     await flushPromises()
@@ -530,7 +666,7 @@ describe('export and import', () => {
 
   it.each([
     ['not JSON', new File(['{oops'], 'x.json'), 'That file isn’t valid JSON.'],
-    ['another format', jsonFile({ plans: {} }), 'That file isn’t an Fitness Planner export.'],
+    ['another format', jsonFile({ plans: {} }), 'That file isn’t a Fitness Planner export.'],
     [
       'a newer version',
       jsonFile({ format: 'fitness-planner-export', version: 2 }),
@@ -592,13 +728,6 @@ describe('export and import with the sample data', () => {
       diet: { ...diet, revs: {} },
       settings: { accent, dailyPick },
     } as SyncState
-  }
-
-  async function openSettings(): Promise<void> {
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text().endsWith('Settings'))!
-      .trigger('click')
   }
 
   function button(name: string) {
@@ -710,14 +839,11 @@ describe('theme', () => {
     fakeColorScheme(false)
     mountApp()
     expect(isDarkClass()).toBe(false)
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text().endsWith('Settings'))!
-      .trigger('click')
+    await openSettings()
     const themeButton = (name: string) =>
       wrapper
-        .get('[role="group"][aria-label="Theme"]')
-        .findAll('button')
+        .get(PANEL)
+        .findAll('[role="group"] button[aria-pressed]')
         .find((b) => b.text() === name)!
 
     expect(themeButton('System').attributes('aria-pressed')).toBe('true')
@@ -739,14 +865,6 @@ describe('theme', () => {
 describe('exercise weight', () => {
   beforeEach(() => {
     localStorage.clear()
-    // jsdom has no modal dialogs; stand in for showModal/close, including the close event.
-    HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
-      this.open = true
-    }
-    HTMLDialogElement.prototype.close = function (this: HTMLDialogElement) {
-      this.open = false
-      this.dispatchEvent(new Event('close'))
-    }
   })
   afterEach(() => wrapper?.unmount())
 
@@ -762,9 +880,9 @@ describe('exercise weight', () => {
 
   it('adds an exercise with a weight, accepting a comma decimal', async () => {
     await mountConfig()
-    await wrapper.get('input[aria-label="New exercise name"]').setValue('Swings')
-    await wrapper.get('input[aria-label="Reps"]').setValue('20')
-    const weight = wrapper.get('input[aria-label="Weight in kg (optional)"]')
+    await wrapper.get('#add-exercise-name').setValue('Swings')
+    await wrapper.get('#add-exercise-reps').setValue('20')
+    const weight = wrapper.get('#add-exercise-weight')
     await weight.setValue('16,5kg')
     expect((weight.element as HTMLInputElement).value).toBe('16.5')
     await wrapper.get('form').trigger('submit')
@@ -774,66 +892,117 @@ describe('exercise weight', () => {
 
   it('edits an existing exercise in a dialog', async () => {
     await mountConfig()
-    expect(wrapper.find('dialog').exists()).toBe(false)
-    await wrapper.get('button[aria-label="Edit Squats"]').trigger('click')
-    const dialog = wrapper.get('dialog')
-    expect((dialog.element as HTMLDialogElement).open).toBe(true)
-    expect((dialog.get('input[data-field="reps"]').element as HTMLInputElement).value).toBe('15')
+    expect(dialog()).toBeNull()
+    const edit = await openEdit('Squats')
+    expect(edit.attributes('aria-modal')).toBe('true')
+    expect(document.getElementById(edit.attributes('aria-labelledby')!)!.textContent).toBe(
+      'Edit exercise',
+    )
+    expect(document.activeElement).toBe(edit.get('#edit-exercise-name').element)
+    expect((edit.get('input[data-field="reps"]').element as HTMLInputElement).value).toBe('15')
 
-    await dialog.get('input[inputmode="decimal"]').setValue('12')
-    await dialog.get('form').trigger('submit')
-    expect(wrapper.find('dialog').exists()).toBe(false)
+    await edit.get('#edit-exercise-weight').setValue('12')
+    await edit.get('form').trigger('submit')
+    await flushPromises()
+    expect(dialog()).toBeNull()
     expect(detail('Squats')).toBe('15 reps / set · 12 kg')
+  })
+
+  it('labels every field in the dialog, and saves from the button outside the form', async () => {
+    await mountConfig()
+    const edit = await openEdit('Squats')
+    const labels = edit
+      .findAll('input')
+      .map((i) => edit.get(`label[for="${i.attributes('id')}"]`).text())
+    expect(labels).toEqual(['Name', 'Sets', 'Reps', 'Weight in kg'])
+    // Optional fields say so in their hint, as in the add form.
+    const sets = edit.get('#edit-exercise-sets')
+    expect(edit.get(`#${sets.attributes('aria-describedby')}`).text()).toBe('Optional.')
+    const save = edit.findAll('button').find((b) => b.text() === 'Save')!
+    expect(save.attributes('type')).toBe('submit')
+    expect(save.attributes('form')).toBe(edit.get('form').attributes('id'))
   })
 
   it('discards changes on Cancel', async () => {
     await mountConfig()
-    await wrapper.get('button[aria-label="Edit Squats"]').trigger('click')
-    const dialog = wrapper.get('dialog')
-    await dialog.get('input[inputmode="decimal"]').setValue('40')
-    await dialog
+    const edit = await openEdit('Squats')
+    await edit.get('#edit-exercise-weight').setValue('40')
+    await edit
       .findAll('button')
       .find((b) => b.text() === 'Cancel')!
       .trigger('click')
-    expect(wrapper.find('dialog').exists()).toBe(false)
+    await flushPromises()
+    expect(dialog()).toBeNull()
     expect(detail('Squats')).toBe('15 reps / set')
   })
 
   it('edits the name, reps and per-side count, keeping the goal', async () => {
     await mountConfig()
-    await wrapper.get('button[aria-label="Edit Kettlebell halos"]').trigger('click')
-    const dialog = wrapper.get('dialog')
+    const edit = await openEdit('Kettlebell halos')
     const toggle = (name: string) =>
-      dialog.findAll('button[aria-pressed]').find((b) => b.text() === name)!
-    expect(toggle('each side, per set').attributes('aria-pressed')).toBe('true')
-    await dialog.get('input:not([inputmode])').setValue('Halos')
-    await dialog.get('input[data-field="reps"]').setValue('1x0')
-    await toggle('per set').trigger('click')
-    await dialog.get('form').trigger('submit')
+      edit.findAll('button[aria-pressed]').find((b) => b.text() === name)!
+    expect(toggle('Each side').attributes('aria-pressed')).toBe('true')
+    await edit.get('#edit-exercise-name').setValue('Halos')
+    await edit.get('input[data-field="reps"]').setValue('1x0')
+    await toggle('Per set').trigger('click')
+    await edit.get('form').trigger('submit')
+    await flushPromises()
     expect(detail('Halos')).toBe('10 reps / set')
     expect(ex().findAll('[data-testid="row-total"]').at(-1)!.text()).toBe('0 / 3')
   })
 
+  it('closes on Escape and on Close without saving, returning focus to its Edit button', async () => {
+    await mountConfig()
+    for (const close of ['Escape', 'Close'] as const) {
+      const opener = wrapper.get('button[aria-label="Edit Squats"]').element as HTMLElement
+      opener.focus()
+      const edit = await openEdit('Squats')
+      await edit.get('#edit-exercise-weight').setValue('40')
+      if (close === 'Escape') {
+        document.activeElement!.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+        )
+      } else {
+        await edit.get('button[aria-label="Close"]').trigger('click')
+      }
+      await flushPromises()
+      expect(dialog()).toBeNull()
+      expect(document.activeElement).toBe(opener)
+      expect(detail('Squats')).toBe('15 reps / set')
+    }
+  })
+
+  it('stays open with the input when the name is blank', async () => {
+    await mountConfig()
+    const edit = await openEdit('Squats')
+    await edit.get('#edit-exercise-name').setValue('  ')
+    await edit.get('form').trigger('submit')
+    await flushPromises()
+    expect(dialog()).not.toBeNull()
+    expect((dialog()!.get('#edit-exercise-name').element as HTMLInputElement).value).toBe('  ')
+    expect(detail('Squats')).toBe('15 reps / set')
+  })
+
   it('closes the dialog when another tab deletes the exercise', async () => {
     await mountConfig()
-    await wrapper.get('button[aria-label="Edit Squats"]').trigger('click')
+    await openEdit('Squats')
     const store = usePlannerStore()
     const other = emptyState()
     other.exercise.plans = { '2026-10-19': store.exercises.filter((e) => e.id !== 'sq') }
     otherTabWrites(other)
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find('dialog').exists()).toBe(false)
+    await flushPromises()
+    expect(dialog()).toBeNull()
   })
 
   it('stays open when another tab changes a different exercise', async () => {
     await mountConfig()
-    await wrapper.get('button[aria-label="Edit Squats"]').trigger('click')
+    await openEdit('Squats')
     const store = usePlannerStore()
     const other = emptyState()
     other.exercise.plans = { '2026-10-19': store.exercises.filter((e) => e.id !== 'pu') }
     otherTabWrites(other)
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find('dialog').exists()).toBe(true)
+    await flushPromises()
+    expect(dialog()).not.toBeNull()
   })
 
   it('offers no edit button for foods', () => {
@@ -847,13 +1016,6 @@ describe('config mode and weekly plans', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(NOW)
     localStorage.clear()
-    HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
-      this.open = true
-    }
-    HTMLDialogElement.prototype.close = function (this: HTMLDialogElement) {
-      this.open = false
-      this.dispatchEvent(new Event('close'))
-    }
   })
   afterEach(() => {
     wrapper?.unmount()
@@ -880,8 +1042,8 @@ describe('config mode and weekly plans', () => {
     expect(wrapper.find('button[aria-label^="Edit Squats"]').exists()).toBe(false)
     expect(wrapper.find('button[aria-label^="Remove"]').exists()).toBe(false)
     expect(wrapper.find('button[aria-label^="Raise"]').exists()).toBe(false)
-    expect(wrapper.find('input[aria-label="New exercise name"]').exists()).toBe(false)
-    expect(wrapper.find('input[aria-label="New food name"]').exists()).toBe(false)
+    expect(wrapper.find('#add-exercise-name').exists()).toBe(false)
+    expect(wrapper.find('#add-food-name').exists()).toBe(false)
     expect(button('Copy plan to next week')).toBeUndefined()
 
     await rowCells('Squats')[0]!.trigger('click')
@@ -891,21 +1053,21 @@ describe('config mode and weekly plans', () => {
     expect(toggle.attributes('aria-checked')).toBe('true')
     expect(wrapper.find('button[aria-label="Edit Squats"]').exists()).toBe(true)
     expect(wrapper.find('button[aria-label="Remove Fish"]').exists()).toBe(true)
-    expect(wrapper.find('input[aria-label="New food name"]').exists()).toBe(true)
+    expect(wrapper.find('#add-food-name').exists()).toBe(true)
   })
 
   it('copies the plan to next week and shows it', async () => {
     await mountConfig()
-    await wrapper.get('button[aria-label="Edit Squats"]').trigger('click')
-    const dialog = wrapper.get('dialog')
-    await dialog.get('input[data-field="sets"]').setValue('3')
-    await dialog.get('input[inputmode="decimal"]').setValue('12')
-    await dialog.get('form').trigger('submit')
+    const edit = await openEdit('Squats')
+    await edit.get('input[data-field="sets"]').setValue('3')
+    await edit.get('#edit-exercise-weight').setValue('12')
+    await edit.get('form').trigger('submit')
+    await flushPromises()
     expect(chips('Squats')).toBe('3 × 15 reps · 12 kg')
 
-    const confirm = vi.spyOn(window, 'confirm')
     await button('Copy plan to next week')!.trigger('click')
-    expect(confirm).not.toHaveBeenCalled()
+    await settle()
+    expect(confirmation()).toBeNull()
     expect(wrapper.find('h1').text()).toBe('Oct 26 – Nov 1, 2026')
     expect(chips('Squats')).toBe('3 × 15 reps · 12 kg')
     expect(wrapper.find('[data-testid="carried-from"]').exists()).toBe(false)
@@ -913,21 +1075,31 @@ describe('config mode and weekly plans', () => {
 
   it('asks before replacing a week that has its own plan', async () => {
     await mountConfig()
-    await wrapper.get('button[title="Next week"]').trigger('click')
+    await wrapper.get('button[aria-label="Next week"]').trigger('click')
     await rowCells('Squats')[0]!.trigger('click')
-    await wrapper.get('button[title="Previous week"]').trigger('click')
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false)
+    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
     await button('Copy plan to next week')!.trigger('click')
-    expect(confirm).toHaveBeenCalledWith(
-      'Replace the plan for Oct 26 – Nov 1, 2026 with this week’s?',
+    await settle()
+    expect(confirmation()!.get('h2').text()).toBe('Replace next week’s plan?')
+    expect(confirmation()!.text()).toContain(
+      'The week of 26 October already has its own plan. Copying replaces it with this week’s exercises and foods.',
     )
+    await answer('Cancel')
     expect(wrapper.find('h1').text()).toBe('Oct 19 – Oct 25, 2026')
+    expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('false')
+
+    await button('Copy plan to next week')!.trigger('click')
+    await settle()
+    await answer('Replace')
+    expect(wrapper.find('h1').text()).toBe('Oct 26 – Nov 1, 2026')
+    // The copy replaced next week's own plan; its tick stays in the log.
+    expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('true')
   })
 
   it('says when a week’s plan is carried over from an earlier week', async () => {
     await mountConfig()
     await wrapper.get('button[aria-label="Raise Squats goal"]').trigger('click')
-    await wrapper.get('button[title="Next week"]').trigger('click')
+    await wrapper.get('button[aria-label="Next week"]').trigger('click')
     expect(wrapper.get('[data-testid="carried-from"]').text()).toContain('Oct 19 – Oct 25, 2026')
     await wrapper.get('button[aria-label="Raise Squats goal"]').trigger('click')
     expect(wrapper.find('[data-testid="carried-from"]').exists()).toBe(false)
@@ -937,7 +1109,7 @@ describe('config mode and weekly plans', () => {
     await mountConfig()
     await wrapper.get('button[aria-label="Raise Squats goal"]').trigger('click')
     await wrapper.get('button[aria-label="Raise Fish goal"]').trigger('click')
-    await wrapper.get('button[title="Next week"]').trigger('click')
+    await wrapper.get('button[aria-label="Next week"]').trigger('click')
     expect(wrapper.get('[data-testid="carried-from"]').text()).toBe(
       'Uses the plan from Oct 19 – Oct 25, 2026 until you change this week.',
     )
@@ -949,18 +1121,18 @@ describe('config mode and weekly plans', () => {
 
   it('closes the edit dialog if the week changes under it', async () => {
     await mountConfig()
-    await wrapper.get('button[aria-label="Edit Squats"]').trigger('click')
-    expect(wrapper.find('dialog').exists()).toBe(true)
+    await openEdit('Squats')
+    expect(dialog()).not.toBeNull()
     usePlannerStore().nextWeek()
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find('dialog').exists()).toBe(false)
+    await flushPromises()
+    expect(dialog()).toBeNull()
   })
 
   it('adds an exercise with sets from the form', async () => {
     await mountConfig()
-    await wrapper.get('input[aria-label="New exercise name"]').setValue('Swings')
-    await wrapper.get('input[aria-label="Sets (optional)"]').setValue('4x')
-    await wrapper.get('input[aria-label="Reps"]').setValue('20')
+    await wrapper.get('#add-exercise-name').setValue('Swings')
+    await wrapper.get('#add-exercise-sets').setValue('4x')
+    await wrapper.get('#add-exercise-reps').setValue('20')
     await wrapper.get('form').trigger('submit')
     expect(chips('Swings')).toBe('4 × 20 reps')
   })

@@ -21,4 +21,4 @@ Plain, calm and brief, in the second person. Facts first, then the next step. Th
 | You missed 2 days this week | Two of four this week. |
 | 4/3 (over!) | 4, one extra |
 | Sync failed!! | Not synced. Your changes are saved on this device and will sync when you're back online. |
-| Invalid link | This invite has already been used. Go to sign in. |
+| Invalid link | This link has expired or was already used. Ask for a new one. (Then, on its own line, a "Go to sign in" link.) |

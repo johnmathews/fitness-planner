@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs, useId, type HTMLAttributes } from 'vue'
-import { CircleAlert } from '@lucide/vue'
 import { cn, joinIds } from '@/lib/utils'
+import { InlineMessage } from '@/components/ui/inline-message'
 import { textAreaVariants } from '.'
 
 // Every attribute but `class` belongs to the <textarea>, not the wrapper.
@@ -61,15 +61,7 @@ const describedBy = computed(() =>
       :aria-invalid="error ? 'true' : undefined"
       :aria-describedby="describedBy"
     />
-    <p
-      v-if="error"
-      :id="errorId"
-      role="alert"
-      class="caption mt-1 flex items-start gap-1 text-error-ink"
-    >
-      <CircleAlert :size="16" :stroke-width="1.5" class="mt-0.5 shrink-0" />
-      <span>{{ error }}</span>
-    </p>
+    <InlineMessage v-if="error" :id="errorId" tone="error" class="mt-1">{{ error }}</InlineMessage>
     <p v-if="showHint || count" class="caption flex justify-between gap-2 text-ink-secondary">
       <span v-if="showHint" :id="hintId">{{ hint }}</span>
       <span v-if="count" :id="countId" class="ml-auto tabular-nums">{{ count }}</span>

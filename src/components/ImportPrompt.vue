@@ -4,6 +4,8 @@ import type { ExportData } from '@/lib/transfer'
 import { usePlannerStore } from '@/stores/planner'
 import { useSyncStore } from '@/stores/sync'
 import { useImportSummary } from '@/composables/importSummary'
+import { Button } from '@/components/ui/button'
+import { InlineMessage } from '@/components/ui/inline-message'
 import {
   readImportMarker,
   readLegacyData,
@@ -70,35 +72,39 @@ async function addToAccount(log: ExportData): Promise<void> {
 }
 </script>
 
+<!-- A Panel (brand/design-system/project/components/Panel): it sits apart from the week, so it
+     is raised; the actions follow Button order, the least first and the primary last, at the right. -->
 <template>
   <section
     v-if="show"
-    class="mt-4 rounded-xl border border-line bg-panel p-4 shadow-xs"
+    class="mt-4 rounded-lg border border-line bg-panel p-6 shadow-overlay"
     aria-labelledby="import-prompt-title"
     data-testid="import-prompt"
     data-noprint
   >
-    <h2 id="import-prompt-title" class="font-semibold">
+    <h2 id="import-prompt-title" class="title-2 text-ink">
       {{ added ? 'Added to your account' : 'Data from before accounts' }}
     </h2>
     <template v-if="added">
-      <p class="mt-1 text-sm text-ink-secondary" role="status">
+      <InlineMessage tone="success" class="mt-2">
         This browser’s earlier log is now part of your account, on every device.
-      </p>
-      <button type="button" class="btn mt-3" @click="added = false">Close</button>
+      </InlineMessage>
+      <div class="mt-4 flex justify-end">
+        <Button @click="added = false">Close</Button>
+      </div>
     </template>
     <template v-else-if="data">
-      <p class="mt-1 text-sm text-ink-secondary">
+      <p class="body mt-2 text-ink-secondary">
         This browser holds a log saved before accounts existed. If it’s yours, add it to your
         account. {{ summary.describe(data) }}
       </p>
-      <p v-if="problem" role="alert" class="mt-2 text-sm text-error-ink">{{ problem }}</p>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <button type="button" class="btn-primary" :aria-busy="busy" @click="addToAccount(data)">
+      <InlineMessage v-if="problem" tone="error" class="mt-4">{{ problem }}</InlineMessage>
+      <div class="mt-4 flex flex-wrap justify-end gap-3">
+        <Button variant="quiet" @click="later = true">Later</Button>
+        <Button @click="answer('dismissed')">Not mine</Button>
+        <Button variant="primary" :busy="busy" @click="addToAccount(data)">
           {{ busy ? 'Adding…' : 'Add to my account' }}
-        </button>
-        <button type="button" class="btn" @click="answer('dismissed')">Not mine</button>
-        <button type="button" class="btn" @click="later = true">Later</button>
+        </Button>
       </div>
     </template>
   </section>

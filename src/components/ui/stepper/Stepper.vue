@@ -19,12 +19,15 @@ const props = withDefaults(
     step?: number
     /** Only when the value truly cannot change; a limit is not disabled. */
     disabled?: boolean
+    /** Keeps the label for screen readers only, where the row around the Stepper already says
+     * what it sets (a goal in the week grid's total cell). */
+    hideLabel?: boolean
     /** The spinbutton's id; one is generated when omitted. */
     id?: string
     /** Classes for the wrapper, for layout. */
     class?: HTMLAttributes['class']
   }>(),
-  { step: 1, disabled: false, id: undefined, class: undefined },
+  { step: 1, disabled: false, hideLabel: false, id: undefined, class: undefined },
 )
 
 const model = defineModel<number>({ required: true })
@@ -58,9 +61,16 @@ function onValue(value: number | undefined): void {
 }
 </script>
 
+<!-- The wrapper is positioned, so the visually hidden label and live region stay inside it: in a
+     scrolling grid they would otherwise escape the scroll box and widen the page. -->
 <template>
-  <div data-slot="stepper" :class="cn('flex flex-col items-start gap-1', props.class)">
-    <label :id="labelId" data-slot="stepper-label" :for="inputId" class="label text-ink">
+  <div data-slot="stepper" :class="cn('relative flex flex-col items-start gap-1', props.class)">
+    <label
+      :id="labelId"
+      data-slot="stepper-label"
+      :for="inputId"
+      :class="hideLabel ? 'sr-only' : 'label text-ink'"
+    >
       {{ label }}
     </label>
     <NumberFieldRoot

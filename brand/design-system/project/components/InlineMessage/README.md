@@ -7,12 +7,12 @@ A one- or two-line message next to the thing it is about, in one of four tones, 
 - **Caution** (`caution-ink`, `triangle-alert`, `role="status"`): over the daily pick, and nothing else. Always with the words: "Four exercises today, one extra." Never for errors.
 - **Success** (`ink`, `check`, `role="status"`): something finished that the person may not see otherwise: "Added to your account…", "Imported." Never `pen`: pen means a done session, not a done task. Never celebrate.
 - **Info** (`ink-secondary`, `info`, `role="status"`): a neutral fact: "Nothing new: everything in that file is already here."
-- For errors on a single field, TextField's own error line is this component; tie it with `aria-describedby`. For connection and sync state across the app, use a Banner.
+- For errors on a single field, TextField's own error line is this component; tie it with `aria-describedby`. A form-level error (one message for several fields, such as "Wrong username or password. Check both and try again.") is this component placed once below the fields, each field `aria-invalid` and described by it. For connection and sync state across the app, use a Banner.
 
 ## States
 
 - Appears and disappears without motion. Error and caution stay until their cause is gone; success and info may clear on the next action.
-- The live role is on the message element, present before the text arrives, so screen readers announce it.
+- The live role is on the message element itself: `role="alert"` for an error, which interrupts, and `role="status"` for caution, success and info, which wait their turn. The message is added with its words in it, so an error is read out as it appears.
 
 ## You provide
 

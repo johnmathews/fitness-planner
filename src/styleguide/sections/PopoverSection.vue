@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Download, LogOut, Settings, Upload } from '@lucide/vue'
+import { BrandMark } from '@/components/ui/brand-mark'
 import { Button } from '@/components/ui/button'
 import { IconButton } from '@/components/ui/icon-button'
+import { InkPicker } from '@/components/ui/ink-picker'
 import { Popover } from '@/components/ui/popover'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Stepper } from '@/components/ui/stepper'
 import { useConfirm } from '@/composables/useConfirm'
+import type { InkId } from '@/lib/inks'
 
 const THEMES = [
   { value: 'system', label: 'System' },
@@ -17,6 +20,7 @@ const THEMES = [
 const open = ref(false)
 const theme = ref('system')
 const pick = ref(3)
+const ink = ref<InkId>('ink-blue')
 
 const { confirm } = useConfirm()
 
@@ -32,13 +36,13 @@ async function signOut(): Promise<void> {
 </script>
 
 <!-- The Settings popover (components/Popover/preview.html) under its IconButton in a stand-in
-     header. The InkPicker is not built yet, so the panel skips it. The panel renders in place, so
+     header, with the panel's contents as SettingsPopover.vue has them. The panel renders in place, so
      Tab from its last control moves on to the next section, and that closes it. -->
 <template>
   <div
     class="flex items-center justify-between gap-4 rounded-lg border border-line bg-panel py-1 pr-1 pl-4"
   >
-    <span class="label">Fitness Planner</span>
+    <BrandMark />
     <Popover v-model:open="open" title="Settings">
       <template #trigger>
         <IconButton id="sg-popover-settings-trigger" label="Settings"><Settings /></IconButton>
@@ -50,6 +54,7 @@ async function signOut(): Promise<void> {
           label="Theme"
           :options="THEMES"
         />
+        <InkPicker id="sg-popover-settings-ink" v-model="ink" />
         <Stepper
           id="sg-popover-settings-pick"
           v-model="pick"

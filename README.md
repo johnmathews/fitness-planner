@@ -17,7 +17,7 @@
   are Vegetables (7), Fruit (5), Fish (2) and Nuts (3).
 - **Normal mode and config mode.** The app opens in normal mode, where you only tick cells. The
   **Edit plan** switch in the top bar turns on config mode for changing the plan:
-  - add an exercise with a name, optional sets, reps, "per set" or "each side, per set", and an
+  - add an exercise with a name, optional sets, reps, "Per set" or "Each side", and an
     optional weight in kg (e.g. squats with a 12 kg kettlebell); add a food by name;
   - `✎` edits an exercise, `×` removes an item after a confirmation (its ticks stay stored), and
     `−` / `+` change a weekly goal. New items start with a goal of 3.

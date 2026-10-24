@@ -4,7 +4,7 @@ import type { AuthProblem } from '@/stores/session'
 export function describeProblem(p: AuthProblem): string {
   switch (p.code) {
     case 'invalid':
-      return 'Wrong username or password.'
+      return 'Wrong username or password. Check both and try again.'
     case 'locked': {
       const minutes = Math.max(1, Math.ceil((p.retryAfter ?? 900) / 60))
       return `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`
