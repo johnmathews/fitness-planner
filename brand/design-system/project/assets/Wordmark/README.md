@@ -1,0 +1,3 @@
+The wordmark is "Fitness Planner" set in Source Serif 4 at weight 600 and converted to outlines, so it renders without the font. `fitness-planner-wordmark-ink.svg` is filled in light-theme `ink` (#1f1d1a) for light grounds; `fitness-planner-wordmark-light.svg` in dark-theme `ink` (#ede9e2) for dark grounds. In previews and the app, inline the outline with `fill: var(--ink)` instead, so one file follows the theme.
+
+There is no logo or symbol. The name is a working name and lives in one constant in the code; regenerate both files with `scripts/wordmark.py` when it changes. Never recolour the wordmark in `pen`, `highlight` or any accent.

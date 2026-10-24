@@ -1,0 +1,66 @@
+<!-- @dsCard group="Planner" height=330 subtitle="A folded corner: this day has a note" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NoteMark — preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  h2 { margin: 0 0 var(--space-3); color: var(--ink-secondary); }
+  section + section { margin-top: var(--space-8); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-2); margin: 0; padding: 0; list-style: none; }
+  .row li { width: 100px; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; }
+  .caption { color: var(--ink-secondary); }
+
+  .cell { position: relative; width: 56px; height: 60px; display: grid; place-items: center; border-top: 1px solid var(--line); }
+  .cell.today { background: var(--highlight); }
+  .mark { width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; }
+  .mark::before { content: ""; width: 24px; height: 24px; border-radius: var(--radius-full); border: 1.5px solid var(--control-border); }
+  .mark[aria-pressed="true"]::before { background: var(--pen); border-color: var(--pen); }
+  .mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* The NoteMark: a 10px right triangle, flush in the cell's top-right corner. */
+  .note-mark { position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: var(--ink-secondary); clip-path: polygon(0 0, 100% 0, 100% 100%); pointer-events: none; }
+
+  /* Construction: the same corner at four times size. */
+  .big { position: relative; width: 120px; height: 120px; border-top: 1px solid var(--line); border-right: 1px dashed var(--line); }
+  .big .note-mark { width: 40px; height: 40px; }
+  .dims { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-6); }
+  .dims p { margin: 0; max-width: 32ch; color: var(--ink-secondary); }
+  @media (max-width: 639px) { body { padding: var(--space-4); } }
+</style>
+</head>
+<body>
+<section aria-labelledby="h-cell">
+  <h2 id="h-cell" class="label">At cell size</h2>
+  <ul class="row">
+    <li>
+      <div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Squats, Wednesday 21 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div>
+      <span class="caption">Done</span>
+    </li>
+    <li>
+      <div class="cell"><button type="button" class="mark" aria-pressed="false" aria-label="Squats, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div>
+      <span class="caption">Not done</span>
+    </li>
+    <li>
+      <div class="cell today"><button type="button" class="mark" aria-pressed="true" aria-label="Squats, Thursday 22 October, today, has a note"></button><span class="note-mark" aria-hidden="true"></span></div>
+      <span class="caption">Today</span>
+    </li>
+  </ul>
+</section>
+<section aria-labelledby="h-big">
+  <h2 id="h-big" class="label">Construction, four times size</h2>
+  <div class="dims">
+    <div class="big" aria-hidden="true"><span class="note-mark"></span></div>
+    <p class="caption">A right triangle, 10 × 10px, its right angle in the cell's top-right corner, filled with ink-secondary. No border, no icon font, no letter.</p>
+  </div>
+</section>
+<script>
+  document.addEventListener('click', (e) => {
+    const mark = e.target.closest('.mark');
+    if (mark) mark.setAttribute('aria-pressed', String(mark.getAttribute('aria-pressed') !== 'true'));
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!-- @dsCard group="Planner" height=900 subtitle="The phone's first view: today's exercises and diet, one mark each" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TodayList — preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .note { font-style: italic; }
+
+  /* A phone-width column. On a phone it is the screen; on a wider frame it gets a hairline edge. */
+  .phone { max-width: 390px; padding-bottom: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--canvas); }
+
+  /* View switch: Today | Week. */
+  .bar { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-4); }
+  /* SegmentedControl, drawn exactly as its own card: 44px tall, no inset, every segment in label type. */
+  .seg { display: inline-flex; flex-wrap: wrap; align-self: flex-start; box-sizing: border-box; max-width: 100%; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+  .seg button { position: relative; height: 42px; padding: 0 var(--space-4); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); font: 600 14px/20px var(--font-sans); cursor: pointer; text-wrap: nowrap; }
+  .seg button:hover, .seg button.is-hover { background: var(--tile); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
+  .seg button:focus-visible, .seg button.is-focus { z-index: 1; outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .seg button { transition: background-color 120ms ease-out, color 120ms ease-out; }
+  }
+
+  /* The day heading sits on the highlight band: the top of today's column, turned sideways. */
+  .band { background: var(--highlight); padding: var(--space-4); }
+  .band h1 { margin: 0; }
+  .summary { margin: var(--space-1) 0 0; }
+
+  /* Groups and rows. */
+  h2 { margin: 0; padding: var(--space-6) var(--space-4) var(--space-2); color: var(--ink-secondary); }
+  .items { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+  .items li { padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); border-bottom: 1px solid var(--line); }
+  .row { display: flex; align-items: center; gap: var(--space-3); min-height: 48px; }
+  .text { flex: 1 1 auto; min-width: 0; }
+  .name { display: block; font-weight: 600; }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); color: var(--ink-secondary); }
+  .chip { background: var(--tile); color: var(--ink-secondary); border-radius: var(--radius-sm); padding: 0 var(--space-2); white-space: nowrap; }
+  .items .note { margin: var(--space-1) var(--space-12) var(--space-1) 0; }
+
+  /* DayMark at list size: a 48px button, the same 24px dot or ring. */
+  .mark { flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; }
+  .mark::before { content: ""; width: 24px; height: 24px; border-radius: var(--radius-full); border: 1.5px solid var(--control-border); }
+  .mark[aria-pressed="true"]::before { background: var(--pen); border-color: var(--pen); }
+  .mark[aria-pressed="false"]:hover::before { border-color: var(--ink); }
+  .mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .mark::before { transition: background-color 120ms, border-color 120ms; }
+  }
+
+  @media (max-width: 639px) {
+    body { padding: 0; }
+    .phone { max-width: none; border: 0; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="bar">
+    <div class="seg" role="group" aria-label="View">
+      <button type="button" tabindex="0" aria-pressed="true">Today</button>
+      <button type="button" tabindex="-1" aria-pressed="false">Week</button>
+    </div>
+  </div>
+
+  <header class="band">
+    <h1 class="title-2"><span class="vh">Today, </span>Thursday 22 October</h1>
+    <p class="summary body-large" id="summary">Two of three. One to go.</p>
+  </header>
+
+  <section aria-labelledby="h-ex">
+    <h2 id="h-ex" class="label">Exercises</h2>
+    <ul class="items" id="exercises">
+      <li>
+        <div class="row">
+          <div class="text"><span class="name">Push-ups</span><span class="meta"><span class="chip label">3 × 12</span><span class="caption">3 of 4 this week</span></span></div>
+          <button type="button" class="mark" aria-pressed="true" aria-label="Push-ups, today"></button>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <div class="text"><span class="name">Pull-ups</span><span class="meta"><span class="chip label">3 × 5</span><span class="caption">1 of 3 this week</span></span></div>
+          <button type="button" class="mark" aria-pressed="false" aria-label="Pull-ups, today"></button>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <div class="text"><span class="name">Squats</span><span class="meta"><span class="chip label">3 × 15</span><span class="chip label">16 kg</span><span class="caption">3 of 3 this week</span></span></div>
+          <button type="button" class="mark" aria-pressed="true" aria-label="Squats, today, has a note" aria-describedby="note-sq"></button>
+        </div>
+        <p class="note" id="note-sq">Left knee twinge. Went to 3 × 10, no jumps.</p>
+      </li>
+      <li>
+        <div class="row">
+          <div class="text"><span class="name">Kettlebell halos</span><span class="meta"><span class="chip label">8 each side</span><span class="caption">1 of 2 this week</span></span></div>
+          <button type="button" class="mark" aria-pressed="false" aria-label="Kettlebell halos, today"></button>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-diet">
+    <h2 id="h-diet" class="label">Diet</h2>
+    <ul class="items">
+      <li>
+        <div class="row">
+          <div class="text"><span class="name">Vegetables</span><span class="meta"><span class="caption">5 of 7 this week</span></span></div>
+          <button type="button" class="mark" aria-pressed="true" aria-label="Vegetables, today"></button>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <div class="text"><span class="name">Fruit</span><span class="meta"><span class="caption">3 of 5 this week</span></span></div>
+          <button type="button" class="mark" aria-pressed="false" aria-label="Fruit, today"></button>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <div class="text"><span class="name">Fish</span><span class="meta"><span class="caption">1 of 2 this week</span></span></div>
+          <button type="button" class="mark" aria-pressed="false" aria-label="Fish, today"></button>
+        </div>
+      </li>
+      <li>
+        <div class="row">
+          <div class="text"><span class="name">Nuts</span><span class="meta"><span class="caption">2 of 3 this week</span></span></div>
+          <button type="button" class="mark" aria-pressed="true" aria-label="Nuts, today"></button>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>
+<script>
+(() => {
+  // The summary counts today's exercises against the daily pick, in words.
+  const PICK = 3;
+  const WORDS = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+  const cap = (s) => s[0].toUpperCase() + s.slice(1);
+  function summary(n) {
+    if (n === 0) return `None yet. ${cap(WORDS[PICK])} to go.`;
+    if (n < PICK) return `${cap(WORDS[n])} of ${WORDS[PICK]}. ${cap(WORDS[PICK - n])} to go.`;
+    if (n === PICK) return `${cap(WORDS[n])} of ${WORDS[PICK]}.`;
+    return `${cap(WORDS[n])} today, ${WORDS[n - PICK]} extra.`;
+  }
+  document.addEventListener('click', (e) => {
+    const mark = e.target.closest('.mark');
+    if (mark) {
+      mark.setAttribute('aria-pressed', String(mark.getAttribute('aria-pressed') !== 'true'));
+      const done = document.querySelectorAll('#exercises .mark[aria-pressed="true"]').length;
+      document.getElementById('summary').textContent = summary(done);
+    }
+    const seg = e.target.closest('.seg button');
+    if (seg) seg.parentElement.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-pressed', String(b === seg)); b.tabIndex = b === seg ? 0 : -1; });
+  });
+  // SegmentedControl: one tab stop; arrow keys move between segments (Reka's roving focus).
+  document.querySelectorAll('.seg').forEach((g) => g.addEventListener('keydown', (e) => {
+    const all = [...g.querySelectorAll('button:not([disabled])')];
+    const i = all.indexOf(e.target);
+    const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (i < 0 || !d) return;
+    e.preventDefault();
+    const next = all[(i + d + all.length) % all.length];
+    all.forEach((b) => (b.tabIndex = b === next ? 0 : -1));
+    next.focus();
+  }));
+})();
+</script>
+</body>
+</html>

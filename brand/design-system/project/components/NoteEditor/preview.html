@@ -1,0 +1,65 @@
+<!-- @dsCard group="Planner" height=620 subtitle="Write or change a note on a day — design only, no storage yet (K6)" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NoteEditor — preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .pair { display: flex; flex-wrap: wrap; gap: var(--space-6); align-items: flex-start; }
+  .pair > div { flex: 1 1 300px; min-width: 0; max-width: 360px; }
+  .state { margin: 0 0 var(--space-2); color: var(--ink-secondary); }
+  .note { font-style: italic; }
+
+  .editor { width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-overlay); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+  .context { margin: 0; color: var(--ink-secondary); }
+  .context strong { color: var(--ink); font-weight: 600; }
+  .field { display: flex; flex-direction: column; gap: var(--space-1); }
+  textarea { display: block; width: 100%; min-height: 120px; resize: vertical; margin: 0; padding: var(--space-3); background: var(--tile); color: var(--ink); border: 1px solid var(--control-border); border-radius: var(--radius-sm); font-family: var(--font-serif); font-size: 16px; line-height: 24px; font-style: italic; }
+  textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+  .btn { height: 44px; padding: 0 var(--space-4); border-radius: var(--radius-md); font: inherit; font-weight: 600; cursor: pointer; }
+  .btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--control-border); }
+  .btn.secondary:hover { background: var(--tile); }
+  .btn.primary { background: var(--ink); color: var(--on-ink); border: 1px solid var(--ink); }
+  .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) { .btn { transition: background-color 120ms; } }
+  @media (max-width: 639px) { body { padding: var(--space-4); } }
+</style>
+</head>
+<body>
+<div class="pair">
+  <div>
+    <p class="state label">A note already written</p>
+    <form class="editor" aria-labelledby="ctx-1" onsubmit="return false">
+      <p class="context caption" id="ctx-1"><strong>Squats</strong> · Thursday 22 October</p>
+      <div class="field">
+        <label class="label" for="note-1">Note</label>
+        <textarea id="note-1" class="note">Left knee twinge. Went to 3 × 10, no jumps.</textarea>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn secondary">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+  <div>
+    <p class="state label">A new note, opened on purpose</p>
+    <form class="editor" aria-labelledby="ctx-2" onsubmit="return false">
+      <p class="context caption" id="ctx-2"><strong>Push-ups</strong> · Thursday 22 October</p>
+      <div class="field">
+        <label class="label" for="note-2">Note</label>
+        <textarea id="note-2" class="note"></textarea>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn secondary">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script></script>
+</body>
+</html>
