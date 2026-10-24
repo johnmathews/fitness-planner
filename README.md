@@ -3,15 +3,16 @@
 > Purpose
 >
 > A weekly workout and diet log: exercises and foods down the side, Monday–Sunday across the top,
-> one click to tick a day. Vue 3 + Vite + Tailwind single-page app with light and dark themes,
-> and a Python API that keeps each person's data in sync across devices.
+> one click to tick a day. A Vue 3 + Vite single-page app (Tailwind CSS 4, shadcn-vue on Reka UI,
+> built to the Notebook design system) with light and dark themes, and a Python API that keeps each
+> person's data in sync across devices.
 
 ## 1. What it does
 
 - **Exercises.** Each day, pick a few exercises (default three) and click their cells when done. The
-  **Week** column counts sessions against a weekly goal of 0–7 days and turns accent-coloured once a
-  non-zero goal is met. The footer counts picks per day: accent when the daily target is met, orange
-  when over.
+  **Week** column counts sessions against a weekly goal of 0–7 days, and turns to your ink with a
+  check once a non-zero goal is met. The **Picked** row counts each day's exercises against the
+  daily pick and says so in words when a day goes over ("one extra").
 - **Diet.** Below the exercises, foods work the same way: tick each day you ate one, and its Week
   column counts days against a goal. The section header shows how many food goals are met. Defaults
   are Vegetables (7), Fruit (5), Fish (2) and Nuts (3).
@@ -19,22 +20,25 @@
   **Edit plan** switch in the top bar turns on config mode for changing the plan:
   - add an exercise with a name, optional sets, reps, "Per set" or "Each side", and an
     optional weight in kg (e.g. squats with a 12 kg kettlebell); add a food by name;
-  - `✎` edits an exercise, `×` removes an item after a confirmation (its ticks stay stored), and
-    `−` / `+` change a weekly goal. New items start with a goal of 3.
+  - the pencil edits an exercise, the bin removes an item after a confirmation (its ticks stay
+    stored), and the goal's `−` / `+` change it. New items start with a goal of 3.
 - **Weekly plans.** Each week has its own plan, so reps, sets, weights and goals can change from week
   to week. A week you haven't changed carries over the latest earlier week's plan; it gets its own
   copy the first time you change it or tick a cell. In config mode, **Copy plan to next week**
   copies this week's exercises and foods over the next week's.
 - `‹` / `›` move between weeks for both sections; past weeks persist. **Print…** produces a
   black-on-white sheet.
-- **Settings** sets the theme (System, Light or Dark), the accent colour and the exercises-per-day
-  target (1–8), and shows who is signed in, with **Sign out**.
+- **On a phone** the app opens on **Today**: today's exercises and foods, one mark each. A Today |
+  Week switch leads to the week's grids, whose names stay put while the days scroll.
+- **Settings** sets the theme (System, Light or Dark), the ink that marks a day done (Ink blue,
+  Forest, Violet or Graphite) and the exercises-per-day target (1–8), and shows who is signed in,
+  with **Sign out**.
 - **Accounts and sync.** Each person signs in with a username and password. Accounts come only from
-  invite links (`docs/api.md` §4). Plans, ticks, the accent and the daily pick are stored on the
+  invite links (`docs/api.md` §4). Plans, ticks, the ink and the daily pick are stored on the
   server and sync across devices; the theme stays with each device. The app opens from a cached
   copy and keeps working offline, sending changes once the connection is back.
-- **Export and import.** Settings → **Export** downloads your plans, ticks, accent and daily pick
-  as a JSON file; **Import…** merges such a file into your account. An import only adds: weeks you
+- **Export and import.** Settings → **Export** downloads your plans, ticks, ink and daily pick as
+  a JSON file; **Import…** merges such a file into your account. An import only adds: weeks you
   already have keep their plan, and no tick is ever cleared. The export is your own copy of your
   data.
 - **Moving a log from before accounts.** A browser that kept a log before accounts existed offers
@@ -80,7 +84,11 @@ npm run build              # type-check + production build into dist/
 npm run preview            # serve dist/ locally
 ```
 
-[docs/development.md](docs/development.md) covers the toolchain, conventions and test layout.
+In development, <http://localhost:5173/styleguide> shows the living style guide: every component
+in each state, in either theme and any ink, with no sign-in needed.
+
+[docs/development.md](docs/development.md) covers the toolchain, conventions and test layout, and
+[docs/brand.md](docs/brand.md) the brand and the design system.
 
 ## 3. Deploy
 
@@ -139,13 +147,14 @@ end to end.
 
 ## 4. Documentation
 
-| Doc                                                                           | Covers                                               |
-| ----------------------------------------------------------------------------- | ---------------------------------------------------- |
-| [docs/architecture.md](docs/architecture.md)                                  | Components, stores, storage format, design decisions |
-| [docs/development.md](docs/development.md)                                    | Toolchain, scripts, conventions, tests               |
-| [docs/deployment.md](docs/deployment.md)                                      | Docker images, nginx, CI, GHCR publishing            |
-| [docs/api.md](docs/api.md)                                                    | The API service: endpoints, accounts, CLI, backups   |
-| [docs/decisions.md](docs/decisions.md)                                        | Why accounts and sync are built the way they are     |
-| [design_handoff_exercise_planner/](design_handoff_exercise_planner/README.md) | The original design spec and HTML prototype          |
+| Doc                                                                           | Covers                                                              |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [docs/architecture.md](docs/architecture.md)                                  | Components, stores, storage format, design decisions                |
+| [docs/development.md](docs/development.md)                                    | Toolchain, scripts, conventions, tests                              |
+| [docs/deployment.md](docs/deployment.md)                                      | Docker images, nginx, CI, GHCR publishing                           |
+| [docs/api.md](docs/api.md)                                                    | The API service: endpoints, accounts, CLI, backups                  |
+| [docs/brand.md](docs/brand.md)                                                | The brand, the design system and how to change them                 |
+| [docs/decisions.md](docs/decisions.md)                                        | Why accounts, sync and the design system are built the way they are |
+| [design_handoff_exercise_planner/](design_handoff_exercise_planner/README.md) | The original design spec and HTML prototype                         |
 
 Development history lives in [`journal/`](journal/).

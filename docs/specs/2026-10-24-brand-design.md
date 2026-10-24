@@ -21,12 +21,12 @@ Three rules for success: **Have fun. Avoid injury. Don't stop.**
 
 ## 2. References, and what each one lends
 
-| Reference | Borrowed | Not borrowed |
-| --- | --- | --- |
-| Whiteboard | Rooted in now: today and this week get one bold, obvious place | The busy, marker-heavy look (direction A, rejected as too busy for years of use) |
-| Apple Notes | Restraint, dependability, deliberate design; chronological order and plain search are enough | Its literal look: system blue, stock iOS greys |
-| Moleskine | Durable quality: well bound, does not fall apart, pleasant to write on | Nostalgia, faux paper, leather, handwriting fonts |
-| Paper tracker / star chart | A mark per session, made by hand, read at a glance | Stickers, rewards, gold stars |
+| Reference                  | Borrowed                                                                                     | Not borrowed                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Whiteboard                 | Rooted in now: today and this week get one bold, obvious place                               | The busy, marker-heavy look (direction A, rejected as too busy for years of use) |
+| Apple Notes                | Restraint, dependability, deliberate design; chronological order and plain search are enough | Its literal look: system blue, stock iOS greys                                   |
+| Moleskine                  | Durable quality: well bound, does not fall apart, pleasant to write on                       | Nostalgia, faux paper, leather, handwriting fonts                                |
+| Paper tracker / star chart | A mark per session, made by hand, read at a glance                                           | Stickers, rewards, gold stars                                                    |
 
 The tension between the whiteboard (transient, now) and the notebook (permanent, years) resolves
 into two layers rather than an average of the two.
@@ -45,26 +45,26 @@ into two layers rather than an average of the two.
 Standard roles (same names in every project), starting values. The gate measures every pair in
 both themes before anything ships; a value that misses moves one step and the change is recorded.
 
-| Role | Light | Dark | Use |
-| --- | --- | --- | --- |
-| `canvas` | `#FAF8F3` paper | `#1B1A18` | Page ground |
-| `panel` | `#FFFEFB` | `#23221F` | Dialogs, popovers, cards |
-| `tile` | `#F1EDE4` | `#2B2926` | Quiet fills, hover, the note background |
-| `line` | `#E4DFD5` | `#3A3733` | Rules between rows; never a control border |
-| `control-border` | `#8C8579` | `#8F887C` | Inputs, outlined buttons, the empty-day ring |
-| `ink` | `#1F1D1A` | `#EDE9E2` | Text, icons, the primary button's fill |
-| `on-ink` | `#FAF8F3` | `#1B1A18` | Text on an `ink` fill |
-| `ink-secondary` | `#5F5A52` | `#B3AC9F` | Captions, dates, goals, hints |
-| `error-ink` | `#9F1D1D` | `#F08A7E` | Form errors, always with an icon and words |
-| `focus` | `#2B4C7E` | `#9DB8E8` | Solid 2px outline at 2px offset |
+| Role             | Light           | Dark      | Use                                          |
+| ---------------- | --------------- | --------- | -------------------------------------------- |
+| `canvas`         | `#FAF8F3` paper | `#1B1A18` | Page ground                                  |
+| `panel`          | `#FFFEFB`       | `#23221F` | Dialogs, popovers, cards                     |
+| `tile`           | `#F1EDE4`       | `#2B2926` | Quiet fills, hover, the note background      |
+| `line`           | `#E4DFD5`       | `#3A3733` | Rules between rows; never a control border   |
+| `control-border` | `#8C8579`       | `#8F887C` | Inputs, outlined buttons, the empty-day ring |
+| `ink`            | `#1F1D1A`       | `#EDE9E2` | Text, icons, the primary button's fill       |
+| `on-ink`         | `#FAF8F3`       | `#1B1A18` | Text on an `ink` fill                        |
+| `ink-secondary`  | `#5F5A52`       | `#B3AC9F` | Captions, dates, goals, hints                |
+| `error-ink`      | `#9F1D1D`       | `#F08A7E` | Form errors, always with an icon and words   |
+| `focus`          | `#2B4C7E`       | `#9DB8E8` | Solid 2px outline at 2px offset              |
 
 Project roles:
 
-| Role | Light | Dark | Means | Never |
-| --- | --- | --- | --- | --- |
-| `pen` | the chosen ink | the chosen ink, dark value | Done: the session dot, met totals | Decoration, links, buttons |
-| `highlight` | `#F6EBB8` | `#3B3524` | Today | Anything but today |
-| `caution-ink` | `#A0461A` | `#E3A06B` | Over the daily pick, always with words ("one extra") | Errors |
+| Role          | Light          | Dark                       | Means                                                | Never                      |
+| ------------- | -------------- | -------------------------- | ---------------------------------------------------- | -------------------------- |
+| `pen`         | the chosen ink | the chosen ink, dark value | Done: the session dot, met totals                    | Decoration, links, buttons |
+| `highlight`   | `#F6EBB8`      | `#3B3524`                  | Today                                                | Anything but today         |
+| `caution-ink` | `#A0461A`      | `#E3A06B`                  | Over the daily pick, always with words ("one extra") | Errors                     |
 
 **Inks** (the accent setting becomes a choice of pen): Ink blue `#2B4C7E` / `#9DB8E8` (default),
 Forest `#2F5D46` / `#8FCBAA`, Violet `#4B3B7A` / `#B9A9E8`, Graphite `#3D3D3D` / `#CFCFCF`. Every

@@ -3,7 +3,8 @@
 > Purpose
 >
 > How the planner is put together: the component tree, the Pinia stores, how data syncs with the
-> API and what stays in `localStorage`, and the decisions that depart from the design prototype.
+> API and what stays in `localStorage`, the decisions that depart from the design prototype, and
+> how the design system reaches the screen.
 
 ## 1. Overview
 
@@ -18,26 +19,29 @@ decides which week's plan a week shows; `src/lib/dates.ts` holds the week maths 
 `YYYY-MM-DD` keys and back, labels, `DAY_NAMES`); `src/lib/theme.ts` holds the theme names and
 `isDark`.
 
-`TrackerGrid` and `TrackerRow` (on the `DayMark`, `Chip`, `Stepper` and `IconButton` primitives in
-`src/components/ui/`) take props, emit events, and serve both sections; `TrackerRow` also asks the
-`ConfirmDialog` (through `useConfirm`) before emitting `remove`, and names where focus goes once the
-row has gone. `ExerciseGrid` and
-`DietSection` wire them to their store. `AddExerciseForm` and `EditExerciseDialog` share their field
+Every screen is built from the primitives in `src/components/ui/` (§6.3), which follow the design
+system's cards ([brand.md](brand.md)). `TrackerGrid` and `TrackerRow` (on the `DayMark`, `Chip`,
+`Stepper` and `IconButton` primitives) take props, emit events, and serve both sections.
+`TrackerGrid` runs the grid's keyboard model (`useGridNav`, §6.5). `TrackerRow` asks the
+`ConfirmDialog` (through `useConfirm`, §6.4) before emitting `remove`, and names where focus goes
+once the row has gone. `ExerciseGrid` and `DietSection` wire them to their store. `AddExerciseForm` and `EditExerciseDialog` share their field
 state and input cleaning through `useExerciseForm` (`src/composables/exerciseForm.ts`) and the
 `PerSideToggle` segmented control. `src/lib/problems.ts` turns a sign-in, link or sign-out refusal
 into a sentence for the forms; `src/composables/importSummary.ts` says what an import would add,
 for Settings → Import… and the first-login prompt.
 
 ```
-App.vue                 picks the screen (link, planner or sign-in), --accent variable, .dark class,
-│                       clock refresh, sync triggers (focus, visibility, online, minute tick, storage)
+App.vue                 picks the screen (link, planner or sign-in), the pen variables (inkFor),
+│                       .dark class, clock refresh, sync triggers (focus, visibility, online, minute
+│                       tick, storage), the phone's Today | Week switch, and the one ConfirmHost
 ├── PasswordForm.vue    an invite or reset link (#/invite/<t>, #/reset/<t>): choose a password
 ├── LoginForm.vue       username and password; explains refusals; notes an ended session
-│   (both inside AuthCard.vue: a centred card with the app name)
-├── AppNavbar.vue       sticky top bar: app name, ‹ This Week ›, Edit plan switch, Settings, Print…
-│   └── SettingsPopover.vue   who is signed in and Sign out, theme (System/Light/Dark), accent
-│                             swatches, exercises-per-day stepper, Export and Import… (see §4)
-├── SyncStatus.vue      loading, offline and conflict messages above the planner
+│   (both inside AuthCard.vue: a centred Panel with the BrandMark)
+├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
+│   │                   the Edit plan Switch, Settings and Print…
+│   └── SettingsPopover.vue   Popover: theme (SegmentedControl), Ink (InkPicker), Exercises a day
+│                             (Stepper), Export and Import… (see §4), who is signed in, Sign out
+├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
 ├── TodayList.vue       phones only (below 640px), the first view: today's exercises and foods,
 │                       one DayMark each, "Two of three. One to go."; a Today | Week switch above
@@ -78,15 +82,15 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 
 `usePlannerStore` is a setup store.
 
-| State                 | Kept by                                    | Notes                                                           |
-| --------------------- | ------------------------------------------ | --------------------------------------------------------------- |
-| `plans`               | the sync store: server and per-user cache  | week → `{ id, name, sets?, reps, perSide?, weight?, target }[]` |
-| `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven booleans         |
-| `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158`, `3`                                         |
-| `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                           |
-| `configMode`          | no                                         | `false` (normal mode) on every load                             |
-| `weekOffset`          | no                                         | `0` is the current week                                         |
-| `now`                 | no                                         | a ref so "today" can move; see §5                               |
+| State                 | Kept by                                    | Notes                                                            |
+| --------------------- | ------------------------------------------ | ---------------------------------------------------------------- |
+| `plans`               | the sync store: server and per-user cache  | week → `{ id, name, sets?, reps, perSide?, weight?, target }[]`  |
+| `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven booleans          |
+| `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is drawn as an ink (§6.2) |
+| `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                            |
+| `configMode`          | no                                         | `false` (normal mode) on every load                              |
+| `weekOffset`          | no                                         | `0` is the current week                                          |
+| `now`                 | no                                         | a ref so "today" can move; see §5                                |
 
 The stores start empty (showing the defaults) and never write the user's data themselves. The sync
 store fills them with `adopt` and saves their changes (§7).
@@ -167,7 +171,8 @@ v2; now the conversion only feeds the import.
 `parseDietData` applies the same rules to foods, with four default foods (Vegetables 7, Fruit 5,
 Fish 2, Nuts 3).
 
-`parseSettings` accepts any `#rrggbb` accent (not only the four swatches), clamps the daily pick to
+`parseSettings` accepts any `#rrggbb` accent (not only the four inks' values, K3a in
+[brand.md](brand.md) §4), clamps the daily pick to
 1–8, and accepts only `system`, `light` or `dark` as the theme, falling back to the defaults
 otherwise. Settings saved before the theme option existed load as `system`.
 
@@ -220,7 +225,8 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **Cells are buttons.** The prototype's cells were clickable `div`s. Each day is a `DayMark`: a
   `button` with `aria-pressed` and a name such as "Squats, Friday 23 October, today" (today also
   carries `aria-current="date"`), so the grid works from the keyboard and with a screen reader. The
-  grid is a `<table>` with ARIA `table`/`row`/`cell` roles.
+  grid is a `<table role="grid">` with `row`, `columnheader`, `rowheader` and `gridcell` roles, and
+  one tab stop (§6.5).
 - **A normal web page, not a window.** The handoff drew the app as a macOS window (traffic lights, a
   framed window on a backdrop). The app is an SPA, so it uses a full-width sticky navbar and a
   centred content column instead; the navbar keeps the week controls, Settings and Print….
@@ -230,16 +236,17 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   does not flash light while the bundle loads. It is a plain file rather than an inline script
   because the nginx CSP allows scripts only from `'self'`.
 - **Settings popover.** The handoff calls accent and daily pick user settings but shows no UI for
-  them; the popover adds one, plus the theme. The default accent is green (`#30d158`), which the
-  handoff records as the user's pick. It is a disclosure: an outside click or Escape closes it, and
-  Escape returns focus to the trigger. Swatches, the theme buttons and the per-set toggle are
-  `aria-pressed` buttons.
+  them. The popover (the Popover primitive, on Reka UI) adds one, plus the theme. The accent is a
+  choice of four inks, Ink blue by default, and the stored value keeps its old format (K3a,
+  [brand.md](brand.md) §4). The popover closes when focus leaves it, on Escape and on an outside
+  click, and returns focus to the trigger. The theme and per-side choices are SegmentedControls:
+  `aria-pressed` buttons in a `role="group"`.
 - **Config mode and normal mode.** Normal mode, the default on every load, only ticks cells. The
-  "Edit plan" switch in the navbar (a `role="switch"` button) turns on config mode, which shows ✎,
-  ×, the goal steppers, the add forms and "Copy plan to next week". The mode is not saved, so the
+  "Edit plan" Switch in the navbar (a `role="switch"` button) turns on config mode, which shows the
+  edit and remove IconButtons, the goal Steppers, the add forms and "Copy plan to next week". The mode is not saved, so the
   app always opens ready for ticking.
-- **Exercises are editable.** The handoff had no way to change an exercise after adding it. A ✎
-  button on each exercise row (not foods) opens `EditExerciseDialog`, on the Dialog primitive (Reka UI),
+- **Exercises are editable.** The handoff had no way to change an exercise after adding it. An
+  Edit IconButton (`pencil`) on each exercise row (not foods) opens `EditExerciseDialog`, on the Dialog primitive (Reka UI),
   which traps focus, closes on Escape and returns focus to the button. Sets and
   weight are optional, weight in kg; the sets/reps chip and the weight chip are separate so they
   wrap in the narrow name column.
@@ -257,11 +264,8 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   `BroadcastChannel`; the cache already lives in `localStorage`, whose events carry the same news
   with no second channel to keep in step.
 - **Diet sits below the exercises** on the same page, sharing the week navigation and the print
-  sheet. It has no daily target, so its footer counts are neutral rather than accent/orange.
-- **Print is black on white in either theme.** The print block in `src/styles/main.css` swaps the
-  colour tokens for print values: off cells and the today column print white, and only done cells
-  print black with a white tick. The navbar and every config-mode control are hidden
-  (`data-noprint`), and each grid avoids splitting across pages.
+  sheet. It has no daily target, so its grid has no Picked row.
+- **Print is black on white in either theme** (§6.7).
 - **Narrow screens.** Below 640px the navbar drops the app name and Print… and shortens the switch
   label to "Edit"; below 380px a gear replaces the word Settings (still its accessible name), so the
   controls fit a 320px screen. Below 640px the app opens on the **Today list** (brand spec K5):
@@ -272,30 +276,139 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   edited in the week; choosing Today returns to this week and turns Edit plan off. The grids keep a
   600px minimum and scroll sideways inside their own container, with the **name column sticky** at
   the left on the canvas, `scroll-padding-left` at its width so keyboard focus never lands under
-  it, and the scroller opening with the day before today beside the names. In Edit plan the name
+  it, and the scroller opening with the day before today beside the names (another week opens at
+  Monday). The table's minimum width keeps every day column at 56px or more: 600px on a phone and
+  680px above, 848px and 928px in Edit plan. In Edit plan the name
   column is 384px, wider than the room a phone leaves for it, so there it scrolls with the days
-  instead of sticking. This reverses the earlier "the grid scrolls sideways, as designed" (F1).
+  instead of sticking, and the grid opens at its left edge. This reverses the earlier "the grid
+  scrolls sideways, as designed" (K5, F1).
 
-## 6. Styling
+## 6. Styling and the design system
 
-Tailwind CSS 4, through `@tailwindcss/vite`. Components style themselves with utility classes in
-their templates and have no `<style>` blocks. Everything global is in `src/styles/main.css`:
+Tailwind CSS 4, through `@tailwindcss/vite`, on the design system in `brand/design-system/`
+([brand.md](brand.md)). Components style themselves with utility classes in their templates and
+have no `<style>` blocks. Everything global is in `src/styles/main.css`.
 
-- **Semantic colours.** `:root` (light) and `.dark` define variables such as `--surface`, `--line`
-  and `--muted`, and `@theme inline` exposes them as Tailwind colours, so templates write
-  `bg-surface`, `border-line` or `text-muted` and both themes follow without `dark:` variants.
-- **Accent.** `App.vue` sets `--accent` on `<html>` from the store; it backs `bg-accent`. Text uses
-  `text-accent-fg`, which light mode darkens (the swatches are too bright to read on white).
+### 6.1 Tokens and roles
+
+- **Generated tokens.** `npm run tokens` writes `src/styles/tokens.css` from
+  `brand/design-system/project/tokens.json` (through `scripts/design_preview.py --tokens-css` with
+  `--dark-selector .dark`) and drops the generated `@font-face` rules. It holds every role's light
+  value on `:root` and dark value on `.dark`, the four ink values, spacing, radius, the font
+  families and the type-style classes. Nobody edits it by hand, and `.prettierignore` keeps
+  Prettier off it, so a regeneration diff is always the tokens' own change.
+- **Role utilities.** `main.css` imports Tailwind, then `tokens.css` into Tailwind's `components`
+  layer (above the theme, below the utilities), then maps each role to a
+  Tailwind colour in `@theme inline` (`--color-canvas: var(--canvas)`). Templates write
+  `bg-canvas`, `text-ink-secondary` or `border-control-border`, and both themes follow without
+  `dark:` variants. The roles are `canvas`, `panel`, `tile`, `line`, `control-border`, `ink`,
+  `on-ink`, `ink-secondary`, `error-ink`, `focus`, `pen`, `highlight`, `caution-ink` and `scrim`.
+- **No palette.** `--color-*: initial` switches Tailwind's default colours off, keeping only
+  `transparent` and `current`, so a palette class such as `bg-red-500` or `text-white` generates
+  nothing. Every colour on screen comes from a role.
 - **Dark variant.** `@custom-variant dark` keys `dark:` to the `.dark` class rather than the media
-  query, so the Light and Dark settings can override the OS.
-- **Shared classes.** `.btn` (navbar and other secondary buttons), `.segment` (the theme toggle)
-  and `.btn-primary` (the import prompt) still live in the components layer, until those screens
-  move onto the primitives in `src/components/ui/`. The forms, the sign-in and link screens and
-  the edit dialog already use Button, TextField, TextLink, Dialog, SegmentedControl and
-  InlineMessage.
-- **Sticky navbar.** `scroll-padding-top` on `<html>` keeps keyboard-focused content from scrolling
-  under it.
-- **Print.** The `@media print` block described in §5.
+  query, so the Light and Dark settings can override the OS. `public/theme-init.js` sets the class
+  before first paint, and `App.vue` keeps it in step afterwards.
+- **Type.** The type-style classes (`display`, `title-1`, `title-2`, `body-large`, `body`,
+  `caption`, `label`, `note`) come from `tokens.css`. `main.css` adds the note's italic and the
+  smaller `display` below 640px, in the same layer, so a utility beside a type class wins. Numbers use `tabular-nums`. The fonts are the Fontsource variable
+  packages, imported in `src/main.ts` so Vite bundles them under `/assets/` (the CSP allows only
+  `'self'`), with the latin files preloaded in `index.html`.
+- **Shape, focus and scroll.** `rounded-sm`, `rounded-md` and `rounded-lg` follow the radius tokens,
+  and `shadow-overlay` is the one shadow. A global `:focus-visible` rule draws a solid 2px `focus`
+  outline at a 2px offset on every interactive element. `scroll-padding-top` on `<html>` keeps
+  keyboard-focused content from scrolling under the sticky navbar.
+
+### 6.2 The pen and the inks
+
+The pen is the person's ink, so it lives in variables rather than in the stylesheet. `App.vue` runs
+the stored accent through `inkFor` (`src/lib/inks.ts`, K3a) and sets `--user-pen-light` and
+`--user-pen-dark` on `<html>`. `main.css` sets `--pen` from the first on `:root` and from the second
+on `.dark`, falling back to Ink blue (`--ink-blue`) before they are set. Everything reads `--pen`
+(`bg-pen`, `text-pen`), never the user variables. [brand.md](brand.md) §4 has the mapping.
+
+### 6.3 The primitives
+
+`src/components/ui/<name>/` holds the shared components, one folder each with the `.vue` file and
+an `index.ts`. They are shadcn-vue (K1): owned source on Reka UI, added with the shadcn-vue CLI
+(`components.json`: the Lucide icon library, `src/styles/main.css` as the stylesheet) and restyled
+to the tokens and the cards. `cn` (`src/lib/utils.ts`) merges a consumer's classes over a
+component's own.
+
+| Group    | Primitives                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Basics   | Button (primary, secondary and quiet, 44px tall, `sm` 36px from 640px up), IconButton (44px, a required `label`), TextLink, BrandMark |
+| Forms    | TextField, TextArea, SegmentedControl, Switch, Stepper, InkPicker                                                                     |
+| Overlays | Dialog, ConfirmDialog with ConfirmHost, Popover                                                                                       |
+| Planner  | DayMark, Chip, SectionHeader, StatFigure                                                                                              |
+| Feedback | InlineMessage, Banner                                                                                                                 |
+
+The other cards are composed in the screens: Header in `AppNavbar.vue`, Panel in `AuthCard.vue`
+and `ImportPrompt.vue`, WeekGrid in `TrackerGrid.vue` and `TrackerRow.vue`, TodayList in
+`TodayList.vue`. Icons are `@lucide/vue` at a 1.5px stroke, `aria-hidden` beside words. A
+primitive's colour transitions last 120ms at most, stop under `prefers-reduced-motion`, and name
+the properties they animate, so the focus ring never fades in.
+
+### 6.4 Confirmations
+
+`useConfirm()` (`src/composables/useConfirm.ts`) asks a yes-or-no question and returns a promise:
+true for the verb, false for Cancel or Escape. One `<ConfirmHost />`, mounted once in `App.vue`,
+shows the open question in a ConfirmDialog (Reka's AlertDialog). A newer question answers an older
+one false. `returnFocus` names where focus goes on closing when the control that asked has gone, as
+after a removal. Removing a row (`TrackerRow`) and copying over next week's plan (`WeekHeader`) ask
+this way. Sign out uses a ConfirmDialog of its own in the Settings popover, because it shows the
+unsynced count, a busy state and an error.
+
+### 6.5 Keyboard in the grids
+
+Each grid is one tab stop, following the WAI-ARIA grid pattern with a roving tabindex
+(`createGridNav` in `src/composables/gridNav.ts`, run by `useGridNav` from `TrackerGrid`):
+
+- **The stop** starts on today's DayMark in the first row (`[aria-current="date"]`), else the first
+  day, else the first cell, and then stays on the last cell focused. A `MutationObserver` keeps
+  exactly one stop as rows come and go.
+- **Keys.** Arrows move cell by cell over the names, days, totals and the Picked row, and never
+  wrap. Home and End go along the row, Ctrl+Home and Ctrl+End to the grid's ends. Space and Enter
+  belong to the DayMark. An `aria-hidden` cell (the empty Picked cell under "Week") is skipped.
+- **Edit plan.** The Stepper and IconButtons in a row header stay out of the Tab order. Enter or F2
+  on the name cell lets them in, Tab moves among them, and Escape puts focus back on the cell.
+
+"Skip to today", first in the tab order in `AppNavbar.vue`, focuses today's first mark: in the
+phone's Today list when it shows, otherwise in the first grid that has today.
+
+### 6.6 The phone layout
+
+`usePhoneView` (`src/composables/phoneView.ts`) decides what the main screen shows below 640px
+(`PHONE_QUERY`, Tailwind's `sm`). §5, "Narrow screens", has the behaviour. The sticky name column
+is `stickyName()` in `TrackerRow.vue`, shared with the header and Picked cells in `TrackerGrid.vue`,
+and `TrackerGrid` opens its scroller with today in view and scrolls a focused cell wholly clear of
+the names.
+
+### 6.7 Print
+
+The `@media print` block in `main.css` gives a black-on-white landscape sheet from either theme. It
+re-points the roles at black, white and greys, the only literal colours the system allows: done
+dots print black, rings grey, chips outlined, and `--highlight` goes transparent. `--pen` is set
+there too, so the user's ink can't leak through. Shadows and transitions are off.
+
+- Anything marked `data-noprint` is hidden: the navbar, the phone's view switch, the sync status,
+  the import prompt, Edit plan's controls and add forms, and each section's hint line. Dialogs, the
+  popover and Banners carry `print:hidden`.
+- "One extra" keeps its underline and words. The Picked row's `<tfoot>` prints as an ordinary row
+  group, so a table split across pages repeats its header but prints the Picked row once, at the
+  end.
+- Diet's heading stays with its grid (`print:break-inside-avoid`), and a section header never ends
+  a page (`print:break-after-avoid`).
+
+### 6.8 The style guide
+
+`src/styleguide/` is the living style guide (K2): every primitive and planner component rendered by
+its real source, in each state. `src/main.ts` mounts it instead of the app at `/styleguide` when
+`import.meta.env.DEV` is true, so a production build drops it. The page's Theme and Ink menus set
+the same `.dark` class and pen variables the app does (`src/styleguide/look.ts`), and the address
+carries them (`/styleguide?theme=dark&ink=forest`), so a browser test can open any combination.
+Each section is one entry in `src/styleguide/sections.ts`. Coverage excludes the folder, and the
+browser checks run against it.
 
 ## 7. Accounts and sync
 

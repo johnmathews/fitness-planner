@@ -1,4 +1,4 @@
-<!-- @dsCard group="Planner" height=900 subtitle="The phone's first view: today's exercises and diet, one mark each" -->
+<!-- @dsCard group="Planner" height=1180 subtitle="The phone's first view: today's exercises and diet, one mark each" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -41,8 +41,9 @@
   .chip { background: var(--tile); color: var(--ink-secondary); border-radius: var(--radius-sm); padding: 0 var(--space-2); white-space: nowrap; }
   .items .note { margin: var(--space-1) var(--space-12) var(--space-1) 0; }
 
-  /* DayMark at list size: a 48px button, the same 24px dot or ring. */
-  .mark { flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; }
+  /* The grid's own DayMark: a 44px button with the 24px dot or ring, centred in a 48px cell. */
+  .day { flex: none; width: 48px; height: 48px; display: grid; place-items: center; }
+  .mark { width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; }
   .mark::before { content: ""; width: 24px; height: 24px; border-radius: var(--radius-full); border: 1.5px solid var(--control-border); }
   .mark[aria-pressed="true"]::before { background: var(--pen); border-color: var(--pen); }
   .mark[aria-pressed="false"]:hover::before { border-color: var(--ink); }
@@ -51,8 +52,13 @@
     .mark::before { transition: background-color 120ms, border-color 120ms; }
   }
 
+  .empty { margin: var(--space-6) var(--space-4) 0; color: var(--ink-secondary); }
+  .variant { margin: 0 0 var(--space-3); color: var(--ink-secondary); }
+  .gap { height: var(--space-8); }
+
   @media (max-width: 639px) {
     body { padding: 0; }
+    .variant { margin: 0 var(--space-4) var(--space-3); }
     .phone { max-width: none; border: 0; border-radius: 0; }
   }
 </style>
@@ -77,26 +83,26 @@
       <li>
         <div class="row">
           <div class="text"><span class="name">Push-ups</span><span class="meta"><span class="chip label">3 × 12</span><span class="caption">3 of 4 this week</span></span></div>
-          <button type="button" class="mark" aria-pressed="true" aria-label="Push-ups, today"></button>
+          <div class="day"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div>
         </div>
       </li>
       <li>
         <div class="row">
           <div class="text"><span class="name">Pull-ups</span><span class="meta"><span class="chip label">3 × 5</span><span class="caption">1 of 3 this week</span></span></div>
-          <button type="button" class="mark" aria-pressed="false" aria-label="Pull-ups, today"></button>
+          <div class="day"><button type="button" class="mark" aria-pressed="false" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today"></button></div>
         </div>
       </li>
       <li>
         <div class="row">
           <div class="text"><span class="name">Squats</span><span class="meta"><span class="chip label">3 × 15</span><span class="chip label">16 kg</span><span class="caption">3 of 3 this week</span></span></div>
-          <button type="button" class="mark" aria-pressed="true" aria-label="Squats, today, has a note" aria-describedby="note-sq"></button>
+          <div class="day"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note" aria-describedby="note-sq"></button></div>
         </div>
         <p class="note" id="note-sq">Left knee twinge. Went to 3 × 10, no jumps.</p>
       </li>
       <li>
         <div class="row">
           <div class="text"><span class="name">Kettlebell halos</span><span class="meta"><span class="chip label">8 each side</span><span class="caption">1 of 2 this week</span></span></div>
-          <button type="button" class="mark" aria-pressed="false" aria-label="Kettlebell halos, today"></button>
+          <div class="day"><button type="button" class="mark" aria-pressed="false" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div>
         </div>
       </li>
     </ul>
@@ -108,29 +114,38 @@
       <li>
         <div class="row">
           <div class="text"><span class="name">Vegetables</span><span class="meta"><span class="caption">5 of 7 this week</span></span></div>
-          <button type="button" class="mark" aria-pressed="true" aria-label="Vegetables, today"></button>
+          <div class="day"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Vegetables, Thursday 22 October, today"></button></div>
         </div>
       </li>
       <li>
         <div class="row">
           <div class="text"><span class="name">Fruit</span><span class="meta"><span class="caption">3 of 5 this week</span></span></div>
-          <button type="button" class="mark" aria-pressed="false" aria-label="Fruit, today"></button>
+          <div class="day"><button type="button" class="mark" aria-pressed="false" aria-current="date" aria-label="Fruit, Thursday 22 October, today"></button></div>
         </div>
       </li>
       <li>
         <div class="row">
           <div class="text"><span class="name">Fish</span><span class="meta"><span class="caption">1 of 2 this week</span></span></div>
-          <button type="button" class="mark" aria-pressed="false" aria-label="Fish, today"></button>
+          <div class="day"><button type="button" class="mark" aria-pressed="false" aria-current="date" aria-label="Fish, Thursday 22 October, today"></button></div>
         </div>
       </li>
       <li>
         <div class="row">
           <div class="text"><span class="name">Nuts</span><span class="meta"><span class="caption">2 of 3 this week</span></span></div>
-          <button type="button" class="mark" aria-pressed="true" aria-label="Nuts, today"></button>
+          <div class="day"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Nuts, Thursday 22 October, today"></button></div>
         </div>
       </li>
     </ul>
   </section>
+</div>
+
+<div class="gap"></div>
+<p class="variant label">Nothing planned this week</p>
+<div class="phone">
+  <header class="band">
+    <h2 class="title-2" style="margin:0;padding:0;color:var(--ink)"><span class="vh">Today, </span>Thursday 22 October</h2>
+  </header>
+  <p class="empty body">Nothing is planned this week. Switch to Week and turn on Edit plan to add exercises and foods.</p>
 </div>
 <script>
 (() => {
