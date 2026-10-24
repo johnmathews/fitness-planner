@@ -950,6 +950,11 @@ describe('exercise weight', () => {
     const edit = await openEdit('Plank')
     expect(edit.get('label[for="edit-exercise-reps"]').text()).toBe('Seconds')
     expect((edit.get('#edit-exercise-reps').element as HTMLInputElement).value).toBe('50')
+    const measure = (label: string) => edit.findAll('button').find((b) => b.text() === label)!
+    await measure('Reps').trigger('click')
+    expect(edit.get('label[for="edit-exercise-reps"]').text()).toBe('Reps')
+    await measure('Time').trigger('click')
+    expect(edit.get('label[for="edit-exercise-reps"]').text()).toBe('Seconds')
     await edit.get('button[aria-label="More times a week"]').trigger('click')
     await edit.get('form').trigger('submit')
     await flushPromises()
