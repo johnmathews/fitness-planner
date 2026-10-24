@@ -17,10 +17,15 @@ function print(): void {
 }
 
 /**
- * Today's cell in the first grid that shows today (Exercises, or Diet when there are no
- * exercises); in another week, the first day; with no rows anywhere, the first grid's tab stop.
+ * On the phone's Today list, its first mark (today's first exercise, or food). Otherwise today's
+ * cell in the first grid that shows today (Exercises, or Diet when there are no exercises); in
+ * another week, the first day; with no rows anywhere, the first grid's tab stop.
  */
 function skipToToday(): void {
+  const listed = document.querySelector<HTMLElement>(
+    '[data-slot="today-list"] [data-slot="day-mark-button"]',
+  )
+  if (listed) return listed.focus()
   const grids = [...document.querySelectorAll<HTMLElement>('[role="grid"]')]
   const first = (selector: string) =>
     grids.map((g) => g.querySelector<HTMLElement>(selector)).find((el) => el !== null)
@@ -40,7 +45,8 @@ function skipToToday(): void {
   row at the right; the markup stays in the desktop order, which is the tab order.
 
   "Skip to today" comes first in the tab order (F15): hidden until it has focus, then shown over
-  the wordmark with the focus ring; it puts focus on today's cell, past the Header.
+  the wordmark with the focus ring; it puts focus on today's cell, past the Header, or on the
+  phone's Today list on its first mark.
 -->
 <template>
   <header class="sticky top-0 z-20 border-b border-line bg-canvas" data-noprint>

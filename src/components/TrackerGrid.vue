@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import type { Day } from '@/stores/planner'
 import type { CountTone, PickedCount, Tracked } from '@/lib/tracker'
 import { useGridNav } from '@/composables/gridNav'
-import TrackerRow from '@/components/TrackerRow.vue'
+import TrackerRow, { stickyName } from '@/components/TrackerRow.vue'
 
-defineProps<{
+const props = defineProps<{
   /** The rows' kind, for the name column's hidden header: "Exercise" or "Food". */
   label: string
   /** The table's name, repeating the section and week: "Exercises, week of 19 October". */
@@ -43,6 +43,34 @@ useGridNav(table, {
   widget: '[data-slot="day-mark-button"]',
   start: '[data-slot="day-mark-button"][aria-current="date"]',
 })
+
+/**
+ * Opens with today in view (WeekGrid card, phone): the day before today sits beside the names, then
+ * today, so no one has to scroll sideways to mark it. Another week opens at Monday, and Edit plan at
+ * the start, since there the names (with their controls) don't stick and would otherwise be off
+ * screen. Where the table fits (sm and up) there is nothing to scroll, and this changes nothing.
+ */
+const scroller = ref<HTMLDivElement | null>(null)
+function showToday(): void {
+  const heads = table.value!.tHead!.rows[0]!.cells
+  // Header cells: the names at 0, then Monday at 1, so the day before today is at today's index.
+  const today = props.days.findIndex((d) => d.isToday)
+  scroller.value!.scrollLeft =
+    !props.configMode && today > 0 ? heads[today]!.offsetLeft - heads[0]!.offsetWidth : 0
+}
+onMounted(showToday)
+watch([() => props.days, () => props.configMode], showToday, { flush: 'post' })
+
+/**
+ * Brings a focused day or total wholly into view. Chrome's own focus scroll leaves a cell that is
+ * already partly visible where it is, even half under the sticky names; scrollIntoView honours the
+ * scroller's scroll-padding-left. The names are always in view, so they are left alone.
+ */
+function reveal(ev: FocusEvent): void {
+  const el = ev.target as HTMLElement
+  // Optional: jsdom has no scrollIntoView.
+  if (el.closest('td')) el.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+}
 </script>
 
 <!--
@@ -50,8 +78,10 @@ useGridNav(table, {
   136px below 640px), seven day columns sharing the rest, and the 88px "Week" total (72px).
   Hairline rules between rows, an ink rule under the header, no boxes and no card around it.
   Today's highlight band runs down its column from the header to the Picked row. Below 600px the
-  table scrolls sideways inside its own container, never the page (W12 makes the names sticky):
-  the container is positioned so the visually hidden text inside it can't escape and widen the page.
+  table scrolls sideways inside its own container, never the page: the container is positioned so
+  the visually hidden text inside it can't escape and widen the page. The name column is sticky
+  (stickyName) and the container's scroll-padding-left is its width, so a focused cell scrolls
+  clear of the names rather than under them; the container opens scrolled to today (showToday).
 
   Edit plan widens only the name column, by exactly the controls it gains (a 136px Stepper and
   two 44px IconButtons, with 8px gaps), so each row keeps its height (F25).
@@ -61,7 +91,12 @@ useGridNav(table, {
   draw the focus ring inset, so the scroller never clips it.
 -->
 <template>
-  <div class="relative overflow-x-auto print:overflow-visible">
+  <div
+    ref="scroller"
+    class="relative overflow-x-auto print:overflow-visible"
+    :class="{ 'scroll-pl-34 sm:scroll-pl-50': !configMode }"
+    @focusin="reveal"
+  >
     <table
       ref="table"
       role="grid"
@@ -80,7 +115,7 @@ useGridNav(table, {
       </colgroup>
       <thead>
         <tr role="row" class="border-b border-ink">
-          <th scope="col" role="columnheader" class="p-0">
+          <th scope="col" role="columnheader" class="p-0" :class="stickyName(configMode)">
             <span class="sr-only">{{ label }}</span>
           </th>
           <th
@@ -136,7 +171,8 @@ useGridNav(table, {
           <th
             scope="row"
             role="rowheader"
-            class="py-3 pr-3 text-left align-top font-normal focus-visible:-outline-offset-2"
+            class="py-3 pr-1.5 pl-1.5 text-left align-top font-normal focus-visible:-outline-offset-2"
+            :class="stickyName(configMode)"
           >
             <span class="body block text-ink">Picked</span>
             <span class="caption block text-ink-secondary">{{ picked.caption }}</span>

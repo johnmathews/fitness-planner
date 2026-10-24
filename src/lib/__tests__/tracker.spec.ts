@@ -7,6 +7,7 @@ import {
   grandTotal,
   isDone,
   pickedCount,
+  todaySummary,
   newId,
   toggleDay,
   totalFor,
@@ -93,5 +94,27 @@ describe('pickedCount', () => {
   it('leaves a day still to come blank until something is marked on it', () => {
     expect(pickedCount(0, 3, true)).toEqual({ n: 0, tone: 'future', extra: null })
     expect(pickedCount(1, 3, true)).toEqual({ n: 1, tone: 'under', extra: null })
+  })
+})
+
+describe('todaySummary', () => {
+  it('counts today against the pick in words: what is done, then what is left', () => {
+    expect(todaySummary(2, 3)).toBe('Two of three. One to go.')
+    expect(todaySummary(1, 3)).toBe('One of three. Two to go.')
+  })
+
+  it('says plainly when nothing is done yet, without guilt', () => {
+    expect(todaySummary(0, 3)).toBe('None yet. Three to go.')
+    expect(todaySummary(0, 1)).toBe('None yet. One to go.')
+  })
+
+  it('stops at the pick, and says how far over it, never praising', () => {
+    expect(todaySummary(3, 3)).toBe('Three of three.')
+    expect(todaySummary(4, 3)).toBe('Four today, one extra.')
+    expect(todaySummary(5, 3)).toBe('Five today, two extra.')
+  })
+
+  it('uses figures from 11 up, as the voice does', () => {
+    expect(todaySummary(12, 8)).toBe('12 today, four extra.')
   })
 })

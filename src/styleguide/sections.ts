@@ -21,6 +21,7 @@ import ChipSection from './sections/ChipSection.vue'
 import StatFigureSection from './sections/StatFigureSection.vue'
 import SectionHeaderSection from './sections/SectionHeaderSection.vue'
 import WeekGridSection from './sections/WeekGridSection.vue'
+import TodayListSection from './sections/TodayListSection.vue'
 
 /**
  * One section of the style guide. StyleGuide.vue renders each as
@@ -197,5 +198,12 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     summary:
       'One week, Monday to Sunday, as a grid: a row per exercise or food, a DayMark per day, the week’s total at the end of each row, and for exercises a picked row that counts each day against the daily pick.',
     component: WeekGridSection,
+  },
+  {
+    id: 'sg-today-list',
+    title: 'TodayList',
+    summary:
+      'The phone’s first view: today’s exercises and foods as one list, each with a single DayMark, under the day’s heading and a one-line summary.',
+    component: TodayListSection,
   },
 ]

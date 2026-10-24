@@ -1,3 +1,18 @@
+<script lang="ts">
+/**
+ * The name column, stuck to the scroller's left edge while the days scroll (WeekGrid card, phone;
+ * K5, F1): on the canvas so no mark shows through, above the day cells, with a line rule on its
+ * right edge on a phone. Drawn by a pseudo-element, since a collapsed table border doesn't move
+ * with a sticky cell. Edit plan's name column is wider than a phone (384px), so there it scrolls
+ * away with the rest instead of filling the screen.
+ */
+export function stickyName(configMode: boolean): string {
+  return configMode
+    ? ''
+    : 'sticky left-0 z-10 bg-canvas max-sm:after:absolute max-sm:after:inset-y-0 max-sm:after:right-0 max-sm:after:w-px max-sm:after:bg-line'
+}
+</script>
+
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Check, Pencil, Trash2 } from '@lucide/vue'
@@ -85,7 +100,8 @@ function setTarget(value: number): void {
     <th
       scope="row"
       role="rowheader"
-      class="py-2 pr-3 text-left align-middle font-normal focus-visible:-outline-offset-2"
+      class="py-2 pr-1.5 pl-1.5 text-left align-middle font-normal focus-visible:-outline-offset-2"
+      :class="stickyName(configMode)"
     >
       <div class="flex items-center gap-2">
         <div class="flex w-31 shrink-0 flex-col sm:w-47">

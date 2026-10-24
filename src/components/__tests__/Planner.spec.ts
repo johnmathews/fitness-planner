@@ -422,4 +422,126 @@ describe('the planner grids (W10)', () => {
       expect(block.classList).toContain('print:break-inside-avoid')
     })
   })
+
+  describe('the phone width (F1, W12)', () => {
+    /** The name cells: the hidden header, each row's name and the Picked row's. */
+    const nameCells = (grid: ReturnType<typeof ex>) => [
+      grid.get('thead th'),
+      ...grid.findAll('[role="rowheader"]'),
+    ]
+    const scroller = (grid: ReturnType<typeof ex>) => grid.element as HTMLElement
+
+    it('keeps the names stuck at the left on the canvas, and focus clear of them', () => {
+      mountApp()
+      for (const grid of [ex(), diet()]) {
+        for (const cell of nameCells(grid)) {
+          expect(cell.classes()).toEqual(
+            expect.arrayContaining(['sticky', 'left-0', 'z-10', 'bg-canvas']),
+          )
+        }
+        expect(grid.classes()).toEqual(expect.arrayContaining(['scroll-pl-34', 'sm:scroll-pl-50']))
+      }
+    })
+
+    it('lets Edit plan’s wide name column scroll away instead of filling a phone', async () => {
+      await mountConfig()
+      for (const cell of nameCells(ex())) expect(cell.classes()).not.toContain('sticky')
+      expect(ex().classes()).not.toContain('scroll-pl-34')
+    })
+
+    it('scrolls a focused cell wholly into view, clear of the names, but not a name itself', () => {
+      // Chrome's own focus scroll leaves a half-visible cell where it is, even under the names;
+      // scrollIntoView honours the scroller's scroll-padding-left.
+      const reveal = vi.fn<(arg?: boolean | ScrollIntoViewOptions) => void>()
+      const own = Element.prototype.scrollIntoView
+      Element.prototype.scrollIntoView = reveal
+      try {
+        mountApp()
+        ;(marks('Squats')[2]!.element as HTMLElement).focus()
+        expect(reveal).toHaveBeenCalledTimes(1)
+        expect(reveal.mock.instances[0]).toBe(marks('Squats')[2]!.element)
+        expect(reveal).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' })
+        ;(
+          ex().findAll('[data-testid="row-total"]')[0]!.element.closest('td') as HTMLElement
+        ).focus()
+        expect(reveal).toHaveBeenCalledTimes(2)
+        ;(ex().get('tbody [role="rowheader"]').element as HTMLElement).focus()
+        expect(reveal).toHaveBeenCalledTimes(2)
+      } finally {
+        if (own) Element.prototype.scrollIntoView = own
+        else Reflect.deleteProperty(Element.prototype, 'scrollIntoView')
+      }
+    })
+
+    describe('opening scrolled to today', () => {
+      // jsdom has no layout: a 136px name column, 56px days, and a scroller that keeps its offset.
+      const NAME = 136
+      const DAY = 56
+      beforeEach(() => {
+        Object.defineProperty(HTMLTableCellElement.prototype, 'offsetWidth', {
+          configurable: true,
+          get(this: HTMLTableCellElement) {
+            return this.cellIndex === 0 ? NAME : DAY
+          },
+        })
+        Object.defineProperty(HTMLTableCellElement.prototype, 'offsetLeft', {
+          configurable: true,
+          get(this: HTMLTableCellElement) {
+            return this.cellIndex === 0 ? 0 : NAME + (this.cellIndex - 1) * DAY
+          },
+        })
+        Object.defineProperty(HTMLDivElement.prototype, 'scrollLeft', {
+          configurable: true,
+          get(this: HTMLDivElement & { left?: number }) {
+            return this.left ?? 0
+          },
+          set(this: HTMLDivElement & { left?: number }, value: number) {
+            this.left = value
+          },
+        })
+      })
+      afterEach(() => {
+        Reflect.deleteProperty(HTMLTableCellElement.prototype, 'offsetWidth')
+        Reflect.deleteProperty(HTMLTableCellElement.prototype, 'offsetLeft')
+        Reflect.deleteProperty(HTMLDivElement.prototype, 'scrollLeft')
+      })
+
+      it('puts the day before today beside the names, so today is in view', async () => {
+        mountApp()
+        await flushPromises()
+        // Friday is today: Thursday sits next to the names, three days in.
+        expect(scroller(ex()).scrollLeft).toBe(3 * DAY)
+        expect(scroller(diet()).scrollLeft).toBe(3 * DAY)
+      })
+
+      it('starts another week at Monday, and comes back to today', async () => {
+        mountApp()
+        await flushPromises()
+        await wrapper.get('button[aria-label="Previous week"]').trigger('click')
+        await flushPromises()
+        expect(scroller(ex()).scrollLeft).toBe(0)
+        await wrapper.get('button[aria-label="Next week"]').trigger('click')
+        await flushPromises()
+        expect(scroller(ex()).scrollLeft).toBe(3 * DAY)
+      })
+
+      it('opens Edit plan at the start, where the names and their controls are, and back', async () => {
+        mountApp()
+        await flushPromises()
+        await wrapper.get('button[role="switch"]').trigger('click')
+        await flushPromises()
+        expect(scroller(ex()).scrollLeft).toBe(0)
+        await wrapper.get('button[role="switch"]').trigger('click')
+        await flushPromises()
+        expect(scroller(ex()).scrollLeft).toBe(3 * DAY)
+      })
+
+      it('leaves a Monday at the start, the names beside it', async () => {
+        vi.setSystemTime(new Date(2026, 9, 19, 9, 0))
+        mountApp()
+        await flushPromises()
+        expect(scroller(ex()).scrollLeft).toBe(0)
+      })
+    })
+  })
 })

@@ -5,6 +5,9 @@ import { numberWord } from '@/lib/words'
 /** Anything tracked as a tick per day against a weekly goal: exercises and foods. */
 export type Tracked = { id: string; name: string; target: number }
 
+/** One row of the Today list: the item, its chips (exercises only), today's mark and the week. */
+export type TodayItem = Tracked & { chips?: string[]; done: boolean; total: number }
+
 /**
  * A day's count in the Picked row against the daily pick (WeekGrid card): at the pick, over it,
  * under it, or a day still to come with nothing marked.
@@ -22,6 +25,21 @@ export function pickedCount(n: number, pick: number, future: boolean): PickedCou
   if (future && n === 0) return { n, tone: 'future', extra: null }
   if (n > pick) return { n, tone: 'over', extra: `${numberWord(n - pick)} extra` }
   return { n, tone: n === pick ? 'met' : 'under', extra: null }
+}
+
+/**
+ * The Today list's summary (TodayList card): today's exercises against the daily pick, in words.
+ * What is done, then what is left; at the pick it stops; over it, it says how far, as the Picked
+ * row does. No praise and no guilt: "None yet. Three to go.", "Two of three. One to go.",
+ * "Three of three.", "Four today, one extra."
+ */
+export function todaySummary(done: number, pick: number): string {
+  if (done === 0) return `None yet. ${numberWord(pick, true)} to go.`
+  if (done < pick) {
+    return `${numberWord(done, true)} of ${numberWord(pick)}. ${numberWord(pick - done, true)} to go.`
+  }
+  if (done === pick) return `${numberWord(done, true)} of ${numberWord(pick)}.`
+  return `${numberWord(done, true)} today, ${numberWord(done - pick)} extra.`
 }
 
 /** One week of a log: item id → done flags Mon–Sun. */

@@ -39,6 +39,9 @@ App.vue                 picks the screen (link, planner or sign-in), --accent va
 │                             swatches, exercises-per-day stepper, Export and Import… (see §4)
 ├── SyncStatus.vue      loading, offline and conflict messages above the planner
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
+├── TodayList.vue       phones only (below 640px), the first view: today's exercises and foods,
+│                       one DayMark each, "Two of three. One to go."; a Today | Week switch above
+│                       it (usePhoneView, src/composables/phoneView.ts) leads to the week below
 ├── WeekHeader.vue      the page's h1, the week ("19–25 October"); in config mode "Copy plan to
 │                       next week" and a note when the plan is carried over
 ├── ExerciseGrid.vue    the Exercises section: SectionHeader (hint, "10 of 12 this week" StatFigure)
@@ -261,7 +264,17 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   (`data-noprint`), and each grid avoids splitting across pages.
 - **Narrow screens.** Below 640px the navbar drops the app name and Print… and shortens the switch
   label to "Edit"; below 380px a gear replaces the word Settings (still its accessible name), so the
-  controls fit a 320px screen. The grid scrolls sideways at its 780px minimum width, as designed.
+  controls fit a 320px screen. Below 640px the app opens on the **Today list** (brand spec K5):
+  today's exercises and foods, each with one DayMark, ticked through the same store actions as the
+  grid, with no sideways scroll down to 320px. A Today | Week switch leads to the grids; the choice
+  is remembered on the device (`fitness-planner-view-v1`, like the theme, never synced). Another
+  week and Edit plan always show the grids, since the list only ever shows today and the plan is
+  edited in the week; choosing Today returns to this week and turns Edit plan off. The grids keep a
+  600px minimum and scroll sideways inside their own container, with the **name column sticky** at
+  the left on the canvas, `scroll-padding-left` at its width so keyboard focus never lands under
+  it, and the scroller opening with the day before today beside the names. In Edit plan the name
+  column is 384px, wider than the room a phone leaves for it, so there it scrolls with the days
+  instead of sticking. This reverses the earlier "the grid scrolls sideways, as designed" (F1).
 
 ## 6. Styling
 

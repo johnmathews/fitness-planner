@@ -54,6 +54,7 @@ test suites run.
 | P16 | Tabs share the cache and outbox through `localStorage` events, not a `BroadcastChannel`                                                 | The cache is in `localStorage` already; one channel instead of two                                            |
 | P17 | Sign-out is refused while offline                                                                                                       | The session cookie is HttpOnly, so only the server can end it                                                 |
 | P18 | Imports, from a file or the first-login prompt, merge on the server in one request                                                      | One transaction against the account's real state, not one write per tick                                      |
+| P19 | The phone's Today                                                                                                                       | Week choice is kept per device in `localStorage` (`fitness-planner-view-v1`), never synced or exported        | Like the theme (P3), it suits the screen, not the person; the phone still opens on Today until someone picks Week |
 
 ## 4. Accepted risks
 
