@@ -94,8 +94,8 @@ modules. The `build` job builds without pushing and holds only `contents: read`.
 is the only one granted `packages: write`. It logs in to `ghcr.io` with `GITHUB_TOKEN` and pushes
 `ghcr.io/johnmathews/fitness-planner` and `ghcr.io/johnmathews/fitness-planner-api`, each tagged
 `latest` and `sha-<short sha>`. `publish` runs on `workflow_run` after the `CI` workflow succeeds
-on a push to `main`, and checks out and tags exactly the commit CI passed (`workflow_run.head_sha`,
-metadata-action `context: git`). The home server auto-deploys `latest` (What's Up Docker), so a red
+on a push to `main`, and checks out, tags and labels exactly the commit CI passed
+(`workflow_run.head_sha`; `github.sha` would be the default branch's newest commit). The home server auto-deploys `latest` (What's Up Docker), so a red
 commit must never publish. Every checkout sets `persist-credentials: false`. Before
 2026-10-24 the project was called exercise-planner and published `exercise-planner` and
 `exercise-planner-api`. Those images still exist but no longer update, so a host must pull the new
