@@ -88,9 +88,10 @@ cut off at the limit rather than read whole. A body with nothing to send, such a
 | `GET /export`                              | session | the export file (`architecture.md` §4)                                                         |
 | `POST /import`                             | session | an export file, merged in; → `{weeks, ticks, settings}` added                                  |
 
-**The account** is `{username}`. While mail is on, an account created by sign-up (its username is
-an email) also carries `confirmed`, true once its address is confirmed; an invited account, and
-every account while mail is off, has no such key.
+**The account** is `{username}`: the account's email (the field keeps its old name, so older
+tabs and clients work unchanged). While mail is on it also carries `confirmed`, true once the
+address is confirmed. A legacy account still named by a username (below), and every account while
+mail is off, has no such key.
 
 `GET /state` returns `{exercise, diet, settings}`. Each section is `{plans, log, revs}`: `plans`
 and `log` have the same shape as in `localStorage` (a log row is seven marks or nulls), and `revs`
@@ -132,30 +133,36 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
 ## 4. Accounts and sessions
 
 - **Sign-up.** `POST /auth/signup` with `{email, password}` creates an account and signs it in.
-  The email is trimmed and lower-cased, then stored as the account's username, so it is what the
+  The email is trimmed and lower-cased, then stored in `users.username`, so it is what the
   person signs in with and what `X-Expected-User`, the cache keys and `fp-admin` name. It must be
   at most 254 characters, with printable ASCII before the `@` (no spaces, no second `@`) and a
   domain of letters, digits and hyphens with at least one dot; otherwise 400 `email`. It is ASCII
-  because the name travels in a header. Invite usernames never contain `@`, so the two kinds
-  cannot collide. With mail on, a confirm-your-email link goes to the address (§4.1); the account
+  because the name travels in a header. With mail on, a confirm-your-email link goes to the address (§4.1); the account
   works at once either way. A taken email gets 409 `exists`, a password outside 10 to 256
   characters 400 `password`. When `MAX_USERS` accounts exist (every account counts, invited or not)
   or `MAX_USERS` is 0, sign-up gets 403 `closed`; a disabled account still counts. At most 10
-  sign-ups land in any rolling hour (invited accounts do not count); beyond that, 429 `too-many`
+  sign-ups land in any rolling hour (accounts made from an invite do not count); beyond that, 429 `too-many`
   with `Retry-After` saying when the oldest of them leaves the hour. The caps are checked before the password is
   hashed and again under the write lock with the insert, so parallel sign-ups cannot pass them.
   Sign-ups wait for the same bounded hasher as logins and get 503 `busy` the same way.
-- **Invites.** `fp-admin invite <username>` mints a single-use link,
+- **Invites.** `fp-admin invite <email>` mints a single-use link,
   `$PUBLIC_ORIGIN/#/invite/<token>`, valid for 7 days. The person opens it and chooses a password
-  (10 to 256 characters). The username is fixed by the invite: 1 to 32 letters, digits, `.`, `_`
-  or `-`, unique regardless of case. Inviting a name that already exists fails; use `reset`. `fp-admin reset <username>` mints a
-  reset link the same way, valid for 24 hours. Using it ends every session of that user and clears
-  any lockout. Minting a new link revokes the earlier unused `fp-admin` links of the same kind for
-  that username (a new invite leaves a reset link alone, and the reverse). A reset sent by email
+  (10 to 256 characters). The account is the email the invite names, under sign-up's email rule
+  and lower-cased, so every new account, invited or signed up, signs in with an email. Inviting
+  an email that already has an account fails; use `reset`. With mail on, redeeming an invite
+  sends a confirm link, as sign-up does. `fp-admin reset <email>` mints a reset link the same
+  way, valid for 24 hours. Using it ends every session of that user and clears any lockout.
+  Minting a new link revokes the earlier unused `fp-admin` links of the same kind for that account
+  (a new invite leaves a reset link alone, and the reverse). A reset sent by email
   (§4.1) revokes nothing, and nothing revokes it but its hour running out. The token travels
   in the URL fragment and then in request bodies, never in a path, so no access log (Traefik, nginx
   or uvicorn) records it. Redeeming with a password outside 10 to 256 characters gets 400
   `password`, and a used, expired or unknown link gets 410 `gone`.
+- **Legacy usernames.** Invites before 2026-10-25 named a username (1 to 32 letters, digits, `.`,
+  `_` or `-`). Such an account still signs in with it, and `reset`, `disable` and the rest still
+  name it, but it has no email to confirm or reset by. Renaming it to its owner's email (one
+  `UPDATE users SET username` while nobody needs its unsynced changes) gives it all of that; the
+  planner's one such account, `john`, was renamed that way on 2026-10-25.
 - **Passwords** are hashed with argon2id at argon2-cffi's defaults (64 MiB, 3 passes,
   parallelism 4). One hash runs at a time (a process-wide semaphore), so concurrent logins queue
   instead of multiplying memory. At most eight requests hold a place (one hashing, seven waiting,
@@ -164,13 +171,13 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
 - **Lockout.** Five wrong passwords within 15 minutes lock the account for 15 minutes. While
   locked, every login gets 423 `locked`, even with the right password. A success resets the count.
   The lock is read again after the hash, under the write lock, so a burst of parallel guesses
-  cannot get past it or clear it. An unknown username costs the same hash as a known one and gets
+  cannot get past it or clear it. An unknown email costs the same hash as a known one and gets
   the same 401 `invalid`. So does a disabled user with the right password, and that attempt counts
   towards the lockout. Traefik's rate limit sits in front of all of it.
 - **Sessions** are 32 random bytes in an `HttpOnly; Secure; SameSite=Lax; Path=/` cookie named
   `__Host-session`. They last 90 days from the last use: a request more than a day after the last
   refresh moves the expiry forward and re-sends the cookie. Logout ends one session.
-  `fp-admin revoke-sessions <username>` and a reset end them all. A disabled user's sessions stop
+  `fp-admin revoke-sessions <email>` and a reset end them all. A disabled user's sessions stop
   working at once.
 
 ### 4.1 Email
@@ -213,13 +220,12 @@ resets are `fp-admin`'s, as before.
 `fp-admin` runs in the API container against the same database:
 
 ```sh
-docker compose exec fitness-api fp-admin invite alice     # prints the invite link
-docker compose exec fitness-api fp-admin reset alice      # prints a reset link
-docker compose exec fitness-api fp-admin reset bob@example.com  # a signed-up account, by its email
-docker compose exec fitness-api fp-admin users            # username, created, disabled, sessions
-docker compose exec fitness-api fp-admin disable alice    # blocks login and ends sessions
-docker compose exec fitness-api fp-admin enable alice
-docker compose exec fitness-api fp-admin revoke-sessions alice
+docker compose exec fitness-api fp-admin invite alice@example.com   # prints the invite link
+docker compose exec fitness-api fp-admin reset alice@example.com    # prints a reset link
+docker compose exec fitness-api fp-admin users            # email, created, disabled, sessions
+docker compose exec fitness-api fp-admin disable alice@example.com  # blocks login, ends sessions
+docker compose exec fitness-api fp-admin enable alice@example.com
+docker compose exec fitness-api fp-admin revoke-sessions alice@example.com
 ```
 
 ## 6. Configuration
@@ -272,9 +278,9 @@ Reviewed and kept on purpose, for a small service with open sign-up (D9 in
   and each stranger's data is bounded by the quota. `fp-admin users` shows who signed up and
   `disable` blocks one, but a disabled account still counts towards `MAX_USERS`, so only raising
   it reopens sign-up.
-- **Lockout reveals and can block a username.** Five wrong passwords lock a real account, but an
-  unknown name never locks, so guessing shows which names exist. Sign-in names are now often
-  emails, which are easier to guess than invite usernames. The same five guesses every 15
+- **Lockout reveals and can block an account.** Five wrong passwords lock a real account, but an
+  unknown email never locks, so guessing shows which emails have accounts. Emails are easier to
+  guess than the invite usernames accounts once had. The same five guesses every 15
   minutes keep someone out. The lock is per account because the LAN port means no client IP can
   be trusted. `fp-admin reset` clears it.
 - **Sessions have no absolute lifetime.** A session used at least every 90 days lasts

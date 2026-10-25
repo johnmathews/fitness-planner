@@ -208,6 +208,17 @@ def create_app(config: Config, run_backups: bool = True, mailer: Mailer | None =
         assert mailer is not None
         background.add_task(send_quietly, mailer, message)
 
+    def first_confirmation(conn: sqlite3.Connection, uid: int, background: BackgroundTasks) -> None:
+        """Send a confirm link to an unconfirmed account that has never been sent one: a new
+        sign-up, a redeemed invite, or an account from before mail was on. Over a limit, none;
+        the banner's "Send it again" can ask later."""
+        if mailer is None or auth.confirmed(conn, uid) is not False:
+            return
+        if conn.execute("SELECT 1 FROM confirmations WHERE user_id = ?", (uid,)).fetchone():
+            return
+        with suppress(auth.AuthError):
+            deliver(background, outbox.confirmation(conn, config, uid))
+
     def need_mail() -> Mailer:
         if mailer is None:
             raise ApiError(503, "mail-off")
@@ -237,13 +248,16 @@ def create_app(config: Config, run_backups: bool = True, mailer: Mailer | None =
         return {"ok": True}
 
     @app.post("/api/auth/login")
-    def login(body: Body, response: Response, conn: Conn) -> dict[str, Any]:
+    def login(
+        body: Body, response: Response, background: BackgroundTasks, conn: Conn
+    ) -> dict[str, Any]:
         username, password = strings(body, "username", "password")
         try:
             uid = auth.login(conn, config, username, password)
         except auth.AuthError as e:
             raise refused(e) from None
         set_session_cookie(response, auth.create_session(conn, config, uid))
+        first_confirmation(conn, uid, background)
         return account(conn, uid)
 
     @app.post("/api/auth/signup")
@@ -256,10 +270,7 @@ def create_app(config: Config, run_backups: bool = True, mailer: Mailer | None =
         except auth.AuthError as e:
             raise refused(e) from None
         set_session_cookie(response, auth.create_session(conn, config, uid))
-        if mailer is not None:
-            # Over the hourly cap no email goes now; the banner's "Send it again" asks later.
-            with suppress(auth.AuthError):
-                deliver(background, outbox.confirmation(conn, config, uid))
+        first_confirmation(conn, uid, background)
         return account(conn, uid)
 
     @app.post("/api/auth/logout", status_code=204)
@@ -318,13 +329,16 @@ def create_app(config: Config, run_backups: bool = True, mailer: Mailer | None =
         return {"kind": info[0], "username": info[1]}
 
     @app.post("/api/invites/redeem")
-    def redeem(body: Body, response: Response, conn: Conn) -> dict[str, Any]:
+    def redeem(
+        body: Body, response: Response, background: BackgroundTasks, conn: Conn
+    ) -> dict[str, Any]:
         token, password = strings(body, "token", "password")
         try:
             uid = auth.redeem(conn, config, token, password)
         except auth.AuthError as e:
             raise refused(e) from None
         set_session_cookie(response, auth.create_session(conn, config, uid))
+        first_confirmation(conn, uid, background)
         return account(conn, uid)
 
     @app.get("/api/state")

@@ -13,7 +13,7 @@ from .config import Config
 from .db import connect, migrate
 
 MESSAGES = {
-    "username": "usernames are 1 to 32 letters, digits, '.', '_' or '-'",
+    "email": "invites name an email address, like name@example.com",
     "exists": "already exists; use reset to give them a new password",
 }
 
@@ -26,13 +26,15 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="fp-admin", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     for name, text in [
-        ("invite", "print a single-use sign-up link for a new user (valid 7 days)"),
-        ("reset", "print a password-reset link for a user (valid 24 hours)"),
-        ("disable", "block a user's logins and end their sessions"),
-        ("enable", "allow a disabled user to log in again"),
-        ("revoke-sessions", "sign a user out everywhere"),
+        ("invite", "print a single-use sign-up link for a new account's email (valid 7 days)"),
+        ("reset", "print a password-reset link for an account (valid 24 hours)"),
+        ("disable", "block an account's logins and end its sessions"),
+        ("enable", "allow a disabled account to log in again"),
+        ("revoke-sessions", "sign an account out everywhere"),
     ]:
-        commands.add_parser(name, help=text).add_argument("username")
+        # `username`: the account's name, its email (or, for an account from before invites
+        # took an email, the username it was invited with).
+        commands.add_parser(name, help=text).add_argument("username", metavar="email")
     commands.add_parser("users", help="list users")
     return parser
 

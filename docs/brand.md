@@ -130,8 +130,8 @@ three. One to go."), and figures stay figures in data ("10 of 12 this week"). No
 no hype, no guilt: facts, then the next step. A confirmation names the thing and uses the verb
 ("Remove Push-ups?", Remove), never OK or Yes. `voice.md` in the system has the rules and examples,
 and its corrected copy is the source for screen strings. Its "Signing in and creating an account" section
-sets the account screens' words: the sign-in field is "Email or username", a failed sign-in names
-all three and blames none, creating an account asks for an email and a password (twice) under
+sets the account screens' words: every account is an email, the sign-in field is "Email", a failed
+sign-in names both and blames neither, creating an account asks for an email and a password (twice) under
 "Create account", and where the planner sends email, "confirm" (never "verify") and "Forgot your
 password?" join them. Its "Email" section sets the two emails' words: a subject naming the one
 thing, one sentence, one button, how long the link works, and what to do if it wasn't you. The

@@ -41,7 +41,7 @@ App.vue                 picks the screen (a link, planner, sign-up, reset or sig
 ├── PasswordForm.vue    an invite or reset link (#/invite/<t>, #/reset/<t>): choose a password
 ├── SignupForm.vue      #/signup: email and password twice; field and form-level refusals
 ├── ForgotForm.vue      #/forgot: an email; then the same words whether or not it has an account
-├── LoginForm.vue       email or username, and password; explains refusals; notes an ended
+├── LoginForm.vue       email and password; explains refusals; notes an ended
 │                       session; links to #/signup, and to #/forgot where the API sends email
 │   (all five inside AuthCard.vue: a centred Panel with the BrandMark)
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
@@ -469,7 +469,7 @@ browser checks run against it.
 `fitness-planner-session-v1` is signed in at once and their cache shown, then `GET /api/auth/me`
 confirms it. A 401 asks them to sign in again, keeping unsent writes; being offline keeps them
 working from the cache. With nobody remembered the app waits for the server, then shows the
-sign-in form, which takes an email or a username and links to `#/signup`. That form creates an
+sign-in form, which asks for an email and links to `#/signup`. That form creates an
 account (`POST /api/auth/signup`) and signs straight in; once anyone is signed in, `App.vue` drops
 `#/signup` from the address. A taken or malformed email and a password outside 10 to 256 characters
 show on their own fields; a closed sign-up, the hourly limit and connection trouble show once above the button.
@@ -575,5 +575,5 @@ and reads a damaged v1 key as nothing rather than as the default exercises.
   a stale copy and lose the other's queued write. Duplicate sends are harmless (ticks carry their
   value, identical plans are accepted); this narrower case would need one outbox per tab.
 - When a session ends by itself (expiry, a reset elsewhere), the device keeps that user's cache and
-  outbox so unsent changes survive, and the sign-in form offers their username. Only signing out
+  outbox so unsent changes survive, and the sign-in form fills in their email. Only signing out
   on purpose clears the device.

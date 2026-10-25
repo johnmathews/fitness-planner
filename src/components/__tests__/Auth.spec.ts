@@ -110,7 +110,7 @@ describe('signing in', () => {
       'a wrong password',
       'invalid',
       undefined,
-      'Wrong email, username or password. Check them and try again.',
+      'Wrong email or password. Check them and try again.',
     ],
     ['a locked account', 'locked', 600, 'Too many attempts. Try again in ten minutes.'],
     ['a lock about to end', 'locked', 30, 'Too many attempts. Try again in one minute.'],
@@ -190,11 +190,13 @@ describe('creating an account', () => {
     history.replaceState(null, '', '/#/signup')
   }
 
-  it('is linked from sign-in, which takes an email or a username', async () => {
+  it('is linked from sign-in, which asks for an email', async () => {
     api = signedOut()
     mountApp()
     await flushPromises()
-    expect(wrapper.get('label[for="login-username"]').text()).toBe('Email or username')
+    expect(wrapper.get('label[for="login-username"]').text()).toBe('Email')
+    expect(wrapper.get('#login-username').attributes('inputmode')).toBe('email')
+    expect(wrapper.text()).not.toContain('username')
     const link = wrapper.findAll('a').find((a) => a.text() === 'Create an account')!
     expect(link.attributes('href')).toBe('#/signup')
     expect(wrapper.text()).not.toContain('invitation')

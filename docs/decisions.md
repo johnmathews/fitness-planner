@@ -39,11 +39,21 @@ test suites run.
 | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | D9  | Sign-up | Anyone can create an account with an email and a password. Guardrails: `MAX_USERS` (default 50; 0 closes sign-up, leaving invites), 10 sign-ups an hour, and a 5 MiB quota on every account | Approval by `fp-admin` before first login; a shared sign-up code; no limits at all                |
 | D10 | Email   | The email is only a login name, stored lower-cased in `users.username`. No mail is sent: no verification, no self-service reset (the "no mail" part superseded by D12–D14)                  | Verification and "forgot password" by mail, which need a mail provider; a separate `email` column |
-| D11 | Sign-in | One field takes an email or a username, since both live in the same column                                                                                                                  | Email only, which would strand invited users until each had an email attached                     |
+| D11 | Sign-in | One field takes an email or a username, since both live in the same column (superseded by D15)                                                                                              | Email only, which would strand invited users until each had an email attached                     |
 
 D9 supersedes D1, and with it the premise behind two accepted risks in [api.md](api.md) §8: the
 unbounded per-user data (now the quota) and an account count bounded only by invites (now
 `MAX_USERS` and the hourly limit). John chose all three on 2026-10-25.
+
+### 2.3 Email only (2026-10-25)
+
+| ID  | Topic    | Decision                                                                                                                                                                                                                         | Rejected                                                                           |
+| --- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| D15 | Accounts | Every account is an email: invites name one (`fp-admin invite <email>`), sign-in asks for "Email", and the app never says "username". An account from before keeps its username and signs in with it, until renamed to its email | Keeping usernames for invites (D11); a separate `email` column beside the username |
+
+John asked for it on 2026-10-25, after a "Forgot your password?" for his own email found nothing:
+his account was the invited `john`, which had no email. It was renamed to his email the same day.
+Every account then has an address for resets, confirmation and, later, monthly reports (#29).
 
 ### 2.2 Transactional email (2026-10-25)
 
@@ -67,7 +77,7 @@ Monthly progress reports, which will use the confirmed addresses, are issue #29.
 | P2  | Import always merges and never deletes: existing weeks keep their plan, ticks are OR-ed, settings apply only when there are none        | No import, anywhere, can destroy data                                                                             |
 | P3  | The theme is never exported or synced                                                                                                   | It belongs to the device; `public/theme-init.js` reads it before first paint                                      |
 | P4  | Invite and reset tokens travel in the URL fragment, then in request bodies, never in a path                                             | No access log (Traefik, nginx, uvicorn) records them                                                              |
-| P5  | The CLI fixes the username when it mints an invite                                                                                      | A leaked link cannot claim an arbitrary name                                                                      |
+| P5  | The CLI fixes the account's name (an email since D15) when it mints an invite                                                           | A leaked link cannot claim an arbitrary name                                                                      |
 | P6  | Every write must carry `Origin` equal to `PUBLIC_ORIGIN` and a JSON body                                                                | `SameSite=Lax` alone treats other `*.itsa-pizza.com` hosts as same-site                                           |
 | P7  | A plan create whose items match the stored plan succeeds instead of conflicting                                                         | A first tick creates the week's plan, and two devices do that from the same source                                |
 | P8  | Argon2 at its defaults, one hash at a time, a bounded login queue, and the API's own memory limit (160m, measured)                      | One hash takes 64 MiB, the web container's whole limit                                                            |
@@ -119,7 +129,7 @@ for a day tried and not managed, with a press stepping through them.
 
 Each is described where it applies:
 
-- the lockout and sign-up reveal which usernames and emails have accounts; the lockout can block
+- the lockout and sign-up reveal which emails have accounts; the lockout can block
   one; sessions have no absolute lifetime; anyone can claim an email that is not theirs until it is
   confirmed; whoever holds an account's inbox can reset its password; Resend sees the addresses and
   links; strangers can fill the account cap or the hourly limit ([api.md](api.md) §8);
