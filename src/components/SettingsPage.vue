@@ -7,7 +7,14 @@ import { useSessionStore } from '@/stores/session'
 import { useSyncStore } from '@/stores/sync'
 import { describeProblem } from '@/lib/problems'
 import { useImportSummary } from '@/composables/importSummary'
-import { MAX_DAILY_PICK, MIN_DAILY_PICK } from '@/lib/storage'
+import {
+  MARK_KINDS,
+  MARK_SETS,
+  MAX_DAILY_PICK,
+  MIN_DAILY_PICK,
+  isMarkSet,
+  type MarkSet,
+} from '@/lib/storage'
 import { THEMES, type Theme } from '@/lib/theme'
 import { countOf } from '@/lib/words'
 import { APP_NAME } from '@/lib/app'
@@ -20,7 +27,9 @@ import {
 } from '@/lib/transfer'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { DayMarkDrawing } from '@/components/ui/day-mark'
 import { InlineMessage } from '@/components/ui/inline-message'
+import { RadioCard } from '@/components/ui/radio-card'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Stepper } from '@/components/ui/stepper'
 import { Switch } from '@/components/ui/switch'
@@ -28,6 +37,14 @@ import { TextLink } from '@/components/ui/text-link'
 
 const THEME_NAMES: Record<Theme, string> = { system: 'System', light: 'Light', dark: 'Dark' }
 const THEME_OPTIONS = THEMES.map((t) => ({ value: t, label: THEME_NAMES[t] }))
+const MARK_SET_NAMES: Record<MarkSet, string> = {
+  squiggles: 'Squiggles',
+  ticks: 'Ticks',
+  'stamped-ticks': 'Stamped ticks',
+  faces: 'Faces',
+  'stamped-faces': 'Stamped faces',
+}
+const MARK_SET_OPTIONS = MARK_SETS.map((m) => ({ value: m, label: MARK_SET_NAMES[m] }))
 
 const IMPORT_ERRORS: Record<ParseError | 'read', string> = {
   json: 'That file isn’t valid JSON.',
@@ -66,6 +83,12 @@ const summary = useImportSummary()
 const theme = computed({
   get: () => store.theme,
   set: (value: string) => store.setTheme(value as Theme),
+})
+const markSet = computed({
+  get: () => store.markSet,
+  set: (value: string) => {
+    if (isMarkSet(value)) store.markSet = value
+  },
 })
 const dailyPick = computed({
   get: () => store.dailyPick,
@@ -163,7 +186,7 @@ async function confirmSignOut(): Promise<void> {
 
 <!--
   The Settings page (brand/design-system/project/components/SettingsPage), at #/settings: a link
-  back to the week, the heading, then Appearance (Theme), Planner (Exercises a day, Show
+  back to the week, the heading, then Appearance (Theme, Marks), Planner (Exercises a day, Show
   weekly totals), Your data and Account, each a section under its own heading with a line rule
   between them. Settings take effect at once; there is no Save.
 -->
@@ -177,6 +200,18 @@ async function confirmSignOut(): Promise<void> {
     <section :aria-labelledby="ids.look" class="mt-8 flex flex-col gap-4">
       <h2 :id="ids.look" class="title-2 text-ink">Appearance</h2>
       <SegmentedControl v-model="theme" label="Theme" :options="THEME_OPTIONS" />
+      <RadioCard v-model="markSet" label="Marks" :options="MARK_SET_OPTIONS">
+        <template #picture="{ option }">
+          <span
+            v-for="kind in MARK_KINDS"
+            :key="kind"
+            class="grid size-16 shrink-0 place-items-center"
+            data-testid="mark-set-sample"
+          >
+            <DayMarkDrawing :mark="kind" :set="option.value as MarkSet" />
+          </span>
+        </template>
+      </RadioCard>
     </section>
 
     <section

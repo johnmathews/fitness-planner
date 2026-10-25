@@ -146,6 +146,12 @@
     display: none !important;
   }
 
+  /* A stamped mark's symbol is paper on the pen (DayMark card). The canvas is transparent on paper,
+     so the symbol takes the light canvas, as the other print colours take the light theme's. */
+  [data-slot='day-mark-symbol'][data-stamped='true'] {
+    color: #faf8f3;
+  }
+
   /* No shadows, and no colour transition caught halfway when the print colours switch in. */
   * {
     box-shadow: none !important;

@@ -10,8 +10,11 @@ import {
   todaySummary,
   newId,
   cycleDay,
+  cycleFor,
   EXERCISE_CYCLE,
+  EXERCISE_KIND_CYCLE,
   FOOD_CYCLE,
+  FOOD_KIND_CYCLE,
   markOf,
   nextMark,
   totalFor,
@@ -97,6 +100,34 @@ describe('tracker helpers', () => {
     expect(nextMark('great-hatch', FOOD_CYCLE)).toBeNull()
     // A food marked another way (an import, say) clears on the next press.
     expect(nextMark('partial', FOOD_CYCLE)).toBeNull()
+  })
+
+  it('steps a tick or face set through the plain kinds once (K21)', () => {
+    expect(EXERCISE_KIND_CYCLE).toEqual(['great', 'partial', 'missed'])
+    expect(FOOD_KIND_CYCLE).toEqual(['great'])
+    expect(nextMark(null, EXERCISE_KIND_CYCLE)).toBe('great')
+    expect(nextMark('great', EXERCISE_KIND_CYCLE)).toBe('partial')
+    expect(nextMark('partial', EXERCISE_KIND_CYCLE)).toBe('missed')
+    expect(nextMark('missed', EXERCISE_KIND_CYCLE)).toBeNull()
+    expect(nextMark(null, FOOD_KIND_CYCLE)).toBe('great')
+    expect(nextMark('great', FOOD_KIND_CYCLE)).toBeNull()
+  })
+
+  it('steps a squiggle drawing on from its kind in a symbol set', () => {
+    expect(nextMark('great-solid', EXERCISE_KIND_CYCLE)).toBe('partial')
+    expect(nextMark('partial-hatch', EXERCISE_KIND_CYCLE)).toBe('missed')
+    expect(nextMark('missed-solid', EXERCISE_KIND_CYCLE)).toBeNull()
+    expect(nextMark('great-hatch', FOOD_KIND_CYCLE)).toBeNull()
+    expect(nextMark('partial', FOOD_KIND_CYCLE)).toBeNull()
+  })
+
+  it('picks the cycle for the item and the mark set', () => {
+    expect(cycleFor('exercise', 'squiggles')).toBe(EXERCISE_CYCLE)
+    expect(cycleFor('food', 'squiggles')).toBe(FOOD_CYCLE)
+    for (const set of ['ticks', 'stamped-ticks', 'faces', 'stamped-faces'] as const) {
+      expect(cycleFor('exercise', set)).toBe(EXERCISE_KIND_CYCLE)
+      expect(cycleFor('food', set)).toBe(FOOD_KIND_CYCLE)
+    }
   })
 
   it('reads a mark’s kind and drawing: a plain kind is the zigzag', () => {

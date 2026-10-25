@@ -54,6 +54,18 @@ export function markDrawing(mark: Mark): Drawing {
   return (mark.split('-')[1] ?? 'zigzag') as Drawing
 }
 
+/**
+ * How the marks are drawn (DayMark card, K20): the squiggles (each mark's own drawing), or one
+ * symbol per kind, stroked or stamped: a tick, a circle and a cross, or a happy, so-so and sad
+ * face. The device's choice, like the theme; it never changes a stored mark (K21).
+ */
+export const MARK_SETS = ['squiggles', 'ticks', 'stamped-ticks', 'faces', 'stamped-faces'] as const
+export type MarkSet = (typeof MARK_SETS)[number]
+
+export function isMarkSet(value: unknown): value is MarkSet {
+  return MARK_SETS.includes(value as MarkSet)
+}
+
 /** One item's week: a mark or `null` for each day, Monday first. */
 export type Days = (Mark | null)[]
 
@@ -70,6 +82,8 @@ export type Settings = {
   theme: Theme
   /** Whether the sections show their weekly totals ("6 of 15 this week"); the device's choice. */
   showTotals: boolean
+  /** How marked days are drawn; the device's choice. */
+  markSet: MarkSet
 }
 
 /** Exercise plans per week plus the log: `{ plans, log }`. */
@@ -100,6 +114,7 @@ export const DEFAULT_SETTINGS: Settings = {
   dailyPick: 3,
   theme: 'system',
   showTotals: true,
+  markSet: 'squiggles',
 }
 
 export function defaultExercises(): Exercise[] {
@@ -261,7 +276,7 @@ export function parseDietData(
   return parseTracked(raw, legacyRaw, currentWeek, 'foods', normaliseFood, defaultFoods)
 }
 
-/** The settings that belong to the person rather than the device: not the theme or totals. */
+/** The settings that belong to the person rather than the device: not the theme, totals or marks. */
 export type PortableSettings = Pick<Settings, 'accent' | 'dailyPick'>
 
 /** Any `#rrggbb` accent and a daily pick clamped to 1–8, each falling back to its default. */
@@ -284,7 +299,8 @@ export function parseSettings(raw: string | null): Settings {
   const theme = isTheme(parsed.theme) ? parsed.theme : DEFAULT_SETTINGS.theme
   const showTotals =
     typeof parsed.showTotals === 'boolean' ? parsed.showTotals : DEFAULT_SETTINGS.showTotals
-  return { ...normalisePortableSettings(parsed), theme, showTotals }
+  const markSet = isMarkSet(parsed.markSet) ? parsed.markSet : DEFAULT_SETTINGS.markSet
+  return { ...normalisePortableSettings(parsed), theme, showTotals, markSet }
 }
 
 /** `localStorage` can throw (private mode, blocked site data); the app must still run. */

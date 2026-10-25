@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { BOX_PATH, DayMark, MARK_DRAWINGS, MARK_PENS, dayMarkLabel } from '@/components/ui/day-mark'
-import { MARKS, markDrawing, markKind } from '@/lib/storage'
+import {
+  BOX_PATH,
+  DayMark,
+  MARK_DRAWINGS,
+  MARK_PENS,
+  MARK_SYMBOLS,
+  dayMarkLabel,
+} from '@/components/ui/day-mark'
+import { MARKS, MARK_SETS, markDrawing, markKind } from '@/lib/storage'
 
 const PROPS = { name: 'Squats', date: 'Thursday 22 October', mark: null }
 
@@ -96,6 +103,58 @@ describe('DayMark', () => {
     expect(wrapper.get('[data-slot="day-mark-outline"]').classes()).toContain(
       'motion-safe:duration-120',
     )
+  })
+
+  it('strokes a tick set’s symbol in its pen at a marker’s width, under the box', () => {
+    const wrapper = mount(DayMark, { props: { ...PROPS, mark: 'partial', set: 'ticks' } })
+    const symbol = wrapper.get('[data-slot="day-mark-symbol"]')
+    expect(wrapper.find('[data-slot="day-mark-stroke"]').exists()).toBe(false)
+    expect(symbol.classes()).toContain('text-pen-partial')
+    expect(symbol.attributes('data-stamped')).toBe('false')
+    expect(symbol.get('path').attributes('d')).toBe(MARK_SYMBOLS.ticks.partial.path)
+    expect(symbol.get('path').attributes('stroke-width')).toBe('4.5')
+    expect(symbol.findAll('circle')).toHaveLength(0)
+    // The box is drawn last, over the symbol.
+    const paths = wrapper.findAll('svg > *')
+    expect(paths.at(-1)!.attributes('data-slot')).toBe('day-mark-outline')
+  })
+
+  it('draws a face with two eyes, and its mouth by kind', () => {
+    for (const mark of ['great', 'partial', 'missed'] as const) {
+      const wrapper = mount(DayMark, { props: { ...PROPS, mark, set: 'faces' } })
+      const symbol = wrapper.get('[data-slot="day-mark-symbol"]')
+      expect(symbol.classes()).toContain(MARK_PENS[mark])
+      expect(symbol.get('path').attributes('d')).toBe(MARK_SYMBOLS.faces[mark].path)
+      expect(symbol.findAll('circle')).toHaveLength(2)
+    }
+  })
+
+  it('stamps: the box filled solid in the pen, the symbol in paper on it', () => {
+    const wrapper = mount(DayMark, { props: { ...PROPS, mark: 'missed', set: 'stamped-faces' } })
+    const fill = wrapper.get('[data-slot="day-mark-stroke"]')
+    expect(fill.attributes('d')).toBe(MARK_DRAWINGS.solid)
+    expect(fill.classes()).toContain('text-pen-missed')
+    const symbol = wrapper.get('[data-slot="day-mark-symbol"]')
+    expect(symbol.classes()).toContain('text-canvas')
+    expect(symbol.attributes('data-stamped')).toBe('true')
+    expect(symbol.get('path').attributes('stroke-width')).toBe('3.25')
+  })
+
+  it('draws a squiggle mark as its kind’s symbol in a symbol set, keeping the name', () => {
+    const wrapper = mount(DayMark, { props: { ...PROPS, mark: 'partial-hatch', set: 'ticks' } })
+    expect(wrapper.get('[data-slot="day-mark-symbol"] path').attributes('d')).toBe(
+      MARK_SYMBOLS.ticks.partial.path,
+    )
+    expect(wrapper.get('button').attributes('aria-label')).toBe(
+      'Squats, Thursday 22 October, partly done',
+    )
+  })
+
+  it('draws an empty day as the box alone in every set', () => {
+    for (const set of MARK_SETS) {
+      const wrapper = mount(DayMark, { props: { ...PROPS, set } })
+      expect(wrapper.findAll('svg > *')).toHaveLength(1)
+    }
   })
 
   it('emits toggle on click', async () => {

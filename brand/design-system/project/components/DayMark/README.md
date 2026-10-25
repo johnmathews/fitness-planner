@@ -1,4 +1,4 @@
-One day of one exercise or food: a box drawn as if on a whiteboard, empty or filled with a marker in green (great), yellow (partial) or red (missed), and the button that steps between them.
+One day of one exercise or food: a box drawn as if on a whiteboard, empty or marked in green (great), yellow (partial) or red (missed) in the device's mark set, and the button that steps between them.
 
 ## Use
 
@@ -20,15 +20,23 @@ One day of one exercise or food: a box drawn as if on a whiteboard, empty or fil
   The pen says which kind a day is; the drawing carries no meaning. The person chooses it by pressing (below), and it is saved with the day, so a day keeps its drawing everywhere: in the week, in the Today list and in an export. A mark is written `great`, `partial` or `missed` for the zigzag, and with the drawing after it for the others: `great-solid`, `missed-hatch`.
 
   The box is drawn over the fill, as a pen line shows through marker. The ink runs past the box's edges, as if scribbled quickly by hand, so the SVG is `overflow: visible`. The paths are `BOX_PATH` and `MARK_DRAWINGS` in the app's `day-mark/index.ts`; the previews draw the same ones (`data-drawing` picks one, the open zigzag by default).
+- **Mark sets** (K20): Settings' **Marks** chooses how a marked day is drawn on this device. **Squiggles**, the default, are the three drawings above. The other four draw one symbol per kind, so each kind has its own shape:
+
+  | Set | Great | Partial | Missed |
+  | --- | --- | --- | --- |
+  | Ticks | a tick | a circle | a cross |
+  | Faces | a happy face | a so-so face | a sad face |
+
+  **Ticks** and **Faces** stroke the symbol in the pen at a marker's width (4.5 units, round ends), with the box drawn over it; the tick's long stroke runs past the box's corner. **Stamped ticks** and **Stamped faces** fill the box with the solid drawing in the pen and draw the symbol in paper (`canvas`, 3.25 units) on it. The paths are `MARK_SYMBOLS` and `markLook` in `day-mark/index.ts`. A set changes only the look: a stored `great-solid` is a tick in Ticks and the solid squiggle again in Squiggles (K21).
 - **Empty:** the box alone. A day not marked is an empty box, never a dash or a grey mark.
 - Each pen means its mark and nothing else: `pen-partial` is never a warning (`caution-ink` is over the pick), and `pen-missed` is never an error (`error-ink`); a missed day is a record, not a fault.
 - **Every kind counts.** Great, partial and missed all count towards the week's totals, the Picked row and the Today summary: the person showed up.
-- **Pressing steps the mark, drawing first** (K17). An exercise goes empty → great, partial, missed in the zigzag → the same three in the solid → the same three in the hatch → empty: nine marks, then empty. A food has one kind: empty → great in the zigzag, the solid, the hatch → empty.
+- **Pressing steps the mark, drawing first** (K17). An exercise goes empty → great, partial, missed in the zigzag → the same three in the solid → the same three in the hatch → empty: nine marks, then empty. A food has one kind: empty → great in the zigzag, the solid, the hatch → empty. In a tick or face set there is one drawing per kind (K21): an exercise goes empty → great → partial → missed → empty, and a food empty → great → empty; a squiggle drawing already there steps on from its kind.
 - The mark is a 64 × 64px button centred in a 76px square cell (72px in TodayList). The rest of the cell is quiet space, so neither the ink past the box nor the focus ring touches a neighbour or the edge of a scrolling grid.
 - **Today:** the cell sits on the `highlight` band that runs down today's column; the mark itself doesn't change. The band is the only use of `highlight`.
 - **Note:** a NoteMark (a 10px folded corner in `ink-secondary`) in the cell's top-right corner, flush to the corner. It sits outside the box, never on it.
 - Use one size: the 60px drawing in its 64px button. The same DayMark sits in WeekGrid, in the phone's TodayList and in the Food grid.
-- **Print:** the light theme's colours on white paper, from either theme: the box and the marks keep their light colours, and the band disappears (K16). See WeekGrid.
+- **Print:** the light theme's colours on white paper, from either theme: the box and the marks keep their light colours, and the band disappears (K16). A stamped symbol takes the light `canvas`, since the canvas itself goes transparent. See WeekGrid.
 
 ## States
 
@@ -39,6 +47,7 @@ One day of one exercise or food: a box drawn as if on a whiteboard, empty or fil
 | Great | the box filled in `pen` |
 | Partial | the box filled in `pen-partial` |
 | Missed | the box filled in `pen-missed` |
+| In a tick or face set | the kind's symbol in its pen, or stamped: the box solid in its pen, the symbol in paper |
 | Today | any of the above on `highlight` |
 | Has a note | any of the above plus the folded corner |
 | Keyboard focus | solid 2px `focus` outline at 2px offset around the 64px button, never clipped |
@@ -62,8 +71,8 @@ A marked box doesn't change on hover. A press draws the next mark at once; the b
 - Today's mark says so twice: `aria-current="date"` on the button, and "today" in its name. The name carries it for every screen reader; `aria-current` lets assistive tech and the grid's keyboard model (WeekGrid) find today's mark without parsing words. Neither depends on the band, so today never rests on colour (F16).
 - The NoteMark is `aria-hidden`; "has a note" in the name carries it.
 - Enter and Space step the mark. Inside a WeekGrid the mark is one cell of a roving-tabindex grid (see WeekGrid); on its own it is an ordinary tab stop.
-- Contrast, measured by the gate in both themes: `pen` reaches 4.5:1 on `canvas` and `panel` (it is also the text of a met total) and 3:1 on `tile` and `highlight`; `pen-missed` reaches 3:1 on `canvas`, `panel`, `tile` and `highlight`; the box is `control-border`, 3:1 on `canvas`, `panel`, `tile` and `highlight`. `pen-partial` is the exception, by the owner's choice (K18): a sunny yellow is 1.5–1.9:1 on the light grounds, and the gate holds it to 1.5:1 so it can't fade further; in dark it is above 7:1. The box drawn over it keeps a yellow mark findable. The kinds are told apart by their pens, the owner's call (K15): a fill of any kind differs from the empty box by shape, and the accessible name says "partly done" or "couldn't do it", but someone who can't tell green from red sees only "marked".
+- Contrast, measured by the gate in both themes: `pen` reaches 4.5:1 on `canvas` and `panel` (it is also the text of a met total) and 3:1 on `tile` and `highlight`; `pen-missed` reaches 3:1 on `canvas`, `panel`, `tile` and `highlight`; the box is `control-border`, 3:1 on `canvas`, `panel`, `tile` and `highlight`. `pen-partial` is the exception, by the owner's choice (K18): a sunny yellow is 1.5–1.9:1 on the light grounds, and the gate holds it to 1.5:1 so it can't fade further; in dark it is above 7:1. The box drawn over it keeps a yellow mark findable. The kinds are told apart by their pens, the owner's call (K15): a fill of any kind differs from the empty box by shape, and the accessible name says "partly done" or "couldn't do it", but someone who can't tell green from red sees only "marked" in the squiggles. The tick and face sets give each kind its own shape. A stamped set's paper symbol on `pen-partial` is 1.8:1 in light, by the owner's choice (K23), held to 1.5:1 by the gate; on `pen` and `pen-missed` it reaches 3:1 in both themes.
 
 ## You provide
 
-The row's name, the full date, whether it's today, the day's mark (`null`, or a kind with its drawing: `'great'`, `'partial-solid'`, `'missed-hatch'` and so on; `Mark` in `lib/storage.ts`), whether it has a note, and the press handler, which sets the next mark in the row's cycle (`nextMark` with `EXERCISE_CYCLE` or `FOOD_CYCLE` in `lib/tracker.ts`). The pens are fixed tokens; there is nothing to set.
+The row's name, the full date, whether it's today, the day's mark (`null`, or a kind with its drawing: `'great'`, `'partial-solid'`, `'missed-hatch'` and so on; `Mark` in `lib/storage.ts`), whether it has a note, the device's mark set (`set`, `MarkSet` in `lib/storage.ts`; the squiggles when not given), and the press handler, which sets the next mark in the row's cycle (`nextMark` with `cycleFor(item, set)` in `lib/tracker.ts`). The pens are fixed tokens. `DayMarkDrawing` draws the mark alone, without the button, for a picture of a mark (the Marks setting).

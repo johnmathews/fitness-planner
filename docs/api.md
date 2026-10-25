@@ -25,6 +25,7 @@ scoped by `user_id`, and no endpoint reads another user's data.
 | `app.py`      | the HTTP layer: routes, the write checks, error mapping                                          |
 | `backup.py`   | the daily `VACUUM INTO` copy                                                                     |
 | `cli.py`      | `fp-admin`                                                                                       |
+| `seed.py`     | `fp-admin seed-demo`: a demo account and three weeks of marks, on a local stack only             |
 
 ## 2. Data model
 
@@ -231,6 +232,15 @@ docker compose exec fitness-api fp-admin disable alice@example.com  # blocks log
 docker compose exec fitness-api fp-admin enable alice@example.com
 docker compose exec fitness-api fp-admin revoke-sessions alice@example.com
 ```
+
+`fp-admin seed-demo [email] [--password …]` is for a local stack only. It refuses unless
+`PUBLIC_ORIGIN` is `http://localhost` or `http://127.0.0.1` (any port) and `COOKIE_SECURE=false`.
+It creates the account when it doesn't exist (`demo@example.com` with the password
+`demo-password` by default), confirms its email, and merges in three weeks of plans and marks
+ending today through the same merge as Settings → Import. That merge adds a week's plan only where
+the account has none and fills only empty days, so a second run adds nothing, and an existing
+account keeps its password and every mark it has. The demo uses the default plan's ids, and shows
+every kind in every drawing, met and unmet goals, and a day over the pick.
 
 ## 6. Configuration
 

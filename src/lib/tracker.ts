@@ -1,5 +1,13 @@
 import { DAY_NAMES } from '@/lib/dates'
-import { MARKS, markKind, type Days, type Log, type Mark } from '@/lib/storage'
+import {
+  MARKS,
+  MARK_KINDS,
+  markKind,
+  type Days,
+  type Log,
+  type Mark,
+  type MarkSet,
+} from '@/lib/storage'
 import { numberWord } from '@/lib/words'
 
 /** Anything tracked as a tick per day against a weekly goal: exercises and foods. */
@@ -83,10 +91,28 @@ export function goalsMet(items: Tracked[], week: WeekLog): number {
 export const EXERCISE_CYCLE: readonly Mark[] = MARKS
 export const FOOD_CYCLE: readonly Mark[] = MARKS.filter((m) => markKind(m) === 'great')
 
-/** The mark after `mark` in `cycle`, and empty after the last (or after one not in it). */
+/**
+ * The cycles for a tick or face set (K21): one symbol per kind, so a press steps through the plain
+ * kinds once, great, partial and missed for an exercise and great for a food.
+ */
+export const EXERCISE_KIND_CYCLE: readonly Mark[] = MARK_KINDS
+export const FOOD_KIND_CYCLE: readonly Mark[] = ['great']
+
+/** The cycle a press steps through for an exercise or a food, in the device's mark set. */
+export function cycleFor(item: 'exercise' | 'food', set: MarkSet): readonly Mark[] {
+  if (set === 'squiggles') return item === 'exercise' ? EXERCISE_CYCLE : FOOD_CYCLE
+  return item === 'exercise' ? EXERCISE_KIND_CYCLE : FOOD_KIND_CYCLE
+}
+
+/**
+ * The mark after `mark` in `cycle`, and empty after the last. A mark the cycle doesn't hold (a
+ * squiggle drawing, in a symbol set) steps on from its kind, so `great-solid` goes to `partial`;
+ * one whose kind isn't there either goes to empty.
+ */
 export function nextMark(mark: Mark | null, cycle: readonly Mark[]): Mark | null {
   if (mark === null) return cycle[0]!
-  const i = cycle.indexOf(mark)
+  const at = cycle.indexOf(mark)
+  const i = at >= 0 ? at : cycle.indexOf(markKind(mark))
   return i >= 0 && i < cycle.length - 1 ? cycle[i + 1]! : null
 }
 

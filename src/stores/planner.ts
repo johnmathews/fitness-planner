@@ -22,6 +22,7 @@ import {
   type Exercise,
   type Log,
   type Mark,
+  type MarkSet,
   type PlannerData,
   type PortableSettings,
 } from '@/lib/storage'
@@ -106,8 +107,8 @@ export const usePlannerStore = defineStore('planner', () => {
   const currentWeekKey = computed(() => dateKey(mondayOf(now.value, 0)))
 
   // Plans, the log, accent and daily pick are the signed-in user's: the sync store fills them
-  // through `adopt` and saves them. Only the theme and whether the weekly totals show belong to
-  // the device, and are stored here. The accent no longer draws anything, since the marks' pens
+  // through `adopt` and saves them. Only the theme, whether the weekly totals show and the mark
+  // set belong to the device, and are stored here. The accent no longer draws anything, since the marks' pens
   // are fixed (DayMark card); it is kept as it was saved, so the server and exports still agree.
   // Nothing in the app changes it now.
   const plans = ref<Plans<Exercise>>({})
@@ -117,6 +118,7 @@ export const usePlannerStore = defineStore('planner', () => {
   const dailyPick = ref(DEFAULT_SETTINGS.dailyPick)
   const theme = ref<Theme>(parseSettings(readKey(SETTINGS_KEY)).theme)
   const showTotals = ref(parseSettings(readKey(SETTINGS_KEY)).showTotals)
+  const markSet = ref<MarkSet>(parseSettings(readKey(SETTINGS_KEY)).markSet)
   /** Whether the user has settings of their own (from the server, a change, or an import). */
   const settingsSaved = ref(false)
   /** Config mode shows the plan-editing controls; normal mode only ticks cells. Not persisted. */
@@ -173,10 +175,13 @@ export const usePlannerStore = defineStore('planner', () => {
 
   // Any change to a week, marks included, gives it its own plan, so later edits to the week it was
   // carried from no longer move it.
-  /** Steps the day to its next mark: great, partial and missed in each drawing, then empty. */
+  /**
+   * Steps the day to its next mark: great, partial and missed in each drawing, then empty; in a
+   * tick or face set, the three kinds once (K21).
+   */
   function toggle(id: string, day: number): void {
     own()
-    tracker.cycleDay(log.value, weekKey.value, id, day, tracker.EXERCISE_CYCLE)
+    tracker.cycleDay(log.value, weekKey.value, id, day, tracker.cycleFor('exercise', markSet.value))
   }
 
   function changeTarget(id: string, delta: number): void {
@@ -281,9 +286,14 @@ export const usePlannerStore = defineStore('planner', () => {
     const stored = parseJson(readKey(SETTINGS_KEY))
     writeKey(SETTINGS_KEY, { ...(isRecord(stored) ? stored : {}), showTotals: next })
   })
+  watch(markSet, (next) => {
+    const stored = parseJson(readKey(SETTINGS_KEY))
+    writeKey(SETTINGS_KEY, { ...(isRecord(stored) ? stored : {}), markSet: next })
+  })
 
   return {
     showTotals,
+    markSet,
     plans,
     exercises,
     carriedFrom,

@@ -55,10 +55,10 @@ export const useDietStore = defineStore('diet', () => {
   const grandTotal = computed(() => tracker.grandTotal(foods.value, week.value))
   const goalsMet = computed(() => tracker.goalsMet(foods.value, week.value))
 
-  /** Marks the day eaten, or clears it: foods have one kind of mark. */
+  /** Marks the day eaten, in each drawing in the squiggles, or clears it: foods have one kind of mark. */
   function toggle(id: string, day: number): void {
     own()
-    tracker.cycleDay(log.value, planner.weekKey, id, day, tracker.FOOD_CYCLE)
+    tracker.cycleDay(log.value, planner.weekKey, id, day, tracker.cycleFor('food', planner.markSet))
   }
 
   function changeTarget(id: string, delta: number): void {

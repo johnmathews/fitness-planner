@@ -70,6 +70,19 @@ describe('planner store', () => {
     expect(s.log['2026-10-19']!.pu).toEqual([null, null, null, null, null, null, null])
   })
 
+  it('steps a cell through the three kinds once in a tick or face set (K21)', () => {
+    const s = usePlannerStore()
+    s.markSet = 'faces'
+    s.toggle('pu', 0)
+    expect(s.markOf('pu', 0)).toBe('great')
+    s.toggle('pu', 0)
+    expect(s.markOf('pu', 0)).toBe('partial')
+    s.toggle('pu', 0)
+    expect(s.markOf('pu', 0)).toBe('missed')
+    s.toggle('pu', 0)
+    expect(s.markOf('pu', 0)).toBeNull()
+  })
+
   it('counts picks per day and the grand total across exercises', () => {
     const s = usePlannerStore()
     s.toggle('pu', 2)
@@ -228,6 +241,18 @@ describe('planner store', () => {
     s.setTheme('dark')
     await nextTick()
     expect(stored(SETTINGS_KEY)).toEqual({ accent: '#ff9f0a', dailyPick: 5, theme: 'dark' })
+  })
+
+  it('keeps the mark set on the device, beside the theme, and reads it back', async () => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme: 'dark' }))
+    setActivePinia(createPinia())
+    const s = usePlannerStore()
+    expect(s.markSet).toBe('squiggles')
+    s.markSet = 'stamped-ticks'
+    await nextTick()
+    expect(stored(SETTINGS_KEY)).toEqual({ theme: 'dark', markSet: 'stamped-ticks' })
+    setActivePinia(createPinia())
+    expect(usePlannerStore().markSet).toBe('stamped-ticks')
   })
 
   it('writes a settings key holding only the theme when there was none', async () => {

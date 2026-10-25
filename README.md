@@ -12,7 +12,9 @@
 - **Exercises.** Each day, pick a few exercises (default three) and mark their cells. A press steps
   a day through green (done well), yellow (partly done) and red (tried and couldn't), first in a
   zigzag, then a solid fill, then a hatch, and back to empty: the colour says how it went, and the
-  marker drawing is yours to choose. The **Week** column counts every marked day against a
+  marker drawing is yours to choose. **Marks** in Settings swaps the squiggles for ticks (a tick, a
+  circle, a cross) or faces (happy, so-so, sad), drawn in marker or stamped on a coloured box; a
+  press then steps green, yellow, red and back to empty. The **Week** column counts every marked day against a
   weekly goal of 0–7 days, and turns green with a check once a non-zero goal is met. The **Picked** row counts each day's exercises against the
   daily pick and says so in words when a day goes over ("one extra").
 - **Food.** Below the exercises, foods work the same way, with one kind of mark: mark each day you ate one, and its Week
@@ -36,15 +38,16 @@
   this device.
 - **On a phone** the app opens on **Today**: today's exercises and foods, one mark each. A Today |
   Week switch leads to the week's grids, whose names stay put while the days scroll.
-- **Settings** is a page of its own. It sets the theme (System, Light or Dark), the exercises-per-day
-  target (1–8) and whether the weekly totals show, holds export and import, and shows who is signed
+- **Settings** is a page of its own. It sets the theme (System, Light or Dark), how marks are drawn
+  (Squiggles, Ticks, Stamped ticks, Faces or Stamped faces), the exercises-per-day target (1–8) and
+  whether the weekly totals show, holds export and import, and shows who is signed
   in, with **Sign out**.
 - **Accounts and sync.** Anyone can **Create an account** from the sign-in screen with an email and
   a password, or be invited by a link that names their email. Every account signs in with its email. Sign-up
   closes once `MAX_USERS` accounts exist (`docs/api.md` §4), and each account may store 5 MiB
   (§3). Where the API has a Resend key, a new account gets an email to **confirm** its address,
   and **Forgot your password?** emails a reset link (§4.1). Plans, marks and the daily pick are stored on the
-  server and sync across devices; the theme stays with each device. The app opens from a cached
+  server and sync across devices; the theme and the marks stay with each device. The app opens from a cached
   copy and keeps working offline, sending changes once the connection is back.
 - **Export and import.** Settings → **Export** downloads your plans, marks and daily pick as
   a JSON file; **Import…** merges such a file into your account. An import only adds: weeks you
@@ -78,6 +81,17 @@ export PUBLIC_ORIGIN=http://localhost:5173 COOKIE_SECURE=false DATA_DIR=./.data
 uv run fp-admin invite you@example.com          # prints http://localhost:5173/#/invite/…
 uv run uvicorn --factory fitness_planner_api.app:create_app_from_env --port 8000
 ```
+
+For an account that already has data, seed the demo instead (same shell, any time; a second run
+adds nothing):
+
+```bash
+uv run fp-admin seed-demo                       # demo@example.com, password demo-password
+```
+
+It runs only against a local stack, and never overwrites a mark. The database lives in
+`api/.data` (git-ignored), so accounts and data survive restarts, rebuilds and branch switches;
+deleting that folder, or `git clean -x`, starts over.
 
 Vite forwards `/api` to `http://127.0.0.1:8000` (set `API_URL` to change it). Open the invite link
 from the dev server's own address: the API checks the `Origin` of every write, so

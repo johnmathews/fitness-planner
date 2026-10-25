@@ -68,6 +68,7 @@ watch(
     </SectionHeader>
     <TrackerGrid
       label="Exercise"
+      :mark-set="store.markSet"
       :table-label="`Exercises, week of ${dayMonth(store.monday)}`"
       :items="store.exercises"
       :days="store.days"
