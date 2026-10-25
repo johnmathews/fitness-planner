@@ -13,6 +13,7 @@ import {
   expectNoAxeViolations,
   openApp,
   openSignIn,
+  openSignUp,
   openStyleGuide,
   settle,
 } from './support'
@@ -85,6 +86,22 @@ test.describe('the app passes axe', () => {
 
     test(`sign-in, ${theme}`, async ({ page }) => {
       await openSignIn(page, theme)
+      await expectNoAxeViolations(page)
+    })
+
+    test(`create an account, ${theme}`, async ({ page }) => {
+      await openSignUp(page, theme)
+      await expectNoAxeViolations(page)
+    })
+
+    test(`create an account with errors showing, ${theme}`, async ({ page }) => {
+      await openSignUp(page, theme)
+      await page.getByLabel('Email').fill('new@example.com')
+      await page.getByLabel('Password', { exact: true }).fill('a long new password')
+      await page.getByLabel('Repeat password').fill('something else')
+      await page.getByRole('button', { name: 'Create account' }).click()
+      await expect(page.locator('#signup-confirm-error')).toBeVisible()
+      await settle(page)
       await expectNoAxeViolations(page)
     })
   }

@@ -92,11 +92,20 @@ export async function openApp(
 
 /** Opens the sign-in screen: nobody is signed in and the API says so. */
 export async function openSignIn(page: Page, theme: Theme): Promise<void> {
+  await openSignedOut(page, theme, '/')
+}
+
+/** Opens the create-an-account screen (`#/signup`), signed out. */
+export async function openSignUp(page: Page, theme: Theme): Promise<void> {
+  await openSignedOut(page, theme, '/#/signup')
+}
+
+async function openSignedOut(page: Page, theme: Theme, path: string): Promise<void> {
   await page.route('**/api/**', (route) => route.fulfill({ status: 401, json: {} }))
   await page.addInitScript((theme) => {
     localStorage.setItem('fitness-planner-settings-v1', JSON.stringify({ theme }))
   }, theme)
-  await page.goto('/')
+  await page.goto(path)
   await page.waitForSelector('form')
   await settle(page)
 }
