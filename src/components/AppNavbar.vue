@@ -38,11 +38,12 @@ function skipToToday(): void {
 </script>
 
 <!--
-  The Header card (brand/design-system/project/components/Header): the wordmark, then the week
-  navigation, "This week" while another week is on screen, the Edit plan switch, Settings and
-  Print. Every target is 44px on a phone. Below 640px the bar keeps the monogram (under 480px),
-  the arrows, the week and Settings on one row, and "This week" and the switch wrap to a second
-  row at the right; the markup stays in the desktop order, which is the tab order.
+  The Header card (brand/design-system/project/components/Header): the wordmark, the week
+  navigation at the centre, then "This week" while another week is on screen, the Edit plan
+  switch, Settings and Print. Every target is 44px on a phone. Below 640px the bar keeps the
+  monogram (under 480px), the centred arrows and week, and Settings on one row, and "This week"
+  and the switch take a second row at the right; the markup stays in the desktop order, which is
+  the tab order.
 
   "Skip to today" comes first in the tab order (F15): hidden until it has focus, then shown over
   the wordmark with the focus ring; it puts focus on today's cell, past the Header, or on the
@@ -60,12 +61,17 @@ function skipToToday(): void {
         ><span class="block px-3 py-2">Skip to today</span></a
       >
     </div>
+    <!-- Three columns, the outer two equal, so the week sits at the bar's centre (Header card).
+         On a phone the right-hand group dissolves into the grid (max-sm:contents): Settings stays
+         on the first row and the Switch and "This week" take a second, right-aligned. -->
     <div
-      class="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center gap-x-2 py-1 pr-2 pl-4 sm:gap-x-4 sm:px-6 lg:px-8"
+      class="mx-auto grid min-h-14 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-x-2 py-1 pr-2 pl-4 sm:gap-x-4 sm:px-6 lg:px-8"
     >
-      <BrandMark class="max-[479px]:hidden" />
-      <BrandMark variant="monogram" class="min-[480px]:hidden" />
-      <nav class="ml-auto flex items-center" aria-label="Week">
+      <div class="justify-self-start">
+        <BrandMark class="max-[479px]:hidden" />
+        <BrandMark variant="monogram" class="min-[480px]:hidden" />
+      </div>
+      <nav class="flex items-center" aria-label="Week">
         <IconButton label="Previous week" @click="store.prevWeek"><ChevronLeft /></IconButton>
         <span
           class="min-w-29 px-2 text-center text-base leading-6 font-semibold whitespace-nowrap tabular-nums"
@@ -76,22 +82,24 @@ function skipToToday(): void {
         </span>
         <IconButton label="Next week" @click="store.nextWeek"><ChevronRight /></IconButton>
       </nav>
-      <div
-        class="flex items-center gap-2 max-sm:order-last max-sm:basis-full max-sm:justify-end sm:gap-4"
-      >
-        <Button v-if="otherWeek" variant="quiet" size="sm" @click="store.thisWeek">
-          This week
-        </Button>
-        <Switch
-          :model-value="store.configMode"
-          label="Edit plan"
-          short-label="Edit"
-          @update:model-value="store.setConfigMode"
-        />
+      <div class="flex items-center gap-4 justify-self-end max-sm:contents">
+        <div
+          class="flex items-center gap-2 max-sm:col-span-3 max-sm:row-start-2 max-sm:justify-self-end sm:gap-4"
+        >
+          <Button v-if="otherWeek" variant="quiet" size="sm" @click="store.thisWeek">
+            This week
+          </Button>
+          <Switch
+            :model-value="store.configMode"
+            label="Edit plan"
+            short-label="Edit"
+            @update:model-value="store.setConfigMode"
+          />
+        </div>
+        <SettingsPopover class="max-sm:col-start-3 max-sm:row-start-1 max-sm:justify-self-end" />
+        <!-- Printing from a phone is rare, and the bar has no room for it there. -->
+        <Button variant="quiet" size="sm" class="max-sm:hidden" @click="print">Print…</Button>
       </div>
-      <SettingsPopover />
-      <!-- Printing from a phone is rare, and the bar has no room for it there. -->
-      <Button variant="quiet" size="sm" class="max-sm:hidden" @click="print">Print…</Button>
     </div>
   </header>
 </template>
