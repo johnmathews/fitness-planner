@@ -421,7 +421,7 @@ the names.
 
 The `@media print` block in `main.css` gives a black-on-white landscape sheet from either theme. It
 re-points the roles at black, white and greys, the only literal colours the system allows: done
-dots print black, rings grey, chips outlined, and `--highlight` goes transparent. `--pen` is set
+squiggles print black, boxes grey, chips outlined, and `--highlight` goes transparent. `--pen` is set
 there too, so the user's ink can't leak through. Shadows and transitions are off.
 
 - Anything marked `data-noprint` is hidden: the navbar, the phone's view switch, the sync status,

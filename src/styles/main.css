@@ -102,7 +102,7 @@
 
 /*
  * Printing gives a plain black-on-white sheet in either theme (WeekGrid card, Print): the roles
- * switch to the card's print values, so done marks print solid black, empty rings grey, chips
+ * switch to the card's print values, so done squiggles print solid black, empty boxes grey, chips
  * outlined, and today's highlight disappears; "one extra" keeps its underline and words. These
  * are the only literal colours the system allows. The user's ink cannot leak through: --pen is
  * set here, and App.vue only sets --user-pen-*.

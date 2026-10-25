@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { DayMark, dayMarkLabel } from '@/components/ui/day-mark'
+import { BOX_PATH, DayMark, SQUIGGLE_PATH, dayMarkLabel } from '@/components/ui/day-mark'
 
 const PROPS = { name: 'Squats', date: 'Thursday 22 October', done: false }
 
@@ -25,25 +25,32 @@ describe('DayMark', () => {
     expect(wrapper.classes()).not.toContain('bg-highlight')
   })
 
-  it('draws a 24px ring when not done and a pen dot when done', async () => {
+  it('draws an empty hand-drawn box when not done, and a pen squiggle in it when done', async () => {
     const wrapper = mount(DayMark, { props: PROPS })
-    const dot = () => wrapper.get('[data-slot="day-mark-dot"]')
-    expect(dot().attributes('aria-hidden')).toBe('true')
-    expect(dot().attributes('data-on')).toBe('false')
-    expect(dot().classes()).toEqual(
-      expect.arrayContaining(['size-6', 'rounded-full', 'border-[1.5px]', 'border-control-border']),
+    const box = () => wrapper.get('[data-slot="day-mark-box"]')
+    const outline = () => wrapper.get('[data-slot="day-mark-outline"]')
+    const squiggle = () => wrapper.find('[data-slot="day-mark-squiggle"]')
+    expect(box().attributes('aria-hidden')).toBe('true')
+    expect(box().attributes('data-on')).toBe('false')
+    expect(box().classes()).toContain('size-10')
+    expect(outline().attributes('d')).toBe(BOX_PATH)
+    expect(outline().classes()).toEqual(
+      expect.arrayContaining(['stroke-control-border', 'group-hover:stroke-ink']),
     )
-    expect(dot().classes()).not.toContain('bg-pen')
+    expect(squiggle().exists()).toBe(false)
     await wrapper.setProps({ done: true })
-    expect(dot().attributes('data-on')).toBe('true')
-    expect(dot().classes()).toEqual(expect.arrayContaining(['bg-pen', 'border-pen']))
+    expect(box().attributes('data-on')).toBe('true')
+    expect(squiggle().attributes('d')).toBe(SQUIGGLE_PATH)
+    expect(squiggle().classes()).toContain('stroke-pen')
+    // Done, the box no longer darkens on hover: the squiggle says it all.
+    expect(outline().classes()).not.toContain('group-hover:stroke-ink')
   })
 
   it('centres a 44px button in a 56 × 60px cell, and changes colour in 120ms at most', () => {
     const wrapper = mount(DayMark, { props: PROPS })
     expect(wrapper.classes()).toEqual(expect.arrayContaining(['h-15', 'w-14', 'relative']))
     expect(wrapper.get('button').classes()).toContain('size-11')
-    expect(wrapper.get('[data-slot="day-mark-dot"]').classes()).toContain(
+    expect(wrapper.get('[data-slot="day-mark-outline"]').classes()).toContain(
       'motion-safe:duration-120',
     )
   })

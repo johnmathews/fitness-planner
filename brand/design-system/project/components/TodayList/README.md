@@ -16,7 +16,7 @@ The phone's first view: today's exercises and foods as one list, each with a sin
   No praise, no exclamation marks, no guilt. With no exercises in the plan there is nothing to count, and the summary line is left out.
 - **Groups:** "Exercises" then "Food", each a `label` heading in `ink-secondary` over a list with `line` hairlines between rows.
 - **Rows:** the name in `body` at 600; beneath it the Chip(s) and the week so far in `caption` `ink-secondary` ("3 of 4 this week"); the DayMark on the right. Foods have no chips.
-- **DayMark:** the grid's own DayMark, unchanged: the same 24px dot or ring in the same 44 × 44px button, centred in a 48 × 48px cell at the row's right. The row itself is not a button, so a scroll never marks a day by accident.
+- **DayMark:** the grid's own DayMark, unchanged: the same box and squiggle in the same 44 × 44px button, centred in a 48 × 48px cell at the row's right. The row itself is not a button, so a scroll never marks a day by accident.
 - **Notes:** a day's note shows under its row in the `note` style (serif italic, `ink`), the person's words without quotation marks. The list never invites one: no "Add a note" in a row.
 - **Empty:** a week with no exercises and no foods shows the band and, beneath it in `body` `ink-secondary`: "Nothing is planned this week. Switch to Week and turn on Edit plan to add exercises and foods." A group with no items is left out.
 - **Print:** the view switch never prints. The printed sheet is the WeekGrid's job (Print… is in the Header from 640px up), so TodayList has no print styles of its own.

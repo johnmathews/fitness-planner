@@ -136,15 +136,13 @@ describe('the planner grids (W10)', () => {
       ])
     })
 
-    it('draws the mark as a pen dot when done and a ring when not', async () => {
+    it('draws the mark as a pen squiggle in its box when done, an empty box when not', async () => {
       mountApp()
       const mark = marks('Push-ups')[1]!
-      expect(mark.get('[data-slot="day-mark-dot"]').classes()).toContain('border-control-border')
+      expect(mark.find('[data-slot="day-mark-squiggle"]').exists()).toBe(false)
       await mark.trigger('click')
       expect(mark.attributes('aria-pressed')).toBe('true')
-      expect(mark.get('[data-slot="day-mark-dot"]').classes()).toEqual(
-        expect.arrayContaining(['bg-pen', 'border-pen']),
-      )
+      expect(mark.get('[data-slot="day-mark-squiggle"]').classes()).toContain('stroke-pen')
       expect(mark.text()).toBe('')
     })
   })

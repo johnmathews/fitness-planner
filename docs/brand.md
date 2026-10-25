@@ -45,7 +45,7 @@ git-ignored `brand/design-system/preview/`.
 
 Every colour on screen comes from a role. The ten standard roles carry the screens: `canvas` (the
 page), `panel` (dialogs, the popover), `tile` (quiet fills, hover, chips), `line` (hairline rules,
-never a control border), `control-border` (inputs, outlined buttons, the empty-day ring), `ink`
+never a control border), `control-border` (inputs, outlined buttons, the day's box), `ink`
 (text, icons, the primary button's fill), `on-ink` (text on an `ink` fill), `ink-secondary` (dates,
 goals, hints), `error-ink` (form errors) and `focus` (the focus ring). `scrim` dims the page behind a
 dialog.
@@ -65,7 +65,7 @@ over the pick adds words.
 ## 4. Inks
 
 The person chooses the pen from four inks in Settings. Each has a light and a dark value, and every
-one reaches 4.5:1 as text on `canvas` and `panel` and 3:1 as a dot on `highlight` in its theme. None
+one reaches 4.5:1 as text on `canvas` and `panel` and 3:1 as a squiggle on `highlight` in its theme. None
 is red or orange, so `pen` can't be mistaken for `error-ink` or `caution-ink`.
 
 | Ink                | Light     | Dark      |
@@ -110,13 +110,13 @@ Labels are sentence case, never uppercase with letter-spacing.
 
 | Mark          | Look                                                              | Also carried by                            |
 | ------------- | ----------------------------------------------------------------- | ------------------------------------------ |
-| Done          | A 24px `pen` dot in a 44px button                                 | `aria-pressed="true"`                      |
-| Not done      | A 24px ring, 1.5px `control-border`                               | `aria-pressed="false"`                     |
+| Done          | A `pen` marker squiggle in the hand-drawn box, in a 44px button   | `aria-pressed="true"`                      |
+| Not done      | The empty hand-drawn box, about 30px, in `control-border`         | `aria-pressed="false"`                     |
 | Today         | The `highlight` band down the column                              | "today" in the name, `aria-current="date"` |
 | Over the pick | The day's count in `caution-ink`, underlined, "one extra" beneath | The words                                  |
 | Note          | A 10px folded corner in `ink-secondary` (NoteMark)                | "has a note" in the name                   |
 
-Print is black on white in either theme: dots solid black, rings grey, the band gone, "one extra"
+Print is black on white in either theme: squiggles solid black, boxes grey, the band gone, "one extra"
 kept. Icons are Lucide outline at 1.5px stroke, never Unicode glyphs or emoji. Colour transitions
 last 120ms at most and stop under `prefers-reduced-motion`. Nothing celebrates.
 
