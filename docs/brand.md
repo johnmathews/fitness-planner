@@ -54,26 +54,28 @@ Five project roles each mean one thing, and nothing else may use them:
 
 | Role          | Means                                                                      | Never                      |
 | ------------- | -------------------------------------------------------------------------- | -------------------------- |
-| `pen`         | Great: a day's full squiggle, and a total or figure whose goal is met      | Links, buttons, decoration |
-| `pen-partial` | Partly done: a day's half squiggle                                         | Over the pick, warnings    |
-| `pen-missed`  | Tried and couldn't: a day's cross                                          | Errors                     |
+| `pen`         | Great: a day's fill, and a total or figure whose goal is met               | Links, buttons, decoration |
+| `pen-partial` | Partly done: a day's fill                                                  | Over the pick, warnings    |
+| `pen-missed`  | Tried and couldn't: a day's fill                                           | Errors                     |
 | `highlight`   | Today: the band down today's column, and the Today list's heading          | Anything but today         |
 | `caution-ink` | Over the daily pick, always with words and an underline ("4", "one extra") | Errors                     |
 
 The primary action is `ink`, not a brand colour (K8): one colour for "act", the pens for "done".
-No meaning rests on colour alone. Each mark has its own shape, a met total adds a check, today adds
-"today" to the name, and over the pick adds words.
+Outside the day's mark, no meaning rests on colour alone: a met total adds a check, today adds
+"today" to the name, and over the pick adds words. The day's mark is the one exception, by the
+owner's choice (K15): its pen alone tells great, partial and missed apart on screen, and the
+accessible name says "partly done" or "couldn't do it".
 
 ## 4. The three pens
 
-A day's mark comes in three kinds, like the green, amber and red markers by a whiteboard (K9, K10).
-The pens are fixed: there is no Ink setting any more.
+A day's mark comes in three kinds, like the green, amber and red markers by a whiteboard (K9, K10,
+K15). The pens are fixed: there is no Ink setting any more.
 
-| Pen           | Mark                              | Light     | Dark      |
-| ------------- | --------------------------------- | --------- | --------- |
-| `pen`         | Great: a squiggle filling the box | `#2e7a4c` | `#8fcbaa` |
-| `pen-partial` | Partial: a squiggle, lower half   | `#a56f00` | `#e6b450` |
-| `pen-missed`  | Missed: a cross                   | `#c0392b` | `#ee7d72` |
+| Pen           | Mark                    | Light     | Dark      |
+| ------------- | ----------------------- | --------- | --------- |
+| `pen`         | Great: the box filled   | `#2e7a4c` | `#8fcbaa` |
+| `pen-partial` | Partial: the box filled | `#a56f00` | `#e6b450` |
+| `pen-missed`  | Missed: the box filled  | `#c0392b` | `#ee7d72` |
 
 `pen` reaches 4.5:1 as text on `canvas` and `panel` (a met total), and all three reach 3:1 as a
 stroke on `canvas`, `panel`, `tile` and `highlight` in both themes; the gate measures every pair.
@@ -107,20 +109,23 @@ Labels are sentence case, never uppercase with letter-spacing.
 
 | Mark          | Look                                                              | Also carried by                            |
 | ------------- | ----------------------------------------------------------------- | ------------------------------------------ |
-| Great         | A `pen` squiggle filling the hand-drawn box, in a 44px button     | `aria-pressed="true"`                      |
-| Partial       | A `pen-partial` squiggle in the box's lower half                  | `aria-pressed="true"`, "partly done"       |
-| Missed        | A `pen-missed` cross over the box                                 | `aria-pressed="true"`, "couldn't do it"    |
+| Great         | The hand-drawn box filled in `pen`, in a 44px button              | `aria-pressed="true"`                      |
+| Partial       | The box filled in `pen-partial`                                   | `aria-pressed="true"`, "partly done"       |
+| Missed        | The box filled in `pen-missed`                                    | `aria-pressed="true"`, "couldn't do it"    |
 | Empty         | The empty hand-drawn box, about 30px, in `control-border`         | `aria-pressed="false"`                     |
 | Today         | The `highlight` band down the column                              | "today" in the name, `aria-current="date"` |
 | Over the pick | The day's count in `caution-ink`, underlined, "one extra" beneath | The words                                  |
 | Note          | A 10px folded corner in `ink-secondary` (NoteMark)                | "has a note" in the name                   |
 
-Each stroke runs a little past the box, as a quick hand does. A press steps an exercise's day from
+A marked box is filled with one of three marker drawings traced from the owner's whiteboard marks:
+an open zigzag, a solid fill and a dense hatch. The drawing carries no meaning: the app picks it from
+the row and the date, so the grid looks filled by hand and a day keeps its drawing. The box is drawn
+over the fill, and the fill runs a little past the box, as a quick hand does. A press steps an exercise's day from
 empty to great, partial, missed and back to empty; a food is eaten or not, so it steps between empty
 and great. Every mark counts towards the week, the Picked row and the Today summary.
 
-Print is black on white in either theme: every mark solid black (the shapes tell them apart), boxes
-grey, the band gone, "one extra" kept. Icons are Lucide outline at 1.5px stroke, never Unicode glyphs or emoji. Colour transitions
+Print is the light theme on white paper, from either theme (K16): words, boxes and marks keep their
+light colours, the surfaces and the band go transparent, chips are outlined, "one extra" is kept. Icons are Lucide outline at 1.5px stroke, never Unicode glyphs or emoji. Colour transitions
 last 120ms at most and stop under `prefers-reduced-motion`. Nothing celebrates.
 
 ## 7. Voice

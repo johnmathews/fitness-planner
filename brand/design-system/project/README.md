@@ -36,5 +36,5 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 - Fake paper texture, handwriting fonts, leather, binding or any skeuomorphism.
 - Confetti, streak flames, badges, points, motivational slogans, exclamation marks.
 - The `pen` colours on anything but their marks (and `pen` on a met total); the `highlight` on anything but today.
-- A mark told from another by colour alone: each kind keeps its own shape. `pen-missed` is a record, never an error, so it never stands in for `error-ink`.
+- `pen-missed` standing in for `error-ink`: a missed day is a record, never an error.
 - Uppercase letter-spaced labels, monospace numbers, gradients, glows, emoji.

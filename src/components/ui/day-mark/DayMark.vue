@@ -2,7 +2,7 @@
 import { computed, type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
 import type { Mark } from '@/lib/storage'
-import { BOX_PATH, MARK_PATHS, MARK_STROKES, dayMarkLabel } from '.'
+import { BOX_PATH, MARK_DRAWINGS, MARK_PENS, dayMarkLabel, markDrawing } from '.'
 
 const props = withDefaults(
   defineProps<{
@@ -24,14 +24,16 @@ const props = withDefaults(
 defineEmits<{ toggle: [] }>()
 
 const label = computed(() => dayMarkLabel(props))
+const drawing = computed(() => markDrawing(props.name, props.date))
 </script>
 
 <!--
   One day of one row (brand/design-system/project/components/DayMark): a 44px button centred in a
-  56 × 60px cell, drawing a hand-drawn box about 30px across in control-border. A marked day adds a
-  marker stroke that runs a little past the box: a full squiggle (great), a half one (partial) or
-  a cross (missed), each in its own pen. The rest of the cell is quiet space, so the 2px focus
-  ring at 2px offset never touches a neighbour.
+  56 × 60px cell, drawing a hand-drawn box about 30px across in control-border. A marked day fills
+  it in its pen (green great, amber partial, red missed) with one of three marker drawings, picked
+  by the row and the date, running a little past the box; the box is drawn over the fill, as a pen
+  line shows through marker. The rest of the cell is quiet space, so the 2px focus ring at 2px
+  offset never touches a neighbour.
 -->
 <template>
   <div
@@ -59,6 +61,16 @@ const label = computed(() => dayMarkLabel(props))
         class="size-10 overflow-visible"
       >
         <path
+          v-if="mark"
+          :d="MARK_DRAWINGS[drawing].d"
+          data-slot="day-mark-stroke"
+          :data-drawing="drawing"
+          stroke="currentColor"
+          :fill="MARK_DRAWINGS[drawing].filled ? 'currentColor' : 'none'"
+          :stroke-width="MARK_DRAWINGS[drawing].filled ? 1.5 : 3.5"
+          :class="MARK_PENS[mark]"
+        />
+        <path
           :d="BOX_PATH"
           data-slot="day-mark-outline"
           stroke-width="1.75"
@@ -68,13 +80,6 @@ const label = computed(() => dayMarkLabel(props))
               mark === null && 'group-hover:stroke-ink',
             )
           "
-        />
-        <path
-          v-if="mark"
-          :d="MARK_PATHS[mark]"
-          data-slot="day-mark-stroke"
-          stroke-width="3.5"
-          :class="MARK_STROKES[mark]"
         />
       </svg>
     </button>

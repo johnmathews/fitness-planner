@@ -42,13 +42,17 @@
   /* DayMark: 44px button, its hand-drawn box and mark, in a 60px cell. */
   .day { position: relative; width: 56px; height: 60px; margin: 0 auto; display: grid; place-items: center; }
   .mark { width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; }
-  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border; a marked day adds its stroke, a mask filled with its pen: a full squiggle for great, the lower half for partial, a cross for missed. The strokes run a little past the box, so the masks fill the whole 44px button (the 36-unit paths at 40px, with room round them). Same paths as the app's DayMark. */
+  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border, drawn over the fill. A marked day fills the box in its pen (green great, amber partial, red missed) with one of three marker drawings, a mask each: an open zigzag (the default), a solid fill (data-drawing="solid") or a dense hatch (data-drawing="hatch"). The app picks the drawing from the row and the date. The strokes run a little past the box, so the masks fill the whole 44px button (the 36-unit paths at 40px, with room round them). Same paths as the app's DayMark. */
   .mark { position: relative; }
   .mark::before, .mark::after { content: ""; position: absolute; inset: 0; -webkit-mask: var(--m) center / 100% 100% no-repeat; mask: var(--m) center / 100% 100% no-repeat; }
   .mark::before { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--control-border); }
-  .mark[data-mark="great"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.2 7.4C11 5.4 21.5 4.6 33.4 5.4C24.5 9 14 13.2 3.8 18.6C13.5 16.3 24.2 14.8 34 15C24.2 19.4 13.6 24 4.4 29.8C14 27.6 24.6 26.4 33.4 26.9C27.2 29.6 21 32.2 15.2 34.6' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen); }
-  .mark[data-mark="partial"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.6 19.2C12 17.6 22.5 16.8 33.6 17.2C24.6 21 14.2 25.4 4.2 30.6C14 28.6 24.4 27.6 33.2 28.2' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-partial); }
-  .mark[data-mark="missed"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M4.4 4.6C13 12.8 22.4 22.4 33 33.2M32.6 3.8C24.2 12.2 14 22.6 3.6 32.8' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-missed); }
+  .mark[data-mark]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M4 7.8L24 14.6L15.6 3.4L33.8 11.4M2.6 11.8L34 24.4L4 16.8L31.2 27.6L4.4 21.8L24.6 31.6L7 25.6L19.2 33.2' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .mark[data-mark][data-drawing="solid"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.7 5.1L31.5 5L32.5 6.6L33.1 12.1L33.1 21.8L32 31.3L29.8 32.4L14.2 32.3L6.6 33L2.6 30.6L4 28.9L3.5 22.4L3.9 14.7L3.4 6.7Z' fill='black' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .mark[data-mark][data-drawing="hatch"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M12 4.2L33.4 14L8 6.6L33.2 20.4L5.6 9.6L32.2 24.8L4.8 13.6L30.2 28.8L4.4 18L27 31.2L4 22.6L20.4 32L5.2 27.2L12.4 32.2' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .mark::before { z-index: 1; }
+  .mark[data-mark="great"]::after { background: var(--pen); }
+  .mark[data-mark="partial"]::after { background: var(--pen-partial); }
+  .mark[data-mark="missed"]::after { background: var(--pen-missed); }
   .mark:not([data-mark]):hover::before { background: var(--ink); }
   .mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   /* Cells without a mark take focus themselves; their ring sits inside the cell so the scroller never clips it. */
@@ -75,15 +79,14 @@
   td.p .fig.over { color: var(--caution-ink); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
   td.p .extra { display: block; font-size: 14px; line-height: 18px; color: var(--caution-ink); }
 
-  /* Print: black on white in either theme (spec 4.1). The one place this system allows literal
-     colours: the tokens are re-pointed at black, white and greys inside .print only. In the app the
-     same overrides sit under @media print. */
+  /* Print: the light theme's colours on white paper, in either theme (K16). The one place this
+     system allows literal colours: the tokens are re-pointed inside .print only, the surfaces and
+     the band at transparent. In the app the same overrides sit under @media print. */
   .print {
-    --canvas: #ffffff; --panel: #ffffff; --tile: #ffffff; --line: #b3b3b3;
-    --ink: #000000; --ink-secondary: #3d3d3d; --control-border: #767676;
-    --pen: #000000; --pen-partial: #000000; --pen-missed: #000000;
-    --caution-ink: #000000; --highlight: transparent;
-    background: var(--canvas); color: var(--ink); padding: var(--space-4); border-radius: var(--radius-sm);
+    --canvas: transparent; --panel: transparent; --tile: transparent; --highlight: transparent;
+    --line: #e4dfd5; --control-border: #8c8579; --ink: #1f1d1a; --ink-secondary: #5f5a52;
+    --pen: #2e7a4c; --pen-partial: #a56f00; --pen-missed: #c0392b; --caution-ink: #a0461a;
+    background: #ffffff; color: var(--ink); padding: var(--space-4); border-radius: var(--radius-sm);
   }
   .print .chip { border: 1px solid var(--line); }
   .sheet-note { margin: var(--space-2) 0 0; color: var(--ink-secondary); }
@@ -114,46 +117,46 @@
     <tbody>
       <tr role="row" data-goal="4">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Push-ups</span><span class="meta"><span class="chip label">3 × 12</span></span></th>
-        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="partial" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Wednesday 21 October, partly done"></button></div></td>
-        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="0" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Friday 23 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Saturday 24 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Sunday 25 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="partial" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Wednesday 21 October, partly done"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="great" data-drawing="zigzag" class="mark" tabindex="0" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Friday 23 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Saturday 24 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Sunday 25 October"></button></div></td>
         <td role="gridcell" class="total" tabindex="-1"><span class="fig">3</span> <span class="of">of 4</span></td>
       </tr>
       <tr role="row" data-goal="3">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Pull-ups</span><span class="meta"><span class="chip label">3 × 5</span></span></th>
-        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Monday 19 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Tuesday 20 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Wednesday 21 October"></button></div></td>
-        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="missed" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today, couldn't do it"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Friday 23 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Saturday 24 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Sunday 25 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Tuesday 20 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Wednesday 21 October"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="missed" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today, couldn't do it"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Friday 23 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Saturday 24 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Sunday 25 October"></button></div></td>
         <td role="gridcell" class="total" tabindex="-1"><span class="fig">2</span> <span class="of">of 3</span></td>
       </tr>
       <tr role="row" data-goal="3">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Squats</span><span class="meta"><span class="chip label">3 × 15</span><span class="chip label">16 kg</span></span></th>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Monday 19 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Tuesday 20 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Wednesday 21 October"></button></div></td>
-        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="partial" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note, partly done"></button><span class="note-mark" aria-hidden="true"></span></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Friday 23 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Saturday 24 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Sunday 25 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Tuesday 20 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Wednesday 21 October"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="partial" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note, partly done"></button><span class="note-mark" aria-hidden="true"></span></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Friday 23 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Saturday 24 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Sunday 25 October"></button></div></td>
         <td role="gridcell" class="total" tabindex="-1"><span class="fig met">3</span> <span class="of">of 3</span><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></td>
       </tr>
       <tr role="row" data-goal="2">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Kettlebell halos</span><span class="meta"><span class="chip label">8 each side</span></span></th>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Monday 19 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Wednesday 21 October"></button></div></td>
-        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Friday 23 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Saturday 24 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Sunday 25 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Wednesday 21 October"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="great" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Friday 23 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Saturday 24 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Sunday 25 October"></button></div></td>
         <td role="gridcell" class="total" tabindex="-1"><span class="fig met">2</span> <span class="of">of 2</span><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></td>
       </tr>
     </tbody>
@@ -170,7 +173,7 @@
 <div class="gap"></div>
 <p class="variant label">Printed, from either theme</p>
 <div class="print" id="print" inert></div>
-<p class="sheet-note caption">Marks black, told apart by shape; boxes grey, no band. “One extra” keeps its words; the hint line and buttons don't print.</p>
+<p class="sheet-note caption">Words, boxes and marks in the light theme’s colours on white paper; no band, chips outlined. “One extra” keeps its words; the hint line and buttons don't print.</p>
 
 <script>
 (() => {

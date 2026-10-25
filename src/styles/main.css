@@ -96,10 +96,11 @@
 }
 
 /*
- * Printing gives a plain black-on-white sheet in either theme (WeekGrid card, Print): the roles
- * switch to the card's print values, so every mark prints solid black (its shape still tells the
- * three apart), empty boxes grey, chips outlined, and today's highlight disappears; "one extra"
- * keeps its underline and words. These are the only literal colours the system allows.
+ * Printing gives a light-theme sheet on white paper from either theme (WeekGrid card, Print): the
+ * words, boxes and marks keep the light theme's colours, so a printed week looks like the app, and
+ * the surfaces go transparent, so nothing fills the paper: no page ground, no tile behind a chip
+ * (chips print outlined) and no band down today. "One extra" keeps its underline and words. These
+ * are the only literal colours the system allows; a test holds them to tokens.json's light values.
  */
 @media print {
   @page {
@@ -109,19 +110,19 @@
 
   :root,
   .dark {
-    --canvas: #ffffff;
-    --panel: #ffffff;
-    --tile: #ffffff;
-    --line: #b3b3b3;
-    --control-border: #767676;
-    --ink: #000000;
-    --on-ink: #ffffff;
-    --ink-secondary: #3d3d3d;
-    --error-ink: #000000;
-    --caution-ink: #000000;
-    --pen: #000000;
-    --pen-partial: #000000;
-    --pen-missed: #000000;
+    --canvas: transparent;
+    --panel: transparent;
+    --tile: transparent;
+    --line: #e4dfd5;
+    --control-border: #8c8579;
+    --ink: #1f1d1a;
+    --on-ink: #faf8f3;
+    --ink-secondary: #5f5a52;
+    --error-ink: #9f1d1d;
+    --caution-ink: #a0461a;
+    --pen: #2e7a4c;
+    --pen-partial: #a56f00;
+    --pen-missed: #c0392b;
     --highlight: transparent;
     --shadow-overlay: none;
     color-scheme: light;
