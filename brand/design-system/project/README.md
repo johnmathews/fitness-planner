@@ -13,7 +13,7 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 ## The feeling
 
 - **Simple and durable.** A tool for years of ordinary weeks. Nothing in it wears out or goes out of fashion: hairline rules, two typefaces, almost no shadow.
-- **Rooted in now.** Today gets the `highlight` band; this week gets the big date. Nothing archival competes with them. This is what the whiteboard lends.
+- **Rooted in now.** This week fills the screen. Nothing archival competes with it. This is what the whiteboard lends.
 - **Quiet record.** Months and years sit below, small and dense. A week off shows as empty rings, plainly, without comment. This is what Apple Notes and the Moleskine lend: restraint and quality, not their look.
 - **A mark per session.** The marker stroke is the whole reward: green for a day done well, yellow for part of one, red for a day tried and missed, all of them counted. No streaks, badges, confetti or slogans, and no guilt for a red one.
 
@@ -21,7 +21,7 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 
 | Layer | Where | How it behaves |
 | --- | --- | --- |
-| 1. Now | The week header, the Exercises and Food grids, today's band, the phone's Today list | One obvious thing to do. Bold date, generous cells, 44px targets. |
+| 1. Now | The Exercises and Food screens, each filling the screen, and today's band | One obvious thing to do. The week fills the screen, the bar keeps out of sight, 44px targets. |
 | 2. Record | The year strip, notes, search | Quiet and dense: `caption` type, `ink-secondary`, small marks. |
 
 ## How to use this system
@@ -35,6 +35,6 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 
 - Fake paper texture, handwriting fonts, leather, binding or any skeuomorphism.
 - Confetti, streak flames, badges, points, motivational slogans, exclamation marks.
-- The `pen` colours on anything but their marks (and `pen` on a met total); the `highlight` on anything but today.
+- The `pen` colours on anything but their marks (and `pen` on a met total).
 - `pen-missed` standing in for `error-ink`: a missed day is a record, never an error.
 - Uppercase letter-spaced labels, monospace numbers, gradients, glows, emoji.

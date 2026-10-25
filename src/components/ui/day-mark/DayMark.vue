@@ -19,9 +19,14 @@ const props = withDefaults(
     note?: boolean
     /** How the mark is drawn: the device's mark set (K20). The squiggles by default. */
     set?: MarkSet
+    /**
+     * Fills its cell on screen (K24): the cell must be a size container (WeekGrid's day cells
+     * are). The button takes 86% of the cell's shorter side, up to 128px; paper keeps 64px.
+     */
+    fill?: boolean
     class?: HTMLAttributes['class']
   }>(),
-  { today: false, note: false, set: 'squiggles', class: undefined },
+  { today: false, note: false, set: 'squiggles', fill: false, class: undefined },
 )
 
 defineEmits<{ toggle: [] }>()
@@ -37,24 +42,32 @@ const label = computed(() => dayMarkLabel(props))
   set strokes its symbol (tick, circle, cross; happy, so-so, sad), or stamps it, the box filled
   solid with the symbol in paper. The ink runs a little past the box, and the box is drawn over it,
   as a pen line shows through marker. The rest of the cell is quiet space, so the 2px focus ring at 2px
-  offset never touches a neighbour.
+  offset never touches a neighbour. With `fill`, on screen the whole thing scales to its cell
+  (DayMark card, Filling a cell), the drawing at 94% of the button.
 -->
 <template>
   <div
     data-slot="day-mark"
     :data-today="today"
-    :class="cn('relative mx-auto grid size-19 place-items-center', props.class)"
+    :class="
+      cn(
+        'relative mx-auto grid size-19 place-items-center',
+        fill && 'screen:size-full',
+        props.class,
+      )
+    "
   >
     <button
       type="button"
       data-slot="day-mark-button"
       class="group grid size-16 place-items-center rounded-md"
+      :class="fill && 'screen:size-[min(86cqw,86cqh,128px)]'"
       :aria-pressed="mark !== null"
       :aria-label="label"
       :aria-current="today ? 'date' : undefined"
       @click="$emit('toggle')"
     >
-      <DayMarkDrawing :mark="mark" :set="set" />
+      <DayMarkDrawing :mark="mark" :set="set" :class="fill && 'screen:size-[94%]'" />
     </button>
     <!-- NoteMark: a 10px folded corner in ink-secondary, flush in the cell's top-right corner. -->
     <span

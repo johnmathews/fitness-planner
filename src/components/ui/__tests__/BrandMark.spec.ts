@@ -39,10 +39,10 @@ describe('BrandMark', () => {
     )
   })
 
-  it('never takes the pen or the highlight', () => {
+  it('never takes the pen', () => {
     for (const variant of ['wordmark', 'monogram'] as const) {
       for (const size of ['md', 'lg'] as const) {
-        expect(brandMarkVariants({ variant, size })).not.toMatch(/pen|highlight/)
+        expect(brandMarkVariants({ variant, size })).not.toMatch(/pen/)
       }
     }
   })

@@ -16,6 +16,103 @@
    by public/theme-init.js before first paint and by App.vue after. tokens.css matches it. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * The full-screen planner (PlannerScreen and WeekGrid cards, K24–K27). Four variants, all
+ * screen-only, so paper keeps the table at its fixed sizes:
+ *
+ * - `screen:` any screen: the WeekGrid is a CSS grid that fills its cells (a table on paper).
+ * - `full:` the planner's screens: App puts `.planner-screens` on <html> outside Edit plan and
+ *   Settings, and each section fills the screen while the scroll snaps between them.
+ * - `folded:` held upright under 1000px wide, or any screen under 760px wide: the week folds,
+ *   each row's name line above its seven boxes (K26).
+ * - `short:` the planner's screens, landscape and 540px tall or less (a phone on its side): the
+ *   title moves into the grid's corner and the chips drop out.
+ *
+ * Declared in this order, so a later one wins over an earlier one on the same property.
+ */
+@custom-variant screen (@media screen);
+@custom-variant full {
+  @media screen {
+    &:where(.planner-screens, .planner-screens *) {
+      @slot;
+    }
+  }
+}
+@custom-variant folded {
+  @media screen and (orientation: portrait) and (width < 1000px), screen and (width < 760px) {
+    @slot;
+  }
+}
+@custom-variant short {
+  @media screen and (orientation: landscape) and (height <= 540px) {
+    &:where(.planner-screens *) {
+      @slot;
+    }
+  }
+}
+
+/*
+ * The planner's sizes, which follow the screen (WeekGrid card, Filling the screen). `--u` is 1 on
+ * a 1280×800 screen, held between 0.75 and 1.6; folded, `--n` is 1 on a phone and up to 1.4 on an
+ * iPad held upright. Components read the named sizes; a type class beside one keeps its font and
+ * weight, and the size follows the screen. Outside the planner's screens (Edit plan, print) the
+ * rows keep the fixed 76px cell.
+ */
+:root {
+  --u: clamp(0.75px, min(calc(100vw / 1280), calc(100dvh / 800)), 1.6px);
+  --n: clamp(1px, calc(100vw / 600), 1.4px);
+  --screen-pad-x: calc(var(--u) * 48);
+  --screen-pad-top: calc(var(--u) * 28);
+  --screen-pad-bottom: calc(var(--u) * 20);
+  --grid-name-w: calc(var(--u) * 280);
+  --grid-row-min: 76px;
+  --grid-row-max: 76px;
+  --fs-title: max(30px, calc(var(--u) * 40));
+  --fs-week: max(16px, calc(var(--u) * 20));
+  --fs-name: max(18px, calc(var(--u) * 24));
+  --fs-chip: max(16px, calc(var(--u) * 17));
+  --fs-day: max(16px, calc(var(--u) * 20));
+  --fs-total: max(18px, calc(var(--u) * 24));
+  --fs-figure: max(18px, calc(var(--u) * 26));
+  --fs-way-on: max(16px, calc(var(--u) * 18));
+  --fs-stat: max(22px, calc(var(--u) * 28));
+  --fs-stat-words: max(20px, calc(var(--u) * 22));
+  /* A folded row of boxes: a share of the screen's height, so a tall phone spreads the week. */
+  --grid-box-h: clamp(48px, min(19vw, 7.5dvh), 110px);
+}
+
+@media screen {
+  /* Rows share the screen's height, at least 56px each; the grid stops at 1.25 × a day's width a
+     row (TrackerGrid's max-height), so a tall screen centres the week. */
+  :root.planner-screens {
+    --grid-row-min: 56px;
+    --grid-row-max: calc((100vw - 2 * var(--screen-pad-x) - var(--grid-name-w)) / 7 * 1.25);
+  }
+}
+
+/* A phone on its side: rows of 52px, so five still fit with the title in the corner. */
+@media screen and (orientation: landscape) and (height <= 540px) {
+  :root.planner-screens {
+    --grid-row-min: 52px;
+  }
+}
+
+@media screen and (orientation: portrait) and (width < 1000px), screen and (width < 760px) {
+  :root {
+    --screen-pad-x: calc(var(--n) * 16);
+    --screen-pad-top: calc(var(--n) * 34);
+    --screen-pad-bottom: 12px;
+    --fs-title: calc(var(--n) * 30);
+    --fs-name: calc(var(--n) * 18);
+    --fs-chip: calc(var(--n) * 16);
+    --fs-day: calc(var(--n) * 16);
+    --fs-total: calc(var(--n) * 18);
+    --fs-figure: calc(var(--n) * 20);
+    --fs-stat: calc(var(--n) * 20);
+    --fs-stat-words: calc(var(--n) * 18);
+  }
+}
+
 :root {
   color-scheme: light;
 }
@@ -62,7 +159,6 @@
   --color-pen: var(--pen);
   --color-pen-partial: var(--pen-partial);
   --color-pen-missed: var(--pen-missed);
-  --color-highlight: var(--highlight);
   --color-caution-ink: var(--caution-ink);
   --color-scrim: var(--scrim);
 }
@@ -88,6 +184,14 @@
   /* Keeps keyboard-focused content from scrolling under the sticky navbar. */
   html {
     scroll-padding-top: 4.5rem;
+  }
+
+  /* The planner's screens: the scroll stops on each one, and no bar covers the top (K24). */
+  @media screen {
+    html.planner-screens {
+      scroll-snap-type: y mandatory;
+      scroll-padding-top: 0;
+    }
   }
 
   body {
@@ -133,9 +237,17 @@
     --pen: #2e7a4c;
     --pen-partial: #f2b300;
     --pen-missed: #c0392b;
-    --highlight: transparent;
     --shadow-overlay: none;
     color-scheme: light;
+    /* The planner's sizes at their fixed values: paper doesn't follow the screen. */
+    --fs-title: 30px;
+    --fs-name: 18px;
+    --fs-chip: 16px;
+    --fs-day: 16px;
+    --fs-total: 20px;
+    --fs-figure: 20px;
+    --fs-stat: 22px;
+    --fs-stat-words: 20px;
   }
 
   body {

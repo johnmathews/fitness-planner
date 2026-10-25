@@ -16,7 +16,6 @@ const ROLES = [
   'pen',
   'pen-partial',
   'pen-missed',
-  'highlight',
   'caution-ink',
 ] as const
 </script>

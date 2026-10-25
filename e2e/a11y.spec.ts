@@ -7,6 +7,7 @@
 // changes nothing, so a "dark" audit can never quietly re-run light.
 import { expect, test, type Page } from '@playwright/test'
 import {
+  callUpBar,
   THEMES,
   canvasToken,
   expectNoAxeViolations,
@@ -62,6 +63,7 @@ test.describe('the app passes axe', () => {
     test(`week view in Edit plan, desktop, ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 900 })
       await openApp(page, { theme })
+      await callUpBar(page)
       await page.getByRole('switch', { name: /Edit/ }).click()
       await settle(page)
       await expectNoAxeViolations(page)
@@ -70,16 +72,26 @@ test.describe('the app passes axe', () => {
     test(`the Settings page, desktop, ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 900 })
       await openApp(page, { theme })
+      await callUpBar(page)
       await page.getByRole('button', { name: /Settings/ }).click()
       await page.getByRole('heading', { level: 1, name: 'Settings' }).waitFor()
       await settle(page)
       await expectNoAxeViolations(page)
     })
 
-    test(`Today view, 375px, ${theme}`, async ({ page }) => {
+    test(`the folded week, 375px, ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 800 })
-      await openApp(page, { theme, view: 'today' })
-      await expect(page.locator('[data-slot="today-list"]')).toBeVisible()
+      await openApp(page, { theme })
+      await expect(page.getByTestId('exercise-grid')).toBeVisible()
+      await expectNoAxeViolations(page)
+    })
+
+    test(`the bar called up, desktop, ${theme}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 })
+      await openApp(page, { theme })
+      await page.mouse.move(640, 4)
+      await expect(page.locator('[data-slot="bar"]')).toHaveAttribute('data-shown', 'true')
+      await settle(page)
       await expectNoAxeViolations(page)
     })
 

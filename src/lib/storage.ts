@@ -80,8 +80,6 @@ export type Settings = {
   accent: string
   dailyPick: number
   theme: Theme
-  /** Whether the sections show their weekly totals ("6 of 15 this week"); the device's choice. */
-  showTotals: boolean
   /** How marked days are drawn; the device's choice. */
   markSet: MarkSet
 }
@@ -113,7 +111,6 @@ export const DEFAULT_SETTINGS: Settings = {
   accent: '#30d158',
   dailyPick: 3,
   theme: 'system',
-  showTotals: true,
   markSet: 'squiggles',
 }
 
@@ -297,10 +294,8 @@ export function parseSettings(raw: string | null): Settings {
   const parsed = parseJson(raw)
   if (!isRecord(parsed)) return { ...DEFAULT_SETTINGS }
   const theme = isTheme(parsed.theme) ? parsed.theme : DEFAULT_SETTINGS.theme
-  const showTotals =
-    typeof parsed.showTotals === 'boolean' ? parsed.showTotals : DEFAULT_SETTINGS.showTotals
   const markSet = isMarkSet(parsed.markSet) ? parsed.markSet : DEFAULT_SETTINGS.markSet
-  return { ...normalisePortableSettings(parsed), theme, showTotals, markSet }
+  return { ...normalisePortableSettings(parsed), theme, markSet }
 }
 
 /** `localStorage` can throw (private mode, blocked site data); the app must still run. */

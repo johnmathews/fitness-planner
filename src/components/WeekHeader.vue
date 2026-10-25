@@ -50,10 +50,11 @@ async function copyToNextWeek(): Promise<void> {
 <!--
   The page's one h1: the week, as the Header writes it ("19–25 October"), set in display above the
   sections (SectionHeader card). Each section brings its own heading and figure. In Edit plan the
-  plan's own actions follow, off paper.
+  plan's own actions follow, off paper. On the planner's screens it is visually hidden: each
+  SectionHeader shows the week beside its title (K25).
 -->
 <template>
-  <div class="flex flex-col gap-3 pt-8 print:pt-0">
+  <div class="flex flex-col gap-3 pb-8 print:pb-0 full:sr-only">
     <h1 class="display text-ink">{{ store.label }}</h1>
     <div v-if="store.configMode" class="flex flex-wrap items-center gap-x-3 gap-y-2" data-noprint>
       <Button size="sm" @click="copyToNextWeek">Copy plan to next week</Button>

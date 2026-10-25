@@ -10,7 +10,7 @@ The small form for writing or changing the note on one day of one exercise, set 
 - Buttons at the end: secondary "Cancel", primary "Save" (`ink` fill, K8).
 - No placeholder. The editor only ever opens because the person chose to write a note, so it has nothing to ask. Never "How did it go?", "Add a note…" in an empty row, a reminder or a count of days without notes.
 - Saving an empty note removes the note; there is no separate delete and no confirmation.
-- Notes are the person's words. The app shows them back only where they were written (the TodayList row, SearchResult) and never quotes them as advice.
+- Notes are the person's words. The app shows them back only where they were written (the day's cell, SearchResult) and never quotes them as advice.
 
 ## States
 

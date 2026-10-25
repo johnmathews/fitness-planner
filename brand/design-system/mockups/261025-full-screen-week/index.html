@@ -1,0 +1,322 @@
+<title>A full-screen week</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="proto.css">
+<!--
+  A mockup (design-system skill, references/mockups.md). The question: the planner's week fills the
+  screen, a screen per section, with the bar out of sight. How is the bar reached and where does
+  each screen's title sit (A, B, C)? And what does a phone held upright show (P1, P2)?
+  The screens are live: proto.js draws them (proto.css sizes them from the frame), try.html shows
+  one at full size. Every proposed value is a --candidate-* in proto.css.
+-->
+<style>
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .mockup-page {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: var(--space-8, 32px) var(--space-16, 64px);
+    max-width: 1200px; margin: 0 auto; display: grid; gap: var(--space-12, 48px);
+  }
+  .mockup-head { display: grid; gap: var(--space-2, 8px); max-width: 72ch; }
+  .mockup-head h1, .option h2, .part h2 { margin: 0; text-wrap: balance; }
+  .mockup-head p, .option p, .part p { margin: 0; }
+  .mockup-head ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+  .mockup-meta { color: var(--ink-secondary); }
+  .part { display: grid; gap: var(--space-8, 32px); }
+  .part > header { display: grid; gap: var(--space-2, 8px); max-width: 72ch; padding-top: var(--space-6); border-top: 1px solid var(--ink); }
+  .option { display: grid; gap: var(--space-4, 16px); }
+  .option-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2, 8px) var(--space-3, 12px); }
+  .option-tag { color: var(--ink-secondary); }
+  .option[data-recommended] .option-tag::after { content: " · Recommended"; color: var(--ink); }
+  .option > p { max-width: 72ch; }
+  .panes { display: grid; grid-template-columns: 1fr; gap: var(--space-4, 16px); }
+  .panes.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+  .pane { min-width: 0; background: var(--canvas); color: var(--ink); border: 1px solid var(--line);
+          border-radius: var(--radius-lg, 10px); padding: var(--space-4, 16px); }
+  .pane-label { color: var(--ink-secondary); margin: 0 0 var(--space-3, 12px); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-6, 24px); align-items: flex-start; }
+  .measures { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); }
+  .measures li { border: 1px solid var(--line); border-radius: var(--radius-sm, 4px); padding: 2px var(--space-2, 8px); font-variant-numeric: tabular-nums; }
+  .measures li[data-pass="no"] { border-color: currentColor; }
+  .try { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: center; }
+  .try a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* A device: the screen at its real size in pixels, scaled down to fit (the script sets the scale). */
+  .device { position: relative; width: 100%; }
+  .device > .fs { position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .device.phone > .fs { border-radius: 28px; border-width: 2px; }
+  .device-cap { margin: var(--space-2) 0 0; color: var(--ink-secondary); }
+  figure { margin: 0; min-width: 0; }
+</style>
+
+<main class="mockup-page">
+  <header class="mockup-head">
+    <p class="caption mockup-meta">Mockup · 2026-10-25 · Notebook</p>
+    <h1 class="title-1">A full-screen week</h1>
+    <p class="body">The planner becomes one screen with one job, like the timer: the week fills the screen, and the bar stays out of sight until it is wanted. Scrolling down brings Food, which takes the whole screen in turn. Two questions: how the bar is reached and where each screen’s title sits (A, B or C), and what a phone held upright shows (P1 or P2).</p>
+    <p class="body">Every option shares these:</p>
+    <ul class="body">
+      <li>Exercises is one screen and Food is the next. The scroll stops on each, never between.</li>
+      <li>The grid grows with the screen. On a 1280×800 desktop the names are 24px and the boxes 86px. Nothing drops below the system’s 16px.</li>
+      <li>An iPad, and a phone on its side, get the same screen as a desktop.</li>
+      <li>On a tall screen the week stays a sensible shape and sits in the middle. With more rows than fit, rows stop at 56px and the screen runs longer.</li>
+      <li>The marks, pens and the bar’s contents stay as they are. The marks here are your Stamped ticks.</li>
+      <li>Round 2, from your comments: no Picked row, and the day headers show only the day’s name. Round 3: no section figures (“15 of 15 this week”, “0 of 4 goals met”). Round 4: no Week column, and a Full screen button.</li>
+    </ul>
+    <p class="body">The screens on this page are live. Hover the top edge to bring the bar, scroll to reach Food, press a box to mark it. <a href="try.html#a" target="_blank" rel="noopener">Open the full-size version</a> on a desktop, an iPad or a phone to try it at its real size. Its Mockup button switches option and theme.</p>
+  </header>
+
+  <section class="part" aria-labelledby="q4">
+    <header>
+      <h2 class="title-1" id="q4">4. A bar or a sidebar</h2>
+      <p class="body">From your comments: the Week column is gone, and the bar gains a Full screen button (the browser’s full screen; Esc leaves it; an iPhone has none, so the button isn’t there). Then the question: keep the bar along the top, or move it into a sidebar that is hidden in the same way, and expands to an icon and a name per item, with room for more later. Section 3’s pick, G2, is drawn on every screen now, with your round 5 change: no pale wash, a bold green line along the foot of a met day’s column instead. Round 6: no band for today; every day looks alike.</p>
+    </header>
+    <section class="option" id="n1" data-recommended aria-labelledby="n1-h">
+      <div class="option-head">
+        <h2 class="title-2" id="n1-h">N1. The bar along the top</h2>
+        <span class="label option-tag">Option N1</span>
+      </div>
+      <p class="body">A as built, with the Full screen button beside Settings. Recommended: one slim line holds everything there is today, and it slides over the title rather than the names.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · called up</p><div class="device" data-w="1440" data-h="900" data-option="a" data-nav="bar" data-bar="shown" data-input="mouse"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · at rest (move to the top edge)</p><div class="device" data-w="1440" data-h="900" data-option="a" data-nav="bar" data-input="mouse"></div></div>
+      </div>
+      <div class="panes two">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · phone, called up</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-nav="bar" data-bar="shown" data-input="touch"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone, at rest</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-nav="bar" data-input="touch"></div></div>
+      </div>
+    </section>
+    <section class="option" id="n2" aria-labelledby="n2-h">
+      <div class="option-head">
+        <h2 class="title-2" id="n2-h">N2. A sidebar from the left</h2>
+        <span class="label option-tag">Option N2</span>
+      </div>
+      <p class="body">Hidden off the left edge until the pointer reaches it, or the handle half-way down the edge is pressed or pulled. Expanded it is 280px: the wordmark, the week, Edit plan, then Settings, Print… and Full screen, open room for options to come, and Log out on its own at the foot. On a phone held upright it comes in over the week, which dims behind it. It covers the names while open.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · called up</p><div class="device" data-w="1440" data-h="900" data-option="a" data-nav="side" data-bar="shown" data-input="mouse"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · at rest (move to the left edge)</p><div class="device" data-w="1440" data-h="900" data-option="a" data-nav="side" data-input="mouse"></div></div>
+      </div>
+      <div class="panes two">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · phone, called up</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-nav="side" data-bar="shown" data-input="touch"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone, at rest</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-nav="side" data-input="touch"></div></div>
+      </div>
+    </section>
+  </section>
+
+  <section class="part" aria-labelledby="q3">
+    <header>
+      <h2 class="title-1" id="q3">3. A day that meets its goal (decided: G2)</h2>
+      <p class="body">With the Picked row gone, the daily pick (three a day here) shows only when a day reaches it. Monday, Tuesday, Wednesday and Friday have three exercises marked, so they meet it; the rest don’t yet. Press boxes to see a day turn. Only the Exercises screen shows it, since foods have no daily pick. A screen reader hears “three picked” with the day.</p>
+    </header>
+    <section class="option" id="g1" data-recommended aria-labelledby="g1-h">
+      <div class="option-head">
+        <h2 class="title-2" id="g1-h">G1. The day’s name turns green</h2>
+        <span class="label option-tag">Option G1</span>
+      </div>
+      <p class="body">The day’s name in <code>pen</code> with a check after it, as a met week total already looks. Nothing else changes. Recommended: the smallest change that still reads at arm’s length, and it uses the existing meaning of green and the check.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light</p><div class="device" data-w="1440" data-h="900" data-option="a" data-affirm="g1" data-input="mouse"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark</p><div class="device" data-w="1440" data-h="900" data-option="a" data-affirm="g1" data-input="mouse"></div></div>
+      </div>
+      <div class="panes two">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · phone</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-affirm="g1" data-input="touch"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-affirm="g1" data-input="touch"></div></div>
+      </div>
+    </section>
+    <section class="option" id="g2" aria-labelledby="g2-h">
+      <div class="option-head">
+        <h2 class="title-2" id="g2-h">G2. G1, and a pale green column</h2>
+        <span class="label option-tag">Option G2</span>
+      </div>
+      <p class="body">The day’s name as in G1, and the whole column washed in a pale green, a new colour (<code>#e3efe6</code>, <code>#1e3325</code> in dark). Louder from across the room. On today, the wash replaces the grey band.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light</p><div class="device" data-w="1440" data-h="900" data-option="a" data-affirm="g2" data-input="mouse"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark</p><div class="device" data-w="1440" data-h="900" data-option="a" data-affirm="g2" data-input="mouse"></div></div>
+      </div>
+      <div class="panes two">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · phone</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-affirm="g2" data-input="touch"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-affirm="g2" data-input="touch"></div></div>
+      </div>
+    </section>
+    <section class="option" id="g3" aria-labelledby="g3-h">
+      <div class="option-head">
+        <h2 class="title-2" id="g3-h">G3. The day’s header stamped green</h2>
+        <span class="label option-tag">Option G3</span>
+      </div>
+      <p class="body">The day’s header cell filled in <code>pen</code>, with the name and check in paper, like a stamped mark. The strongest, but a block of colour at the top of each met day.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light</p><div class="device" data-w="1440" data-h="900" data-option="a" data-affirm="g3" data-input="mouse"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark</p><div class="device" data-w="1440" data-h="900" data-option="a" data-affirm="g3" data-input="mouse"></div></div>
+      </div>
+      <div class="panes two">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · phone</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-affirm="g3" data-input="touch"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-affirm="g3" data-input="touch"></div></div>
+      </div>
+    </section>
+    <ul class="measures caption">
+      <li data-fg="var(--pen)" data-bg="var(--canvas)" data-min="4.5">G1: the green name on the page</li>
+      <li data-fg="var(--pen)" data-bg="var(--candidate-pen-wash)" data-min="4.5">G2: the green name on the wash</li>
+      <li data-fg="var(--control-border)" data-bg="var(--candidate-pen-wash)" data-min="3">G2: an empty box on the wash</li>
+      <li data-fg="var(--pen-missed)" data-bg="var(--candidate-pen-wash)" data-min="3">G2: a red mark on the wash</li>
+      <li data-fg="var(--on-ink)" data-bg="var(--pen)" data-min="4.5">G3: paper on the stamped header</li>
+    </ul>
+  </section>
+
+  <section class="part" aria-labelledby="q1">
+    <header>
+      <h2 class="title-1" id="q1">1. The bar and the titles (decided: A)</h2>
+      <p class="body">Each option is shown on a 1440×900 desktop. Light shows the first screen at rest. Dark shows Food with the bar called up.</p>
+    </header>
+
+    <section class="option" id="a" data-recommended aria-labelledby="a-h">
+      <div class="option-head">
+        <h2 class="title-2" id="a-h">A. Hidden bar, a title line</h2>
+        <span class="label option-tag">Option A</span>
+      </div>
+      <p class="body">Each screen opens with one line: its name in the serif and the week beside it, its figure at the right. A “Food” button with an arrow at the foot of the first screen says there is more. The bar slides down when the pointer reaches the top edge, or when the handle at the top centre is pressed or pulled on a touch screen. It also shows while a key press is inside it. It hides when the pointer leaves, on Escape, or on a press elsewhere.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · at rest</p><div class="device" data-w="1440" data-h="900" data-option="a" data-input="mouse"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · Food, the bar called up</p><div class="device" data-w="1440" data-h="900" data-option="a" data-input="mouse" data-start="food" data-bar="shown"></div></div>
+      </div>
+      <p class="try caption"><a href="try.html#a" target="_blank" rel="noopener">Try A at full size</a></p>
+    </section>
+
+    <section class="option" id="b" aria-labelledby="b-h">
+      <div class="option-head">
+        <h2 class="title-2" id="b-h">B. Hidden bar, the title in the corner</h2>
+        <span class="label option-tag">Option B</span>
+      </div>
+      <p class="body">No line above the grid. The screen’s name, the week and its figure sit in the grid’s empty top-left corner, so the rows get the height the title line took. Two short marks at the right edge show which screen this is and move between them. The bar works as in A.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · at rest</p><div class="device" data-w="1440" data-h="900" data-option="b" data-input="mouse"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · Food, the bar called up</p><div class="device" data-w="1440" data-h="900" data-option="b" data-input="mouse" data-start="food" data-bar="shown"></div></div>
+      </div>
+      <p class="try caption"><a href="try.html#b" target="_blank" rel="noopener">Try B at full size</a></p>
+    </section>
+
+    <section class="option" id="c" aria-labelledby="c-h">
+      <div class="option-head">
+        <h2 class="title-2" id="c-h">C. A quiet bar that stays</h2>
+        <span class="label option-tag">Option C</span>
+      </div>
+      <p class="body">The timer’s way: the tools never hide, they recede. The bar loses its wordmark, rule and shadow, and its tools turn <code>ink-secondary</code>. Nothing has to be found, at the cost of a line of tools that is always in view. The titles are as in A, without the week, which the bar already shows.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · at rest</p><div class="device" data-w="1440" data-h="900" data-option="c" data-input="mouse"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · Food</p><div class="device" data-w="1440" data-h="900" data-option="c" data-input="mouse" data-start="food"></div></div>
+      </div>
+      <p class="try caption"><a href="try.html#c" target="_blank" rel="noopener">Try C at full size</a></p>
+    </section>
+
+    <section class="option" aria-labelledby="dev-h">
+      <div class="option-head">
+        <h2 class="title-2" id="dev-h">The same screen on an iPad and a phone on its side</h2>
+        <span class="label option-tag">Option A</span>
+      </div>
+      <p class="body">An iPad on its side and a phone on its side get the desktop screen. The handle replaces the top edge on touch screens. On a phone on its side the title moves into the corner in every option, and the chips and the “Food” button drop out, so five rows still fit at 56px each. An iPad held upright is 820px wide, too narrow for seven roomy days beside the names, so it folds the week as P2 does below, at a larger size, with boxes of about 90px.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light</p>
+          <div class="row">
+            <figure style="flex: 1 1 420px; max-width: 480px"><div class="device" data-w="1180" data-h="820" data-option="a" data-input="touch"></div><figcaption class="caption device-cap">iPad Air, landscape, 1180×820</figcaption></figure>
+            <figure style="flex: 0 1 230px"><div class="device" data-w="820" data-h="1180" data-option="a" data-input="touch"></div><figcaption class="caption device-cap">iPad Air, portrait, 820×1180</figcaption></figure>
+            <figure style="flex: 1 1 360px; max-width: 420px"><div class="device phone" data-w="844" data-h="390" data-option="a" data-input="touch"></div><figcaption class="caption device-cap">iPhone on its side, 844×390</figcaption></figure>
+          </div>
+        </div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark</p>
+          <div class="row">
+            <figure style="flex: 1 1 420px; max-width: 480px"><div class="device" data-w="1180" data-h="820" data-option="a" data-input="touch" data-start="food"></div><figcaption class="caption device-cap">iPad Air, landscape, Food</figcaption></figure>
+            <figure style="flex: 0 1 230px"><div class="device" data-w="820" data-h="1180" data-option="a" data-input="touch" data-bar="shown"></div><figcaption class="caption device-cap">iPad Air, portrait, the bar called up</figcaption></figure>
+            <figure style="flex: 1 1 360px; max-width: 420px"><div class="device phone" data-w="844" data-h="390" data-option="a" data-input="touch" data-start="food"></div><figcaption class="caption device-cap">iPhone on its side, Food</figcaption></figure>
+          </div>
+        </div>
+      </div>
+      <ul class="measures caption">
+        <li data-fg="var(--control-border)" data-bg="var(--canvas)" data-min="3">The handle on the page</li>
+        <li data-fg="var(--ink-secondary)" data-bg="var(--canvas)" data-min="4.5">The week, the “Food” button and C’s tools</li>
+        <li data-fg="var(--control-border)" data-bg="var(--canvas)" data-min="3">B’s other-screen mark</li>
+      </ul>
+    </section>
+  </section>
+
+  <section class="part" aria-labelledby="q2">
+    <header>
+      <h2 class="title-1" id="q2">2. A phone held upright (decided: P2)</h2>
+      <p class="body">A 390px screen can’t hold names beside seven days, so it needs its own layout. The bar works as on the iPad: the handle brings it. Shown on a 390×844 iPhone. Light shows the first screen. Dark shows Food with the bar called up.</p>
+    </header>
+
+    <section class="option" id="p2" data-recommended aria-labelledby="p2-h">
+      <div class="option-head">
+        <h2 class="title-2" id="p2-h">P2. The week, narrow</h2>
+        <span class="label option-tag">Option P2</span>
+      </div>
+      <p class="body">The same week as every other screen, folded: each row’s name and total on one line, its seven boxes beneath it, today’s band down the last column. Nothing scrolls sideways. The phone opens on the week, which changes K5, so the Today list would leave the phone. Recommended, because it keeps one interface everywhere.</p>
+      <div class="panes two">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · Exercises</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-input="touch"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · Food, the bar called up</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p2" data-input="touch" data-start="food" data-bar="shown"></div></div>
+      </div>
+      <p class="try caption"><a href="try.html#a-p2" target="_blank" rel="noopener">Try P2 on a phone</a></p>
+    </section>
+
+    <section class="option" id="p1" aria-labelledby="p1-h">
+      <div class="option-head">
+        <h2 class="title-2" id="p1-h">P1. Today, full screen</h2>
+        <span class="label option-tag">Option P1</span>
+      </div>
+      <p class="body">The phone keeps opening on today (K5). The Today list grows to fill the screen, one row per exercise with its mark at the right, up to 96px, and Food is the next screen. The week is one press away in the bar (Today | Week), and shows as P2 there.</p>
+      <div class="panes two">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · Exercises</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p1" data-input="touch"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · Food, the bar called up</p><div class="device phone" style="max-width: 300px" data-w="390" data-h="844" data-option="a" data-phone="p1" data-input="touch" data-start="food" data-bar="shown"></div></div>
+      </div>
+      <p class="try caption"><a href="try.html#a-p1" target="_blank" rel="noopener">Try P1 on a phone</a></p>
+    </section>
+  </section>
+</main>
+
+<script src="marks.js"></script>
+<script src="proto.js"></script>
+<script>
+  // Each .device gets a live screen at its real pixel size, scaled to the space it has.
+  for (const device of document.querySelectorAll('.device')) {
+    const w = Number(device.dataset.w), h = Number(device.dataset.h)
+    const screen = document.createElement('div')
+    screen.style.width = w + 'px'
+    screen.style.height = h + 'px'
+    device.append(screen)
+    const fit = () => {
+      const s = Math.min(1, device.clientWidth / w)
+      screen.style.transform = `scale(${s})`
+      device.style.height = Math.ceil(h * s) + 'px'
+    }
+    new ResizeObserver(fit).observe(device)
+    fit()
+    FP.mount(screen, { option: device.dataset.option, phone: device.dataset.phone, affirm: device.dataset.affirm, nav: device.dataset.nav, input: device.dataset.input, start: device.dataset.start, bar: device.dataset.bar })
+  }
+
+  // Measures: for each <li data-fg data-bg data-min>, the WCAG contrast of the two colours in each theme.
+  (() => {
+    const rgb = (value, scope, theme) => {
+      const probe = document.createElement('span')
+      probe.dataset.theme = theme
+      probe.style.color = value
+      scope.append(probe)
+      const parts = getComputedStyle(probe).color.match(/[\d.]+/g).map(Number)
+      probe.remove()
+      return parts.slice(0, 3)
+    }
+    const lum = ([r, g, b]) => [r, g, b]
+      .map((c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 })
+      .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0)
+    const ratio = (a, b) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05) }
+    for (const li of document.querySelectorAll('.measures li[data-fg]')) {
+      const scope = li.closest('.option') || document.body
+      const min = Number(li.dataset.min || 0)
+      const results = ['light', 'dark'].map((theme) => {
+        const r = ratio(rgb(li.dataset.fg, scope, theme), rgb(li.dataset.bg, scope, theme))
+        return { theme, r, ok: !min || r >= min }
+      })
+      li.dataset.pass = results.every((x) => x.ok) ? 'yes' : 'no'
+      li.append(`: ${results.map((x) => `${x.theme} ${x.r.toFixed(1)}:1${x.ok ? '' : ' (below ' + min + ':1)'}`).join(', ')}`)
+    }
+  })()
+</script>

@@ -11,6 +11,18 @@ import { readFixture } from '@/lib/__tests__/fixtures'
 import type { FakeApi } from '@/lib/__tests__/fakeApi'
 import { USER, cached, emptyState, signedIn } from '@/lib/__tests__/signedIn'
 
+/** A row's week as the stores hold it, "N of M": the grid shows no total since K33. */
+function exTotal(i: number): string {
+  const store = usePlannerStore()
+  const e = store.exercises.at(i)!
+  return `${store.totalFor(e.id)} of ${e.target}`
+}
+function foodTotal(i: number): string {
+  const store = useDietStore()
+  const f = store.foods.at(i)!
+  return `${store.totalFor(f.id)} of ${f.target}`
+}
+
 const NOW = new Date(2026, 9, 23, 18, 0)
 
 let wrapper: VueWrapper
@@ -177,13 +189,11 @@ describe('App', () => {
       expect(cell.attributes('aria-pressed')).toBe('true')
       expect(cell.find(`[data-mark="${markKind(mark)}"]`).exists()).toBe(true)
       expect(cell.find(`[data-drawing="${markDrawing(mark)}"]`).exists()).toBe(true)
-      expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('1 of 18 this week')
-      expect(ex().findAll('[data-testid="day-count"]')[1]!.text()).toBe('1')
-      expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('1 of 4')
+      expect(exTotal(0)).toBe('1 of 4')
     }
     await cell.trigger('click')
     expect(cell.attributes('aria-pressed')).toBe('false')
-    expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('0 of 4')
+    expect(exTotal(0)).toBe('0 of 4')
   })
 
   it('marks a food eaten in each drawing, then clears it', async () => {
@@ -198,30 +208,17 @@ describe('App', () => {
     expect(cell.attributes('aria-pressed')).toBe('false')
   })
 
-  it('colours the footer count by whether the daily pick is met, exceeded or not', async () => {
-    mountApp()
-    const counts = () => ex().findAll('[data-testid="day-count"]')
-    for (const name of ['Push-ups', 'Pull-ups', 'Squats']) await rowCells(name)[0]!.trigger('click')
-    expect(counts()[0]!.attributes('data-tone')).toBe('met')
-    await rowCells('Kettlebell halos')[0]!.trigger('click')
-    expect(counts()[0]!.attributes('data-tone')).toBe('over')
-    expect(counts()[1]!.attributes('data-tone')).toBe('under')
-  })
-
-  it('highlights the row total once a food’s goal is reached, with the goal set in its dialog', async () => {
+  it('reaches a food’s goal once it is set lower in its dialog', async () => {
     await mountConfig()
-    const food = () => wrapper.get('[data-testid="diet-grid"]')
-    const total = () => food().findAll('[data-testid="row-total"]')[3]!
     await rowCells('Nuts')[0]!.trigger('click')
-    expect(total().attributes('data-met')).toBe('false')
+    expect(foodTotal(3)).toBe('1 of 3')
     const edit = await openEdit('Nuts')
     const fewer = edit.get('button[aria-label="Fewer times a week"]')
     await fewer.trigger('click')
     await fewer.trigger('click')
     await edit.get('form').trigger('submit')
     await flushPromises()
-    expect(total().text()).toBe('1 of 1')
-    expect(total().attributes('data-met')).toBe('true')
+    expect(foodTotal(3)).toBe('1 of 1')
   })
 
   it('gives Edit plan rows no Stepper: both grids edit in a dialog', async () => {
@@ -229,23 +226,6 @@ describe('App', () => {
     expect(wrapper.find('[data-testid="exercise-grid"] [role="spinbutton"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="diet-grid"] [role="spinbutton"]').exists()).toBe(false)
     expect(wrapper.find('button[aria-label="Edit Vegetables"]').exists()).toBe(true)
-  })
-
-  it('hides both weekly totals from Settings, and the device remembers it', async () => {
-    mountApp()
-    const totals = () =>
-      ['grand-total', 'diet-goals-met'].map((id) => wrapper.find(`[data-testid="${id}"]`).exists())
-    expect(totals()).toEqual([true, true])
-    await openSettings()
-    const toggle = wrapper.get(PANEL).get('[role="switch"]')
-    expect(toggle.text()).toBe('Show weekly totals')
-    expect(toggle.attributes('aria-checked')).toBe('true')
-    await toggle.trigger('click')
-    await backToWeek()
-    expect(totals()).toEqual([false, false])
-    expect(JSON.parse(localStorage.getItem('fitness-planner-settings-v1')!)).toMatchObject({
-      showTotals: false,
-    })
   })
 
   it('draws the marks in the set chosen in Settings, and the device remembers it', async () => {
@@ -357,7 +337,7 @@ describe('App', () => {
         .findAll('[data-testid="item-name"]')
         .map((n) => n.text()),
     ).toEqual(['From other tab'])
-    expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('1 of 2 this week')
+    expect(exTotal(0)).toMatch(/^1 of \d+$/)
   })
 })
 
@@ -386,7 +366,7 @@ describe('AddExerciseForm', () => {
       .trigger('click')
     await wrapper.get('form').trigger('submit')
     expect(wrapper.findAll('[data-testid="item-detail"]').at(-1)!.text()).toBe('12 each side')
-    expect(ex().findAll('[data-testid="row-total"]').at(-1)!.text()).toBe('0 of 3')
+    expect(exTotal(-1)).toBe('0 of 3')
     expect((wrapper.get('#add-exercise-name').element as HTMLInputElement).value).toBe('')
     expect((reps.element as HTMLInputElement).value).toBe('')
     const perSet = wrapper.findAll('button[aria-pressed]').find((b) => b.text() === 'Per set')!
@@ -470,8 +450,6 @@ describe('the Settings page', () => {
     expect(wrapper.get(PANEL).get('a[href="#/"]').text()).toBe('Back to the week')
     await backToWeek()
     expect(wrapper.find(PANEL).exists()).toBe(false)
-    expect(ex().get('tfoot [role="rowheader"]').text()).toBe('Picked4 a day')
-    expect(ex().findAll('[data-testid="day-count"]')[0]!.text()).toBe('0')
     expect(document.activeElement).toBe(settingsButton().element)
   })
 
@@ -992,7 +970,7 @@ describe('exercise weight', () => {
     await flushPromises()
     expect(dialog()).toBeNull()
     expect(detail('Plank')).toBe('3 × 50 s')
-    expect(ex().findAll('[data-testid="row-total"]').at(-1)!.text()).toBe('0 of 4')
+    expect(exTotal(-1)).toBe('0 of 4')
   })
 
   it('edits an existing exercise in a dialog', async () => {
@@ -1055,7 +1033,7 @@ describe('exercise weight', () => {
     await edit.get('form').trigger('submit')
     await flushPromises()
     expect(detail('Halos')).toBe('10 reps a set')
-    expect(ex().findAll('[data-testid="row-total"]').at(-1)!.text()).toBe('0 of 3')
+    expect(exTotal(-1)).toBe('0 of 3')
   })
 
   it('closes on Escape and on Close without saving, returning focus to its Edit button', async () => {

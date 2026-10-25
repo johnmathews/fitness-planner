@@ -32,7 +32,6 @@ import { InlineMessage } from '@/components/ui/inline-message'
 import { RadioCard } from '@/components/ui/radio-card'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Stepper } from '@/components/ui/stepper'
-import { Switch } from '@/components/ui/switch'
 import { TextLink } from '@/components/ui/text-link'
 
 const THEME_NAMES: Record<Theme, string> = { system: 'System', light: 'Light', dark: 'Dark' }
@@ -227,7 +226,6 @@ async function confirmSignOut(): Promise<void> {
         :min="MIN_DAILY_PICK"
         :max="MAX_DAILY_PICK"
       />
-      <Switch v-model="store.showTotals" label="Show weekly totals" class="-ml-2 self-start" />
     </section>
 
     <section :aria-labelledby="ids.data" class="mt-8 flex flex-col gap-4 border-t border-line pt-8">

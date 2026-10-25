@@ -39,9 +39,9 @@ describe('print', () => {
     }
   })
 
-  it('leaves the paper white: every surface and the band are transparent', () => {
+  it('leaves the paper white: every surface is transparent', () => {
     const roles = printRoles()
-    for (const role of ['canvas', 'panel', 'tile', 'highlight']) {
+    for (const role of ['canvas', 'panel', 'tile']) {
       expect([role, roles.get(role)]).toEqual([role, 'transparent'])
     }
   })

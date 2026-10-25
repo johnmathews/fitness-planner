@@ -1,15 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { h } from 'vue'
 import { mount } from '@vue/test-utils'
 import { SectionHeader } from '@/components/ui/section-header'
-import { StatFigure } from '@/components/ui/stat-figure'
 
 function header(hint?: string) {
   return mount(SectionHeader, {
-    props: { title: 'Exercises', hint, headingId: 'exercises-heading' },
-    slots: {
-      default: () => h(StatFigure, { figure: 10, total: 12, words: 'this week', met: false }),
-    },
+    props: { title: 'Exercises', hint, headingId: 'exercises-heading', week: '19–25 October' },
   })
 }
 
@@ -32,7 +27,7 @@ describe('SectionHeader', () => {
     expect(header().find('[data-slot="section-hint"]').exists()).toBe(false)
   })
 
-  it('sets the one figure on the title’s baseline, and keeps the heading with what follows on paper (F20)', () => {
+  it('sets the week on the title’s baseline, hidden from a screen reader, and keeps the heading with what follows on paper (F20)', () => {
     const wrapper = header()
     expect(wrapper.element.tagName).toBe('HEADER')
     expect(wrapper.classes()).toEqual(
@@ -43,6 +38,8 @@ describe('SectionHeader', () => {
         'print:break-after-avoid',
       ]),
     )
-    expect(wrapper.get('[data-slot="stat-figure"]').text()).toBe('10 of 12 this week')
+    const week = wrapper.get('[data-slot="section-week"]')
+    expect(week.text()).toBe('19–25 October')
+    expect(week.attributes('aria-hidden')).toBe('true')
   })
 })

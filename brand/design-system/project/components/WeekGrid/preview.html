@@ -1,4 +1,4 @@
-<!-- @dsCard group="Planner" height=980 subtitle="One week Mon–Sun: today's band, totals (met with a check), the picked row, phone scroll and print" -->
+<!-- @dsCard group="Planner" height=980 subtitle="One week Mon–Sun: today's band, days that meet the daily pick, folded when narrow, and print" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,20 +10,17 @@
   .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .variant { margin: 0 0 var(--space-3); color: var(--ink-secondary); }
 
-  /* The scroller: the grid scrolls sideways inside it on a phone, never the page. */
-  .scroller { overflow-x: auto; scroll-padding-left: 136px; }
+  /* At the fixed sizes (paper, Edit plan): a table. On a PlannerScreen the same grid fills the
+     screen (see the PlannerScreen card); below, at a phone's width, it folds. */
+  .scroller { overflow-x: auto; }
   .grid { position: relative; width: 100%; min-width: 828px; border-collapse: collapse; table-layout: fixed; }
   .c-name { width: 200px; }
-  .c-total { width: 88px; }
   th, td { padding: 0; font-weight: inherit; }
 
-  /* Header: day names in label, dates in caption, an ink rule beneath. */
+  /* Header: day names in label, the date only for a screen reader (K29), an ink rule beneath. */
   thead tr { border-bottom: 1px solid var(--ink); }
   thead th.d { position: relative; padding: var(--space-2) 0; text-align: center; }
-  thead th.d .label, thead th.d .date { display: block; }
-  thead th.d .date { font-size: 16px; line-height: 22px; color: var(--ink-secondary); }
-  thead th.today .date { color: var(--ink); font-weight: 600; }
-  .total-h { color: var(--ink-secondary); text-align: center; }
+  thead th.d .label { display: block; white-space: nowrap; }
 
   /* Rows: hairline rules between them. */
   tbody tr { border-bottom: 1px solid var(--line); }
@@ -33,11 +30,14 @@
   .goal { color: var(--ink-secondary); }
   .chip { background: var(--tile); color: var(--ink-secondary); border-radius: var(--radius-sm); padding: 0 var(--space-2); white-space: nowrap; }
 
-  /* The name column stays put while the days scroll (K5). */
-  th[scope="row"], th.corner { position: sticky; left: 0; z-index: 1; background: var(--canvas); }
+  /* A day that meets the daily pick (K30, K35): the name in pen with a check, and a bold pen line at
+     the foot of the column. Today keeps its band, and its name stays ink beside the pen check. */
+  tbody tr:last-child td.day-met { position: relative; }
+  tbody tr:last-child td.day-met::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: 0; height: 6px; border-radius: 3px 3px 0 0; background: var(--pen); }
+  th.d.day-met:not(.today) .label { color: var(--pen); }
+  th.d .check { width: 16px; height: 16px; margin-left: 4px; vertical-align: -2px; color: var(--pen); }
 
-  /* Today: the highlight band down the whole column. */
-  .today { background: var(--highlight); }
+  /* Today: no band (K36); its header and marks say "today" for a screen reader. */
 
   /* DayMark: 64px button, its hand-drawn box and mark, in a 76px cell. */
   .day { position: relative; width: 76px; height: 76px; margin: 0 auto; display: grid; place-items: center; }
@@ -61,28 +61,12 @@
   }
   .note-mark { position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: var(--ink-secondary); clip-path: polygon(0 0, 100% 0, 100% 100%); pointer-events: none; }
 
-  /* Week total: the figure turns pen when the goal is met. */
-  .total { text-align: center; white-space: nowrap; font-size: 20px; line-height: 28px; }
-  .total .fig { font-weight: 600; }
-  .total .fig.met { color: var(--pen); }
-  .total .of { color: var(--ink-secondary); }
-  /* Met is pen plus a check, never colour alone (colour-blind people, print). */
-  .total .check { display: inline-block; width: 16px; height: 16px; margin-left: 4px; vertical-align: -2px; color: var(--pen); }
-
-  /* The picked row: how many exercises each day, against the daily pick. */
-  tfoot th[scope="row"] { padding-top: var(--space-3); padding-bottom: var(--space-3); }
-  tfoot .name { font-weight: 400; }
-  td.p { position: relative; text-align: center; vertical-align: top; padding: var(--space-3) 2px; }
-  td.p .fig { display: block; font-size: 18px; line-height: 26px; font-weight: 600; }
-  td.p .fig.under, td.p .fig.future { color: var(--ink-secondary); font-weight: 400; }
-  td.p .fig.over { color: var(--caution-ink); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
-  td.p .extra { display: block; font-size: 16px; line-height: 22px; color: var(--caution-ink); }
 
   /* Print: the light theme's colours on white paper, in either theme (K16). The one place this
      system allows literal colours: the tokens are re-pointed inside .print only, the surfaces and
      the band at transparent. In the app the same overrides sit under @media print. */
   .print {
-    --canvas: transparent; --panel: transparent; --tile: transparent; --highlight: transparent;
+    --canvas: transparent; --panel: transparent; --tile: transparent;
     --line: #e4dfd5; --control-border: #888175; --ink: #1f1d1a; --ink-secondary: #5f5a52;
     --pen: #2e7a4c; --pen-partial: #f2b300; --pen-missed: #c0392b; --caution-ink: #a0461a;
     background: #ffffff; color: var(--ink); padding: var(--space-4); border-radius: var(--radius-sm);
@@ -91,26 +75,33 @@
   .sheet-note { margin: var(--space-2) 0 0; color: var(--ink-secondary); }
   .gap { height: var(--space-8); }
 
+  /* Folded (K26): held upright or narrow, each row's name line spans the seven days above its
+     boxes. The table is a grid and its rows display: contents; the script gives each row its two
+     lines (--line, --box). Nothing scrolls sideways. */
   @media (max-width: 639px) {
     body { padding: var(--space-4); }
-    .c-name { width: 136px; }
-    .c-total { width: 72px; }
-    .grid { min-width: 748px; }
-    th[scope="row"], th.corner { border-right: 1px solid var(--line); }
+    #screen .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); min-width: 0; }
+    #screen colgroup, #screen th.corner { display: none; }
+    #screen thead, #screen tbody, #screen tr { display: contents; }
+    #screen thead th.d { border-bottom: 1px solid var(--ink); padding: 6px 0; }
+    #screen th[scope="row"] { grid-column: 1 / -1; grid-row: var(--line); display: flex; align-items: baseline; gap: var(--space-2); padding: var(--space-2) 30% 2px 0; }
+    #screen td.d { grid-row: var(--box); border-bottom: 1px solid var(--line); }
+    #screen .day { width: 52px; height: 52px; }
+    #screen .mark { width: 46px; height: 46px; }
+    #screen .mark::before, #screen .mark::after { inset: -4px; }
     .print { padding: var(--space-2); }
   }
 </style>
 </head>
 <body>
-<p class="variant label">On screen. Today is Thursday; the pick is three a day. Press a day to step its mark.</p>
+<p class="variant label">On screen. Today is Thursday. Press a day to step its mark.</p>
 <div class="scroller" id="screen">
   <table class="grid" role="grid" aria-label="Exercises, week of 19 October">
-    <colgroup><col class="c-name"><col span="7"><col class="c-total"></colgroup>
+    <colgroup><col class="c-name"><col span="7"></colgroup>
     <thead>
       <tr role="row">
         <th scope="col" role="columnheader" class="corner"><span class="vh">Exercise</span></th>
-        <th scope="col" role="columnheader" class="d"><span class="label">Mon</span><span class="date">19</span></th><th scope="col" role="columnheader" class="d"><span class="label">Tue</span><span class="date">20</span></th><th scope="col" role="columnheader" class="d"><span class="label">Wed</span><span class="date">21</span></th><th scope="col" role="columnheader" class="d today" aria-current="date"><span class="label">Thu</span><span class="date">22</span><span class="vh">, today</span></th><th scope="col" role="columnheader" class="d"><span class="label">Fri</span><span class="date">23</span></th><th scope="col" role="columnheader" class="d"><span class="label">Sat</span><span class="date">24</span></th><th scope="col" role="columnheader" class="d"><span class="label">Sun</span><span class="date">25</span></th>
-        <th scope="col" role="columnheader" class="total-h label">Week</th>
+        <th scope="col" role="columnheader" class="d"><span class="label">Mon</span><span class="vh"> 19</span></th><th scope="col" role="columnheader" class="d"><span class="label">Tue</span><span class="vh"> 20</span></th><th scope="col" role="columnheader" class="d"><span class="label">Wed</span><span class="vh"> 21</span></th><th scope="col" role="columnheader" class="d today" aria-current="date"><span class="label">Thu</span><span class="vh"> 22</span><span class="vh">, today</span></th><th scope="col" role="columnheader" class="d"><span class="label">Fri</span><span class="vh"> 23</span></th><th scope="col" role="columnheader" class="d"><span class="label">Sat</span><span class="vh"> 24</span></th><th scope="col" role="columnheader" class="d"><span class="label">Sun</span><span class="vh"> 25</span></th>
       </tr>
     </thead>
     <tbody>
@@ -123,7 +114,6 @@
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Friday 23 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Saturday 24 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Sunday 25 October"></button></div></td>
-        <td role="gridcell" class="total" tabindex="-1"><span class="fig">3</span> <span class="of">of 4</span></td>
       </tr>
       <tr role="row" data-goal="3">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Pull-ups</span><span class="meta"><span class="chip label">3 × 5</span></span></th>
@@ -134,7 +124,6 @@
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Friday 23 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Saturday 24 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Sunday 25 October"></button></div></td>
-        <td role="gridcell" class="total" tabindex="-1"><span class="fig">2</span> <span class="of">of 3</span></td>
       </tr>
       <tr role="row" data-goal="3">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Squats</span><span class="meta"><span class="chip label">3 × 15</span><span class="chip label">16 kg</span></span></th>
@@ -145,7 +134,6 @@
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Friday 23 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Saturday 24 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Sunday 25 October"></button></div></td>
-        <td role="gridcell" class="total" tabindex="-1"><span class="fig met">3</span> <span class="of">of 3</span><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></td>
       </tr>
       <tr role="row" data-goal="2">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Kettlebell halos</span><span class="meta"><span class="chip label">8 each side</span></span></th>
@@ -156,38 +144,27 @@
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Friday 23 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Saturday 24 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Sunday 25 October"></button></div></td>
-        <td role="gridcell" class="total" tabindex="-1"><span class="fig met">2</span> <span class="of">of 2</span><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></td>
       </tr>
     </tbody>
-    <tfoot>
-      <tr role="row">
-        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Picked</span><span class="meta"><span class="caption goal">3 a day</span></span></th>
-        <td role="gridcell" tabindex="-1" class="p"><span class="fig under">2</span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig under">2</span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig under">2</span></td><td role="gridcell" tabindex="-1" class="p today"><span class="fig over">4</span><span class="extra">one extra</span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig future"><span aria-hidden="true">–</span><span class="vh">Not yet</span></span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig future"><span aria-hidden="true">–</span><span class="vh">Not yet</span></span></td><td role="gridcell" tabindex="-1" class="p"><span class="fig future"><span aria-hidden="true">–</span><span class="vh">Not yet</span></span></td>
-        <td aria-hidden="true"></td>
-      </tr>
-    </tfoot>
   </table>
 </div>
 
 <div class="gap"></div>
 <p class="variant label">Printed, from either theme</p>
 <div class="print" id="print" inert></div>
-<p class="sheet-note caption">Words, boxes and marks in the light theme’s colours on white paper; no band, chips outlined. “One extra” keeps its words; the hint line and buttons don't print.</p>
+<p class="sheet-note caption">Words, boxes and marks in the light theme’s colours on white paper; chips outlined. The hint line and buttons don't print.</p>
 
 <script>
 (() => {
   // WAI-ARIA grid, roving tabindex: the grid is one tab stop (today's cell in the first row).
-  // Every cell takes part except an aria-hidden one (the empty Picked cell under "Week"): names,
-  // days, week totals and the Picked row's name and counts. Arrows move cell by
+  // Every cell takes part: names and days. Arrows move cell by
   // cell, Home and End to the ends of the row, Ctrl+Home and Ctrl+End to the ends of the grid.
   // Only the day cells act on Space and Enter (they are buttons, and step the day's mark).
   const table = document.querySelector('#screen .grid');
   const rows = [...table.tBodies[0].rows];
-  const navRows = [...rows, ...table.tFoot.rows];
-  const PICK = 3;
+  const navRows = rows;
   const TODAY = 3;
   const CHECK = '<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
-  const WORDS = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
   // A press steps the day's mark, drawing first: an exercise goes great, partial and missed in the
   // zigzag, then the solid, then the hatch, then empty; a food (in a [data-cycle="food"] row) goes
   // great in each drawing. aria-pressed is true for any mark; the name adds only a partial or
@@ -249,27 +226,21 @@
     recount();
   });
 
-  // Week totals per row, and the picked count per day. Every kind of mark counts.
+  // Which days reach the daily pick (three). Every kind of mark counts.
+  const PICK = 3;
   function recount() {
-    rows.forEach((tr) => {
-      const n = marksIn(tr).filter((m) => m.getAttribute('aria-pressed') === 'true').length;
-      const fig = tr.querySelector('.total .fig');
-      fig.textContent = n;
-      const met = n >= Number(tr.dataset.goal);
-      fig.classList.toggle('met', met);
-      const check = tr.querySelector('.total .check');
-      if (met && !check) tr.querySelector('.total').insertAdjacentHTML('beforeend', CHECK);
-      if (!met && check) check.remove();
-    });
-    const cells = [...table.tFoot.rows[0].querySelectorAll('td.p')];
-    cells.forEach((td, i) => {
+    const heads = [...table.tHead.rows[0].querySelectorAll('th.d')];
+    heads.forEach((th, i) => {
       const n = rows.filter((tr) => marksIn(tr)[i].getAttribute('aria-pressed') === 'true').length;
-      if (i > TODAY && n === 0) {
-        td.innerHTML = '<span class="fig future"><span aria-hidden="true">–</span><span class="vh">Not yet</span></span>';
-      } else if (n > PICK) {
-        td.innerHTML = `<span class="fig over">${n}</span><span class="extra">${WORDS[n - PICK]} extra</span>`;
-      } else {
-        td.innerHTML = `<span class="fig${n < PICK ? ' under' : ''}">${n}</span>`;
+      const met = n >= PICK;
+      th.classList.toggle('day-met', met);
+      rows.forEach((tr) => tr.querySelectorAll('td.d')[i].classList.toggle('day-met', met));
+      const label = th.querySelector('.label');
+      label.querySelector('.check')?.remove();
+      th.querySelector('.met-words')?.remove();
+      if (met) {
+        label.insertAdjacentHTML('beforeend', CHECK);
+        th.insertAdjacentHTML('beforeend', '<span class="vh met-words">, daily goal met</span>');
       }
     });
     // The print specimen is a copy of the grid above.
@@ -283,12 +254,9 @@
   }
   recount();
 
-  // On a phone the grid opens scrolled so today's column sits in view, one day after the names.
-  const scroller = document.getElementById('screen');
-  const head = table.tHead.rows[0].cells;
-  if (scroller.scrollWidth > scroller.clientWidth) {
-    scroller.scrollLeft = Math.max(0, head[TODAY + 1].offsetLeft - head[0].offsetWidth - head[TODAY].offsetWidth);
-  }
+  // Folded, each row takes two lines of the grid: its name line, then its boxes (header is line 1).
+  table.style.setProperty('--today', TODAY);
+  navRows.forEach((tr, i) => { tr.style.setProperty('--line', 2 + 2 * i); tr.style.setProperty('--box', 3 + 2 * i); });
 })();
 </script>
 </body>

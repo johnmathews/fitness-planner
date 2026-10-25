@@ -2,25 +2,16 @@
 import { computed, reactive, ref } from 'vue'
 import type { Day } from '@/stores/planner'
 import { DAY_NAMES, addDays, dateKey, fullDate } from '@/lib/dates'
-import {
-  EXERCISE_CYCLE,
-  cycleDay,
-  dayCounts,
-  pickedCount,
-  totalFor,
-  type Tracked,
-} from '@/lib/tracker'
+import { EXERCISE_CYCLE, cycleDay, type Tracked } from '@/lib/tracker'
 import type { Log, Mark } from '@/lib/storage'
 import { Switch } from '@/components/ui/switch'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import ExampleGroup from '../parts/ExampleGroup.vue'
 import StateExample from '../parts/StateExample.vue'
 
-// The card's week (components/WeekGrid/preview.html): Monday 19 October, today Thursday, a pick
-// of three, and Thursday one over it.
+// The card's week (components/WeekGrid/preview.html): Monday 19 October, today Thursday.
 const MONDAY = new Date(2026, 9, 19)
 const TODAY = 3
-const PICK = 3
 const WEEK = 'sg'
 
 const days: Day[] = DAY_NAMES.map((name, i) => {
@@ -58,17 +49,12 @@ const editing = ref(false)
 /** The grid's keys (WeekGrid card, Accessibility; src/composables/gridNav.ts). */
 const KEYS: [string, string][] = [
   ['Tab', 'Lands once on the grid: today’s first mark, or the last cell used. Tab again leaves.'],
-  ['Arrows', 'Move cell by cell: names, days, totals and the Picked row. Never wrap.'],
+  ['Arrows', 'Move cell by cell: names, days and totals. Never wrap.'],
   ['Home, End', 'First and last cell in the row.'],
   ['Ctrl+Home, Ctrl+End', 'First and last cell of the grid.'],
   ['Space, Enter', 'Step a day’s mark: great, partial, missed in each drawing, then empty.'],
   ['Enter or F2, Escape', 'In Edit plan, on a name: into its Edit button; Escape back.'],
 ]
-
-const picked = computed(() => ({
-  caption: `${PICK} a day`,
-  counts: dayCounts(rows, week.value).map((n, i) => pickedCount(n, PICK, days[i]!.isFuture)),
-}))
 
 function marksFor(id: string): (Mark | null)[] {
   return week.value[id] ?? []
@@ -81,11 +67,10 @@ function remove(id: string): void {
 }
 </script>
 
-<!-- The card's grid, drawn by the app's own TrackerGrid: today's band, the totals, the Picked row
-     with Thursday one over the pick, and Edit plan. A press steps a mark; nothing is saved. -->
+<!-- The card's grid, drawn by the app's own TrackerGrid: today's band, the totals and Edit plan. A press steps a mark; nothing is saved. -->
 <template>
   <ExampleGroup>
-    <StateExample state="On screen. Today is Thursday; the pick is three a day." class="w-full">
+    <StateExample state="On screen. Today is Thursday." class="w-full">
       <Switch v-model="editing" label="Edit plan" />
       <div id="sg-week-grid-screen" class="w-full">
         <TrackerGrid
@@ -94,11 +79,9 @@ function remove(id: string): void {
           :items="rows"
           :days="days"
           :marks-for="marksFor"
-          :total-for="(id) => totalFor(week, id)"
           :details-for="(item) => (item as Row).chips"
           editable
           :config-mode="editing"
-          :picked="picked"
           @toggle="(id, day) => cycleDay(log, WEEK, id, day, EXERCISE_CYCLE)"
           @remove="remove"
         />

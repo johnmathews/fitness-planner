@@ -34,13 +34,14 @@
   copy the first time you change it or mark a cell. In config mode, **Copy plan to next week**
   copies this week's exercises and foods over the next week's.
 - `‹` / `›` move between weeks for both sections; past weeks persist. **Print…** produces a
-  sheet in the light theme's colours on white paper. **Show weekly totals** in Settings hides or shows each section's total on
-  this device.
-- **On a phone** the app opens on **Today**: today's exercises and foods, one mark each. A Today |
-  Week switch leads to the week's grids, whose names stay put while the days scroll.
+  sheet in the light theme's colours on white paper.
+- **One screen per section.** The week fills the screen, and the bar stays out of sight until the
+  pointer reaches the top edge (or the handle at the top centre is pressed). Scrolling brings Food,
+  which takes the screen in turn. Held upright, a phone or an iPad folds the week: each row's name
+  above its seven boxes. A day that reaches the exercises-a-day target turns green.
 - **Settings** is a page of its own. It sets the theme (System, Light or Dark), how marks are drawn
-  (Squiggles, Ticks, Stamped ticks, Faces or Stamped faces), the exercises-per-day target (1–8) and
-  whether the weekly totals show, holds export and import, and shows who is signed
+  (Squiggles, Ticks, Stamped ticks, Faces or Stamped faces), and the exercises-per-day target (1–8),
+  holds export and import, and shows who is signed
   in, with **Sign out**.
 - **Accounts and sync.** Anyone can **Create an account** from the sign-in screen with an email and
   a password, or be invited by a link that names their email. Every account signs in with its email. Sign-up
