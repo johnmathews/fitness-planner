@@ -101,7 +101,7 @@ in each state, in either theme and any ink, with no sign-in needed.
 
 Two containers: the app (static files on nginx, port **8080**) and the API (port **8000**), with
 nginx forwarding `/api/` to the API so the browser sees one origin. CI publishes both as
-multi-architecture images (`linux/amd64` and `linux/arm64`) to GHCR on every push to `main`:
+multi-architecture images (`linux/amd64` and `linux/arm64`) to GHCR once CI passes on a push to `main`:
 
 | Image                                     | Tags                        |
 | ----------------------------------------- | --------------------------- |
