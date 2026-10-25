@@ -140,8 +140,9 @@ def reset(origin: str, address: str, token: str, lifetime: int) -> Email:
 
 
 # A real-length token (secrets.token_urlsafe(32) is 43 characters), so the card shows the wrap.
+# Plainly fake, so secret scanners don't take it for one.
 SAMPLE_ORIGIN = "https://fitness.itsa-pizza.com"
-SAMPLE_TOKEN = "Qm9vdHN0cmFwLXNhbXBsZS10b2tlbi1mb3ItdGhlLWNh"  # noqa: S105
+SAMPLE_TOKEN = "sample-link-token-for-the-card-preview-0000"  # noqa: S105 (not a secret)
 MARKER = (
     '<!-- @dsCard group="Feedback" height=1720 subtitle="The two emails, confirm and reset:'
     ' inline styles, light only" -->'

@@ -116,15 +116,15 @@ copy of one person's data.
 **Email** (`api.md` §4.1) is off until the API gets `RESEND_API_KEY` and `MAIL_FROM`. To turn it
 on:
 
-1. In Resend, add the sending domain (a subdomain, such as `updates.itsa-pizza.com`, keeps the
-   root domain's mail reputation apart) in region **eu-west-1**.
+1. In Resend, add the sending domain. This planner sends from `fitness.itsa-pizza.com`, its own
+   subdomain, which keeps the root domain's mail reputation apart.
 2. Add the records Resend shows in Cloudflare, all **DNS only**, with the names exactly as Resend
    gives them: a TXT for DKIM and an MX and a TXT (SPF) for bounces. For the root domain they are
-   `resend._domainkey` and `send`; for a subdomain they carry it, such as `resend._domainkey.updates`
-   and `send.updates`. Wait until Resend says the domain is verified.
+   `resend._domainkey` and `send`; for a subdomain they carry it: here `resend._domainkey.fitness`
+   and `send.fitness`. Wait until Resend says the domain is verified.
 3. Create an API key with **sending access**, limited to that domain, and keep it in the
    home-server vault; the compose template passes it to `fitness-api` with
-   `MAIL_FROM=Fitness Planner <planner@updates.itsa-pizza.com>`.
+   `MAIL_FROM=Fitness Planner <planner@fitness.itsa-pizza.com>`.
 4. Redeploy the API. `GET /api/auth/options` then answers `{"mail": true}`, and the sign-in screen
    shows "Forgot your password?".
 

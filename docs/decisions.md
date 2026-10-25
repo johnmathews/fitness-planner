@@ -47,15 +47,16 @@ unbounded per-user data (now the quota) and an account count bounded only by inv
 
 ### 2.2 Transactional email (2026-10-25)
 
-| ID  | Topic      | Decision                                                                                                                                                                                                       | Rejected                                                                                                     |
-| --- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| D12 | Provider   | Resend's HTTP API, called with the standard library, from a subdomain of `itsa-pizza.com` in the EU region. A send-only key in the home-server vault turns it on; without one, mail is off and nothing changes | Self-hosted SMTP from infra-vm (a residential IP); a provider SDK as a dependency                            |
-| D13 | Confirming | Sign-up still signs in at once and still says when an email is taken. A link confirms the address; until then a banner asks, and nothing else is limited                                                       | Holding the account until confirmed, which would also hide taken emails but makes everyone wait for an email |
-| D14 | Resets     | "Forgot your password?" emails a one-hour reset link, answering the same for every address; using it confirms the email. Mail is rate-limited per account and across the API                                   | Reset by `fp-admin` only                                                                                     |
+| ID  | Topic      | Decision                                                                                                                                                                                                        | Rejected                                                                                                     |
+| --- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| D12 | Provider   | Resend's HTTP API, called with the standard library, from `fitness.itsa-pizza.com`, the app's own subdomain. A send-only key in the home-server vault turns it on; without one, mail is off and nothing changes | Self-hosted SMTP from infra-vm (a residential IP); a provider SDK as a dependency                            |
+| D13 | Confirming | Sign-up still signs in at once and still says when an email is taken. A link confirms the address; until then a banner asks, and nothing else is limited                                                        | Holding the account until confirmed, which would also hide taken emails but makes everyone wait for an email |
+| D14 | Resets     | "Forgot your password?" emails a one-hour reset link, answering the same for every address; using it confirms the email. Mail is rate-limited per account and across the API                                    | Reset by `fp-admin` only                                                                                     |
 
 John chose Resend on 2026-10-25 and asked for password-reset and confirm-your-email emails. The
-rest of D12–D14 (the subdomain and region, signing in before confirming, keeping the `exists`
-answer, the one-hour lifetime and the limits) were Claude's calls, stated to him before the build.
+sending domain, `fitness.itsa-pizza.com`, is the one he set up in Resend. The rest of D12–D14
+(signing in before confirming, keeping the `exists` answer, the one-hour lifetime and the limits)
+were Claude's calls, stated to him before the build.
 Monthly progress reports, which will use the confirmed addresses, are issue #29.
 
 ## 3. Made while planning and building (2026-10-24)
