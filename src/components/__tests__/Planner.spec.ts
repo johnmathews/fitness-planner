@@ -142,7 +142,7 @@ describe('the planner grids (W10)', () => {
       const mark = marks('Push-ups')[1]!
       const stroke = () => mark.find('[data-slot="day-mark-stroke"]')
       expect(stroke().exists()).toBe(false)
-      for (const pen of ['stroke-pen', 'stroke-pen-partial', 'stroke-pen-missed']) {
+      for (const pen of ['text-pen', 'text-pen-partial', 'text-pen-missed']) {
         await mark.trigger('click')
         expect(mark.attributes('aria-pressed')).toBe('true')
         expect(stroke().classes()).toContain(pen)

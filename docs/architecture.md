@@ -306,7 +306,7 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   with no second channel to keep in step.
 - **Food sits below the exercises** on the same page, sharing the week navigation and the print
   sheet. It has no daily target, so its grid has no Picked row.
-- **Print is black on white in either theme** (§6.7).
+- **Print is the light theme on white paper, from either theme** (§6.7).
 - **Narrow screens.** Below 640px the navbar drops Print…, shortens the switch's visible label to
   "Edit" (its accessible name stays "Edit plan"), and wraps "This week" and the switch to a second
   row at the right, leaving the brand mark, the centred arrows and week, and Settings on the first; below
@@ -367,9 +367,10 @@ have no `<style>` blocks. Everything global is in `src/styles/main.css`.
 ### 6.2 The marks' pens
 
 `pen`, `pen-partial` and `pen-missed` are ordinary roles with fixed values (K10), mapped to
-`stroke-pen`, `stroke-pen-partial` and `stroke-pen-missed`. `DayMark` draws the box and, for a
-marked day, the kind's own stroke (`MARK_PATHS`, `MARK_STROKES` in `src/components/ui/day-mark`),
-which runs a little past the box. A press emits `toggle`; the stores step the day with `cycleDay`
+`text-pen`, `text-pen-partial` and `text-pen-missed`. For a marked day `DayMark` draws one of three
+marker drawings in the kind's pen (`MARK_DRAWINGS`, `MARK_PENS` in `src/components/ui/day-mark`),
+picked by `markDrawing` from the row and the date (K15), then the box over it. The fill runs a
+little past the box. A press emits `toggle`; the stores step the day with `cycleDay`
 and `nextMark` (`src/lib/tracker.ts`): `EXERCISE_CYCLE` for exercises, `FOOD_CYCLE` for foods.
 `isDone` and the totals count every kind. [brand.md](brand.md) §4 has the values.
 
@@ -439,10 +440,11 @@ the names.
 
 ### 6.7 Print
 
-The `@media print` block in `main.css` gives a black-on-white landscape sheet from either theme. It
-re-points the roles at black, white and greys, the only literal colours the system allows: done
-every mark prints black (its shape tells the three apart), boxes grey, chips outlined, and
-`--highlight` goes transparent. Shadows and transitions are off.
+The `@media print` block in `main.css` gives a landscape sheet in the light theme's colours on
+white paper from either theme (K16). It re-points the roles at the light theme's values, the only
+literal colours the system allows (`src/styles/__tests__/print.spec.ts` holds them to
+`tokens.json`): words, boxes and marks keep their light colours, chips are outlined, and `--canvas`,
+`--panel`, `--tile` and `--highlight` go transparent. Shadows and transitions are off.
 
 - Anything marked `data-noprint` is hidden: the navbar, the phone's view switch, the sync status,
   the import prompt, Edit plan's controls and add forms, and a section's hint line if it has one. Dialogs, the

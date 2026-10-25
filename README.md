@@ -11,7 +11,7 @@
 
 - **Exercises.** Each day, pick a few exercises (default three) and mark their cells. A press steps
   a day from empty to green (done well), amber (partly done), red (tried and couldn't) and back to
-  empty; each mark has its own shape too. The **Week** column counts every marked day against a
+  empty, filling the box with a marker drawing in that colour. The **Week** column counts every marked day against a
   weekly goal of 0–7 days, and turns green with a check once a non-zero goal is met. The **Picked** row counts each day's exercises against the
   daily pick and says so in words when a day goes over ("one extra").
 - **Food.** Below the exercises, foods work the same way, with one kind of mark: mark each day you ate one, and its Week
@@ -31,7 +31,7 @@
   copy the first time you change it or mark a cell. In config mode, **Copy plan to next week**
   copies this week's exercises and foods over the next week's.
 - `‹` / `›` move between weeks for both sections; past weeks persist. **Print…** produces a
-  black-on-white sheet. **Show weekly totals** in Settings hides or shows each section's total on
+  sheet in the light theme's colours on white paper. **Show weekly totals** in Settings hides or shows each section's total on
   this device.
 - **On a phone** the app opens on **Today**: today's exercises and foods, one mark each. A Today |
   Week switch leads to the week's grids, whose names stay put while the days scroll.

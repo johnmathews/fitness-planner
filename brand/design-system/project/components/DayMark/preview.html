@@ -15,13 +15,17 @@
   .cell.today { background: var(--highlight); }
 
   .mark { width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; color: inherit; }
-  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border; a marked day adds its stroke, a mask filled with its pen: a full squiggle for great, the lower half for partial, a cross for missed. The strokes run a little past the box, so the masks fill the whole 44px button (the 36-unit paths at 40px, with room round them). Same paths as the app's DayMark. */
+  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border, drawn over the fill. A marked day fills the box in its pen (green great, amber partial, red missed) with one of three marker drawings, a mask each: an open zigzag (the default), a solid fill (data-drawing="solid") or a dense hatch (data-drawing="hatch"). The app picks the drawing from the row and the date. The strokes run a little past the box, so the masks fill the whole 44px button (the 36-unit paths at 40px, with room round them). Same paths as the app's DayMark. */
   .mark { position: relative; }
   .mark::before, .mark::after { content: ""; position: absolute; inset: 0; -webkit-mask: var(--m) center / 100% 100% no-repeat; mask: var(--m) center / 100% 100% no-repeat; }
   .mark::before { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--control-border); }
-  .mark[data-mark="great"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.2 7.4C11 5.4 21.5 4.6 33.4 5.4C24.5 9 14 13.2 3.8 18.6C13.5 16.3 24.2 14.8 34 15C24.2 19.4 13.6 24 4.4 29.8C14 27.6 24.6 26.4 33.4 26.9C27.2 29.6 21 32.2 15.2 34.6' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen); }
-  .mark[data-mark="partial"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.6 19.2C12 17.6 22.5 16.8 33.6 17.2C24.6 21 14.2 25.4 4.2 30.6C14 28.6 24.4 27.6 33.2 28.2' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-partial); }
-  .mark[data-mark="missed"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M4.4 4.6C13 12.8 22.4 22.4 33 33.2M32.6 3.8C24.2 12.2 14 22.6 3.6 32.8' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-missed); }
+  .mark[data-mark]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M4 7.8L24 14.6L15.6 3.4L33.8 11.4M2.6 11.8L34 24.4L4 16.8L31.2 27.6L4.4 21.8L24.6 31.6L7 25.6L19.2 33.2' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .mark[data-mark][data-drawing="solid"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.7 5.1L31.5 5L32.5 6.6L33.1 12.1L33.1 21.8L32 31.3L29.8 32.4L14.2 32.3L6.6 33L2.6 30.6L4 28.9L3.5 22.4L3.9 14.7L3.4 6.7Z' fill='black' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .mark[data-mark][data-drawing="hatch"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M12 4.2L33.4 14L8 6.6L33.2 20.4L5.6 9.6L32.2 24.8L4.8 13.6L30.2 28.8L4.4 18L27 31.2L4 22.6L20.4 32L5.2 27.2L12.4 32.2' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .mark::before { z-index: 1; }
+  .mark[data-mark="great"]::after { background: var(--pen); }
+  .mark[data-mark="partial"]::after { background: var(--pen-partial); }
+  .mark[data-mark="missed"]::after { background: var(--pen-missed); }
   .mark:not([data-mark]):hover::before { background: var(--ink); }
   .mark:focus-visible, .mark.is-focus { outline: 2px solid var(--focus); outline-offset: 2px; }
   @media (prefers-reduced-motion: no-preference) {
@@ -36,12 +40,14 @@
   .states li { width: 100px; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; }
   .states .caption { color: var(--ink-secondary); }
 
-  /* Print: black on white in either theme; the three kinds differ by shape alone. The one place
-     this system allows literal colours. In the app the same overrides sit under @media print. */
+  /* Print: the light theme's colours on white paper, in either theme; nothing fills the paper, so
+     today's band goes. The one place this system allows literal colours. In the app the same
+     overrides sit under @media print. */
   .print {
-    --canvas: #ffffff; --ink-secondary: #3d3d3d; --control-border: #767676; --highlight: transparent;
-    --pen: #000000; --pen-partial: #000000; --pen-missed: #000000;
-    display: inline-block; background: var(--canvas); padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm);
+    --canvas: transparent; --panel: transparent; --tile: transparent; --highlight: transparent;
+    --line: #e4dfd5; --control-border: #8c8579; --ink: #1f1d1a; --ink-secondary: #5f5a52;
+    --pen: #2e7a4c; --pen-partial: #a56f00; --pen-missed: #c0392b; --caution-ink: #a0461a;
+    display: inline-block; background: #ffffff; padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm);
   }
   .print .mark { cursor: default; }
 
@@ -58,19 +64,19 @@
   <h2 id="page-h" class="label">On the page</h2>
   <ul class="states">
     <li>
-      <div class="cell"><button type="button" class="mark" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div>
+      <div class="cell"><button type="button" data-drawing="solid" class="mark" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div>
       <span class="caption">Empty</span>
     </li>
     <li>
-      <div class="cell"><button type="button" class="mark" data-mark="great" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div>
+      <div class="cell"><button type="button" data-drawing="zigzag" class="mark" data-mark="great" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div>
       <span class="caption">Great</span>
     </li>
     <li>
-      <div class="cell"><button type="button" class="mark" data-mark="partial" aria-pressed="true" aria-label="Pull-ups, Monday 19 October, partly done"></button></div>
+      <div class="cell"><button type="button" data-drawing="hatch" class="mark" data-mark="partial" aria-pressed="true" aria-label="Pull-ups, Monday 19 October, partly done"></button></div>
       <span class="caption">Partial</span>
     </li>
     <li>
-      <div class="cell"><button type="button" class="mark" data-mark="missed" aria-pressed="true" aria-label="Squats, Wednesday 21 October, couldn't do it"></button></div>
+      <div class="cell"><button type="button" data-drawing="zigzag" class="mark" data-mark="missed" aria-pressed="true" aria-label="Squats, Wednesday 21 October, couldn't do it"></button></div>
       <span class="caption">Missed</span>
     </li>
   </ul>
@@ -80,19 +86,19 @@
   <h2 id="today-h" class="label">Today, on the band</h2>
   <ul class="states">
     <li>
-      <div class="cell today"><button type="button" class="mark" aria-pressed="false" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div>
+      <div class="cell today"><button type="button" data-drawing="solid" class="mark" aria-pressed="false" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div>
       <span class="caption">Empty</span>
     </li>
     <li>
-      <div class="cell today"><button type="button" class="mark" data-mark="great" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div>
+      <div class="cell today"><button type="button" data-drawing="hatch" class="mark" data-mark="great" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div>
       <span class="caption">Great</span>
     </li>
     <li>
-      <div class="cell today"><button type="button" class="mark" data-mark="partial" aria-pressed="true" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today, partly done"></button></div>
+      <div class="cell today"><button type="button" data-drawing="hatch" class="mark" data-mark="partial" aria-pressed="true" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today, partly done"></button></div>
       <span class="caption">Partial</span>
     </li>
     <li>
-      <div class="cell today"><button type="button" class="mark" data-mark="missed" aria-pressed="true" aria-current="date" aria-label="Plank, Thursday 22 October, today, couldn't do it"></button></div>
+      <div class="cell today"><button type="button" data-drawing="solid" class="mark" data-mark="missed" aria-pressed="true" aria-current="date" aria-label="Plank, Thursday 22 October, today, couldn't do it"></button></div>
       <span class="caption">Missed</span>
     </li>
   </ul>
@@ -102,11 +108,11 @@
   <h2 id="more-h" class="label">Note and focus</h2>
   <ul class="states">
     <li>
-      <div class="cell today"><button type="button" class="mark" data-mark="partial" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note, partly done"></button><span class="note-mark" aria-hidden="true"></span></div>
+      <div class="cell today"><button type="button" data-drawing="zigzag" class="mark" data-mark="partial" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note, partly done"></button><span class="note-mark" aria-hidden="true"></span></div>
       <span class="caption">Has a note</span>
     </li>
     <li>
-      <div class="cell today"><button type="button" class="mark is-focus" data-mark="great" aria-pressed="true" aria-current="date" aria-label="Lunges, Thursday 22 October, today"></button></div>
+      <div class="cell today"><button type="button" data-drawing="hatch" class="mark is-focus" data-mark="great" aria-pressed="true" aria-current="date" aria-label="Lunges, Thursday 22 October, today"></button></div>
       <span class="caption">Keyboard focus</span>
     </li>
   </ul>
@@ -116,10 +122,10 @@
   <h2 id="print-h" class="label">Printed, from either theme</h2>
   <div class="print" inert>
     <ul class="states">
-      <li><div class="cell"><span class="mark" aria-hidden="true"></span></div><span class="caption">Empty</span></li>
-      <li><div class="cell"><span class="mark" data-mark="great" aria-hidden="true"></span></div><span class="caption">Great</span></li>
-      <li><div class="cell"><span class="mark" data-mark="partial" aria-hidden="true"></span></div><span class="caption">Partial</span></li>
-      <li><div class="cell"><span class="mark" data-mark="missed" aria-hidden="true"></span></div><span class="caption">Missed</span></li>
+      <li><div class="cell"><span data-drawing="zigzag" class="mark" aria-hidden="true"></span></div><span class="caption">Empty</span></li>
+      <li><div class="cell"><span data-drawing="solid" class="mark" data-mark="great" aria-hidden="true"></span></div><span class="caption">Great</span></li>
+      <li><div class="cell"><span data-drawing="hatch" class="mark" data-mark="partial" aria-hidden="true"></span></div><span class="caption">Partial</span></li>
+      <li><div class="cell"><span data-drawing="hatch" class="mark" data-mark="missed" aria-hidden="true"></span></div><span class="caption">Missed</span></li>
     </ul>
   </div>
 </section>

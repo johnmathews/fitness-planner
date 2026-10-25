@@ -1,17 +1,25 @@
-One day of one exercise or food: a box drawn as if on a whiteboard, empty or marked with a marker stroke (a full squiggle for great, a half one for partial, a cross for missed), and the button that steps between them.
+One day of one exercise or food: a box drawn as if on a whiteboard, empty or filled with a marker in green (great), amber (partial) or red (missed), and the button that steps between them.
 
 ## Use
 
 - **The box:** drawn by hand, a little uneven, about 30px across: a 40px SVG on a 36-unit square, its path stroked 1.75 units in `control-border` with round caps and joins. The box is the same in every state; marking a day never changes it.
-- **The marks:** each stroked 3.5 units with round caps and joins, in its own pen and its own shape, so no kind rests on colour alone (colour-blind people, print):
+- **The marks:** a marked day fills the box in its pen, with one of three drawings traced from the owner's own whiteboard marks:
 
-  | Mark | Shape | Pen |
-  | --- | --- | --- |
-  | Great | a full squiggle, back and forth from top to bottom as a hand fills a box with a marker | `pen` |
-  | Partial | half a squiggle, filling the lower half of the box | `pen-partial` |
-  | Missed ("tried and couldn't") | a cross, corner to corner | `pen-missed` |
+  | Drawing | Look |
+  | --- | --- |
+  | Open zigzag | a back-and-forth scribble with a sharp turn at the top and paper showing between the strokes, stroked 3.5 units |
+  | Solid | the box coloured in, a ragged edge just past it, filled and stroked 1.5 units |
+  | Dense hatch | close diagonal strokes with slivers of paper between them, stroked 3.5 units |
 
-  The strokes run a little past the box's edges, as if scribbled quickly by hand, so the SVG is `overflow: visible`. The paths are `BOX_PATH` and `MARK_PATHS` in the app's `day-mark/index.ts`; the previews draw the same ones.
+  | Mark | Pen |
+  | --- | --- |
+  | Great | `pen` (green) |
+  | Partial | `pen-partial` (amber) |
+  | Missed ("tried and couldn't") | `pen-missed` (red) |
+
+  The drawing doesn't carry meaning: any kind can use any drawing, and the pen says which kind it is (K15). The app picks the drawing from the row's name and the date (`markDrawing`), so the grid looks filled by hand and a day keeps its drawing on every render, in the week and in the Today list. Stepping a day to another kind keeps its drawing and changes its pen. All three use round caps and joins.
+
+  The box is drawn over the fill, as a pen line shows through marker. The fills run a little past the box's edges, as if scribbled quickly by hand, so the SVG is `overflow: visible`. The paths are `BOX_PATH` and `MARK_DRAWINGS` in the app's `day-mark/index.ts`; the previews draw the same ones (`data-drawing` picks one, the open zigzag by default).
 - **Empty:** the box alone. A day not marked is an empty box, never a dash or a grey mark.
 - Each pen means its mark and nothing else: `pen-partial` is never a warning (`caution-ink` is over the pick), and `pen-missed` is never an error (`error-ink`); a missed day is a record, not a fault.
 - **Every kind counts.** Great, partial and missed all count towards the week's totals, the Picked row and the Today summary: the person showed up.
@@ -20,7 +28,7 @@ One day of one exercise or food: a box drawn as if on a whiteboard, empty or mar
 - **Today:** the cell sits on the `highlight` band that runs down today's column; the mark itself doesn't change. The band is the only use of `highlight`.
 - **Note:** a NoteMark (a 10px folded corner in `ink-secondary`) in the cell's top-right corner, flush to the corner. It sits outside the box, never on it.
 - Use one size: the 40px drawing in its 44px button. The same DayMark sits in WeekGrid, in the phone's TodayList and in the Food grid.
-- **Print:** all three marks print solid black and the shapes tell them apart; the box prints grey and the band disappears. See WeekGrid.
+- **Print:** the light theme's colours on white paper, from either theme: the box and the marks keep their light colours, and the band disappears (K16). See WeekGrid.
 
 ## States
 
@@ -28,9 +36,9 @@ One day of one exercise or food: a box drawn as if on a whiteboard, empty or mar
 | --- | --- |
 | Empty | the `control-border` box |
 | Empty, hover | the box darkens to `ink` |
-| Great | the `pen` squiggle over the box |
-| Partial | the `pen-partial` half squiggle over the box's lower half |
-| Missed | the `pen-missed` cross over the box |
+| Great | the box filled in `pen` |
+| Partial | the box filled in `pen-partial` |
+| Missed | the box filled in `pen-missed` |
 | Today | any of the above on `highlight` |
 | Has a note | any of the above plus the folded corner |
 | Keyboard focus | solid 2px `focus` outline at 2px offset around the 44px button, never clipped |
@@ -54,7 +62,7 @@ A marked box doesn't change on hover. A press draws the next mark at once; the b
 - Today's mark says so twice: `aria-current="date"` on the button, and "today" in its name. The name carries it for every screen reader; `aria-current` lets assistive tech and the grid's keyboard model (WeekGrid) find today's mark without parsing words. Neither depends on the band, so today never rests on colour (F16).
 - The NoteMark is `aria-hidden`; "has a note" in the name carries it.
 - Enter and Space step the mark. Inside a WeekGrid the mark is one cell of a roving-tabindex grid (see WeekGrid); on its own it is an ordinary tab stop.
-- Contrast, measured by the gate in both themes: `pen` reaches 4.5:1 on `canvas` and `panel` (it is also the text of a met total) and 3:1 on `tile` and `highlight`; `pen-partial` and `pen-missed` reach 3:1 on `canvas`, `panel`, `tile` and `highlight`; the box is `control-border`, 3:1 on `canvas`, `panel`, `tile` and `highlight`. No kind rests on colour: each is a shape the others and the empty box don't have.
+- Contrast, measured by the gate in both themes: `pen` reaches 4.5:1 on `canvas` and `panel` (it is also the text of a met total) and 3:1 on `tile` and `highlight`; `pen-partial` and `pen-missed` reach 3:1 on `canvas`, `panel`, `tile` and `highlight`; the box is `control-border`, 3:1 on `canvas`, `panel`, `tile` and `highlight`. The kinds are told apart by their pens, the owner's call (K15): a fill of any kind differs from the empty box by shape, and the accessible name says "partly done" or "couldn't do it", but someone who can't tell green from red sees only "marked".
 
 ## You provide
 

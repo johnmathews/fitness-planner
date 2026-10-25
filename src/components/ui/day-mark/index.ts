@@ -3,27 +3,52 @@ import type { Mark } from '@/lib/storage'
 export { default as DayMark } from './DayMark.vue'
 
 /**
- * The mark's strokes on a 36-unit square (DayMark card): a box drawn by hand, a little uneven like
- * one on a whiteboard, and what a marker pen puts in it. Each kind of mark has its own shape as
- * well as its own colour, so none rests on colour alone: a great day is scribbled full, a partial
- * day half full, a missed day crossed out. The strokes run past the box, as a quick hand does.
- * The card's previews draw the same paths.
+ * The mark's drawings on a 36-unit square (DayMark card): a box drawn by hand, a little uneven like
+ * one on a whiteboard, and three ways a marker pen fills it, traced from the owner's own marks: an
+ * open zigzag, a solid fill and a dense hatch. Any kind of mark uses any drawing; the pen says
+ * which kind it is (K15). The strokes run past the box, as a quick hand does. The card's previews
+ * draw the same paths.
  */
 export const BOX_PATH =
   'M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z'
-export const MARK_PATHS: Record<Mark, string> = {
-  great:
-    'M3.2 7.4C11 5.4 21.5 4.6 33.4 5.4C24.5 9 14 13.2 3.8 18.6C13.5 16.3 24.2 14.8 34 15C24.2 19.4 13.6 24 4.4 29.8C14 27.6 24.6 26.4 33.4 26.9C27.2 29.6 21 32.2 15.2 34.6',
-  partial:
-    'M3.6 19.2C12 17.6 22.5 16.8 33.6 17.2C24.6 21 14.2 25.4 4.2 30.6C14 28.6 24.4 27.6 33.2 28.2',
-  missed: 'M4.4 4.6C13 12.8 22.4 22.4 33 33.2M32.6 3.8C24.2 12.2 14 22.6 3.6 32.8',
+
+export type Drawing = 'zigzag' | 'solid' | 'hatch'
+export const DRAWINGS: readonly Drawing[] = ['zigzag', 'solid', 'hatch']
+
+/** Each drawing's path, and whether it is filled (solid) or stroked 3.5 units (the scribbles). */
+export const MARK_DRAWINGS: Record<Drawing, { d: string; filled: boolean }> = {
+  zigzag: {
+    d: 'M4 7.8L24 14.6L15.6 3.4L33.8 11.4M2.6 11.8L34 24.4L4 16.8L31.2 27.6L4.4 21.8L24.6 31.6L7 25.6L19.2 33.2',
+    filled: false,
+  },
+  solid: {
+    d: 'M3.7 5.1L31.5 5L32.5 6.6L33.1 12.1L33.1 21.8L32 31.3L29.8 32.4L14.2 32.3L6.6 33L2.6 30.6L4 28.9L3.5 22.4L3.9 14.7L3.4 6.7Z',
+    filled: true,
+  },
+  hatch: {
+    d: 'M12 4.2L33.4 14L8 6.6L33.2 20.4L5.6 9.6L32.2 24.8L4.8 13.6L30.2 28.8L4.4 18L27 31.2L4 22.6L20.4 32L5.2 27.2L12.4 32.2',
+    filled: false,
+  },
 }
 
-/** Each mark's stroke colour: the pen for great, its own role for the other two (DayMark card). */
-export const MARK_STROKES: Record<Mark, string> = {
-  great: 'stroke-pen',
-  partial: 'stroke-pen-partial',
-  missed: 'stroke-pen-missed',
+/**
+ * Which drawing a day's mark uses: picked from the row and the date (FNV-1a), so the grid looks
+ * filled by hand and a day keeps its drawing on every render, in the week and in the Today list.
+ */
+export function markDrawing(name: string, date: string): Drawing {
+  let hash = 0x811c9dc5
+  for (const ch of `${name}\n${date}`) {
+    hash ^= ch.codePointAt(0)!
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return DRAWINGS[(hash >>> 0) % DRAWINGS.length]!
+}
+
+/** Each mark's pen, as the text colour its drawing strokes and fills with (DayMark card). */
+export const MARK_PENS: Record<Mark, string> = {
+  great: 'text-pen',
+  partial: 'text-pen-partial',
+  missed: 'text-pen-missed',
 }
 
 /** What a mark adds to the name; a great day says nothing more than aria-pressed does. */

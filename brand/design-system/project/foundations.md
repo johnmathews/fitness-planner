@@ -6,15 +6,15 @@ Five project roles each mean exactly one thing:
 
 | Role | Means | Never |
 | --- | --- | --- |
-| `pen` | Great: a day's full squiggle, the year strip's dots and a met total | Links, buttons, decoration |
-| `pen-partial` | Partly done: a day's half squiggle | Over the pick, warnings |
-| `pen-missed` | Tried and couldn't: a day's cross | Errors |
+| `pen` | Great: a day's fill, the year strip's dots and a met total | Links, buttons, decoration |
+| `pen-partial` | Partly done: a day's fill | Over the pick, warnings |
+| `pen-missed` | Tried and couldn't: a day's fill | Errors |
 | `highlight` | Today: the band down today's column | Anything but today |
 | `caution-ink` | Over the daily pick, always with words ("one extra") | Errors |
 
-**The three pens** are fixed, like the green, amber and red markers by a whiteboard; nobody picks them. Each mark also has its own shape, so none rests on colour alone. `pen` reaches 4.5:1 as text on `canvas` and `panel`, and all three reach 3:1 as a stroke on `canvas`, `panel`, `tile` and `highlight`, in both themes.
+**The three pens** are fixed, like the green, amber and red markers by a whiteboard; nobody picks them. The pen is what tells the three kinds apart on screen (K15); the accessible name says "partly done" or "couldn't do it". `pen` reaches 4.5:1 as text on `canvas` and `panel`, and all three reach 3:1 as a stroke on `canvas`, `panel`, `tile` and `highlight`, in both themes.
 
-**Print** is black on white in either theme: every mark solid black (its shape tells the three apart), boxes grey, the highlight gone, "one extra" keeps its words.
+**Print** is the light theme on white paper, from either theme: words, boxes and marks keep their light colours, the surfaces and the highlight go transparent, chips are outlined, and "one extra" keeps its words (K16).
 
 ## Type
 
@@ -34,7 +34,7 @@ Five project roles each mean exactly one thing:
 ## The marks
 
 - **Empty:** the box, drawn by hand in `control-border`, about 30px across, centred in a cell at least 44px tall.
-- **Great:** a `pen` squiggle filling the box. **Partial:** a `pen-partial` squiggle filling its lower half. **Missed:** a `pen-missed` cross. Each runs a little past the box, as a quick hand does, and each counts towards the week.
+- **Great, partial, missed:** the box filled in `pen`, `pen-partial` or `pen-missed` with one of three marker drawings (an open zigzag, a solid fill, a dense hatch), picked by the row and the date so the grid looks filled by hand. The box is drawn over the fill. Each runs a little past the box, as a quick hand does, and each counts towards the week.
 - **A press** steps an exercise's day from empty to great, partial, missed and back to empty; a food is eaten or not, so it goes from empty to great and back.
 - **Today:** the `highlight` band down the column, and "today" in the accessible name.
 - **Note:** a small `ink-secondary` mark in the cell's top-right corner; "has a note" in the accessible name.
