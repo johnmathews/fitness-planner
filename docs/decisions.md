@@ -123,3 +123,13 @@ for the whole run (`journal/261024-design-system.md`):
 | W8–W9   | Forms, sign-in, navbar, settings and confirmations             | #16 |
 | W10–W12 | The planner on the new marks, keyboard grids, phone Today view | #17 |
 | W13–W14 | Lint, CI and e2e enforcement; the design-system docs           | #18 |
+
+Open sign-up (D9–D11) was a third run, numbered afresh from W1, shipped in one pull request with
+one journal entry (`journal/261025-email-signup.md`):
+
+| Unit | What                                              | PR  |
+| ---- | ------------------------------------------------- | --- |
+| W1   | The sign-up endpoint, the email rule and the caps | #23 |
+| W2   | The per-user quota                                | #23 |
+| W3   | The create-an-account screen and the sign-in copy | #23 |
+| W4   | The decision record, docs and journal             | #23 |
