@@ -142,7 +142,7 @@ export const useSessionStore = defineStore('session', () => {
     return signedIn(await request<Account>('POST', '/invites/redeem', { token, password }))
   }
 
-  /** Ask the server whether it sends email (docs/api.md §7); unknown counts as no. */
+  /** Ask the server whether it sends email (docs/api.md §4.1); unknown counts as no. */
   async function loadOptions(): Promise<void> {
     const res = await request<{ mail: boolean }>('GET', '/auth/options')
     mail.value = res.ok && res.data.mail === true

@@ -34,7 +34,7 @@ scoped by `user_id`, and no endpoint reads another user's data.
 | `sessions`      | `token_hash`                        | `user_id`, `created_at`, `last_seen`, `expires_at`                                                                                                                      |
 | `invites`       | `token_hash`                        | `kind` (`invite` or `reset`), `username`, `user_id` (resets), `expires_at`, `used_at`, `mailed` (a reset sent by email)                                                 |
 | `confirmations` | `token_hash`                        | `user_id`, `created_at`, `expires_at`, `used_at`: confirm-your-email links                                                                                              |
-| `mail_log`      | `id`                                | `user_id`, `kind` (`confirm` or `reset`), `sent_at`: one row per email sent, for the limits                                                                             |
+| `mail_log`      | `id`                                | `user_id`, `kind` (`confirm` or `reset`), `sent_at`: one row per email attempted (a failed send still counts), for the limits                                           |
 | `settings`      | `user_id`                           | `accent`, `daily_pick`                                                                                                                                                  |
 | `plans`         | `(user_id, section, week)`          | `items_json`, `rev`                                                                                                                                                     |
 | `ticks`         | `(user_id, section, week, item_id)` | `days`, `partial`, `missed`: 7-bit masks (bit 0 is Monday); see below                                                                                                   |
@@ -68,25 +68,25 @@ would not stop a request from another `*.itsa-pizza.com` host, because the brows
 same-site. Bodies over 1 MiB get 413 `too-large`, counted as they stream in, so a chunked body is
 cut off at the limit rather than read whole. A body with nothing to send, such as logout's, is `{}`.
 
-| Method and path                            | Auth    | Does                                                                 |
-| ------------------------------------------ | ------- | -------------------------------------------------------------------- |
-| `GET /healthz`                             | no      | `SELECT 1`; `{"ok": true}`                                           |
-| `POST /auth/login`                         | no      | `{username, password}` → the account and the session cookie          |
-| `POST /auth/signup`                        | no      | `{email, password}` creates an account → the account and the cookie  |
-| `POST /auth/logout`                        | session | ends this session and clears the cookie; 204                         |
-| `GET /auth/me`                             | session | the account: `{username}`, plus `confirmed` (below)                  |
-| `GET /auth/options`                        | no      | `{mail}`: whether this API sends email (§4.1)                        |
-| `POST /auth/forgot`                        | no      | `{email}` → 202 `{}` always; a reset link goes to a matching account |
-| `POST /auth/confirm`                       | no      | `{token}` confirms the email → the account; 410 `gone` otherwise     |
-| `POST /auth/confirm/resend`                | session | a new confirm link → 202 `{}`                                        |
-| `POST /invites/lookup`                     | no      | `{token}` → `{kind, username}` for a live link; 410 `gone` otherwise |
-| `POST /invites/redeem`                     | no      | `{token, password}` sets the password, consumes the link, signs in   |
-| `GET /state`                               | session | everything the client renders (below)                                |
-| `PUT /plans/{section}/{week}`              | session | `{items, rev}` → `{rev}`; 409 `conflict` with the server copy        |
-| `PUT /ticks/{section}/{week}/{item}/{day}` | session | `{mark}` → `{days}`, the week's seven marks for that item            |
-| `PUT /settings`                            | session | `{accent, dailyPick}` → the stored settings                          |
-| `GET /export`                              | session | the export file (`architecture.md` §4)                               |
-| `POST /import`                             | session | an export file, merged in; → `{weeks, ticks, settings}` added        |
+| Method and path                            | Auth    | Does                                                                                           |
+| ------------------------------------------ | ------- | ---------------------------------------------------------------------------------------------- |
+| `GET /healthz`                             | no      | `SELECT 1`; `{"ok": true}`                                                                     |
+| `POST /auth/login`                         | no      | `{username, password}` → the account and the session cookie                                    |
+| `POST /auth/signup`                        | no      | `{email, password}` creates an account → the account and the cookie                            |
+| `POST /auth/logout`                        | session | ends this session and clears the cookie; 204                                                   |
+| `GET /auth/me`                             | session | the account: `{username}`, plus `confirmed` (below)                                            |
+| `GET /auth/options`                        | no      | `{mail}`: whether this API sends email (§4.1)                                                  |
+| `POST /auth/forgot`                        | no      | `{email}` → 202 `{}` for any well-formed email; a reset link goes to a matching account (§4.1) |
+| `POST /auth/confirm`                       | no      | `{token}` confirms the email → the account; 410 `gone` otherwise                               |
+| `POST /auth/confirm/resend`                | session | a new confirm link → 202 `{}`; refusals in §4.1                                                |
+| `POST /invites/lookup`                     | no      | `{token}` → `{kind, username}` for a live link; 410 `gone` otherwise                           |
+| `POST /invites/redeem`                     | no      | `{token, password}` sets the password, consumes the link, signs in                             |
+| `GET /state`                               | session | everything the client renders (below)                                                          |
+| `PUT /plans/{section}/{week}`              | session | `{items, rev}` → `{rev}`; 409 `conflict` with the server copy                                  |
+| `PUT /ticks/{section}/{week}/{item}/{day}` | session | `{mark}` → `{days}`, the week's seven marks for that item                                      |
+| `PUT /settings`                            | session | `{accent, dailyPick}` → the stored settings                                                    |
+| `GET /export`                              | session | the export file (`architecture.md` §4)                                                         |
+| `POST /import`                             | session | an export file, merged in; → `{weeks, ticks, settings}` added                                  |
 
 **The account** is `{username}`. While mail is on, an account created by sign-up (its username is
 an email) also carries `confirmed`, true once its address is confirmed; an invited account, and
@@ -150,8 +150,9 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
   (10 to 256 characters). The username is fixed by the invite: 1 to 32 letters, digits, `.`, `_`
   or `-`, unique regardless of case. Inviting a name that already exists fails; use `reset`. `fp-admin reset <username>` mints a
   reset link the same way, valid for 24 hours. Using it ends every session of that user and clears
-  any lockout. Minting a new link revokes the earlier unused links of the same kind for that
-  username (a new invite leaves a reset link alone, and the reverse). The token travels
+  any lockout. Minting a new link revokes the earlier unused `fp-admin` links of the same kind for
+  that username (a new invite leaves a reset link alone, and the reverse). A reset sent by email
+  (§4.1) revokes nothing, and nothing revokes it but its hour running out. The token travels
   in the URL fragment and then in request bodies, never in a path, so no access log (Traefik, nginx
   or uvicorn) records it. Redeeming with a password outside 10 to 256 characters gets 400
   `password`, and a used, expired or unknown link gets 410 `gone`.
@@ -183,15 +184,18 @@ resets are `fp-admin`'s, as before.
   days; `POST /auth/confirm/resend` sends a new one and revokes the old. Using it (no session
   needed, so it works on any device) sets `email_confirmed_at`. A resend for a confirmed account
   gets 409 `confirmed`, for an invited one 409 `no-email`. An unconfirmed account is not limited
-  in anything; the flag only drives the banner, and later, who may get a report.
+  in anything; the flag only drives the banner, and later, who may get a report. `POST
+/auth/confirm` works with mail off too, so a link sent before mail was turned off still
+  confirms.
 - **Forgot your password.** `POST /auth/forgot` with `{email}` mints a reset link (the same
   `#/reset/<token>` as `fp-admin reset`, the same lookup and redeem) and emails it, valid for one
   hour. A malformed email gets 400 `email`; otherwise the answer is 202 `{}` whether or not an
   account has that email, it is disabled, or a limit was reached, so the reply tells nobody
-  which addresses have accounts. Using a mailed reset also confirms the address, since only its
+  which addresses have accounts. A new request leaves earlier links working, so a stranger asking
+  for resets for someone's address cannot cancel the link that person was just sent. Using a mailed reset also confirms the address, since only its
   owner could have opened it; an `fp-admin` reset does not.
 - **Limits.** Per account and kind, one email a minute and five a day; across the whole API,
-  `MAIL_PER_HOUR` (30) emails of any kind in any rolling hour, which keeps a flood of resets from
+  `MAIL_PER_HOUR` (30, at least 1) emails of any kind in any rolling hour, which keeps a flood of resets from
   spending the Resend quota. Each send is logged in `mail_log` under the write lock before the
   link is minted, so parallel requests cannot pass a limit. Over a limit, a resend gets 429
   `too-soon` with `Retry-After`; a reset request still gets its 202 and sends nothing; a sign-up
@@ -220,16 +224,16 @@ docker compose exec fitness-api fp-admin revoke-sessions alice
 
 ## 6. Configuration
 
-| Variable         | Default               | Meaning                                                                 |
-| ---------------- | --------------------- | ----------------------------------------------------------------------- |
-| `DATA_DIR`       | `/data`               | holds `fitness.db` and `backup/`                                        |
-| `PUBLIC_ORIGIN`  | (required)            | e.g. `https://fitness.itsa-pizza.com`; checked on writes, used in links |
-| `COOKIE_SECURE`  | `true`                | `false` for plain-http local runs; the cookie is then `session`         |
-| `BACKUP_KEEP`    | `7`                   | daily copies kept in `$DATA_DIR/backup/`                                |
-| `MAX_USERS`      | `50`                  | sign-up closes once this many accounts exist; `0` turns sign-up off     |
-| `RESEND_API_KEY` | (unset)               | turns mail on (§4.1); a key with sending access is enough. Never logged |
-| `MAIL_FROM`      | (required with a key) | the From line, `Name <address>` on a domain verified in Resend          |
-| `MAIL_PER_HOUR`  | `30`                  | emails of every kind, across all accounts, in any rolling hour          |
+| Variable         | Default               | Meaning                                                                   |
+| ---------------- | --------------------- | ------------------------------------------------------------------------- |
+| `DATA_DIR`       | `/data`               | holds `fitness.db` and `backup/`                                          |
+| `PUBLIC_ORIGIN`  | (required)            | e.g. `https://fitness.itsa-pizza.com`; checked on writes, used in links   |
+| `COOKIE_SECURE`  | `true`                | `false` for plain-http local runs; the cookie is then `session`           |
+| `BACKUP_KEEP`    | `7`                   | daily copies kept in `$DATA_DIR/backup/`                                  |
+| `MAX_USERS`      | `50`                  | sign-up closes once this many accounts exist; `0` turns sign-up off       |
+| `RESEND_API_KEY` | (unset)               | turns mail on (§4.1); a key with sending access is enough. Never logged   |
+| `MAIL_FROM`      | (required with a key) | the From line, `Name <address>` on a domain verified in Resend            |
+| `MAIL_PER_HOUR`  | `30`                  | emails of every kind, across all accounts, in any rolling hour; 1 or more |
 
 ## 7. Backups
 
@@ -253,6 +257,12 @@ Reviewed and kept on purpose, for a small service with open sign-up (D9 in
   blocks such an account or `fp-admin reset` hands it over.
 - **An inbox can reset the password.** Whoever controls an account's email can choose a new
   password from it, as on most sites. The link lasts an hour, works once, and ends every session.
+- **Strangers can spend the email limits.** Anyone who knows an address can ask for its resets:
+  five a day stop that account's own requests for up to 24 hours, and enough accounts can
+  use up `MAIL_PER_HOUR`, after which sign-ups go without their confirm email for the hour. Links
+  already sent keep working. And an existing account's request writes to the database where a
+  missing one only reads, so its reply can be a few milliseconds slower: a statistical hint, not
+  an answer.
 - **Resend sees the addresses and the links.** Every email passes through Resend (EU region), with
   its reset or confirm link in it. A leaked reset link from their logs would be good for at most
   an hour, and only until used.

@@ -25,10 +25,10 @@ def _flag(env: Mapping[str, str], name: str, default: bool) -> bool:
     return raw.lower() == "true"
 
 
-def _count(env: Mapping[str, str], name: str, default: int) -> int:
+def _count(env: Mapping[str, str], name: str, default: int, least: int = 0) -> int:
     raw = env.get(name, str(default))
-    if not raw.isdigit():
-        raise ValueError(f"{name} must be a whole number of 0 or more, not {raw!r}")
+    if not raw.isdigit() or int(raw) < least:
+        raise ValueError(f"{name} must be a whole number of {least} or more, not {raw!r}")
     return int(raw)
 
 
@@ -98,5 +98,6 @@ class Config:
             max_users=_count(env, "MAX_USERS", 50),
             resend_api_key=key,
             mail_from=sender,
-            mail_per_hour=_count(env, "MAIL_PER_HOUR", 30),
+            # At least one: the limit is a cap, and 0 would make every reset request fail.
+            mail_per_hour=_count(env, "MAIL_PER_HOUR", 30, least=1),
         )

@@ -187,7 +187,7 @@ describe('confirming an email', () => {
     await button('Send it again')!.trigger('click')
     await flushPromises()
     expect(wrapper.get('[data-testid="email-status"]').text()).toContain(
-      'An email went a moment ago. Try again in one minute.',
+      'Can’t send another email yet. Try again in one minute.',
     )
     expect(button('Send it again')).toBeDefined()
   })
@@ -312,13 +312,13 @@ describe('confirming an email', () => {
 describe('problems', () => {
   it('words the new refusals', () => {
     expect(describeProblem({ code: 'too-soon', retryAfter: 600 })).toBe(
-      'An email went a moment ago. Try again in ten minutes.',
+      'Can’t send another email yet. Try again in ten minutes.',
     )
     expect(describeProblem({ code: 'too-soon', retryAfter: 3 * 3600 })).toBe(
-      'An email went a moment ago. Try again in three hours.',
+      'Can’t send another email yet. Try again in three hours.',
     )
     expect(describeProblem({ code: 'too-soon' })).toBe(
-      'An email went a moment ago. Try again in one minute.',
+      'Can’t send another email yet. Try again in one minute.',
     )
     expect(describeProblem({ code: 'confirmed' })).toBe('Your email is already confirmed.')
     expect(describeProblem({ code: 'mail-off' })).toBe(

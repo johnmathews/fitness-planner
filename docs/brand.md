@@ -188,6 +188,7 @@ before editing here.
    `src/styleguide/sections.ts`, showing every state from the card.
 4. Publish the card to the artifact as in §9.
 
-The EmailLayout card is the one exception to steps 2 and 3: an email is not app UI, so it has no
-Vue primitive or style guide section. Its code is `api/src/fitness_planner_api/emails.py`, which
+The EmailLayout card is the one exception to steps 1 to 3: its preview reverses step 1's rule, with
+the light theme's values written inline and no `var(--token)` (email clients read neither; the gate
+checks it), and an email is not app UI, so it has no Vue primitive or style guide section. Its code is `api/src/fitness_planner_api/emails.py`, which
 writes the card's preview; a test fails when the two differ.

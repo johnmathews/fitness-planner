@@ -255,7 +255,9 @@ def mint_link(
     *,
     mailed: bool = False,
 ) -> str:
-    """A new invite or reset token; earlier unused links of that kind for the name stop working.
+    """A new invite or reset token. Earlier unused `fp-admin` links of that kind for the name stop
+    working; a mailed reset leaves every other link alone, since anyone can ask for one and must
+    not be able to cancel a link already sent.
 
     A `mailed` reset went to the account's email, so it lasts `mail_reset_minutes` and using it
     confirms the address."""
@@ -269,10 +271,12 @@ def mint_link(
             raise AuthError("exists")
         if kind == "reset" and existing is None:
             raise AuthError("no-user")
-        conn.execute(
-            "DELETE FROM invites WHERE username = ? AND kind = ? AND used_at IS NULL",
-            (username, kind),
-        )
+        if not mailed:
+            conn.execute(
+                "DELETE FROM invites"
+                " WHERE username = ? AND kind = ? AND used_at IS NULL AND mailed = 0",
+                (username, kind),
+            )
         token = secrets.token_urlsafe(32)
         if kind == "invite":
             lifetime = config.invite_days * DAY

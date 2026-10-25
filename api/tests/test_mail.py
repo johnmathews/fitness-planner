@@ -403,3 +403,20 @@ def test_the_app_builds_a_resend_mailer_from_config(mail_config: Config) -> None
         create_app(replace(mail_config, resend_api_key=None), run_backups=False).state.mailer
         is None
     )
+
+
+def test_a_new_reset_request_leaves_earlier_links_working(
+    mail_client: TestClient, mailer: RecordingMailer, mail_config: Config, clock: Clock
+) -> None:
+    """Anyone can ask for a reset for any address; that must not cancel a link already sent,
+    nor one `fp-admin` handed over."""
+    sign_up(mail_client)
+    conn = connect(mail_config.db_path)
+    admin = auth.mint_link(conn, mail_config, "reset", "sam@example.com")
+    conn.close()
+    forgot(mail_client, "sam@example.com")
+    clock.advance(60)
+    forgot(mail_client, "sam@example.com")
+    first, second = (token_in(m, "reset") for m in mailer.sent if m.kind == "reset")
+    for token in (admin, first, second):
+        assert mail_client.post("/api/invites/lookup", json={"token": token}).status_code == 200

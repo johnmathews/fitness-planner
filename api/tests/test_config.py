@@ -96,3 +96,9 @@ def test_a_key_needs_a_sender(sender: str | None) -> None:
         env["MAIL_FROM"] = sender
     with pytest.raises(ValueError, match="MAIL_FROM"):
         Config.from_env(env)
+
+
+def test_mail_per_hour_must_allow_one() -> None:
+    env = {"PUBLIC_ORIGIN": "https://f.example", "MAIL_PER_HOUR": "0"}
+    with pytest.raises(ValueError, match="MAIL_PER_HOUR"):
+        Config.from_env(env)

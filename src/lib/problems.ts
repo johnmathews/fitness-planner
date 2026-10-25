@@ -38,7 +38,7 @@ export function describeProblem(p: AuthProblem): string {
         wait > 3600
           ? countOf(Math.ceil(wait / 3600), 'hour')
           : countOf(Math.max(1, Math.ceil(wait / 60)), 'minute')
-      return `An email went a moment ago. Try again in ${when}.`
+      return `Can’t send another email yet. Try again in ${when}.`
     }
     case 'confirmed':
       return 'Your email is already confirmed.'

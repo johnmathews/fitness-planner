@@ -58,4 +58,4 @@ The planner sends two emails, both in the EmailLayout card, both from "Fitness P
 | This link expires in 60 minutes | The link works once, for one hour. |
 | If you did not request this, please contact support | If you didn’t ask, ignore this email. Your password stays as it is. |
 | Email sent! | A new link is on its way to sam@example.com. |
-| Please wait before requesting another email | An email went a moment ago. Try again in one minute. |
+| Please wait before requesting another email | Can’t send another email yet. Try again in one minute. (It doesn't say why: a minute's gap, five a day, or the whole planner's hour.) |

@@ -118,9 +118,10 @@ on:
 
 1. In Resend, add the sending domain (a subdomain, such as `updates.itsa-pizza.com`, keeps the
    root domain's mail reputation apart) in region **eu-west-1**.
-2. Add the records Resend shows in Cloudflare, all **DNS only**: a TXT at `resend._domainkey` (DKIM),
-   and an MX and a TXT (SPF) at `send` (for the subdomain, `send.updates`). Wait until Resend says
-   the domain is verified.
+2. Add the records Resend shows in Cloudflare, all **DNS only**, with the names exactly as Resend
+   gives them: a TXT for DKIM and an MX and a TXT (SPF) for bounces. For the root domain they are
+   `resend._domainkey` and `send`; for a subdomain they carry it, such as `resend._domainkey.updates`
+   and `send.updates`. Wait until Resend says the domain is verified.
 3. Create an API key with **sending access**, limited to that domain, and keep it in the
    home-server vault; the compose template passes it to `fitness-api` with
    `MAIL_FROM=Fitness Planner <planner@updates.itsa-pizza.com>`.
