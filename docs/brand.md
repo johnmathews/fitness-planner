@@ -203,3 +203,19 @@ The EmailLayout card is the one exception to steps 1 to 3: its preview reverses 
 the light theme's values written inline and no `var(--token)` (email clients read neither; the gate
 checks it), and an email is not app UI, so it has no Vue primitive or style guide section. Its code is `api/src/fitness_planner_api/emails.py`, which
 writes the card's preview; a test fails when the two differ.
+
+## 11. Mockups
+
+A visual change starts as a mockup and waits for John's pick before any code changes. Each
+question gets a folder in `brand/design-system/mockups/<yymmdd>-<slug>/`:
+
+| File         | Contents                                                                                                                |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `index.html` | The options, built from the system's tokens, fonts and card CSS, each in light and dark side by side, contrast measured |
+| `README.md`  | The question, the options, the decision (and its ID in [decisions.md](decisions.md)) and the private artifact's link    |
+| `dist/`      | The build that is published and rendered; git-ignored                                                                   |
+
+The design-system skill's `references/mockups.md` has the loop and its commands: `mockup.py new`
+starts one, `mockup.py build` and `render_mockup.mjs` render it at desktop and phone width in both
+themes, and the build is published as a private artifact that John picks from and comments on.
+The first one, `261025-pen-partial-yellow`, records the choice of yellow (K18).
