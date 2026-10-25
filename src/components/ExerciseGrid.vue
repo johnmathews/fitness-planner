@@ -61,7 +61,12 @@ watch(
      the first screen: the slot's messages and the page's h1 at its top, the way on to Food at its
      foot. -->
 <template>
-  <section aria-labelledby="exercises-heading" class="pt-8 print:pt-4" :class="SCREEN">
+  <section
+    aria-labelledby="exercises-heading"
+    class="pt-8 print:pt-4"
+    :class="SCREEN"
+    data-planner-screen
+  >
     <slot />
     <SectionHeader title="Exercises" heading-id="exercises-heading" :week="store.label" />
     <TrackerGrid

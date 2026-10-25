@@ -82,3 +82,12 @@ build and push with the bar along the top (N1, K37); the sidebar stays a mockup.
 Lint, types, the unit tests, 39 e2e tests (axe on the folded week and on the bar called up, no
 sideways scroll at 375px, the folded grid walked by keyboard), the design gate, and screenshots of
 the real app at 1440×900, 1280×800, iPad both ways, 844×390 and 390×844/664, in both themes.
+
+## After the release (2026-10-26)
+
+John asked for the underline to be thicker and drawn by hand (K39), and for long trackers to scroll
+normally while the page never rests showing both (K38). An e2e test with fifteen exercises showed
+the shipped CSS snapping was worse than expected: a mouse wheel at the end of a tall screen snapped
+back and could never reach Food. A small script now does the job: once the scroll stops across the
+line between two screens, it sprints on in the direction of travel. The sidebar stays unbuilt: John
+kept the top bar.

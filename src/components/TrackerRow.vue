@@ -7,13 +7,6 @@ export const CELL = {
   /** A row's rule, on screen and on paper alike. */
   rule: 'screen:border-b screen:border-line',
 }
-
-/**
- * A day that met the daily pick (K35): a 6px pen line along the foot of its column, inset from the
- * column's edges so neighbouring days' lines stay apart. On paper too.
- */
-const MET_LINE =
-  'relative after:absolute after:inset-x-[12%] after:bottom-0 after:h-1.5 after:rounded-t-[3px] after:bg-pen'
 </script>
 
 <script setup lang="ts">
@@ -24,7 +17,7 @@ import type { Mark, MarkSet } from '@/lib/storage'
 import type { Tracked } from '@/lib/tracker'
 import { useConfirm } from '@/composables/useConfirm'
 import { Chip } from '@/components/ui/chip'
-import { DayMark } from '@/components/ui/day-mark'
+import { DayMark, MET_UNDERLINES } from '@/components/ui/day-mark'
 import { IconButton } from '@/components/ui/icon-button'
 
 const props = defineProps<{
@@ -45,8 +38,8 @@ const props = defineProps<{
   /** How the marks are drawn: the device's mark set. The squiggles when not given. */
   markSet?: MarkSet
   /**
-   * Exercises only: the days that reach the daily pick. On the grid's last row their cells draw the
-   * bold pen line along the foot of the column (K35).
+   * Exercises only: the days that reach the daily pick. On the grid's last row their cells draw a
+   * hand-drawn green underline below the column (K39).
    */
   metDays?: boolean[]
   /** The grid's last row, which carries the met days' lines. */
@@ -167,7 +160,7 @@ async function remove(event: MouseEvent): Promise<void> {
       :key="d.key"
       role="gridcell"
       class="p-0 align-middle screen:[container-type:size] folded:row-(--box-row) folded:h-(--grid-box-h)"
-      :class="[CELL.rule, last && metDays?.[i] && MET_LINE]"
+      :class="[CELL.rule, { relative: last && metDays?.[i] }]"
     >
       <DayMark
         :name="item.name"
@@ -178,6 +171,17 @@ async function remove(event: MouseEvent): Promise<void> {
         fill
         @toggle="emit('toggle', i)"
       />
+      <!-- A met day's underline (K39): a green marker stroke under the column, below the last box. -->
+      <svg
+        v-if="last && metDays?.[i]"
+        data-slot="met-underline"
+        aria-hidden="true"
+        viewBox="0 0 100 16"
+        preserveAspectRatio="none"
+        class="pointer-events-none absolute -bottom-2.5 left-[6%] h-[max(18px,calc(var(--u)*24))] w-[88%] overflow-visible fill-pen folded:-bottom-1.5 folded:h-3"
+      >
+        <path :d="MET_UNDERLINES[i % MET_UNDERLINES.length]" />
+      </svg>
     </td>
     <td
       v-if="configMode"

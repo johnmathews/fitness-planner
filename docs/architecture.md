@@ -260,7 +260,7 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   one tab stop (§6.5).
 - **One screen per section, not a window.** The handoff drew the app as a macOS window (traffic
   lights, a framed window on a backdrop). The app fills the browser instead: Exercises and Food are
-  a screen each, the scroll snaps between them, and the navbar keeps out of sight until it is
+  a screen each, the page sprints between them, and the navbar keeps out of sight until it is
   wanted (K24, K25; §6.6). Edit plan and Settings are ordinary pages with a sticky navbar and a
   centred content column (K27). The navbar keeps the week controls, Settings and Print….
 - **Light and dark themes.** The handoff is dark-only. Settings offers System (the default, which
@@ -434,9 +434,12 @@ first grid that has today. Tabbing to it brings the navbar into view on the plan
 ### 6.6 The planner's screens
 
 `App.vue` puts `planner-screens` on `<html>` while the planner shows outside Edit plan (K27). That
-class turns on the page's `scroll-snap-type: y mandatory` and main.css's `full:` variant. With it,
-each section is a screen (`SCREEN` in `src/lib/screens.ts`: `min-h-dvh`, `snap-start`, a centred
-column) and its grid takes the height left (`SCREEN_GRID`). Four custom variants in main.css carry
+class turns on main.css's `full:` variant. With it, each section is a screen (`SCREEN` in
+`src/lib/screens.ts`: `min-h-dvh`, a centred column, and `data-planner-screen`) and its grid takes
+the height left (`SCREEN_GRID`). `useScreenSprint` (`src/composables/screenSprint.ts`) keeps the
+page from resting across two screens: 120ms after a scroll stops, `sprintTarget` sends it on in the
+direction of travel (K38). It replaced `scroll-snap-type: y mandatory`, which a mouse wheel couldn't
+cross from the end of a tall screen. Four custom variants in main.css carry
 the layout, all screen-only so paper keeps the table: `screen:` (the WeekGrid is a CSS grid),
 `full:`, `folded:` (upright under 1000px wide, or under 760px wide) and `short:` (landscape, 540px
 tall or less).
