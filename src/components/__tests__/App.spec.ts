@@ -15,7 +15,11 @@ const NOW = new Date(2026, 9, 23, 18, 0)
 let wrapper: VueWrapper
 let api: FakeApi
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  // The Settings page lives at #/settings; each test starts on the week.
+  history.replaceState(null, '', '/')
+})
 
 /** Mount the app signed in as alice, with `cache` as her data on this device. */
 function mountApp(cache?: SyncState): VueWrapper {
@@ -80,13 +84,21 @@ async function answer(name: string): Promise<void> {
 function settingsButton() {
   return wrapper.get('button[aria-label="Settings"]')
 }
+/** Back from the Settings page to the week, as its link goes. */
+async function backToWeek(): Promise<void> {
+  location.hash = '#/'
+  await settle()
+}
+
+/** Opens the Settings page from the bar, coming back to the week first if it is already open. */
 async function openSettings(): Promise<void> {
+  if (location.hash === '#/settings') await backToWeek()
   await settingsButton().trigger('click')
   await settle()
 }
 
-/** The Settings popover's panel: a dialog (Reka Popover), rendered in place after the button. */
-const PANEL = '[role="dialog"][data-slot="popover-content"]'
+/** The Settings page (#/settings). */
+const PANEL = '[data-testid="settings-page"]'
 
 /** An ink in the InkPicker: a radio named by its visible name. */
 function inkRadio(name: string) {
@@ -217,7 +229,7 @@ describe('App', () => {
     expect(toggle.text()).toBe('Show weekly totals')
     expect(toggle.attributes('aria-checked')).toBe('true')
     await toggle.trigger('click')
-    await flushPromises()
+    await backToWeek()
     expect(totals()).toEqual([false, false])
     expect(JSON.parse(localStorage.getItem('fitness-planner-settings-v1')!)).toMatchObject({
       showTotals: false,
@@ -387,12 +399,24 @@ describe('SettingsPopover', () => {
   })
   afterEach(() => wrapper?.unmount())
 
-  it('opens, changes the ink and daily pick live, and closes on Escape', async () => {
+  it('opens as a page, changes the ink and daily pick live, and goes back to the week', async () => {
     mountApp()
     expect(wrapper.find(PANEL).exists()).toBe(false)
     await openSettings()
-    expect(settingsButton().attributes('aria-expanded')).toBe('true')
-    expect(wrapper.get(PANEL).get('h2').text()).toBe('Settings')
+    expect(location.hash).toBe('#/settings')
+    const heading = wrapper.get(PANEL).get('h1')
+    expect(heading.text()).toBe('Settings')
+    expect(document.activeElement).toBe(heading.element)
+    expect(
+      wrapper
+        .get(PANEL)
+        .findAll('h2')
+        .map((h) => h.text()),
+    ).toEqual(['Appearance', 'Planner', 'Your data', 'Account'])
+    // The week is off screen, and the bar holds only the wordmark.
+    expect(wrapper.find('[data-testid="exercise-grid"]').exists()).toBe(false)
+    expect(wrapper.find('nav[aria-label="Week"]').exists()).toBe(false)
+    expect(wrapper.find('button[role="switch"][aria-label="Edit plan"]').exists()).toBe(false)
     // Nothing saved yet: Ink blue, although the stored default accent is the old green.
     expect(inkRadio('Ink blue').attributes('aria-checked')).toBe('true')
     expect(pen()).toEqual(INK_BLUE)
@@ -405,53 +429,20 @@ describe('SettingsPopover', () => {
 
     await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
     expect(dailyPick()).toBe('4')
+
+    expect(wrapper.get(PANEL).get('a[href="#/"]').text()).toBe('Back to the week')
+    await backToWeek()
+    expect(wrapper.find(PANEL).exists()).toBe(false)
     expect(ex().get('tfoot [role="rowheader"]').text()).toBe('Picked4 a day')
     expect(ex().findAll('[data-testid="day-count"]')[0]!.text()).toBe('0')
-
-    const violet = inkRadio('Violet').element as HTMLElement
-    violet.focus()
-    violet.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-    await settle()
-    expect(wrapper.find(PANEL).exists()).toBe(false)
     expect(document.activeElement).toBe(settingsButton().element)
   })
 
-  it('closes when Tab moves focus out of it, onto the next control on the page (F14)', async () => {
+  it('opens straight from a #/settings address', async () => {
+    history.replaceState(null, '', '/#/settings')
     mountApp()
-    await openSettings()
-    const panel = document.getElementById(settingsButton().attributes('aria-controls')!)!
-    const tabbable = [
-      ...document.querySelectorAll<HTMLElement>('button, input, [tabindex="0"]'),
-    ].filter((el) => !el.hasAttribute('disabled'))
-    const last = tabbable.filter((el) => panel.contains(el)).at(-1)!
-    // The first control after the panel in the page's order: where Tab goes from its last one.
-    const next = tabbable.find(
-      (el) =>
-        !panel.contains(el) && panel.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING,
-    )!
-    last.focus()
-    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })
-    last.dispatchEvent(tab)
-    if (!tab.defaultPrevented) next.focus()
     await settle()
-    expect(settingsButton().attributes('aria-expanded')).toBe('false')
-    expect(wrapper.find(PANEL).exists()).toBe(false)
-    // Focus stays where Tab sent it: the next control in the Header, not back in the panel.
-    expect(document.activeElement).toBe(next)
-    expect(next.textContent).toBe('Print…')
-  })
-
-  it('closes on an outside pointerdown but not on one inside', async () => {
-    mountApp()
-    await openSettings()
-    const press = () => new PointerEvent('pointerdown', { bubbles: true, button: 0 })
-    wrapper.get(PANEL).get('h2').element.dispatchEvent(press())
-    await settle()
-    expect(wrapper.find(PANEL).exists()).toBe(true)
-    document.body.dispatchEvent(press())
-    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-    await settle()
-    expect(wrapper.find(PANEL).exists()).toBe(false)
+    expect(wrapper.get(PANEL).get('h1').text()).toBe('Settings')
   })
 
   it('disables the daily-pick buttons at the 1–8 bounds', async () => {
@@ -589,12 +580,13 @@ describe('export and import', () => {
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
       'Adds two weekly plans and three ticks. Existing plans and ticks stay as they are.',
     )
-    expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('false')
+    expect(usePlannerStore().isDone('sq', 0)).toBe(false)
 
     await button('Import').trigger('click')
     await flushPromises()
     expect(wrapper.get('[role="status"]').text()).toBe('Imported.')
     expect(wrapper.find('[data-testid="import-summary"]').exists()).toBe(false)
+    await backToWeek()
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('true')
     expect(rowCells('Push-ups')[4]!.attributes('aria-pressed')).toBe('true')
     expect(rowCells('Eggs')[2]!.attributes('aria-pressed')).toBe('true')
@@ -673,6 +665,7 @@ describe('export and import', () => {
     await choose(jsonFile(EXPORT))
     await button('Cancel').trigger('click')
     expect(wrapper.find('[data-testid="import-summary"]').exists()).toBe(false)
+    await backToWeek()
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('false')
     expect(localStorage.getItem('fitness-planner-v2')).toBeNull()
   })

@@ -245,7 +245,7 @@ listed in [api.md](api.md) §10):
 - `src/components/__tests__/App.spec.ts`: the mounted app in jsdom. Covers rendering, the today
   column, cell toggling and `aria-pressed`, the goal stepper and its bounds,
   navigation, confirm-before-remove, print, the visibility and one-minute clock refresh, another
-  tab's writes to the cache, the add form, the settings popover including focus return, the ink (the pen variables per K3a), and the
+  tab's writes to the cache, the add form, the Settings page (the hash, focus on arrival and on the way back), the ink (the pen variables per K3a), and the
   theme: the `dark` class following the OS (with a stubbed `matchMedia`), the theme control and
   its persistence. Also the weight and sets fields, the edit dialog (found by `role="dialog"` on
   `document.body`, where Reka's portal renders it), normal mode hiding every editing control, export (with

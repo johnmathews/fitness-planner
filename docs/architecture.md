@@ -41,10 +41,10 @@ App.vue                 picks the screen (link, planner or sign-in), the pen var
 ├── LoginForm.vue       username and password; explains refusals; notes an ended session
 │   (both inside AuthCard.vue: a centred Panel with the BrandMark)
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
-│   │                   the Edit plan Switch, Settings and Print…
-│   └── SettingsPopover.vue   Popover: theme (SegmentedControl), Ink (InkPicker), Exercises a day
-│                             (Stepper), Show weekly totals (Switch), Export and Import… (see §4),
-│                             who is signed in, Sign out
+│                       the Edit plan Switch, Settings (to the Settings page) and Print…
+├── SettingsPage.vue    the SettingsPage card, at #/settings: Back to the week, then Appearance
+│                       (Theme, Ink), Planner (Exercises a day, Show weekly totals), Your data
+│                       (Export and Import…, see §4) and Account (who is signed in, Sign out)
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
 ├── TodayList.vue       phones only (below 640px), the first view: today's exercises and foods,
@@ -224,7 +224,7 @@ Confirming sends the file to `POST /api/import` (`sync.importFile`): the server 
 the account's real state in one transaction, and the app then reads the account afresh (after any
 read already in flight, which predates the import). Local writes still queued go out first, so the
 server merges against everything this device has; if they cannot be sent, nothing is imported. When
-the import cannot be done, the popover says why (offline, a server failure, an ended session) and
+the import cannot be done, the Settings page says why (offline, a server failure, an ended session) and
 keeps the file ready to try again. The confirm step names how many weeks and ticks the file adds
 (`mergeSummary`, through `useImportSummary`, which the first-login prompt shares) before anything
 is written. It is computed from the current state, so it stays right if another tab or a settings
@@ -251,12 +251,15 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   `<html>`; `public/theme-init.js` applies the saved choice before first paint so a dark preference
   does not flash light while the bundle loads. It is a plain file rather than an inline script
   because the nginx CSP allows scripts only from `'self'`.
-- **Settings popover.** The handoff calls accent and daily pick user settings but shows no UI for
-  them. The popover (the Popover primitive, on Reka UI) adds one, plus the theme. The accent is a
-  choice of four inks, Ink blue by default, and the stored value keeps its old format (K3a,
-  [brand.md](brand.md) §4). The popover closes when focus leaves it, on Escape and on an outside
-  click, and returns focus to the trigger. The theme and per-side choices are SegmentedControls:
-  `aria-pressed` buttons in a `role="group"`.
+- **Settings page.** The handoff calls accent and daily pick user settings but shows no UI for
+  them. Settings started as a popover and became a page of its own (`SettingsPage.vue`, at
+  `#/settings`) so it has room to grow. App reads the hash (as it does for invite and reset links)
+  and shows the page in place of the week; the Header then holds only the wordmark. Arriving moves
+  focus to the page's heading, and coming back to the week puts it on the Settings button. Signing
+  out there drops the hash, so the next sign-in opens on the week. The accent is a choice of four
+  inks, Ink blue by default, and the stored value keeps its old format (K3a, [brand.md](brand.md)
+  §4). The theme and per-side choices are SegmentedControls: `aria-pressed` buttons in a
+  `role="group"`.
 - **Config mode and normal mode.** Normal mode, the default on every load, only ticks cells. The
   "Edit plan" Switch in the navbar (a `role="switch"` button) turns on config mode, which shows the
   edit and remove IconButtons, the add forms and "Copy plan to next week". An item is changed only
@@ -288,7 +291,7 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **Print is black on white in either theme** (§6.7).
 - **Narrow screens.** Below 640px the navbar drops Print…, shortens the switch's visible label to
   "Edit" (its accessible name stays "Edit plan"), and wraps "This week" and the switch to a second
-  row at the right, leaving the brand mark, the arrows, the week and Settings on the first; below
+  row at the right, leaving the brand mark, the centred arrows and week, and Settings on the first; below
   480px the wordmark becomes the "FP" monogram. Settings is a gear IconButton named "Settings" at
   every width. The markup keeps the desktop order, which is the tab order. Below 640px the app
   opens on the **Today list** (brand spec K5): today's exercises and foods, each with one DayMark,
@@ -379,7 +382,7 @@ true for the verb, false for Cancel or Escape. One `<ConfirmHost />`, mounted on
 shows the open question in a ConfirmDialog (Reka's AlertDialog). A newer question answers an older
 one false. `returnFocus` names where focus goes on closing when the control that asked has gone, as
 after a removal. Removing a row (`TrackerRow`) and copying over next week's plan (`WeekHeader`) ask
-this way. Sign out uses a ConfirmDialog of its own in the Settings popover, because it shows the
+this way. Sign out uses a ConfirmDialog of its own on the Settings page, because it shows the
 unsynced count, a busy state and an error.
 
 A question never outlives what it asked about. It is answered false when the component that asked

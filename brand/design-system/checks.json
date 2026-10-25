@@ -17,6 +17,7 @@
     "Dialog",
     "ConfirmDialog",
     "Popover",
+    "SettingsPage",
     "DayMark",
     "WeekGrid",
     "SectionHeader",

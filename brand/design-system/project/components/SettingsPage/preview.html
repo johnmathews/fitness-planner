@@ -1,0 +1,212 @@
+<!-- @dsCard group="Screens" height=1240 subtitle="Settings as a page of its own: appearance, planner, your data, account" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SettingsPage — preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+
+  /* The page: one column at most 576px wide under the app bar, a link back, the heading, then sections. */
+  .stage { border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .bar { display: flex; align-items: center; min-height: 56px; padding: var(--space-1) var(--space-6); border-bottom: 1px solid var(--line); }
+  .wordmark { font-family: var(--font-serif); font-weight: 600; font-size: 20px; line-height: 26px; }
+  .page { max-width: 576px; margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-12); display: flex; flex-direction: column; }
+  .back { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+  .back svg { width: 20px; height: 20px; }
+  .back:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
+  h1 { margin: var(--space-4) 0 0; }
+  section { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-8); }
+  section + section { border-top: 1px solid var(--line); padding-top: var(--space-8); }
+  h2 { margin: 0; }
+  .group { display: flex; flex-direction: column; gap: var(--space-2); }
+  .lede { margin: 0; color: var(--ink-secondary); }
+  .who { margin: 0; color: var(--ink-secondary); }
+  .who span { color: var(--ink); }
+
+  /* SegmentedControl, drawn exactly as its own card: 44px tall, no inset, every segment in label type. */
+  .seg { display: inline-flex; flex-wrap: wrap; align-self: flex-start; box-sizing: border-box; max-width: 100%; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+  .seg button { position: relative; height: 42px; padding: 0 var(--space-4); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); font: 600 14px/20px var(--font-sans); cursor: pointer; text-wrap: nowrap; }
+  .seg button:hover, .seg button.is-hover { background: var(--tile); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
+  .seg button:focus-visible, .seg button.is-focus { z-index: 1; outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .seg button { transition: background-color 120ms ease-out, color 120ms ease-out; }
+  }
+
+  /* InkPicker, drawn as its own card: a radio group of rows, dot + name + check, two columns of two where each row gets 152px, else one column. */
+  .hint { margin: 0; color: var(--ink-secondary); }
+  .inks { display: grid; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); gap: var(--space-1) var(--space-2); }
+  .ink { display: flex; align-items: center; gap: var(--space-3); box-sizing: border-box; min-width: 0; height: 44px; padding: 0 var(--space-2) 0 var(--space-3); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--ink); font: 400 16px/24px var(--font-sans); text-align: left; cursor: pointer; }
+  .ink:hover { background: var(--tile); }
+  .ink .name { flex: 1; min-width: 0; }
+  .ink[aria-checked="true"] .name { font-weight: 600; }
+  .dot { flex: none; width: 24px; height: 24px; border-radius: var(--radius-full); }
+  .ink[aria-checked="true"] .dot { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .ink .tick { flex: none; display: inline-flex; width: 20px; height: 20px; visibility: hidden; }
+  .ink .tick svg { width: 20px; height: 20px; }
+  .ink[aria-checked="true"] .tick { visibility: visible; }
+  .dot.ink-blue { background: var(--ink-blue); }
+  .dot.forest { background: var(--forest); }
+  .dot.violet { background: var(--violet); }
+  .dot.graphite { background: var(--graphite); }
+
+  /* Stepper, drawn as its own card: minus, value, plus in one bordered control, no separators. */
+  .stepper-row { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .stepper { display: inline-flex; align-items: stretch; box-sizing: border-box; height: 44px; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+  .stepper button { display: inline-flex; align-items: center; justify-content: center; width: 44px; padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); cursor: pointer; }
+  .stepper button svg { width: 20px; height: 20px; }
+  .stepper button:hover { background: var(--tile); }
+  .stepper button[aria-disabled="true"] { cursor: default; background: transparent; }
+  .stepper button[aria-disabled="true"] svg { opacity: .4; }
+  .stepper .value { display: flex; align-items: center; justify-content: center; min-width: 48px; padding: 0 var(--space-1); font: 600 17px/24px var(--font-sans); font-variant-numeric: tabular-nums; }
+
+  .btns { display: flex; gap: var(--space-2); }
+  .btn { height: 44px; padding: 0 var(--space-3); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border-radius: var(--radius-md); font: inherit; font-weight: 600; cursor: pointer; background: transparent; color: var(--ink); border: 1px solid var(--control-border); }
+  .btns .btn { flex: 1; }
+  .btn:hover { background: var(--tile); }
+  .btn svg { width: 20px; height: 20px; }
+
+
+  /* Switch, drawn as its own card. */
+  .switch { display: inline-flex; align-items: center; gap: var(--space-3); height: 44px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--ink); font: 400 16px/24px var(--font-sans); cursor: pointer; text-wrap: nowrap; }
+  .switch:hover, .switch.is-hover { background: var(--tile); }
+  .switch:focus-visible, .switch.is-focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .switch:disabled { opacity: .4; cursor: not-allowed; background: transparent; }
+  .track { position: relative; box-sizing: border-box; flex: none; width: 40px; height: 24px; border: 1px solid var(--control-border); border-radius: var(--radius-full); background: transparent; }
+  .thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: var(--radius-full); background: var(--ink-secondary); }
+  .switch[aria-checked="true"] .track { background: var(--ink); border-color: var(--ink); }
+  .switch[aria-checked="true"] .thumb { left: 19px; background: var(--on-ink); }
+
+  .btns .btn { flex: none; }
+  .account .btn { align-self: flex-start; }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) { button { transition: background-color 120ms, color 120ms; } }
+  @media (max-width: 639px) {
+    body { padding: var(--space-4); }
+    .bar { padding: var(--space-1) var(--space-2) var(--space-1) var(--space-4); }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="bar"><span class="wordmark">Fitness Planner</span></div>
+  <main class="page">
+    <a class="back" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back to the week</a>
+    <h1 class="display" tabindex="-1">Settings</h1>
+
+    <section aria-labelledby="s-look">
+      <h2 class="title-2" id="s-look">Appearance</h2>
+    <div class="group">
+      <span class="label" id="g-theme">Theme</span>
+      <div class="seg" role="group" aria-labelledby="g-theme">
+        <button type="button" tabindex="0" aria-pressed="true">System</button>
+        <button type="button" tabindex="-1" aria-pressed="false">Light</button>
+        <button type="button" tabindex="-1" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+    <div class="group">
+      <span class="label" id="g-ink">Ink</span>
+      <p class="caption hint" id="g-ink-hint">The colour of a done mark.</p>
+      <div class="inks" role="radiogroup" aria-labelledby="g-ink" aria-describedby="g-ink-hint">
+        <button type="button" class="ink" role="radio" aria-checked="true" tabindex="0"><span class="dot ink-blue"></span><span class="name">Ink blue</span><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
+        <button type="button" class="ink" role="radio" aria-checked="false" tabindex="-1"><span class="dot forest"></span><span class="name">Forest</span><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
+        <button type="button" class="ink" role="radio" aria-checked="false" tabindex="-1"><span class="dot violet"></span><span class="name">Violet</span><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
+        <button type="button" class="ink" role="radio" aria-checked="false" tabindex="-1"><span class="dot graphite"></span><span class="name">Graphite</span><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
+      </div>
+    </div>
+    </section>
+
+    <section aria-labelledby="s-plan">
+      <h2 class="title-2" id="s-plan">Planner</h2>
+    <div class="group stepper-row">
+      <span class="label" id="g-pick">Exercises a day</span>
+      <div class="stepper" role="group" aria-labelledby="g-pick">
+        <button type="button" aria-label="Fewer exercises a day" data-step="-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /></svg>
+        </button>
+        <output class="value" aria-live="polite" id="pick">3</output>
+        <button type="button" aria-label="More exercises a day" data-step="1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+        </button>
+      </div>
+    </div>
+      <button class="switch" type="button" role="switch" aria-checked="true" style="align-self: flex-start; margin-left: calc(-1 * var(--space-2))">Show weekly totals<span class="track" aria-hidden="true"><span class="thumb"></span></span></button>
+    </section>
+
+    <section aria-labelledby="g-data">
+      <h2 class="title-2" id="g-data">Your data</h2>
+      <p class="lede body">Export saves everything to a file. Import adds a file’s plans and marks to yours and never deletes anything.</p>
+      <div class="btns" role="group" aria-labelledby="g-data">
+        <button type="button" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
+          Export
+        </button>
+        <button type="button" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg>
+          Import…
+        </button>
+      </div>
+    </section>
+
+    <section class="account" aria-labelledby="s-account">
+      <h2 class="title-2" id="s-account">Account</h2>
+      <p class="who body">Signed in as <span>alex</span></p>
+      <button type="button" class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
+        Sign out
+      </button>
+    </section>
+  </main>
+</div>
+<script>
+(() => {
+  const MIN = 1, MAX = 8;
+  const pick = document.getElementById('pick');
+  document.addEventListener('click', (e) => {
+    const seg = e.target.closest('.seg button');
+    if (seg) seg.parentElement.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-pressed', String(b === seg)); b.tabIndex = b === seg ? 0 : -1; });
+    const ink = e.target.closest('.ink');
+    if (ink) {
+      ink.parentElement.querySelectorAll('.ink').forEach((b) => {
+        b.setAttribute('aria-checked', String(b === ink));
+        b.tabIndex = b === ink ? 0 : -1;
+      });
+    }
+    const step = e.target.closest('[data-step]');
+    if (step) {
+      const next = Number(pick.textContent) + Number(step.dataset.step);
+      if (next >= MIN && next <= MAX) pick.textContent = next;
+      document.querySelectorAll('[data-step]').forEach((b) => {
+        const v = Number(pick.textContent);
+        b.setAttribute('aria-disabled', String(b.dataset.step === '-1' ? v <= MIN : v >= MAX));
+      });
+    }
+  });
+  // SegmentedControl: one tab stop; arrow keys move between segments (Reka's roving focus).
+  document.querySelectorAll('.seg').forEach((g) => g.addEventListener('keydown', (e) => {
+    const all = [...g.querySelectorAll('button:not([disabled])')];
+    const i = all.indexOf(e.target);
+    const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (i < 0 || !d) return;
+    e.preventDefault();
+    const next = all[(i + d + all.length) % all.length];
+    all.forEach((b) => (b.tabIndex = b === next ? 0 : -1));
+    next.focus();
+  }));
+  // The inks are one radio group: arrows move and choose, as a native radio group does.
+  document.querySelector('.inks').addEventListener('keydown', (e) => {
+    const all = [...e.currentTarget.querySelectorAll('.ink')];
+    const i = all.indexOf(e.target);
+    const to = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    const next = all[(to + all.length) % all.length];
+    next.focus();
+    next.click();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,19 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ChevronLeft, ChevronRight } from '@lucide/vue'
+import { ChevronLeft, ChevronRight, Settings } from '@lucide/vue'
 import { usePlannerStore } from '@/stores/planner'
 import { weekRange } from '@/lib/dates'
 import { BrandMark } from '@/components/ui/brand-mark'
 import { Button } from '@/components/ui/button'
 import { IconButton } from '@/components/ui/icon-button'
 import { Switch } from '@/components/ui/switch'
-import SettingsPopover from '@/components/SettingsPopover.vue'
+
+defineProps<{
+  /** On the Settings page the bar holds only the wordmark: the page links back to the week. */
+  page?: 'planner' | 'settings'
+}>()
 
 const store = usePlannerStore()
 const otherWeek = computed(() => store.weekKey !== store.currentWeekKey)
 
 function print(): void {
   window.print()
+}
+
+/** Settings is a page of its own (#/settings); App shows it on the hash change. */
+function openSettings(): void {
+  location.hash = '#/settings'
 }
 
 /**
@@ -40,7 +49,8 @@ function skipToToday(): void {
 <!--
   The Header card (brand/design-system/project/components/Header): the wordmark, the week
   navigation at the centre, then "This week" while another week is on screen, the Edit plan
-  switch, Settings and Print. Every target is 44px on a phone. Below 640px the bar keeps the
+  switch, Settings (which opens the Settings page) and Print. On the Settings page the bar holds
+  only the wordmark. Every target is 44px on a phone. Below 640px the bar keeps the
   monogram (under 480px), the centred arrows and week, and Settings on one row, and "This week"
   and the switch take a second row at the right; the markup stays in the desktop order, which is
   the tab order.
@@ -71,7 +81,7 @@ function skipToToday(): void {
         <BrandMark class="max-[479px]:hidden" />
         <BrandMark variant="monogram" class="min-[480px]:hidden" />
       </div>
-      <nav class="flex items-center" aria-label="Week">
+      <nav v-if="page !== 'settings'" class="flex items-center" aria-label="Week">
         <IconButton label="Previous week" @click="store.prevWeek"><ChevronLeft /></IconButton>
         <span
           class="min-w-29 px-2 text-center text-base leading-6 font-semibold whitespace-nowrap tabular-nums"
@@ -82,7 +92,10 @@ function skipToToday(): void {
         </span>
         <IconButton label="Next week" @click="store.nextWeek"><ChevronRight /></IconButton>
       </nav>
-      <div class="flex items-center gap-4 justify-self-end max-sm:contents">
+      <div
+        v-if="page !== 'settings'"
+        class="flex items-center gap-4 justify-self-end max-sm:contents"
+      >
         <div
           class="flex items-center gap-2 max-sm:col-span-3 max-sm:row-start-2 max-sm:justify-self-end sm:gap-4"
         >
@@ -96,7 +109,13 @@ function skipToToday(): void {
             @update:model-value="store.setConfigMode"
           />
         </div>
-        <SettingsPopover class="max-sm:col-start-3 max-sm:row-start-1 max-sm:justify-self-end" />
+        <IconButton
+          label="Settings"
+          class="max-sm:col-start-3 max-sm:row-start-1 max-sm:justify-self-end"
+          data-testid="settings-button"
+          @click="openSettings"
+          ><Settings
+        /></IconButton>
         <!-- Printing from a phone is rare, and the bar has no room for it there. -->
         <Button variant="quiet" size="sm" class="max-sm:hidden" @click="print">Print…</Button>
       </div>
