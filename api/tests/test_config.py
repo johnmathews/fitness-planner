@@ -31,6 +31,7 @@ def test_defaults() -> None:
     assert cfg.cookie_name == "__Host-session"
     assert cfg.backup_keep == 7
     assert (cfg.max_users, cfg.signups_per_hour) == (50, 10)
+    assert cfg.user_quota_bytes == 5 * 1024 * 1024
     assert (cfg.session_days, cfg.invite_days, cfg.reset_hours) == (90, 7, 24)
     assert (cfg.lockout_attempts, cfg.lockout_minutes) == (5, 15)
     assert cfg.clock() > 1_700_000_000

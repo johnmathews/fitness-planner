@@ -86,6 +86,12 @@ rules as stored data, so a bad item drops out rather than failing the write.
 **Ticks** set or clear one day for one item (an item id of 1 to 128 characters), so two devices ticking different days never collide.
 `day` is 0 (Monday) to 6.
 
+**Quota.** Each user may store 5 MiB: the bytes of their plans' JSON plus 64 for each tick row.
+A plan write, a tick that would add a row, or an import that would take the account over it gets
+413 `quota` and changes nothing. Writes that keep usage level or shrink it always succeed, so a full
+account can still change existing ticks and trim its plans. The client drops a refused write with a
+notice (`architecture.md` §7), and an import says the account is full.
+
 **Import** applies the merge rule from `architecture.md` §4: existing weeks keep their plan, ticks
 are OR-ed, and settings apply only when the account has none. It returns what it added, in one
 transaction. A file that fails to parse gets 400 with `json`, `format` or `version`, the same codes

@@ -591,6 +591,8 @@ describe('importFile', () => {
     const { sync } = await start(emptyState())
     api.failNext('POST', '/import', 400, { error: 'format' })
     expect(await sync.importFile(data)).toEqual({ ok: false, code: 'error' })
+    api.failNext('POST', '/import', 413, { error: 'quota' })
+    expect(await sync.importFile(data)).toEqual({ ok: false, code: 'quota' })
     api.failNext('POST', '/import', 500)
     expect(await sync.importFile(data)).toEqual({ ok: false, code: 'server' })
     api.signedIn = null

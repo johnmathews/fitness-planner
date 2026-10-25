@@ -682,6 +682,18 @@ describe('export and import', () => {
     expect(wrapper.get('[role="status"]').text()).toBe('Imported.')
   })
 
+  it('says when the account is full', async () => {
+    mountApp()
+    await openSettings()
+    await choose(jsonFile(EXPORT))
+    api.failNext('POST', '/import', 413, { error: 'quota' })
+    await button('Import').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[role="alert"]').text()).toBe(
+      'Your account is full, so nothing was imported.',
+    )
+  })
+
   it('discards the file on Cancel', async () => {
     mountApp()
     await openSettings()

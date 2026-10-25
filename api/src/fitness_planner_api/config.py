@@ -45,6 +45,8 @@ class Config:
     #: Sign-up closes once this many accounts exist (invited ones count too); 0 turns it off.
     max_users: int = 50
     signups_per_hour: int = 10
+    #: What each user may store, as `data.usage` measures it.
+    user_quota_bytes: int = 5 * 1024 * 1024
     #: Unix seconds; injectable so tests can move time.
     clock: Callable[[], int] = field(default=_now)
 

@@ -23,6 +23,29 @@ from .validate import (
     normalise_portable,
 )
 
+#: What a tick row counts towards the quota: its key and mask, roughly, with the index's share.
+TICK_BYTES = 64
+
+
+class QuotaExceeded(Exception):
+    """A write would take the user over their quota (docs/api.md §3); nothing was changed."""
+
+
+def usage(conn: sqlite3.Connection, user_id: int) -> int:
+    """The bytes of the user's plans' JSON, plus TICK_BYTES for each tick row."""
+    plans = conn.execute(
+        "SELECT coalesce(sum(length(CAST(items_json AS BLOB))), 0) FROM plans WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()[0]
+    ticks = conn.execute("SELECT count(*) FROM ticks WHERE user_id = ?", (user_id,)).fetchone()[0]
+    return int(plans) + TICK_BYTES * int(ticks)
+
+
+def _check_growth(before: int, after: int, quota: int) -> None:
+    # Level or shrinking writes always pass, so a full account can still trim itself.
+    if after > before and after > quota:
+        raise QuotaExceeded
+
 
 class ImportResult(TypedDict):
     weeks: int
@@ -89,9 +112,12 @@ def put_plan(
     week: str,
     raw_items: list[Any],
     rev: int,
+    *,
+    quota: int,
 ) -> PlanSaved | PlanConflict:
     """Store a week's plan if `rev` is current. A stale `rev` conflicts unless the items match."""
     items = normalise_items(section, raw_items)
+    encoded = json.dumps(items)
     with transaction(conn):
         row = conn.execute(
             "SELECT items_json, rev FROM plans WHERE user_id = ? AND section = ? AND week = ?",
@@ -99,11 +125,14 @@ def put_plan(
         ).fetchone()
         current = 0 if row is None else int(row["rev"])
         if rev == current:
+            before = usage(conn, user_id)
+            old_size = 0 if row is None else len(row["items_json"].encode())
+            _check_growth(before, before - old_size + len(encoded.encode()), quota)
             conn.execute(
                 "INSERT INTO plans (user_id, section, week, items_json, rev) VALUES (?, ?, ?, ?, ?)"
                 " ON CONFLICT (user_id, section, week)"
                 " DO UPDATE SET items_json = excluded.items_json, rev = excluded.rev",
-                (user_id, section, week, json.dumps(items), current + 1),
+                (user_id, section, week, encoded, current + 1),
             )
             return PlanSaved(current + 1)
         stored = None if row is None else json.loads(row["items_json"])
@@ -121,16 +150,30 @@ def set_tick(
     item_id: str,
     day: int,
     done: bool,
+    *,
+    quota: int,
 ) -> list[bool]:
-    """Set or clear one day for one item, in one statement; returns the item's seven flags."""
+    """Set or clear one day for one item in one upsert; returns the item's seven flags.
+
+    Only a tick that adds a row can exceed the quota, so only that case pays for the check.
+    """
     bit = 1 << day
-    row = conn.execute(
-        "INSERT INTO ticks (user_id, section, week, item_id, days) VALUES (?, ?, ?, ?, ?)"
-        " ON CONFLICT (user_id, section, week, item_id)"
-        " DO UPDATE SET days = CASE WHEN ? THEN days | ? ELSE days & ~? END"
-        " RETURNING days",
-        (user_id, section, week, item_id, bit if done else 0, done, bit, bit),
-    ).fetchone()
+    key = (user_id, section, week, item_id)
+    with transaction(conn):
+        exists = conn.execute(
+            "SELECT 1 FROM ticks WHERE user_id = ? AND section = ? AND week = ? AND item_id = ?",
+            key,
+        ).fetchone()
+        if exists is None:
+            before = usage(conn, user_id)
+            _check_growth(before, before + TICK_BYTES, quota)
+        row = conn.execute(
+            "INSERT INTO ticks (user_id, section, week, item_id, days) VALUES (?, ?, ?, ?, ?)"
+            " ON CONFLICT (user_id, section, week, item_id)"
+            " DO UPDATE SET days = CASE WHEN ? THEN days | ? ELSE days & ~? END"
+            " RETURNING days",
+            (*key, bit if done else 0, done, bit, bit),
+        ).fetchone()
     return mask_to_days(int(row["days"]))
 
 
@@ -159,10 +202,13 @@ def export_file(conn: sqlite3.Connection, user_id: int, now: int) -> dict[str, A
     }
 
 
-def import_data(conn: sqlite3.Connection, user_id: int, data: ExportData) -> ImportResult:
+def import_data(
+    conn: sqlite3.Connection, user_id: int, data: ExportData, *, quota: int
+) -> ImportResult:
     """Merge a parsed export in, never deleting (architecture.md §4); returns what it added."""
     weeks = ticks = 0
     with transaction(conn):
+        before = usage(conn, user_id)
         for section in SECTIONS:
             incoming = data[section]
             existing = load_tracked(conn, user_id, section)
@@ -189,4 +235,6 @@ def import_data(conn: sqlite3.Connection, user_id: int, data: ExportData) -> Imp
         if data["settings"] is not None and load_settings(conn, user_id) is None:
             put_settings(conn, user_id, dict(data["settings"]))
             applied = True
+        # Raising inside the transaction rolls the whole merge back.
+        _check_growth(before, usage(conn, user_id), quota)
     return {"weeks": weeks, "ticks": ticks, "settings": applied}
