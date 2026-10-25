@@ -22,12 +22,13 @@ Plain, calm and brief, in the second person. Facts first, then the next step. Th
 | 4/3 (over!) | 4, one extra |
 | Sync failed!! | Not synced. Your changes are saved on this device and will sync when you're back online. |
 | Invalid link | This link has expired or was already used. Ask for a new one. (Then, on its own line, a "Go to sign in" link.) |
-| Accounts are by invitation. | New here? Create an account. ("Create an account" is the link.) |
+| Accounts are by invitation. | New here? Create an account ("Create an account" is the link, with no full stop after it) |
 | Email address invalid | Enter an email address, like name@example.com. |
 | Account already exists | There’s already an account for that email. Go to sign in. |
 | Registration disabled | New accounts are closed for now. Ask whoever runs this planner for an invite. |
 | Rate limit exceeded | Too many new accounts at once. Try again in 12 minutes. |
 | Storage quota exceeded | Your account is full, so nothing was imported. |
+| Quota exceeded (on a change) | Your change wasn’t saved. Your account is full, so it was undone here. Ask whoever runs this planner for more room. |
 
 ## Signing in and creating an account
 

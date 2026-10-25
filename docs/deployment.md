@@ -47,8 +47,13 @@ after another, so the peak stays at one hash's 64 MiB. Give the API **`mem_limit
 container's 64m would be killed by the first login.
 
 `docker compose up --build` runs both images locally: the app on `http://localhost:8083` and the API
-on `http://localhost:8000`, with the API's data in the `api-data` volume. Mint a first invite with
+on `http://localhost:8000`, with the API's data in the `api-data` volume. Create a first account at
+`http://localhost:8083/#/signup`, or mint an invite with
 `docker compose exec fitness-api fp-admin invite <name>`.
+
+Sign-up is open by default: anyone who can reach the app can create an account until `MAX_USERS`
+(default 50) exist. Set `MAX_USERS: '0'` on the API to keep it to invites ([api.md](api.md) §4 and
+§6).
 
 ## 2. nginx
 
@@ -116,7 +121,7 @@ in production.
 `scripts/compose-smoke.sh` builds and starts both images with `docker-compose.yml` and checks the
 whole path through nginx:
 
-- a user signs up from an `fp-admin` invite, writes a tick and reads it back;
+- a user redeems an `fp-admin` invite, writes a tick and reads it back;
 - a write from a foreign `Origin` gets 403;
 - with the API stopped, `/api/` answers 502 or 504 within seconds while nginx still serves the app.
 

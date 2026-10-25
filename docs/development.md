@@ -76,7 +76,7 @@ build and coverage output. ESLint also ignores Playwright's `playwright-report/`
   text, never a Unicode glyph or emoji. An icon-only button is an IconButton with a `label`.
 - **Ids.** TextField and TextArea forward `id` (and `inputmode`, `autocomplete`, `data-*`) to the
   real control, and generate an id with Vue's `useId()` when none is given. Pass a fixed `id` only
-  where a test or another element needs it (the sign-in and link forms).
+  where a test or another element needs it (the sign-in, sign-up and link forms).
 - Tests find elements by role, label, `data-testid`, `data-slot` or state attributes (`data-today`,
   `data-tone`, `data-met`, `data-on`, `aria-pressed`, `aria-current`), never by styling classes.
 
@@ -128,13 +128,13 @@ hand.
 clock is fixed to Wednesday 21 October 2026, so every run sees the same week.
 
 - `a11y.spec.ts`: axe (WCAG 2.0–2.2 A and AA plus best practice) on the style guide in both themes and
-  all four inks, and on the app's week view, Edit plan, open Settings, the phone Today view and
-  sign-in, in light and dark; and the focus ring's shape, a solid 2px outline at 2px offset. Two
+  all four inks, and on the app's week view, Edit plan, open Settings, the phone Today view,
+  sign-in, and create an account (empty and with errors showing), in light and dark; and the focus ring's shape, a solid 2px outline at 2px offset. Two
   "dark really is dark" tests guard the audit: on the style guide and on the app, the `.dark` class
   must be set and `--canvas` must differ from light, so a dark audit can never quietly re-run
   light.
-- `phone.spec.ts`: no sideways scroll at 375px on the style guide and in the Today, Week and Edit plan
-  views, and a focused grid cell never sits under the sticky name column.
+- `phone.spec.ts`: no sideways scroll at 375px on the style guide, sign-in, create an account, and
+  the Today, Week and Edit plan views, and a focused grid cell never sits under the sticky name column.
 
 CI (`.github/workflows/ci.yml`) runs three jobs on every pull request and every push to `main`.
 `check` runs lint, format, types, unit tests with coverage, the build, the design gate and
@@ -173,13 +173,14 @@ listed in [api.md](api.md) §10):
 - `src/lib/__tests__/tracker.spec.ts`: the shared tick-per-day helpers (totals, day counts, goals
   met, toggling, ids), including that `toggleDay` changes a reactive log through its proxy.
 - `src/lib/__tests__/api.spec.ts`: how every kind of reply becomes a typed result (success, 204,
-  401 for an ended session versus a wrong password, 409, gateway errors and network failures as
+  401 for an ended session versus a wrong password, a 409 `conflict` versus any other 409 (a
+  refusal with its code), gateway errors and network failures as
   offline, the API's own refusals with `Retry-After`).
 - `src/lib/__tests__/nginx.spec.ts`: reads `nginx.conf`: the CSP is unchanged, and `/api/` proxies
   to `fitness-api:8000` through a variable upstream with the body cap and one `Cache-Control`.
 - `src/lib/__tests__/fakeApi.ts` (a helper, not a spec): an in-memory API installed as `fetch`. It
-  keeps plan revisions and 409s, identical-item creates, single-day ticks, settings, sessions and
-  invite links. Controls let a test go offline, fail the next matching request, `hold()` every
+  keeps plan revisions and 409s, identical-item creates, single-day ticks, settings, sessions,
+  sign-up (`email`, `password` and `exists` refusals) and invite links. Controls let a test go offline, fail the next matching request, `hold()` every
   reply, `holdNext()` one, or `stall()` one forever. `signedIn.ts` sets up a browser already signed
   in as alice: the fake API, the remembered session, and an empty or given cache.
 - `src/lib/__tests__/theme.spec.ts`: theme names and how System, Light and Dark resolve.
@@ -225,19 +226,20 @@ listed in [api.md](api.md) §10):
   - offline queueing, the backing-off retry timer, gateway errors as offline, and 401s handing
     control back;
   - conflicts (taking the server's copy with a notice, re-creating when the server has none, no
-    notice for identical creates), and refused writes being dropped;
+    notice for identical creates), and refused writes being dropped (with the account-full notice
+    for `quota`);
   - reads that must not undo local edits, including one the watcher has not seen;
   - other tabs' cache and outbox writes, stop and forget, the old keys never written, `diff` and
     `normaliseState`;
-  - `importFile`: queued writes first, then one server import and a read; offline, refused, 401,
-    and nobody signed in.
-- `src/lib/__tests__/problems.spec.ts`: the sentence for every sign-in, link and sign-out refusal,
+  - `importFile`: queued writes first, then one server import and a read; offline, refused, a
+    full account (`quota`), 401, and nobody signed in.
+- `src/lib/__tests__/problems.spec.ts`: the sentence for every sign-in, sign-up, link and sign-out refusal,
   including the minutes left on a lockout.
 - `src/lib/__tests__/legacy.spec.ts`: reading the keys from before accounts (v2, the v1 migration,
   the accent and daily pick but never the theme, broken JSON, nothing worth offering).
 - `src/components/__tests__/ImportPrompt.spec.ts`: the first-login prompt through the app: what it
-  offers, Add (merged on the fake server, shown, remembered), Not mine, Later, offline and refused
-  imports, an account that already holds everything, a browser with no earlier log, waiting for
+  offers, Add (merged on the fake server, shown, remembered), Not mine, Later, offline, refused and
+  over-quota imports, an account that already holds everything, a browser with no earlier log, waiting for
   the account's state, and per-user answers.
 - `src/stores/__tests__/session.spec.ts`: sign-in from a remembered user (online, offline, ended), a
   still-valid cookie, switching user, every login refusal, invite links, sign-out forgetting the

@@ -224,7 +224,8 @@ Confirming sends the file to `POST /api/import` (`sync.importFile`): the server 
 the account's real state in one transaction, and the app then reads the account afresh (after any
 read already in flight, which predates the import). Local writes still queued go out first, so the
 server merges against everything this device has; if they cannot be sent, nothing is imported. When
-the import cannot be done, the popover says why (offline, a server failure, an ended session) and
+the import cannot be done, the popover says why (offline, a server failure, an ended session, a
+full account) and
 keeps the file ready to try again. The confirm step names how many weeks and ticks the file adds
 (`mergeSummary`, through `useImportSummary`, which the first-login prompt shares) before anything
 is written. It is computed from the current state, so it stays right if another tab or a settings
@@ -442,8 +443,8 @@ confirms it. A 401 asks them to sign in again, keeping unsent writes; being offl
 working from the cache. With nobody remembered the app waits for the server, then shows the
 sign-in form, which takes an email or a username and links to `#/signup`. That form creates an
 account (`POST /api/auth/signup`) and signs straight in; once anyone is signed in, `App.vue` drops
-`#/signup` from the address. A taken or malformed email and a too-short password show on their
-own fields; a closed sign-up, the hourly limit and connection trouble show once above the button.
+`#/signup` from the address. A taken or malformed email and a password outside 10 to 256 characters
+show on their own fields; a closed sign-up, the hourly limit and connection trouble show once above the button.
 `request` treats only a 409 `conflict` as a plan conflict, so a sign-up's 409 `exists` arrives as
 a refusal like any other. Invite and reset links arrive as `#/invite/<token>` and
 `#/reset/<token>`. The token goes to the API in request bodies only, and the fragment is cleared once the link is used or turns
@@ -472,14 +473,14 @@ the reply to one already in flight removes only that one. Plan and settings oper
 values when sent, so the server always gets the latest. Operations go out one at a time, in order.
 A tick on a week with no plan of its own creates the plan first, as on the device.
 
-| Reply                                               | What happens                                                                           |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| success                                             | dequeued; a plan's new revision is stored                                              |
-| 409 with the server copy                            | that week shows the server's plan, with a notice                                       |
-| 409 with no server plan                             | sent again as a create                                                                 |
-| offline, a timeout, or a 5xx with no API error code | kept; retried after 5 s, doubling to 60 s, and at once when the browser is back online |
-| 401                                                 | kept; the sign-in form appears, and sending resumes after signing in                   |
-| any other refusal                                   | dropped, so one bad write cannot block the rest, with a notice that it was undone      |
+| Reply                                               | What happens                                                                                                                  |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| success                                             | dequeued; a plan's new revision is stored                                                                                     |
+| 409 with the server copy                            | that week shows the server's plan, with a notice                                                                              |
+| 409 with no server plan                             | sent again as a create                                                                                                        |
+| offline, a timeout, or a 5xx with no API error code | kept; retried after 5 s, doubling to 60 s, and at once when the browser is back online                                        |
+| 401                                                 | kept; the sign-in form appears, and sending resumes after signing in                                                          |
+| any other refusal                                   | dropped, so one bad write cannot block the rest, with a notice that it was undone (for 413 `quota`, that the account is full) |
 
 Two devices creating the same week from the same carried plan send identical items, which the API
 accepts without a conflict (P7 in [decisions.md](decisions.md)), so the common case raises no notice.

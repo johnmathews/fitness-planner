@@ -39,7 +39,8 @@
   with **Sign out**.
 - **Accounts and sync.** Anyone can **Create an account** from the sign-in screen with an email and
   a password; people can also be invited by link, with a username. Sign-in takes either. Sign-up
-  closes once `MAX_USERS` accounts exist, and each account may store 5 MiB (`docs/api.md` §4). Plans, ticks, the ink and the daily pick are stored on the
+  closes once `MAX_USERS` accounts exist (`docs/api.md` §4), and each account may store 5 MiB
+  (§3). Plans, ticks, the ink and the daily pick are stored on the
   server and sync across devices; the theme stays with each device. The app opens from a cached
   copy and keeps working offline, sending changes once the connection is back.
 - **Export and import.** Settings → **Export** downloads your plans, ticks, ink and daily pick as
@@ -161,15 +162,15 @@ end to end.
 
 ## 4. Documentation
 
-| Doc                                                                            | Covers                                                              |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| [docs/architecture.md](docs/architecture.md)                                   | Components, stores, storage format, design decisions                |
-| [docs/development.md](docs/development.md)                                     | Toolchain, scripts, conventions, tests                              |
-| [docs/deployment.md](docs/deployment.md)                                       | Docker images, nginx, CI, GHCR publishing                           |
-| [docs/api.md](docs/api.md)                                                     | The API service: endpoints, accounts, CLI, backups                  |
-| [docs/brand.md](docs/brand.md)                                                 | The brand, the design system and how to change them                 |
-| [docs/decisions.md](docs/decisions.md)                                         | Why accounts, sync and the design system are built the way they are |
-| [docs/specs/2026-10-24-brand-design.md](docs/specs/2026-10-24-brand-design.md) | The approved brand spec (Notebook): intent, rules and calls K1–K8   |
-| [design_handoff_exercise_planner/](design_handoff_exercise_planner/README.md)  | The original design spec and HTML prototype                         |
+| Doc                                                                            | Covers                                                                |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| [docs/architecture.md](docs/architecture.md)                                   | Components, stores, storage format, design decisions                  |
+| [docs/development.md](docs/development.md)                                     | Toolchain, scripts, conventions, tests                                |
+| [docs/deployment.md](docs/deployment.md)                                       | Docker images, nginx, CI, GHCR publishing, opening or closing sign-up |
+| [docs/api.md](docs/api.md)                                                     | The API service: endpoints, accounts, CLI, backups                    |
+| [docs/brand.md](docs/brand.md)                                                 | The brand, the design system and how to change them                   |
+| [docs/decisions.md](docs/decisions.md)                                         | Why accounts, sync and the design system are built the way they are   |
+| [docs/specs/2026-10-24-brand-design.md](docs/specs/2026-10-24-brand-design.md) | The approved brand spec (Notebook): intent, rules and calls K1–K8     |
+| [design_handoff_exercise_planner/](design_handoff_exercise_planner/README.md)  | The original design spec and HTML prototype                           |
 
 Development history lives in [`journal/`](journal/).

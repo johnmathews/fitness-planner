@@ -8,6 +8,7 @@ import {
   CACHE_PREFIX,
   CONFLICT_NOTICE,
   OUTBOX_PREFIX,
+  QUOTA_NOTICE,
   REFUSED_NOTICE,
   useSyncStore,
 } from '@/stores/sync'
@@ -779,6 +780,19 @@ describe('sync status', () => {
     expect(notice.get('p').text()).toBe(`Your change wasn’t kept. ${CONFLICT_NOTICE}`)
     await notice.get('button').trigger('click')
     expect(wrapper.find('[data-testid="sync-notice"]').exists()).toBe(false)
+  })
+
+  it('says a change refused for quota was not saved because the account is full', async () => {
+    api = signedIn()
+    mountApp()
+    await flushPromises()
+    useSyncStore().notice = QUOTA_NOTICE
+    await flushPromises()
+    const notice = wrapper.get('[data-testid="sync-notice"]')
+    expect(notice.attributes('data-tone')).toBe('error')
+    expect(notice.get('p').text()).toBe(
+      'Your change wasn’t saved. Your account is full, so it was undone here. Ask whoever runs this planner for more room.',
+    )
   })
 
   it('says a refused change was not saved, and what to do', async () => {

@@ -65,6 +65,8 @@ export type ImportOutcome =
 
 export const CONFLICT_NOTICE =
   'A plan was changed on another device, so this device now shows that version.'
+/** A write refused because the account is at its quota (413 `quota`, docs/api.md §3). */
+export const QUOTA_NOTICE = 'Your account is full, so a change was undone here.'
 export const REFUSED_NOTICE =
   'The server refused a change, so it was undone here. Reload to see what was saved.'
 const FIRST_RETRY = 5_000
@@ -345,7 +347,8 @@ export const useSyncStore = defineStore('sync', () => {
     // keeping it would block every write behind it. Drop it, and say so: the next read will
     // show the server's state without this change.
     console.warn('sync: dropped a refused write', op, error)
-    notice.value = REFUSED_NOTICE
+    notice.value =
+      error.kind === 'refused' && error.code === 'quota' ? QUOTA_NOTICE : REFUSED_NOTICE
     return 'done'
   }
 
