@@ -5,7 +5,7 @@ import sqlite3
 from typing import Literal
 
 from . import auth, emails
-from .auth import DAY, HOUR, MAX_EMAIL, AuthError
+from .auth import DAY, HOUR, AuthError
 from .config import Config
 from .db import transaction
 from .mail import Message
@@ -71,9 +71,7 @@ def confirmation(conn: sqlite3.Connection, config: Config, user_id: int) -> Mess
 def reset(conn: sqlite3.Connection, config: Config, email: str) -> Message | None:
     """The reset message for whoever has this email, or None: nobody does, the account is
     disabled, or a limit is reached. The caller answers the same either way."""
-    email = email.strip().lower()
-    if len(email) > MAX_EMAIL or not auth.EMAIL_RE.fullmatch(email):
-        raise AuthError("email")
+    email = auth.normal_email(email)
     row = conn.execute(
         "SELECT id FROM users WHERE username = ? AND disabled = 0", (email,)
     ).fetchone()

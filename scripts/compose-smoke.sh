@@ -31,10 +31,10 @@ expect_status 200 "$BASE/"
 cc=$(curl -s -D - -o /dev/null "$BASE/api/healthz" | grep -ci '^cache-control: no-store')
 [ "$cc" = 1 ] || fail "expected exactly one Cache-Control: no-store on /api/, got $cc"
 
-token=$(compose exec -T fitness-api fp-admin invite smoke | sed -n 's|.*/#/invite/||p')
+token=$(compose exec -T fitness-api fp-admin invite smoke@example.com | sed -n 's|.*/#/invite/||p')
 [ -n "$token" ] || fail "no invite token"
 body=$(printf '{"token":"%s","password":"correct horse battery"}' "$token")
-[ "$(post -d "$body" "$BASE/api/invites/redeem")" = '{"username":"smoke"}' ] || fail "redeem through nginx"
+[ "$(post -d "$body" "$BASE/api/invites/redeem")" = '{"username":"smoke@example.com"}' ] || fail "redeem through nginx"
 # The body the app sends: a mark, and `done` for an API from before marks had kinds.
 post -X PUT -d '{"mark":"partial","done":true}' "$BASE/api/ticks/exercise/2026-10-19/pu/0" \
   | grep -q '"days":\["partial"' || fail "tick through nginx"

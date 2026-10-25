@@ -33,7 +33,7 @@ def invite(config: Config, name: str) -> str:
         conn.close()
 
 
-def sign_up(client: TestClient, config: Config, name: str = "alice") -> None:
+def sign_up(client: TestClient, config: Config, name: str = "alice@example.com") -> None:
     r = client.post(
         "/api/invites/redeem", json={"token": invite(config, name), "password": PASSWORD}
     )
@@ -182,13 +182,13 @@ def test_data_endpoints_need_a_session(client: TestClient, method: str, path: st
 
 
 def test_invite_lookup_redeem_and_cookie(client: TestClient, config: Config) -> None:
-    token = invite(config, "alice")
+    token = invite(config, "alice@example.com")
     assert client.post("/api/invites/lookup", json={"token": token}).json() == {
         "kind": "invite",
-        "username": "alice",
+        "username": "alice@example.com",
     }
     r = client.post("/api/invites/redeem", json={"token": token, "password": PASSWORD})
-    assert r.json() == {"username": "alice"}
+    assert r.json() == {"username": "alice@example.com"}
     cookie = r.headers["set-cookie"]
     for part in (
         "__Host-session=",
@@ -200,13 +200,13 @@ def test_invite_lookup_redeem_and_cookie(client: TestClient, config: Config) -> 
     ):
         assert part in cookie
     assert "Domain" not in cookie
-    assert client.get("/api/auth/me").json() == {"username": "alice"}
+    assert client.get("/api/auth/me").json() == {"username": "alice@example.com"}
     r = client.post("/api/invites/lookup", json={"token": token})
     assert (r.status_code, r.json()) == (410, {"error": "gone"})
 
 
 def test_redeem_refusals(client: TestClient, config: Config) -> None:
-    token = invite(config, "alice")
+    token = invite(config, "alice@example.com")
     r = client.post("/api/invites/redeem", json={"token": token, "password": "short"})
     assert (r.status_code, r.json()) == (400, {"error": "password"})
     r = client.post("/api/invites/redeem", json={"token": "nope", "password": PASSWORD})
@@ -217,8 +217,8 @@ def test_login_logout(client: TestClient, config: Config) -> None:
     sign_up(client, config)
     client.cookies.clear()
     assert client.get("/api/auth/me").status_code == 401
-    r = client.post("/api/auth/login", json={"username": "ALICE", "password": PASSWORD})
-    assert r.json() == {"username": "alice"}
+    r = client.post("/api/auth/login", json={"username": "ALICE@example.com", "password": PASSWORD})
+    assert r.json() == {"username": "alice@example.com"}
     assert client.get("/api/auth/me").status_code == 200
     r = client.post("/api/auth/logout", json={})
     assert r.status_code == 204
@@ -271,15 +271,17 @@ def test_login_lockout_over_http(client: TestClient, config: Config, clock: Cloc
     sign_up(client, config)
     for _ in range(5):
         r = client.post(
-            "/api/auth/login", json={"username": "alice", "password": "wrong password!"}
+            "/api/auth/login", json={"username": "alice@example.com", "password": "wrong password!"}
         )
         assert (r.status_code, r.json()) == (401, {"error": "invalid"})
-    r = client.post("/api/auth/login", json={"username": "alice", "password": PASSWORD})
+    r = client.post("/api/auth/login", json={"username": "alice@example.com", "password": PASSWORD})
     assert (r.status_code, r.json()) == (423, {"error": "locked", "retryAfter": 900})
     assert r.headers["retry-after"] == "900"
     clock.advance(900)
     assert (
-        client.post("/api/auth/login", json={"username": "alice", "password": PASSWORD}).status_code
+        client.post(
+            "/api/auth/login", json={"username": "alice@example.com", "password": PASSWORD}
+        ).status_code
         == 200
     )
 
@@ -309,7 +311,8 @@ def test_plain_http_config_uses_an_unprefixed_cookie(config: Config, tmp_path: A
         create_app(plain, run_backups=False), headers={"Origin": "http://testserver"}
     ) as c:
         r = c.post(
-            "/api/invites/redeem", json={"token": invite(plain, "alice"), "password": PASSWORD}
+            "/api/invites/redeem",
+            json={"token": invite(plain, "alice@example.com"), "password": PASSWORD},
         )
         cookie = r.headers["set-cookie"]
         assert cookie.startswith("session=") and "Secure" not in cookie
@@ -479,7 +482,7 @@ def test_the_quota_refuses_growth_but_never_level_or_shrinking_writes(
     assert client.put(plan, json={"items": [PUSHUPS], "rev": 0}).status_code == 200
     room = usage(config) + 64  # room for exactly one more tick row
     with other_client(replace(config, user_quota_bytes=room)) as c:
-        c.post("/api/auth/login", json={"username": "alice", "password": PASSWORD})
+        c.post("/api/auth/login", json={"username": "alice@example.com", "password": PASSWORD})
         ticks = f"/api/ticks/exercise/{WEEK}"
         assert c.put(f"{ticks}/pu/0", json={"mark": "great"}).status_code == 200
         assert usage(config) == room
@@ -502,7 +505,7 @@ def test_an_import_over_the_quota_adds_nothing(client: TestClient, config: Confi
     sign_up(client, config)
     sample = read_fixture("sample/export.json")
     with other_client(replace(config, user_quota_bytes=len(json.dumps(sample)) // 4)) as c:
-        c.post("/api/auth/login", json={"username": "alice", "password": PASSWORD})
+        c.post("/api/auth/login", json={"username": "alice@example.com", "password": PASSWORD})
         r = post_import(c, sample)
         assert (r.status_code, r.json()) == (413, {"error": "quota"})
     assert usage(config) == 0
@@ -514,7 +517,7 @@ def test_the_quota_is_per_user(client: TestClient, config: Config) -> None:
     assert client.put(plan, json={"items": [PUSHUPS], "rev": 0}).status_code == 200
     room = usage(config)
     with other_client(replace(config, user_quota_bytes=room)) as c:
-        sign_up(c, config, "bob")
+        sign_up(c, config, "bob@example.com")
         assert c.put(plan, json={"items": [PUSHUPS], "rev": 0}).status_code == 200
     assert usage(config, 2) == room
 
@@ -531,12 +534,12 @@ def test_settings_are_normalised(client: TestClient, config: Config) -> None:
 
 
 def test_users_cannot_see_or_change_each_others_data(client: TestClient, config: Config) -> None:
-    sign_up(client, config, "alice")
+    sign_up(client, config, "alice@example.com")
     client.put(f"/api/plans/exercise/{WEEK}", json={"items": [PUSHUPS], "rev": 0})
     client.put(f"/api/ticks/exercise/{WEEK}/pu/0", json={"mark": "partial"})
     client.put("/api/settings", json={"accent": "#0a84ff", "dailyPick": 5})
     with other_client(config) as bob:
-        sign_up(bob, config, "bob")
+        sign_up(bob, config, "bob@example.com")
         empty: dict[str, dict[str, Any]] = {"plans": {}, "log": {}, "revs": {}}
         assert bob.get("/api/state").json() == {"exercise": empty, "diet": empty, "settings": None}
         assert bob.get("/api/export").json()["exercise"] == {"plans": {}, "log": {}}
@@ -746,12 +749,14 @@ def test_create_app_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> 
 
 def test_a_request_for_another_user_is_refused(client: TestClient, config: Config) -> None:
     """A tab still showing alice must not read or write bob's data with bob's cookie."""
-    sign_up(client, config, "bob")
-    alice = {"X-Expected-User": "alice"}
+    sign_up(client, config, "bob@example.com")
+    alice = {"X-Expected-User": "alice@example.com"}
     assert client.get("/api/state", headers=alice).json() == {"error": "auth"}
     r = client.put(f"/api/ticks/exercise/{WEEK}/pu/0", json={"mark": "great"}, headers=alice)
     assert (r.status_code, r.json()) == (401, {"error": "auth"})
     assert client.get("/api/state").json()["exercise"]["log"] == {}
     # The right user, in any case, is fine; so is no header at all.
-    assert client.get("/api/state", headers={"X-Expected-User": "BOB"}).status_code == 200
-    assert client.get("/api/auth/me").json() == {"username": "bob"}
+    assert (
+        client.get("/api/state", headers={"X-Expected-User": "BOB@example.com"}).status_code == 200
+    )
+    assert client.get("/api/auth/me").json() == {"username": "bob@example.com"}

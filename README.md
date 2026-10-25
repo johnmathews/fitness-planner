@@ -39,7 +39,7 @@
   target (1–8) and whether the weekly totals show, holds export and import, and shows who is signed
   in, with **Sign out**.
 - **Accounts and sync.** Anyone can **Create an account** from the sign-in screen with an email and
-  a password; people can also be invited by link, with a username. Sign-in takes either. Sign-up
+  a password, or be invited by a link that names their email. Every account signs in with its email. Sign-up
   closes once `MAX_USERS` accounts exist (`docs/api.md` §4), and each account may store 5 MiB
   (§3). Where the API has a Resend key, a new account gets an email to **confirm** its address,
   and **Forgot your password?** emails a reset link (§4.1). Plans, marks and the daily pick are stored on the
@@ -74,7 +74,7 @@ with `PUBLIC_ORIGIN` set to the dev server's origin. Then create an account at
 ```bash
 cd api && uv sync
 export PUBLIC_ORIGIN=http://localhost:5173 COOKIE_SECURE=false DATA_DIR=./.data
-uv run fp-admin invite you                      # prints http://localhost:5173/#/invite/…
+uv run fp-admin invite you@example.com          # prints http://localhost:5173/#/invite/…
 uv run uvicorn --factory fitness_planner_api.app:create_app_from_env --port 8000
 ```
 
@@ -149,7 +149,7 @@ prints:
 
 ```bash
 docker compose up -d
-docker compose exec fitness-api fp-admin invite <name>
+docker compose exec fitness-api fp-admin invite <email>
 ```
 
 Sign-up is open by default: anyone who can reach the address can create an account until 50

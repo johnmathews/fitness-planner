@@ -18,7 +18,7 @@ PASSWORD = "correct horse battery"
 DAY = 86_400
 
 
-def make_user(conn: sqlite3.Connection, config: Config, name: str = "alice") -> int:
+def make_user(conn: sqlite3.Connection, config: Config, name: str = "alice@example.com") -> int:
     token = auth.mint_link(conn, config, "invite", name)
     return auth.redeem(conn, config, token, PASSWORD)
 
@@ -58,11 +58,13 @@ def test_hashing_runs_one_at_a_time(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_invite_then_login(conn: sqlite3.Connection, config: Config) -> None:
     uid = make_user(conn, config)
-    assert auth.login(conn, config, "alice", PASSWORD) == uid
-    assert auth.login(conn, config, "ALICE", PASSWORD) == uid  # usernames ignore case
+    assert auth.login(conn, config, "alice@example.com", PASSWORD) == uid
+    assert auth.login(conn, config, "ALICE@example.com", PASSWORD) == uid  # usernames ignore case
 
 
-@pytest.mark.parametrize(("name", "password"), [("alice", "wrong password!"), ("nobody", PASSWORD)])
+@pytest.mark.parametrize(
+    ("name", "password"), [("alice@example.com", "wrong password!"), ("nobody", PASSWORD)]
+)
 def test_wrong_password_and_unknown_user_look_the_same(
     conn: sqlite3.Connection,
     config: Config,
@@ -91,13 +93,13 @@ def test_five_failures_lock_the_account_for_fifteen_minutes(
     make_user(conn, config)
     for _ in range(5):
         with pytest.raises(AuthError, match="invalid"):
-            auth.login(conn, config, "alice", "wrong password!")
+            auth.login(conn, config, "alice@example.com", "wrong password!")
     with pytest.raises(AuthError) as e:
-        auth.login(conn, config, "alice", PASSWORD)  # right password, still locked
+        auth.login(conn, config, "alice@example.com", PASSWORD)  # right password, still locked
     assert e.value.code == "locked"
     assert e.value.retry_after == 15 * 60
     clock.advance(15 * 60)
-    assert auth.login(conn, config, "alice", PASSWORD)
+    assert auth.login(conn, config, "alice@example.com", PASSWORD)
 
 
 def test_failures_older_than_the_window_do_not_count(
@@ -106,23 +108,23 @@ def test_failures_older_than_the_window_do_not_count(
     make_user(conn, config)
     for _ in range(4):
         with pytest.raises(AuthError):
-            auth.login(conn, config, "alice", "wrong password!")
+            auth.login(conn, config, "alice@example.com", "wrong password!")
     clock.advance(15 * 60 + 1)
     with pytest.raises(AuthError, match="invalid"):
-        auth.login(conn, config, "alice", "wrong password!")
-    assert auth.login(conn, config, "alice", PASSWORD)
+        auth.login(conn, config, "alice@example.com", "wrong password!")
+    assert auth.login(conn, config, "alice@example.com", PASSWORD)
 
 
 def test_success_resets_the_failure_count(conn: sqlite3.Connection, config: Config) -> None:
     make_user(conn, config)
     for _ in range(4):
         with pytest.raises(AuthError):
-            auth.login(conn, config, "alice", "wrong password!")
-    auth.login(conn, config, "alice", PASSWORD)
+            auth.login(conn, config, "alice@example.com", "wrong password!")
+    auth.login(conn, config, "alice@example.com", PASSWORD)
     for _ in range(4):
         with pytest.raises(AuthError, match="invalid"):
-            auth.login(conn, config, "alice", "wrong password!")
-    assert auth.login(conn, config, "alice", PASSWORD)
+            auth.login(conn, config, "alice@example.com", "wrong password!")
+    assert auth.login(conn, config, "alice@example.com", PASSWORD)
 
 
 def test_a_disabled_user_cannot_log_in_and_loses_sessions(
@@ -130,19 +132,23 @@ def test_a_disabled_user_cannot_log_in_and_loses_sessions(
 ) -> None:
     uid = make_user(conn, config)
     token = auth.create_session(conn, config, uid)
-    auth.set_disabled(conn, "alice", True)
+    auth.set_disabled(conn, "alice@example.com", True)
     assert auth.session_user(conn, config, token) is None
     with pytest.raises(AuthError, match="invalid"):
-        auth.login(conn, config, "alice", PASSWORD)
-    auth.set_disabled(conn, "alice", False)
-    assert auth.login(conn, config, "alice", PASSWORD) == uid
+        auth.login(conn, config, "alice@example.com", PASSWORD)
+    auth.set_disabled(conn, "alice@example.com", False)
+    assert auth.login(conn, config, "alice@example.com", PASSWORD) == uid
 
 
 def test_sessions_slide_and_expire(conn: sqlite3.Connection, config: Config, clock: Clock) -> None:
     uid = make_user(conn, config)
     token = auth.create_session(conn, config, uid)
     user = auth.session_user(conn, config, token)
-    assert user is not None and (user.id, user.username, user.refreshed) == (uid, "alice", False)
+    assert user is not None and (user.id, user.username, user.refreshed) == (
+        uid,
+        "alice@example.com",
+        False,
+    )
     clock.advance(DAY + 1)
     user = auth.session_user(conn, config, token)
     assert user is not None and user.refreshed  # more than a day since the last refresh
@@ -169,20 +175,20 @@ def test_ending_sessions(conn: sqlite3.Connection, config: Config) -> None:
     auth.end_session(conn, a)
     assert auth.session_user(conn, config, a) is None
     assert auth.session_user(conn, config, b) is not None
-    assert auth.revoke_sessions(conn, "alice") == 1
+    assert auth.revoke_sessions(conn, "alice@example.com") == 1
     assert auth.session_user(conn, config, b) is None
 
 
 def test_invite_links_are_single_use_and_expire(
     conn: sqlite3.Connection, config: Config, clock: Clock
 ) -> None:
-    token = auth.mint_link(conn, config, "invite", "bob")
-    assert auth.link_info(conn, config, token) == ("invite", "bob")
+    token = auth.mint_link(conn, config, "invite", "bob@example.com")
+    assert auth.link_info(conn, config, token) == ("invite", "bob@example.com")
     auth.redeem(conn, config, token, PASSWORD)
     assert auth.link_info(conn, config, token) is None
     with pytest.raises(AuthError, match="gone"):
         auth.redeem(conn, config, token, PASSWORD)
-    late = auth.mint_link(conn, config, "invite", "carol")
+    late = auth.mint_link(conn, config, "invite", "carol@example.com")
     clock.advance(7 * DAY)
     assert auth.link_info(conn, config, late) is None
     with pytest.raises(AuthError, match="gone"):
@@ -190,10 +196,10 @@ def test_invite_links_are_single_use_and_expire(
 
 
 def test_a_new_link_revokes_the_earlier_one(conn: sqlite3.Connection, config: Config) -> None:
-    first = auth.mint_link(conn, config, "invite", "bob")
-    second = auth.mint_link(conn, config, "invite", "Bob")
+    first = auth.mint_link(conn, config, "invite", "bob@example.com")
+    second = auth.mint_link(conn, config, "invite", "Bob@example.com")
     assert auth.link_info(conn, config, first) is None
-    assert auth.link_info(conn, config, second) == ("invite", "Bob")
+    assert auth.link_info(conn, config, second) == ("invite", "bob@example.com")
 
 
 def test_cannot_invite_an_existing_user_or_reset_a_missing_one(
@@ -201,15 +207,36 @@ def test_cannot_invite_an_existing_user_or_reset_a_missing_one(
 ) -> None:
     make_user(conn, config)
     with pytest.raises(AuthError, match="exists"):
-        auth.mint_link(conn, config, "invite", "Alice")
+        auth.mint_link(conn, config, "invite", "Alice@example.com")
     with pytest.raises(AuthError, match="no-user"):
         auth.mint_link(conn, config, "reset", "nobody")
 
 
-@pytest.mark.parametrize("name", ["", "a b", "x" * 33, "ál", "a/b"])
-def test_usernames_are_short_and_plain(conn: sqlite3.Connection, config: Config, name: str) -> None:
-    with pytest.raises(AuthError, match="username"):
+@pytest.mark.parametrize(
+    "name", ["", "alice", "a b@example.com", "ál@example.com", "x" * 243 + "@example.com"]
+)
+def test_invites_name_an_email(conn: sqlite3.Connection, config: Config, name: str) -> None:
+    with pytest.raises(AuthError, match="email"):
         auth.mint_link(conn, config, "invite", name)
+
+
+def test_an_invite_is_for_the_email_trimmed_and_lower_cased(
+    conn: sqlite3.Connection, config: Config
+) -> None:
+    token = auth.mint_link(conn, config, "invite", " Dana@Example.COM ")
+    assert auth.link_info(conn, config, token) == ("invite", "dana@example.com")
+    assert auth.redeem(conn, config, token, PASSWORD)
+    assert auth.login(conn, config, "dana@example.com", PASSWORD)
+
+
+def test_a_legacy_username_account_still_signs_in(conn: sqlite3.Connection, config: Config) -> None:
+    """Accounts invited before invites took an email keep their name and their sign-in."""
+    conn.execute(
+        "INSERT INTO users (username, password_hash, created_at) VALUES ('john', ?, 0)",
+        (auth.hash_password(PASSWORD),),
+    )
+    assert auth.login(conn, config, "john", PASSWORD)
+    assert auth.link_info(conn, config, auth.mint_link(conn, config, "reset", "john"))
 
 
 def test_reset_sets_the_password_ends_sessions_and_unlocks(
@@ -219,19 +246,19 @@ def test_reset_sets_the_password_ends_sessions_and_unlocks(
     session = auth.create_session(conn, config, uid)
     for _ in range(5):
         with pytest.raises(AuthError):
-            auth.login(conn, config, "alice", "wrong password!")
-    token = auth.mint_link(conn, config, "reset", "alice")
-    assert auth.link_info(conn, config, token) == ("reset", "alice")
+            auth.login(conn, config, "alice@example.com", "wrong password!")
+    token = auth.mint_link(conn, config, "reset", "alice@example.com")
+    assert auth.link_info(conn, config, token) == ("reset", "alice@example.com")
     assert auth.redeem(conn, config, token, "a brand new password") == uid
     assert auth.session_user(conn, config, session) is None
-    assert auth.login(conn, config, "alice", "a brand new password") == uid
+    assert auth.login(conn, config, "alice@example.com", "a brand new password") == uid
     with pytest.raises(AuthError, match="invalid"):
-        auth.login(conn, config, "alice", PASSWORD)
+        auth.login(conn, config, "alice@example.com", PASSWORD)
 
 
 def test_reset_links_last_a_day(conn: sqlite3.Connection, config: Config, clock: Clock) -> None:
     make_user(conn, config)
-    token = auth.mint_link(conn, config, "reset", "alice")
+    token = auth.mint_link(conn, config, "reset", "alice@example.com")
     clock.advance(DAY - 1)
     assert auth.link_info(conn, config, token) is not None
     clock.advance(1)
@@ -242,22 +269,24 @@ def test_reset_links_last_a_day(conn: sqlite3.Connection, config: Config, clock:
 def test_passwords_are_10_to_256_characters(
     conn: sqlite3.Connection, config: Config, password: str
 ) -> None:
-    token = auth.mint_link(conn, config, "invite", "bob")
+    token = auth.mint_link(conn, config, "invite", "bob@example.com")
     with pytest.raises(AuthError, match="password"):
         auth.redeem(conn, config, token, password)
     assert auth.link_info(conn, config, token) is not None  # a rejected password keeps the link
 
 
 def test_a_name_taken_after_the_invite_was_minted(conn: sqlite3.Connection, config: Config) -> None:
-    token = auth.mint_link(conn, config, "invite", "bob")
-    conn.execute("INSERT INTO users (username, password_hash, created_at) VALUES ('BOB', 'h', 0)")
+    token = auth.mint_link(conn, config, "invite", "bob@example.com")
+    conn.execute(
+        "INSERT INTO users (username, password_hash, created_at) VALUES ('BOB@example.com', 'h', 0)"
+    )
     with pytest.raises(AuthError, match="exists"):
         auth.redeem(conn, config, token, PASSWORD)
     assert auth.link_info(conn, config, token) is not None  # rolled back, link still live
 
 
 def test_two_redemptions_race_and_only_one_wins(conn: sqlite3.Connection, config: Config) -> None:
-    token = auth.mint_link(conn, config, "invite", "bob")
+    token = auth.mint_link(conn, config, "invite", "bob@example.com")
     second = connect(config.db_path)
     results: list[Any] = []
     barrier = threading.Barrier(2)
@@ -292,10 +321,10 @@ def test_a_lock_set_while_hashing_wins_over_a_correct_password(
 
     monkeypatch.setattr(auth, "verify_password", lock_meanwhile)
     with pytest.raises(AuthError) as e:
-        auth.login(conn, config, "alice", PASSWORD)
+        auth.login(conn, config, "alice@example.com", PASSWORD)
     assert e.value.code == "locked"
     with pytest.raises(AuthError, match="locked"):
-        auth.login(conn, config, "alice", "wrong password!")
+        auth.login(conn, config, "alice@example.com", "wrong password!")
     # Neither attempt cleared the lock or counted towards a new one.
     row = conn.execute("SELECT failed_logins, locked_until FROM users").fetchone()
     assert (row[0], row[1]) == (0, clock() + 900)
@@ -418,7 +447,7 @@ def test_invited_accounts_do_not_count_towards_the_hourly_limit(
     conn: sqlite3.Connection, config: Config
 ) -> None:
     for i in range(10):
-        make_user(conn, config, f"friend{i}")
+        make_user(conn, config, f"friend{i}@example.com")
     auth.signup(conn, config, "bob@example.com", PASSWORD)
 
 
@@ -479,5 +508,5 @@ def test_a_signed_up_account_can_be_reset_but_not_invited(
     token = auth.mint_link(conn, config, "reset", "bob@example.com")
     assert auth.link_info(conn, config, token) == ("reset", "bob@example.com")
     with pytest.raises(AuthError) as e:
-        auth.mint_link(conn, config, "invite", "carol@example.com")
-    assert e.value.code == "username"
+        auth.mint_link(conn, config, "invite", "BOB@example.com")
+    assert e.value.code == "exists"

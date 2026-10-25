@@ -47,10 +47,13 @@ async function submit(): Promise<void> {
   <AuthCard title="Sign in">
     <p class="body mb-6 text-ink-secondary">{{ intro }}</p>
     <form class="flex flex-col gap-4" @submit.prevent="submit">
+      <!-- inputmode, not type="email": an account from before invites took an email still signs
+           in with its username, which the browser would refuse in an email field. -->
       <TextField
         id="login-username"
         v-model="username"
-        label="Email or username"
+        label="Email"
+        inputmode="email"
         autocomplete="username"
         autocapitalize="none"
         spellcheck="false"

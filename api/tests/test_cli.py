@@ -37,10 +37,13 @@ def test_invite_prints_a_link_that_works(
     conn: sqlite3.Connection,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    code, out, _ = run(env, capsys, "invite", "alice")
+    code, out, _ = run(env, capsys, "invite", "alice@example.com")
     assert code == 0
     assert "expires 2026-10-30 08:00 UTC" in out  # 7 days from the pinned clock
-    assert auth.link_info(conn, config, link_token(out, "invite")) == ("invite", "alice")
+    assert auth.link_info(conn, config, link_token(out, "invite")) == (
+        "invite",
+        "alice@example.com",
+    )
 
 
 def test_reset_disable_enable_and_revoke(
@@ -49,18 +52,21 @@ def test_reset_disable_enable_and_revoke(
     conn: sqlite3.Connection,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    token = auth.mint_link(conn, config, "invite", "alice")
+    token = auth.mint_link(conn, config, "invite", "alice@example.com")
     uid = auth.redeem(conn, config, token, PASSWORD)
     auth.create_session(conn, config, uid)
     code, out, _ = run(env, capsys, "users")
     assert code == 0
-    assert "alice" in out and "1 session" in out and "active" in out
-    code, out, _ = run(env, capsys, "reset", "alice")
+    assert "alice@example.com" in out and "1 session" in out and "active" in out
+    code, out, _ = run(env, capsys, "reset", "alice@example.com")
     assert code == 0 and link_token(out, "reset")
-    assert run(env, capsys, "revoke-sessions", "alice")[1].strip() == "Ended 1 session for alice."
-    assert run(env, capsys, "disable", "alice")[0] == 0
+    assert (
+        run(env, capsys, "revoke-sessions", "alice@example.com")[1].strip()
+        == "Ended 1 session for alice@example.com."
+    )
+    assert run(env, capsys, "disable", "alice@example.com")[0] == 0
     assert "disabled" in run(env, capsys, "users")[1]
-    assert run(env, capsys, "enable", "alice")[0] == 0
+    assert run(env, capsys, "enable", "alice@example.com")[0] == 0
     assert "active" in run(env, capsys, "users")[1]
 
 
@@ -69,7 +75,7 @@ def test_reset_disable_enable_and_revoke(
     [
         (["reset", "nobody"], "no user named 'nobody'"),
         (["disable", "nobody"], "no user named 'nobody'"),
-        (["invite", "has space"], "usernames are 1 to 32 letters, digits"),
+        (["invite", "alice"], "invites name an email address, like name@example.com"),
     ],
 )
 def test_errors_go_to_stderr_with_status_1(
@@ -86,8 +92,8 @@ def test_inviting_an_existing_user(
     conn: sqlite3.Connection,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    auth.redeem(conn, config, auth.mint_link(conn, config, "invite", "alice"), PASSWORD)
-    code, _, err = run(env, capsys, "invite", "Alice")
+    auth.redeem(conn, config, auth.mint_link(conn, config, "invite", "alice@example.com"), PASSWORD)
+    code, _, err = run(env, capsys, "invite", "Alice@example.com")
     assert code == 1 and "already exists; use reset" in err
 
 

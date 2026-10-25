@@ -72,7 +72,6 @@ async function submit(): Promise<void> {
           spellcheck="false"
           maxlength="254"
           required
-          hint="Signed in with a username? Ask whoever runs this planner for a reset link."
           :error="emailError"
         />
         <InlineMessage

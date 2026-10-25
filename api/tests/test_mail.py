@@ -260,10 +260,13 @@ def test_at_most_five_confirmations_a_day(
 def test_resend_refusals(client: TestClient, mail_client: TestClient, config: Config) -> None:
     assert mail_client.post("/api/auth/confirm/resend", json={}).status_code == 401
     conn = connect(config.db_path)
-    token = auth.mint_link(conn, config, "invite", "alice")
+    conn.execute(
+        "INSERT INTO users (username, password_hash, created_at) VALUES ('alice', ?, 0)",
+        (auth.hash_password(PASSWORD),),
+    )
     conn.close()
-    mail_client.post("/api/invites/redeem", json={"token": token, "password": PASSWORD})
-    # An invited account is named, not addressed, so there is nothing to confirm.
+    mail_client.post("/api/auth/login", json={"username": "alice", "password": PASSWORD})
+    # An account from before invites took an email is named, not addressed: nothing to confirm.
     assert mail_client.get("/api/auth/me").json() == {"username": "alice"}
     r = mail_client.post("/api/auth/confirm/resend", json={})
     assert (r.status_code, r.json()) == (409, {"error": "no-email"})
@@ -336,7 +339,7 @@ def test_forgot_answers_the_same_for_anyone(
     sign_up(mail_client, "taken@example.com")
     conn = connect(mail_config.db_path)
     auth.set_disabled(conn, "taken@example.com", True)
-    auth.mint_link(conn, mail_config, "invite", "alice")
+    auth.mint_link(conn, mail_config, "invite", "alice@example.com")
     conn.close()
     mailer.sent.clear()
     for email in ("nobody@example.com", "taken@example.com"):
@@ -420,3 +423,42 @@ def test_a_new_reset_request_leaves_earlier_links_working(
     first, second = (token_in(m, "reset") for m in mailer.sent if m.kind == "reset")
     for token in (admin, first, second):
         assert mail_client.post("/api/invites/lookup", json={"token": token}).status_code == 200
+
+
+def test_redeeming_an_invite_sends_a_confirmation(
+    mail_client: TestClient, mailer: RecordingMailer, mail_config: Config
+) -> None:
+    conn = connect(mail_config.db_path)
+    token = auth.mint_link(conn, mail_config, "invite", "dana@example.com")
+    conn.close()
+    r = mail_client.post("/api/invites/redeem", json={"token": token, "password": PASSWORD})
+    assert r.json() == {"username": "dana@example.com", "confirmed": False}
+    (sent,) = mailer.sent
+    assert (sent.to, sent.kind) == ("dana@example.com", "confirm")
+
+
+def test_signing_in_sends_a_first_confirmation_once(
+    mail_client: TestClient, mailer: RecordingMailer, mail_config: Config, clock: Clock
+) -> None:
+    """An account from before mail was on (or renamed to its email) has never been sent a link,
+    so its first sign-in sends one, and the banner's "the link is in the email" is true."""
+    conn = connect(mail_config.db_path)
+    auth.signup(conn, mail_config, "sam@example.com", PASSWORD)
+    conn.close()
+    login = {"username": "sam@example.com", "password": PASSWORD}
+    assert mail_client.post("/api/auth/login", json=login).json()["confirmed"] is False
+    assert [m.kind for m in mailer.sent] == ["confirm"]
+    clock.advance(DAY)
+    mail_client.post("/api/auth/login", json=login)
+    assert len(mailer.sent) == 1
+
+
+def test_signing_in_confirmed_sends_nothing(
+    mail_client: TestClient, mailer: RecordingMailer, mail_config: Config
+) -> None:
+    conn = connect(mail_config.db_path)
+    uid = auth.signup(conn, mail_config, "sam@example.com", PASSWORD)
+    conn.execute("UPDATE users SET email_confirmed_at = 1 WHERE id = ?", (uid,))
+    conn.close()
+    mail_client.post("/api/auth/login", json={"username": "sam@example.com", "password": PASSWORD})
+    assert mailer.sent == []

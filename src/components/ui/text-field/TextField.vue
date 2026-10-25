@@ -18,7 +18,7 @@ const props = defineProps<{
   /** What happened and what to do. Replaces the hint and marks the input invalid. */
   error?: string
   /** Marks the input invalid when the message lives elsewhere, such as one message for two
-   * fields ("Wrong email, username or password…"); tie it with `aria-describedby`. */
+   * fields ("Wrong email or password…"); tie it with `aria-describedby`. */
   invalid?: boolean
   /** Classes for the wrapper, for layout. */
   class?: HTMLAttributes['class']

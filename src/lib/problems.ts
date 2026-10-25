@@ -8,7 +8,7 @@ export const MISMATCH = 'The passwords don’t match. Type the same password in 
 export function describeProblem(p: AuthProblem): string {
   switch (p.code) {
     case 'invalid':
-      return 'Wrong email, username or password. Check them and try again.'
+      return 'Wrong email or password. Check them and try again.'
     case 'locked': {
       const minutes = Math.max(1, Math.ceil((p.retryAfter ?? 900) / 60))
       return `Too many attempts. Try again in ${countOf(minutes, 'minute')}.`

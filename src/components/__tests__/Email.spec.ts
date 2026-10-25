@@ -94,9 +94,8 @@ describe('forgot your password', () => {
     await go('#/forgot')
     expect(heading()).toBe('Reset your password')
     expect(wrapper.get('#forgot-email').attributes('type')).toBe('email')
-    expect(wrapper.get('#forgot-email-hint').text()).toBe(
-      'Signed in with a username? Ask whoever runs this planner for a reset link.',
-    )
+    expect(wrapper.find('#forgot-email-hint').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('username')
     await wrapper.get('#forgot-email').setValue(' nobody@example.com ')
     await wrapper.get('form').trigger('submit')
     await flushPromises()

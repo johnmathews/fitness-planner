@@ -37,7 +37,7 @@ describe('InlineMessage', () => {
     const p = mount(InlineMessage, {
       props: { tone: 'error', class: 'mt-1' },
       attrs: { id: 'login-problem', 'data-testid': 'login-problem' },
-      slots: { default: 'Wrong email, username or password. Check them and try again.' },
+      slots: { default: 'Wrong email or password. Check them and try again.' },
     }).get('p')
     expect(p.attributes('id')).toBe('login-problem')
     expect(p.attributes('data-testid')).toBe('login-problem')

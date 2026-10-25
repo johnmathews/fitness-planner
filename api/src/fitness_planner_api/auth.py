@@ -29,7 +29,6 @@ _WAITING = threading.BoundedSemaphore(MAX_WAITING)
 
 DAY = 86_400
 MIN_PASSWORD, MAX_PASSWORD = 10, 256
-USERNAME_RE = re.compile(r"[A-Za-z0-9_.-]{1,32}")
 # Printable ASCII, since the name travels in the X-Expected-User header; length checked apart.
 EMAIL_RE = re.compile(r"[!-?A-~]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
 MAX_EMAIL = 254
@@ -147,14 +146,23 @@ def login(conn: sqlite3.Connection, config: Config, username: str, password: str
     raise AuthError("invalid")
 
 
+def normal_email(email: str) -> str:
+    """The email as accounts store it, trimmed and lower-cased; AuthError `email` if not one."""
+    email = email.strip().lower()
+    if len(email) > MAX_EMAIL or not EMAIL_RE.fullmatch(email):
+        raise AuthError("email")
+    return email
+
+
 def _signup_refusal(conn: sqlite3.Connection, config: Config, now: int) -> AuthError | None:
     """Why sign-up is shut right now: the account cap, or the hourly limit with its wait."""
     if conn.execute("SELECT count(*) FROM users").fetchone()[0] >= config.max_users:
         return AuthError("closed")
-    # Only sign-ups count towards the hour: an invited username never contains `@`.
+    # Only sign-ups count towards the hour: an account made from a used invite does not.
     recent = conn.execute(
-        "SELECT created_at FROM users WHERE username LIKE '%@%' AND created_at > ?"
-        " ORDER BY created_at",
+        "SELECT created_at FROM users u WHERE created_at > ? AND NOT EXISTS"
+        " (SELECT 1 FROM invites i WHERE i.kind = 'invite' AND i.used_at IS NOT NULL"
+        " AND i.username = u.username) ORDER BY created_at",
         (now - HOUR,),
     ).fetchall()
     if len(recent) >= config.signups_per_hour:
@@ -165,9 +173,7 @@ def _signup_refusal(conn: sqlite3.Connection, config: Config, now: int) -> AuthE
 
 def signup(conn: sqlite3.Connection, config: Config, email: str, password: str) -> int:
     """Create an account named by its email, lower-cased; returns the new user's id."""
-    email = email.strip().lower()
-    if len(email) > MAX_EMAIL or not EMAIL_RE.fullmatch(email):
-        raise AuthError("email")
+    email = normal_email(email)
     if not MIN_PASSWORD <= len(password) <= MAX_PASSWORD:
         raise AuthError("password")
     # Checked before the hash so a closed sign-up costs nothing, and again under the write lock.
@@ -261,9 +267,9 @@ def mint_link(
 
     A `mailed` reset went to the account's email, so it lasts `mail_reset_minutes` and using it
     confirms the address."""
-    # Invites name a new user, so the username rule applies; a reset may name a signed-up email.
-    if kind == "invite" and not USERNAME_RE.fullmatch(username):
-        raise AuthError("username")
+    # An invite names a new account by its email. A reset names an existing account, which may
+    # still have a username from before invites took an email.
+    username = normal_email(username) if kind == "invite" else username.strip()
     now = config.clock()
     with transaction(conn):
         existing = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()

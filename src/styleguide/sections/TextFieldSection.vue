@@ -19,7 +19,7 @@ const repeat = ref('correct-horse')
       <TextField
         id="sg-text-field-default"
         v-model="username"
-        label="Username"
+        label="Email"
         autocomplete="username"
         autocapitalize="none"
         spellcheck="false"
@@ -65,7 +65,7 @@ const repeat = ref('correct-horse')
       <TextField
         id="sg-text-field-disabled"
         model-value="anna"
-        label="Username"
+        label="Email"
         disabled
         class="w-full"
       />
