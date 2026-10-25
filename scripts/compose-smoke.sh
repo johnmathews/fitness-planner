@@ -35,9 +35,10 @@ token=$(compose exec -T fitness-api fp-admin invite smoke | sed -n 's|.*/#/invit
 [ -n "$token" ] || fail "no invite token"
 body=$(printf '{"token":"%s","password":"correct horse battery"}' "$token")
 [ "$(post -d "$body" "$BASE/api/invites/redeem")" = '{"username":"smoke"}' ] || fail "redeem through nginx"
-post -X PUT -d '{"done":true}' "$BASE/api/ticks/exercise/2026-10-19/pu/0" | grep -q '"days":\[true' \
-  || fail "tick through nginx"
-curl -s -b "$JAR" "$BASE/api/state" | grep -q '"pu":\[true' || fail "state through nginx"
+# The body the app sends: a mark, and `done` for an API from before marks had kinds.
+post -X PUT -d '{"mark":"partial","done":true}' "$BASE/api/ticks/exercise/2026-10-19/pu/0" \
+  | grep -q '"days":\["partial"' || fail "tick through nginx"
+curl -s -b "$JAR" "$BASE/api/state" | grep -q '"pu":\["partial"' || fail "state through nginx"
 expect_status 403 -b "$JAR" -X PUT -H 'Origin: http://evil.example' -H 'Content-Type: application/json' \
   -d '{"done":true}' "$BASE/api/ticks/exercise/2026-10-19/pu/1"
 echo "sign-up, write, read and the origin check work through nginx"
