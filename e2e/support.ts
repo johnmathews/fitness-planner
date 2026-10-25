@@ -79,7 +79,7 @@ export async function openApp(
       if (sessionStorage.getItem('e2e-seeded')) return
       sessionStorage.setItem('e2e-seeded', '1')
       localStorage.setItem('fitness-planner-session-v1', JSON.stringify({ user: 'alice' }))
-      localStorage.setItem('fitness-planner-cache-v1:alice', JSON.stringify(st))
+      localStorage.setItem('fitness-planner-cache-v2:alice', JSON.stringify(st))
       localStorage.setItem('fitness-planner-settings-v1', JSON.stringify({ theme }))
       if (view) localStorage.setItem('fitness-planner-view-v1', JSON.stringify(view))
     },

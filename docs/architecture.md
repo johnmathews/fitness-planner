@@ -141,16 +141,17 @@ with storage blocked or full the app keeps working in memory.
 
 ## 4. Storage format and validation
 
-| Key                                | Holds                                                                                                | Written |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------- | ------- |
-| `fitness-planner-session-v1`       | `{ user }`: the last signed-in user                                                                  | yes     |
-| `fitness-planner-cache-v1:<user>`  | the user's state as `GET /api/state` returns it, with `revs`                                         | yes     |
-| `fitness-planner-outbox-v1:<user>` | writes not yet sent (§7)                                                                             | yes     |
-| `fitness-planner-import-v1:<user>` | the first-login prompt's answer, `imported` or `dismissed` (§7)                                      | yes     |
-| `fitness-planner-settings-v1`      | `theme`, read before first paint by `public/theme-init.js`, and `showTotals`                         | both    |
-| `fitness-planner-view-v1`          | the phone's Today or Week choice, `today` or `week` (§5); the device's own, never synced or exported | yes     |
-| `fitness-planner-v2`, `-diet-v2`   | exercise and food `{ plans, log }` from before accounts                                              | never   |
-| `fitness-planner-v1`, `-diet-v1`   | the single-list format from before weekly plans                                                      | never   |
+| Key                                                    | Holds                                                                                                | Written |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | ------- |
+| `fitness-planner-session-v1`                           | `{ user }`: the last signed-in user                                                                  | yes     |
+| `fitness-planner-cache-v2:<user>`                      | the user's state as `GET /api/state` returns it, with `revs`                                         | yes     |
+| `fitness-planner-outbox-v2:<user>`                     | writes not yet sent (§7)                                                                             | yes     |
+| `fitness-planner-import-v1:<user>`                     | the first-login prompt's answer, `imported` or `dismissed` (§7)                                      | yes     |
+| `fitness-planner-settings-v1`                          | `theme`, read before first paint by `public/theme-init.js`, and `showTotals`                         | both    |
+| `fitness-planner-view-v1`                              | the phone's Today or Week choice, `today` or `week` (§5); the device's own, never synced or exported | yes     |
+| `fitness-planner-cache-v1:<user>`, `-outbox-v1:<user>` | the cache and outbox from before marks had kinds; moved to `-v2` at sign-in (below)                  | never   |
+| `fitness-planner-v2`, `-diet-v2`                       | exercise and food `{ plans, log }` from before accounts                                              | never   |
+| `fitness-planner-v1`, `-diet-v1`                       | the single-list format from before weekly plans                                                      | never   |
 
 Since accounts, nothing writes the keys from before them. They stay because they hold what a browser
 recorded locally, which the first-login import (§7) reads with the parsing, migration and
@@ -163,6 +164,16 @@ each old key to its new name, outbox included, so unsent writes survive. A value
 new name wins, and a copy that fails (storage full) leaves the old key for the next load to retry.
 `public/theme-init.js` runs before that, so it reads the old settings key when the new one is
 absent.
+
+**The cache and outbox took new names with the marks** (K14 in [decisions.md](decisions.md)). A tab
+left open on the code from before the marks reads `"great"` as an empty day, and on another tab's
+`storage` event it adopted the cache and wrote it back with every box empty, which the newer tab then
+adopted in turn: a press flickered and left the box empty, though the server kept the mark. It could
+also drop the newer tab's queued marks from the shared outbox. Under the `-v2` names the two never
+read each other. At sign-in `start` moves this user's `-v1` cache (unless one under the new name
+already exists, which is newer) and merges the `-v1` outbox in, the newer write winning for the
+same cell, then deletes both old keys; signing out deletes them too. The next change to either
+format takes the next version the same way.
 
 **Migration.** Before weekly plans, one list served every week: `{ exercises, log }` under
 `fitness-planner-v1` (the design prototype's shape, under its key renamed) and `{ foods, log }` under
