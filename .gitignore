@@ -37,3 +37,6 @@ api/.data/
 
 # Design system gallery (scripts/design_preview.py)
 brand/design-system/preview/
+
+# Claude Code session worktrees: checkouts, never content.
+.claude/worktrees/
