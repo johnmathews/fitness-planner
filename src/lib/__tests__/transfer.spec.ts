@@ -9,6 +9,7 @@ import {
   mergeSummary,
   mergeTracked,
   parseExport,
+  type ExportData,
 } from '@/lib/transfer'
 import type { Exercise, Log } from '@/lib/storage'
 import type { Plans } from '@/lib/plans'
@@ -60,33 +61,27 @@ describe('mergeTracked', () => {
   it('copies what it adds, so later edits do not reach the imported data', () => {
     const incoming: Tracked = {
       plans: { '2026-10-19': [{ id: 'pu', name: 'Push-ups', reps: 10, target: 4 }] },
-      log: { '2026-10-19': { pu: [true, false, false, false, false, false, false] } },
+      log: { '2026-10-19': { pu: ['great', null, null, null, null, null, null] } },
     }
     const merged = mergeTracked({ plans: {}, log: {} }, incoming)
     merged.plans['2026-10-19']![0]!.reps = 99
-    merged.log['2026-10-19']!.pu![1] = true
+    merged.log['2026-10-19']!.pu![1] = 'missed'
     expect(incoming.plans['2026-10-19']![0]!.reps).toBe(10)
-    expect(incoming.log['2026-10-19']!.pu![1]).toBe(false)
+    expect(incoming.log['2026-10-19']!.pu![1]).toBeNull()
   })
 
   it('leaves the existing data untouched', () => {
     const existing: Tracked = {
       plans: {},
-      log: { '2026-10-19': { pu: [false, false, false, false, false, false, false] } },
+      log: { '2026-10-19': { pu: [null, null, null, null, null, null, null] } },
     }
     mergeTracked(existing, {
       plans: {},
-      log: { '2026-10-19': { pu: [true, true, true, true, true, true, true] } },
+      log: {
+        '2026-10-19': { pu: ['great', 'great', 'great', 'great', 'great', 'great', 'great'] },
+      },
     })
-    expect(existing.log['2026-10-19']!.pu).toEqual([
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-    ])
+    expect(existing.log['2026-10-19']!.pu).toEqual([null, null, null, null, null, null, null])
   })
 })
 
@@ -116,14 +111,14 @@ describe('buildExport', () => {
     const data = {
       exercise: {
         plans: { '2026-10-19': [{ id: 'sq', name: 'Squats', sets: 3, reps: 15, target: 4 }] },
-        log: { '2026-10-19': { sq: [true, false, false, false, false, false, true] } },
+        log: { '2026-10-19': { sq: ['great', null, null, null, null, null, 'partial'] } },
       },
       diet: {
         plans: { '2026-10-19': [{ id: 'veg', name: 'Vegetables', target: 7 }] },
         log: {},
       },
       settings: { accent: '#bf5af2', dailyPick: 2 },
-    }
+    } satisfies ExportData
     expect(parseExport(JSON.stringify(buildExport(data)))).toEqual({ ok: true, data })
   })
 })

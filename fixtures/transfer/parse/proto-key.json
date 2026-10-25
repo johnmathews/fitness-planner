@@ -10,7 +10,7 @@
     "data": {
       "exercise": {
         "plans": {},
-        "log": { "2026-10-19": { "b": [true, false, false, false, false, false, false] } }
+        "log": { "2026-10-19": { "b": ["great", null, null, null, null, null, null] } }
       },
       "diet": { "plans": {}, "log": {} },
       "settings": null

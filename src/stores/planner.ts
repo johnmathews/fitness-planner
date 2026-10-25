@@ -21,6 +21,7 @@ import {
   writeKey,
   type Exercise,
   type Log,
+  type Mark,
   type PlannerData,
   type PortableSettings,
 } from '@/lib/storage'
@@ -106,7 +107,9 @@ export const usePlannerStore = defineStore('planner', () => {
 
   // Plans, the log, accent and daily pick are the signed-in user's: the sync store fills them
   // through `adopt` and saves them. Only the theme and whether the weekly totals show belong to
-  // the device, and are stored here.
+  // the device, and are stored here. The accent no longer draws anything, since the marks' pens
+  // are fixed (DayMark card); it is kept as it was saved, so the server and exports still agree.
+  // Nothing in the app changes it now.
   const plans = ref<Plans<Exercise>>({})
   const log = ref<Log>({})
   const weekOffset = ref(0)
@@ -157,6 +160,10 @@ export const usePlannerStore = defineStore('planner', () => {
     return tracker.isDone(week.value, id, day)
   }
 
+  function markOf(id: string, day: number): Mark | null {
+    return tracker.markOf(week.value, id, day)
+  }
+
   function totalFor(id: string): number {
     return tracker.totalFor(week.value, id)
   }
@@ -164,11 +171,12 @@ export const usePlannerStore = defineStore('planner', () => {
   const dayCounts = computed(() => tracker.dayCounts(exercises.value, week.value))
   const grandTotal = computed(() => tracker.grandTotal(exercises.value, week.value))
 
-  // Any change to a week, ticks included, gives it its own plan, so later edits to the week it was
+  // Any change to a week, marks included, gives it its own plan, so later edits to the week it was
   // carried from no longer move it.
+  /** Steps the day to its next mark: empty, great, partial, missed, empty again. */
   function toggle(id: string, day: number): void {
     own()
-    tracker.toggleDay(log.value, weekKey.value, id, day)
+    tracker.cycleDay(log.value, weekKey.value, id, day, tracker.EXERCISE_CYCLE)
   }
 
   function changeTarget(id: string, delta: number): void {
@@ -249,10 +257,6 @@ export const usePlannerStore = defineStore('planner', () => {
     weekOffset.value = 0
   }
 
-  function setAccent(color: string): void {
-    accent.value = color
-    settingsSaved.value = true
-  }
   function changeDailyPick(delta: number): void {
     dailyPick.value = clamp(dailyPick.value + delta, MIN_DAILY_PICK, MAX_DAILY_PICK)
     settingsSaved.value = true
@@ -298,6 +302,7 @@ export const usePlannerStore = defineStore('planner', () => {
     dayCounts,
     grandTotal,
     isDone,
+    markOf,
     totalFor,
     toggle,
     changeTarget,
@@ -315,7 +320,6 @@ export const usePlannerStore = defineStore('planner', () => {
     adopt,
     adoptWeek,
     clear,
-    setAccent,
     changeDailyPick,
     setTheme,
     savedSettings,

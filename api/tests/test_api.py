@@ -13,6 +13,7 @@ from fitness_planner_api import auth, data
 from fitness_planner_api.app import create_app
 from fitness_planner_api.config import Config
 from fitness_planner_api.db import connect
+from fitness_planner_api.validate import Mark
 
 from .conftest import ORIGIN, Clock
 from .fixtures import read_fixture
@@ -376,11 +377,20 @@ def test_plan_items_are_validated_like_stored_data(client: TestClient, config: C
         ("/api/plans/exercise/2026-10-19", {"items": [], "rev": -1}),
         ("/api/plans/exercise/2026-10-19", {"items": [], "rev": True}),
         ("/api/plans/exercise/2026-10-19", {"items": [], "rev": 1.0}),
-        ("/api/ticks/exercise/2026-10-19/pu/7", {"done": True}),
-        ("/api/ticks/exercise/2026-10-19/pu/x", {"done": True}),
+        ("/api/ticks/exercise/2026-10-19/pu/7", {"mark": "great"}),
+        ("/api/ticks/exercise/2026-10-19/pu/x", {"mark": "great"}),
+        ("/api/ticks/diet/not-a-week/veg/0", {"mark": "great"}),
+        (f"/api/ticks/exercise/2026-10-19/{'x' * 129}/0", {"mark": "great"}),
+        ("/api/ticks/exercise/2026-10-19/pu/0", {"mark": "GREAT"}),
+        ("/api/ticks/exercise/2026-10-19/pu/0", {"mark": "done"}),
+        ("/api/ticks/exercise/2026-10-19/pu/0", {"mark": True}),
+        ("/api/ticks/exercise/2026-10-19/pu/0", {"mark": 1}),
+        ("/api/ticks/exercise/2026-10-19/pu/0", {"mark": ["great"]}),
+        # A `mark` key is read first, so a valid `done` beside a bad one does not rescue it.
+        ("/api/ticks/exercise/2026-10-19/pu/0", {"mark": "x", "done": True}),
         ("/api/ticks/exercise/2026-10-19/pu/0", {"done": 1}),
-        ("/api/ticks/diet/not-a-week/veg/0", {"done": True}),
-        (f"/api/ticks/exercise/2026-10-19/{'x' * 129}/0", {"done": True}),
+        ("/api/ticks/exercise/2026-10-19/pu/0", {"done": None}),
+        ("/api/ticks/exercise/2026-10-19/pu/0", {}),
     ],
 )
 def test_bad_writes_are_400(
@@ -394,30 +404,63 @@ def test_bad_writes_are_400(
 def test_ticks_set_and_clear_single_days(client: TestClient, config: Config) -> None:
     sign_up(client, config)
     url = f"/api/ticks/exercise/{WEEK}/pu"
-    assert client.put(f"{url}/0", json={"done": True}).json()["days"] == [True] + [False] * 6
-    # Another device ticking a different day does not undo the first.
-    assert client.put(f"{url}/4", json={"done": True}).json()["days"] == [
-        True,
-        False,
-        False,
-        False,
-        True,
-        False,
-        False,
-    ]
-    assert client.put(f"{url}/0", json={"done": False}).json()["days"] == [False] * 4 + [
-        True,
-        False,
-        False,
-    ]
-    assert client.put(f"{url}/0", json={"done": False}).json()["days"] == [False] * 4 + [
-        True,
-        False,
-        False,
-    ]
-    assert client.get("/api/state").json()["exercise"]["log"] == {
-        WEEK: {"pu": [False] * 4 + [True, False, False]}
+    _ = None
+    assert client.put(f"{url}/0", json={"mark": "great"}).json() == {
+        "days": ["great", _, _, _, _, _, _]
     }
+    # Another device marking a different day does not undo the first.
+    assert client.put(f"{url}/4", json={"mark": "missed"}).json()["days"] == [
+        "great", _, _, _, "missed", _, _
+    ]  # fmt: skip
+    # Day 0 cycles through every mark and back to empty; day 4 keeps its own throughout.
+    for mark in ("partial", "missed", "great", "partial"):
+        assert client.put(f"{url}/0", json={"mark": mark}).json()["days"] == [
+            mark, _, _, _, "missed", _, _
+        ]  # fmt: skip
+    for _repeat in range(2):  # clearing an empty day is a no-op
+        assert client.put(f"{url}/0", json={"mark": None}).json()["days"] == [
+            _, _, _, _, "missed", _, _
+        ]  # fmt: skip
+    assert client.get("/api/state").json()["exercise"]["log"] == {
+        WEEK: {"pu": [_, _, _, _, "missed", _, _]}
+    }
+    assert ticks_row(config, "pu") == (0b10000, 0, 0b10000)
+
+
+def test_ticks_accept_the_old_done_body(client: TestClient, config: Config) -> None:
+    """A tab or a queued tick from before marks had kinds sends `{done}`: true is great."""
+    sign_up(client, config)
+    url = f"/api/ticks/exercise/{WEEK}/pu"
+    client.put(f"{url}/1", json={"mark": "partial"})
+    assert client.put(f"{url}/0", json={"done": True}).json()["days"][:2] == ["great", "partial"]
+    # done: true over a partial day makes it great; done: false clears whatever mark it had.
+    assert client.put(f"{url}/1", json={"done": True}).json()["days"][:2] == ["great", "great"]
+    assert client.put(f"{url}/0", json={"done": False}).json()["days"][:2] == [None, "great"]
+    assert ticks_row(config, "pu") == (0b10, 0, 0)
+
+
+def test_ticks_read_mark_before_done(client: TestClient, config: Config) -> None:
+    """The app sends both keys, so an older API still saves the day; this one reads `mark`."""
+    sign_up(client, config)
+    url = f"/api/ticks/exercise/{WEEK}/pu"
+    assert client.put(f"{url}/0", json={"mark": "partial", "done": True}).json()["days"][0] == (
+        "partial"
+    )
+    assert client.put(f"{url}/0", json={"mark": None, "done": False}).json()["days"][0] is None
+
+
+def ticks_row(config: Config, item_id: str, uid: int = 1) -> tuple[int, int, int]:
+    """The (days, partial, missed) masks stored for one item in WEEK's exercise ticks."""
+    conn = connect(config.db_path)
+    try:
+        row = conn.execute(
+            "SELECT days, partial, missed FROM ticks"
+            " WHERE user_id = ? AND section = 'exercise' AND week = ? AND item_id = ?",
+            (uid, WEEK, item_id),
+        ).fetchone()
+        return (row["days"], row["partial"], row["missed"])
+    finally:
+        conn.close()
 
 
 def usage(config: Config, uid: int = 1) -> int:
@@ -438,13 +481,13 @@ def test_the_quota_refuses_growth_but_never_level_or_shrinking_writes(
     with other_client(replace(config, user_quota_bytes=room)) as c:
         c.post("/api/auth/login", json={"username": "alice", "password": PASSWORD})
         ticks = f"/api/ticks/exercise/{WEEK}"
-        assert c.put(f"{ticks}/pu/0", json={"done": True}).status_code == 200
+        assert c.put(f"{ticks}/pu/0", json={"mark": "great"}).status_code == 200
         assert usage(config) == room
-        r = c.put(f"{ticks}/sq/0", json={"done": True})
+        r = c.put(f"{ticks}/sq/0", json={"mark": "partial"})
         assert (r.status_code, r.json()) == (413, {"error": "quota"})
         # A full account still changes the rows it has and keeps or trims its plans.
-        assert c.put(f"{ticks}/pu/3", json={"done": True}).status_code == 200
-        assert c.put(f"{ticks}/pu/0", json={"done": False}).status_code == 200
+        assert c.put(f"{ticks}/pu/3", json={"mark": "missed"}).status_code == 200
+        assert c.put(f"{ticks}/pu/0", json={"mark": None}).status_code == 200
         r = c.put("/api/plans/exercise/2026-10-26", json={"items": [PUSHUPS], "rev": 0})
         assert (r.status_code, r.json()) == (413, {"error": "quota"})
         assert c.put(plan, json={"items": [PUSHUPS], "rev": 1}).json() == {"rev": 2}
@@ -452,7 +495,7 @@ def test_the_quota_refuses_growth_but_never_level_or_shrinking_writes(
         assert usage(config) < room
         state = c.get("/api/state").json()["exercise"]
     assert "2026-10-26" not in state["plans"]
-    assert state["log"] == {WEEK: {"pu": [False, False, False, True, False, False, False]}}
+    assert state["log"] == {WEEK: {"pu": [None, None, None, "missed", None, None, None]}}
 
 
 def test_an_import_over_the_quota_adds_nothing(client: TestClient, config: Config) -> None:
@@ -490,7 +533,7 @@ def test_settings_are_normalised(client: TestClient, config: Config) -> None:
 def test_users_cannot_see_or_change_each_others_data(client: TestClient, config: Config) -> None:
     sign_up(client, config, "alice")
     client.put(f"/api/plans/exercise/{WEEK}", json={"items": [PUSHUPS], "rev": 0})
-    client.put(f"/api/ticks/exercise/{WEEK}/pu/0", json={"done": True})
+    client.put(f"/api/ticks/exercise/{WEEK}/pu/0", json={"mark": "partial"})
     client.put("/api/settings", json={"accent": "#0a84ff", "dailyPick": 5})
     with other_client(config) as bob:
         sign_up(bob, config, "bob")
@@ -502,8 +545,8 @@ def test_users_cannot_see_or_change_each_others_data(client: TestClient, config:
             "rev": 1
         }
         assert (
-            bob.put(f"/api/ticks/exercise/{WEEK}/pu/1", json={"done": True}).json()["days"][0]
-            is False
+            bob.put(f"/api/ticks/exercise/{WEEK}/pu/1", json={"mark": "great"}).json()["days"][0]
+            is None
         )
         bob.put("/api/settings", json={"accent": "#bf5af2", "dailyPick": 2})
         bob.post(
@@ -513,7 +556,7 @@ def test_users_cannot_see_or_change_each_others_data(client: TestClient, config:
         )
     alice = client.get("/api/state").json()
     assert alice["exercise"]["plans"] == {WEEK: [PUSHUPS]}
-    assert alice["exercise"]["log"] == {WEEK: {"pu": [True] + [False] * 6}}
+    assert alice["exercise"]["log"] == {WEEK: {"pu": ["partial"] + [None] * 6}}
     assert alice["diet"] == {"plans": {}, "log": {}, "revs": {}}
     assert alice["settings"] == {"accent": "#0a84ff", "dailyPick": 5}
 
@@ -533,6 +576,7 @@ def test_sample_import_then_export_round_trips(client: TestClient, config: Confi
     # The same counts the browser's confirm step shows for this file (App.spec.ts).
     assert r.json() == {"weeks": 6, "ticks": 102, "settings": True}
     exported = client.get("/api/export")
+    assert sample["version"] == exported.json()["version"] == 2
     assert (
         exported.headers["content-disposition"]
         == 'attachment; filename="fitness-planner-2026-10-23.json"'
@@ -545,7 +589,7 @@ def test_sample_import_then_export_round_trips(client: TestClient, config: Confi
 def test_import_merges_without_deleting(client: TestClient, config: Config) -> None:
     sign_up(client, config)
     client.put(f"/api/plans/exercise/{WEEK}", json={"items": [PUSHUPS], "rev": 0})
-    client.put(f"/api/ticks/exercise/{WEEK}/pu/0", json={"done": True})
+    client.put(f"/api/ticks/exercise/{WEEK}/pu/0", json={"mark": "missed"})
     client.put("/api/settings", json={"accent": "#ff9f0a", "dailyPick": 2})
     squats = {"id": "sq", "name": "Squats", "reps": 15, "target": 4}
     r = post_import(
@@ -564,7 +608,8 @@ def test_import_merges_without_deleting(client: TestClient, config: Config) -> N
     state = client.get("/api/state").json()
     assert state["exercise"]["plans"] == {"2026-10-12": [squats], WEEK: [PUSHUPS]}
     assert state["exercise"]["revs"] == {"2026-10-12": 1, WEEK: 1}
-    assert state["exercise"]["log"][WEEK]["pu"][:2] == [True, True]
+    # A version 1 file's true day reads as great; the day already marked keeps its mark.
+    assert state["exercise"]["log"][WEEK]["pu"][:2] == ["missed", "great"]
     assert state["settings"] == {"accent": "#ff9f0a", "dailyPick": 2}
 
 
@@ -575,7 +620,8 @@ def test_import_merges_without_deleting(client: TestClient, config: Config) -> N
         ("null", "json"),
         ('{"format": "fitness-planner-export", "version": 1, "x": NaN}', "json"),
         ({"plans": {}}, "format"),
-        ({"format": "fitness-planner-export", "version": 2}, "version"),
+        ({"format": "fitness-planner-export", "version": 3}, "version"),
+        ({"format": "fitness-planner-export", "version": 0}, "version"),
     ],
 )
 def test_import_rejects_bad_files_and_changes_nothing(
@@ -586,6 +632,59 @@ def test_import_rejects_bad_files_and_changes_nothing(
     assert (r.status_code, r.json()) == (400, {"error": code})
     empty: dict[str, dict[str, Any]] = {"plans": {}, "log": {}, "revs": {}}
     assert client.get("/api/state").json() == {"exercise": empty, "diet": empty, "settings": None}
+
+
+def test_import_keeps_existing_marks_and_fills_empty_days(
+    client: TestClient, config: Config
+) -> None:
+    """Per day, a stored mark beats the file's and an empty day takes it, in one upsert."""
+    sign_up(client, config)
+    url = f"/api/ticks/exercise/{WEEK}/pu"
+    client.put(f"{url}/0", json={"mark": "partial"})
+    client.put(f"{url}/1", json={"mark": "missed"})
+    client.put(f"{url}/2", json={"mark": "great"})
+    _ = None
+    incoming = ["great", "partial", "missed", "partial", "missed", "great", _]
+    r = post_import(
+        client,
+        {
+            "format": "fitness-planner-export",
+            "version": 2,
+            "exercise": {"log": {WEEK: {"pu": incoming, "sq": ["missed", _, _, _, _, _, _]}}},
+        },
+    )
+    assert r.json() == {"weeks": 0, "ticks": 4, "settings": False}
+    log = client.get("/api/state").json()["exercise"]["log"]
+    assert log == {
+        WEEK: {
+            "pu": ["partial", "missed", "great", "partial", "missed", "great", _],
+            "sq": ["missed", _, _, _, _, _, _],
+        }
+    }
+    # partial and missed stay disjoint subsets of days.
+    assert ticks_row(config, "pu") == (0b0111111, 0b0001001, 0b0010010)
+    # The same file again adds nothing.
+    assert post_import(
+        client, {"format": "fitness-planner-export", "version": 2, "exercise": {"log": log}}
+    ).json() == {"weeks": 0, "ticks": 0, "settings": False}
+
+
+def test_a_version_1_import_exports_as_version_2(client: TestClient, config: Config) -> None:
+    sign_up(client, config)
+    old = {
+        "format": "fitness-planner-export",
+        "version": 1,
+        "exercise": {"log": {WEEK: {"pu": [True, False, True, False, False, False, False]}}},
+        "diet": {"log": {WEEK: {"veg": [False] * 7}}},
+    }
+    assert post_import(client, old).json() == {"weeks": 0, "ticks": 2, "settings": False}
+    exported = client.get("/api/export").json()
+    assert exported["version"] == 2
+    assert exported["exercise"]["log"] == {
+        WEEK: {"pu": ["great", None, "great", None, None, None, None]}
+    }
+    # An all-empty row is kept, so the export matches the file.
+    assert exported["diet"]["log"] == {WEEK: {"veg": [None] * 7}}
 
 
 def test_import_accepts_a_byte_order_mark(client: TestClient, config: Config) -> None:
@@ -608,10 +707,12 @@ def test_ticks_on_different_days_from_many_connections_all_land(
     conns = [connect(config.db_path) for _ in range(7)]
     barrier = threading.Barrier(7)
 
+    marks: list[Mark] = ["great", "partial", "missed", "great", "partial", "missed", "great"]
+
     def tick(day: int) -> None:
         barrier.wait()
         for _ in range(20):
-            data.set_tick(conns[day], uid, "exercise", WEEK, "pu", day, True, quota=QUOTA)
+            data.set_tick(conns[day], uid, "exercise", WEEK, "pu", day, marks[day], quota=QUOTA)
 
     threads = [threading.Thread(target=tick, args=(d,)) for d in range(7)]
     for t in threads:
@@ -620,7 +721,7 @@ def test_ticks_on_different_days_from_many_connections_all_land(
         t.join()
     for c in conns:
         c.close()
-    assert client.get("/api/state").json()["exercise"]["log"] == {WEEK: {"pu": [True] * 7}}
+    assert client.get("/api/state").json()["exercise"]["log"] == {WEEK: {"pu": marks}}
 
 
 def test_import_rejects_invalid_utf8(client: TestClient, config: Config) -> None:
@@ -648,7 +749,7 @@ def test_a_request_for_another_user_is_refused(client: TestClient, config: Confi
     sign_up(client, config, "bob")
     alice = {"X-Expected-User": "alice"}
     assert client.get("/api/state", headers=alice).json() == {"error": "auth"}
-    r = client.put(f"/api/ticks/exercise/{WEEK}/pu/0", json={"done": True}, headers=alice)
+    r = client.put(f"/api/ticks/exercise/{WEEK}/pu/0", json={"mark": "great"}, headers=alice)
     assert (r.status_code, r.json()) == (401, {"error": "auth"})
     assert client.get("/api/state").json()["exercise"]["log"] == {}
     # The right user, in any case, is fine; so is no header at all.

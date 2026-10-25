@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, ref, watchEffect } from 'vue'
-import { INKS } from '@/lib/inks'
 import { APP_NAME } from '@/lib/app'
 import { TextLink } from '@/components/ui/text-link'
 import { ConfirmHost } from '@/components/ui/confirm-dialog'
@@ -9,7 +8,7 @@ import { applyLook, lookSearch, readLook, type Look } from './look'
 
 /**
  * The living style guide (brand spec K2): every component rendered by its real source, in either
- * theme and any ink. Development builds only: src/main.ts mounts it at /styleguide instead of
+ * theme. Development builds only: src/main.ts mounts it at /styleguide instead of
  * the app. W13's browser checks (axe, 375px, the focus ring) run against it. Components are added
  * in sections.ts.
  */
@@ -50,12 +49,6 @@ const SELECT =
           <option value="dark">Dark</option>
         </select>
       </div>
-      <div class="flex items-center gap-2">
-        <label for="sg-ink" class="label">Ink</label>
-        <select id="sg-ink" v-model="look.ink" :class="SELECT">
-          <option v-for="ink in INKS" :key="ink.id" :value="ink.id">{{ ink.name }}</option>
-        </select>
-      </div>
     </div>
   </header>
 
@@ -64,8 +57,8 @@ const SELECT =
       <h1 class="display">Style guide</h1>
       <p class="body-large mt-3 max-w-prose text-ink-secondary">
         Every component the app is built from, drawn by its real source in each state its card
-        shows. Switch the theme and the ink above; the address keeps your choice, so a link opens
-        the same view. Hover follows the pointer, and focus follows the Tab key.
+        shows. Switch the theme above; the address keeps your choice, so a link opens the same view.
+        Hover follows the pointer, and focus follows the Tab key.
       </p>
       <nav aria-label="Contents" class="mt-6">
         <ul class="flex flex-wrap gap-x-5 gap-y-2">

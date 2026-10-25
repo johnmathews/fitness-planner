@@ -11,19 +11,22 @@ from .validate import (
     EXPORT_FORMAT,
     EXPORT_VERSION,
     SECTIONS,
+    Days,
     ExportData,
     Item,
+    Log,
+    Mark,
     Portable,
     Section,
     Tracked,
-    days_to_mask,
-    mask_to_days,
+    days_to_masks,
+    masks_to_days,
     merge_summary,
     normalise_items,
     normalise_portable,
 )
 
-#: What a tick row counts towards the quota: its key and mask, roughly, with the index's share.
+#: What a tick row counts towards the quota: its key and masks, roughly, with the index's share.
 TICK_BYTES = 64
 
 
@@ -73,12 +76,15 @@ def load_tracked(conn: sqlite3.Connection, user_id: int, section: Section) -> Tr
             (user_id, section),
         )
     }
-    log: dict[str, dict[str, list[bool]]] = {}
+    log: Log = {}
     for r in conn.execute(
-        "SELECT week, item_id, days FROM ticks WHERE user_id = ? AND section = ? ORDER BY week",
+        "SELECT week, item_id, days, partial, missed FROM ticks"
+        " WHERE user_id = ? AND section = ? ORDER BY week",
         (user_id, section),
     ):
-        log.setdefault(r["week"], {})[r["item_id"]] = mask_to_days(r["days"])
+        log.setdefault(r["week"], {})[r["item_id"]] = masks_to_days(
+            r["days"], r["partial"], r["missed"]
+        )
     return {"plans": plans, "log": log}
 
 
@@ -149,15 +155,16 @@ def set_tick(
     week: str,
     item_id: str,
     day: int,
-    done: bool,
+    mark: Mark | None,
     *,
     quota: int,
-) -> list[bool]:
-    """Set or clear one day for one item in one upsert; returns the item's seven flags.
+) -> Days:
+    """Set or clear one day's mark for one item in one upsert; returns the item's seven marks.
 
     Only a tick that adds a row can exceed the quota, so only that case pays for the check.
     """
     bit = 1 << day
+    days, partial, missed = days_to_masks([mark if i == day else None for i in range(7)])
     key = (user_id, section, week, item_id)
     with transaction(conn):
         exists = conn.execute(
@@ -167,14 +174,27 @@ def set_tick(
         if exists is None:
             before = usage(conn, user_id)
             _check_growth(before, before + TICK_BYTES, quota)
+        # The day's bit is cleared in every mask, then set in the ones its new mark belongs to.
         row = conn.execute(
-            "INSERT INTO ticks (user_id, section, week, item_id, days) VALUES (?, ?, ?, ?, ?)"
-            " ON CONFLICT (user_id, section, week, item_id)"
-            " DO UPDATE SET days = CASE WHEN ? THEN days | ? ELSE days & ~? END"
-            " RETURNING days",
-            (*key, bit if done else 0, done, bit, bit),
+            "INSERT INTO ticks (user_id, section, week, item_id, days, partial, missed)"
+            " VALUES (:user, :section, :week, :item, :days, :partial, :missed)"
+            " ON CONFLICT (user_id, section, week, item_id) DO UPDATE SET"
+            " days = (days & ~:bit) | excluded.days,"
+            " partial = (partial & ~:bit) | excluded.partial,"
+            " missed = (missed & ~:bit) | excluded.missed"
+            " RETURNING days, partial, missed",
+            {
+                "user": user_id,
+                "section": section,
+                "week": week,
+                "item": item_id,
+                "days": days,
+                "partial": partial,
+                "missed": missed,
+                "bit": bit,
+            },
         ).fetchone()
-    return mask_to_days(int(row["days"]))
+    return masks_to_days(int(row["days"]), int(row["partial"]), int(row["missed"]))
 
 
 def put_settings(conn: sqlite3.Connection, user_id: int, raw: dict[str, Any]) -> Portable:
@@ -224,12 +244,17 @@ def import_data(
                     )
             for week, entries in incoming["log"].items():
                 for item_id, days in entries.items():
-                    # An all-false row is kept too, so an export of the result matches the file.
+                    # An all-empty row is kept too, so an export of the result matches the file.
+                    # A marked day keeps its mark: SET reads the old row, so `~days` masks off
+                    # the days already marked before the file's are OR-ed in.
                     conn.execute(
-                        "INSERT INTO ticks (user_id, section, week, item_id, days)"
-                        " VALUES (?, ?, ?, ?, ?) ON CONFLICT (user_id, section, week, item_id)"
-                        " DO UPDATE SET days = days | excluded.days",
-                        (user_id, section, week, item_id, days_to_mask(days)),
+                        "INSERT INTO ticks (user_id, section, week, item_id, days, partial, missed)"
+                        " VALUES (?, ?, ?, ?, ?, ?, ?)"
+                        " ON CONFLICT (user_id, section, week, item_id) DO UPDATE SET"
+                        " days = days | excluded.days,"
+                        " partial = partial | (excluded.partial & ~days),"
+                        " missed = missed | (excluded.missed & ~days)",
+                        (user_id, section, week, item_id, *days_to_masks(days)),
                     )
         applied = False
         if data["settings"] is not None and load_settings(conn, user_id) is None:

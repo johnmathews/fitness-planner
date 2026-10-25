@@ -46,14 +46,6 @@ function rowCells(name: string) {
   return wrapper.findAll(`button[aria-label^="${name},"]`)
 }
 
-/** The pen the app applied: the chosen ink's light and dark values. */
-function pen(): [string, string] {
-  const style = document.documentElement.style
-  return [style.getPropertyValue('--user-pen-light'), style.getPropertyValue('--user-pen-dark')]
-}
-const VIOLET: [string, string] = ['#4b3b7a', '#b9a9e8']
-const INK_BLUE: [string, string] = ['#2b4c7e', '#9db8e8']
-
 /** The open dialog, by role: Reka renders it in a portal on document.body, outside the wrapper. */
 function dialog(): DOMWrapper<HTMLElement> | null {
   const el = document.querySelector<HTMLElement>('[role="dialog"]')
@@ -100,9 +92,10 @@ async function openSettings(): Promise<void> {
 /** The Settings page (#/settings). */
 const PANEL = '[data-testid="settings-page"]'
 
-/** An ink in the InkPicker: a radio named by its visible name. */
-function inkRadio(name: string) {
-  return wrapper.findAll('[role="radio"]').find((r) => r.text() === name)!
+/** Saves settings on Settings without changing them: one more exercise a day, then one fewer. */
+async function saveSettings(): Promise<void> {
+  await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
+  await wrapper.get('button[aria-label="Fewer exercises a day"]').trigger('click')
 }
 
 /** The daily pick as the Settings Stepper shows it. */
@@ -174,16 +167,30 @@ describe('App', () => {
     expect(rowCells('Squats')[4]!.element.parentElement!.getAttribute('data-today')).toBe('true')
   })
 
-  it('toggles a cell with aria-pressed and updates totals and footer counts', async () => {
+  it('steps a cell through its marks with aria-pressed, every mark counting in the totals', async () => {
     mountApp()
     const cell = rowCells('Push-ups')[1]!
     expect(cell.attributes('aria-pressed')).toBe('false')
+    for (const mark of ['great', 'partial', 'missed']) {
+      await cell.trigger('click')
+      expect(cell.attributes('aria-pressed')).toBe('true')
+      expect(cell.find(`[data-mark="${mark}"]`).exists()).toBe(true)
+      expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('1 of 18 this week')
+      expect(ex().findAll('[data-testid="day-count"]')[1]!.text()).toBe('1')
+      expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('1 of 4')
+    }
     await cell.trigger('click')
-    expect(cell.attributes('aria-pressed')).toBe('true')
-    expect(cell.find('[data-on="true"]').exists()).toBe(true)
-    expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('1 of 18 this week')
-    expect(ex().findAll('[data-testid="day-count"]')[1]!.text()).toBe('1')
-    expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('1 of 4')
+    expect(cell.attributes('aria-pressed')).toBe('false')
+    expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('0 of 4')
+  })
+
+  it('marks a food eaten or not: a second press clears it', async () => {
+    mountApp()
+    const cell = rowCells('Fish')[0]!
+    await cell.trigger('click')
+    expect(cell.find('[data-mark="great"]').exists()).toBe(true)
+    await cell.trigger('click')
+    expect(cell.attributes('aria-pressed')).toBe('false')
   })
 
   it('colours the footer count by whether the daily pick is met, exceeded or not', async () => {
@@ -306,7 +313,7 @@ describe('App', () => {
     other.exercise.plans = {
       '2026-10-19': [{ id: 'a', name: 'From other tab', reps: 5, target: 2 }],
     }
-    other.exercise.log = { '2026-10-19': { a: [true, false, false, false, false, false, false] } }
+    other.exercise.log = { '2026-10-19': { a: ['great', null, null, null, null, null, null] } }
     otherTabWrites(other)
     await wrapper.vm.$nextTick()
     expect(
@@ -399,7 +406,7 @@ describe('the Settings page', () => {
   })
   afterEach(() => wrapper?.unmount())
 
-  it('opens as a page, changes the ink and daily pick live, and goes back to the week', async () => {
+  it('opens as a page, changes the daily pick live, and goes back to the week', async () => {
     mountApp()
     expect(wrapper.find(PANEL).exists()).toBe(false)
     await openSettings()
@@ -417,15 +424,9 @@ describe('the Settings page', () => {
     expect(wrapper.find('[data-testid="exercise-grid"]').exists()).toBe(false)
     expect(wrapper.find('nav[aria-label="Week"]').exists()).toBe(false)
     expect(wrapper.find('button[role="switch"][aria-label="Edit plan"]').exists()).toBe(false)
-    // Nothing saved yet: Ink blue, although the stored default accent is the old green.
-    expect(inkRadio('Ink blue').attributes('aria-checked')).toBe('true')
-    expect(pen()).toEqual(INK_BLUE)
-
-    await inkRadio('Violet').trigger('click')
-    expect(inkRadio('Violet').attributes('aria-checked')).toBe('true')
-    expect(inkRadio('Ink blue').attributes('aria-checked')).toBe('false')
-    expect(usePlannerStore().accent).toBe('#4b3b7a')
-    expect(pen()).toEqual(VIOLET)
+    // The marks' pens are fixed, so there is no ink to choose.
+    expect(wrapper.get(PANEL).find('[role="radiogroup"][aria-label="Ink"]').exists()).toBe(false)
+    expect(wrapper.get(PANEL).text()).not.toContain('Ink')
 
     await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
     expect(dailyPick()).toBe('4')
@@ -470,19 +471,14 @@ describe('the Settings page', () => {
     wrapper = mount(App, { global: { plugins: [pinia] }, attachTo: document.body })
   }
 
-  it('shows a saved legacy accent as its ink, without rewriting it', async () => {
+  it('keeps a saved accent as it is, though nothing shows it any more', async () => {
     mountWithSettings({ accent: '#ff9f0a', dailyPick: 3 })
     await openSettings()
-    // Orange was too close to the over-the-pick colour, so it becomes Ink blue (K3).
-    expect(inkRadio('Ink blue').attributes('aria-checked')).toBe('true')
-    expect(pen()).toEqual(INK_BLUE)
+    await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
+    await settle()
     expect(usePlannerStore().accent).toBe('#ff9f0a')
-    wrapper.unmount()
-
-    mountWithSettings({ accent: '#30d158', dailyPick: 3 })
-    await openSettings()
-    expect(inkRadio('Forest').attributes('aria-checked')).toBe('true')
-    expect(pen()).toEqual(['#2f5d46', '#8fcbaa'])
+    expect(api.accounts.get(USER)!.settings).toEqual({ accent: '#ff9f0a', dailyPick: 4 })
+    expect(document.documentElement.style.getPropertyValue('--user-pen-light')).toBe('')
   })
 })
 
@@ -506,6 +502,7 @@ describe('export and import', () => {
         '2026-10-12': [{ id: 'sq', name: 'Squats', reps: 15, target: 4 }],
         '2026-10-19': [{ id: 'sq', name: 'Squats', reps: 15, target: 4 }],
       },
+      // A version 1 file, as an export from before marks had kinds: a done day is `true`.
       log: { '2026-10-19': { sq: [true, true, false, false, false, false, false] } },
     },
     diet: {
@@ -541,6 +538,8 @@ describe('export and import', () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     mountApp()
     await rowCells('Squats')[2]!.trigger('click')
+    await rowCells('Squats')[3]!.trigger('click')
+    await rowCells('Squats')[3]!.trigger('click')
     await openSettings()
     await button('Export').trigger('click')
     expect(click).toHaveBeenCalledOnce()
@@ -550,11 +549,19 @@ describe('export and import', () => {
     const file = JSON.parse(await blob!.text())
     expect(file).toMatchObject({
       format: 'fitness-planner-export',
-      version: 1,
+      version: 2,
       settings: { accent: '#30d158', dailyPick: 3 },
     })
     expect(file.settings).not.toHaveProperty('theme')
-    expect(file.exercise.log['2026-10-19'].sq[2]).toBe(true)
+    expect(file.exercise.log['2026-10-19'].sq).toEqual([
+      null,
+      null,
+      'great',
+      'partial',
+      null,
+      null,
+      null,
+    ])
     expect(file.diet).toEqual({ plans: {}, log: {} })
   })
 
@@ -573,12 +580,12 @@ describe('export and import', () => {
     mountApp()
     await rowCells('Push-ups')[4]!.trigger('click')
     await openSettings()
-    await inkRadio('Ink blue').trigger('click')
+    await saveSettings()
     await choose(jsonFile(EXPORT))
     // The tick gave this week its own plan, so only last week's exercise plan and this week's food
-    // plan are new. Picking Ink blue saved settings, so the file's accent and daily pick don't apply.
+    // plan are new. Settings are saved here, so the file's accent and daily pick don't apply.
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds two weekly plans and three ticks. Existing plans and ticks stay as they are.',
+      'Adds two weekly plans and three marked days. Existing plans and marks stay as they are.',
     )
     expect(usePlannerStore().isDone('sq', 0)).toBe(false)
 
@@ -590,7 +597,7 @@ describe('export and import', () => {
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('true')
     expect(rowCells('Push-ups')[4]!.attributes('aria-pressed')).toBe('true')
     expect(rowCells('Eggs')[2]!.attributes('aria-pressed')).toBe('true')
-    expect(pen()).toEqual(INK_BLUE)
+    expect(usePlannerStore().dailyPick).toBe(3)
   })
 
   it('applies the file’s settings when this browser has none saved', async () => {
@@ -598,30 +605,31 @@ describe('export and import', () => {
     await openSettings()
     await choose(jsonFile(EXPORT))
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds three weekly plans and three ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
+      'Adds three weekly plans and three marked days, plus the number of exercises a day. Existing plans and marks stay as they are.',
     )
     await button('Import').trigger('click')
     await flushPromises()
-    expect(pen()).toEqual(VIOLET)
+    expect(usePlannerStore().accent).toBe(EXPORT.settings.accent)
     expect(dailyPick()).toBe('2')
   })
 
   it('uses the singular for one plan and one tick', async () => {
     mountApp()
     await openSettings()
-    await inkRadio('Ink blue').trigger('click')
+    await saveSettings()
     await choose(
       jsonFile({
         format: 'fitness-planner-export',
         version: 1,
         exercise: {
           plans: { '2026-10-12': [] },
+          // A version 1 file: a done day is `true`.
           log: { '2026-10-19': { pu: [true, false, false, false, false, false, false] } },
         },
       }),
     )
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds one weekly plan and one tick. Existing plans and ticks stay as they are.',
+      'Adds one weekly plan and one marked day. Existing plans and marks stay as they are.',
     )
   })
 
@@ -629,12 +637,12 @@ describe('export and import', () => {
     mountApp()
     await openSettings()
     await choose(jsonFile(EXPORT))
-    expect(wrapper.get('[data-testid="import-summary"]').text()).toContain('plus the ink')
-    await inkRadio('Ink blue').trigger('click')
-    expect(wrapper.get('[data-testid="import-summary"]').text()).not.toContain('plus the ink')
+    expect(wrapper.get('[data-testid="import-summary"]').text()).toContain('plus the number')
+    await saveSettings()
+    expect(wrapper.get('[data-testid="import-summary"]').text()).not.toContain('plus the number')
     await button('Import').trigger('click')
     await flushPromises()
-    expect(pen()).toEqual(INK_BLUE)
+    expect(usePlannerStore().dailyPick).toBe(3)
   })
 
   it('says so, and keeps the file, when the server cannot be reached', async () => {
@@ -697,7 +705,7 @@ describe('export and import', () => {
     ['another format', jsonFile({ plans: {} }), 'That file isn’t a Fitness Planner export.'],
     [
       'a newer version',
-      jsonFile({ format: 'fitness-planner-export', version: 2 }),
+      jsonFile({ format: 'fitness-planner-export', version: 3 }),
       'That export comes from a newer version of the app.',
     ],
   ])('rejects %s with an inline error and changes nothing', async (_, file, message) => {
@@ -807,7 +815,7 @@ describe('export and import with the sample data', () => {
     await input.trigger('change')
     await flushPromises()
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds six weekly plans and 102 ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
+      'Adds six weekly plans and 102 marked days, plus the number of exercises a day. Existing plans and marks stay as they are.',
     )
     await button('Import').trigger('click')
     await flushPromises()

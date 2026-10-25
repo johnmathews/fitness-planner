@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import { dayMonth } from '@/lib/dates'
-import type { Food } from '@/lib/storage'
+import type { Food, Mark } from '@/lib/storage'
 import { SectionHeader } from '@/components/ui/section-header'
 import { StatFigure } from '@/components/ui/stat-figure'
 import TrackerGrid from '@/components/TrackerGrid.vue'
@@ -13,8 +13,8 @@ import EditFoodDialog from '@/components/EditFoodDialog.vue'
 const planner = usePlannerStore()
 const diet = useDietStore()
 
-function flagsFor(id: string): boolean[] {
-  return planner.days.map((_, i) => diet.isEaten(id, i))
+function marksFor(id: string): (Mark | null)[] {
+  return planner.days.map((_, i) => diet.markOf(id, i))
 }
 
 const editing = ref<Food | null>(null)
@@ -64,7 +64,7 @@ watch(
         :table-label="`Food, week of ${dayMonth(planner.monday)}`"
         :items="diet.foods"
         :days="planner.days"
-        :flags-for="flagsFor"
+        :marks-for="marksFor"
         :total-for="diet.totalFor"
         editable
         :config-mode="planner.configMode"

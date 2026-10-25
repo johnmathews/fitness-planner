@@ -17,12 +17,12 @@ The one strong number in a section: a figure and the words that say what it coun
 | Not met yet | `ink`, 600 | "10 of 12 this week" |
 | Zero | `ink-secondary`, 400 | "0 of 12 this week" |
 
-Met never rests on colour alone: Graphite's `pen` is close to `ink`, so the check is what tells met from not met yet in every ink (F6). The check is Lucide `check`, 16px at 1.5px stroke, after the words and centred on their line, `aria-hidden` like every icon. Zero is never in `pen` or a success colour, and never gets the check: a fresh week or a new account starts quiet (F13). Going over the goal stays `pen` with the check ("13 of 12 this week"); there is no over state for the week.
+Met never rests on colour alone: the check is what tells met from not met yet for someone who can't tell `pen` from `ink`, and in print (F6). The check is Lucide `check`, 16px at 1.5px stroke, after the words and centred on their line, `aria-hidden` like every icon. Zero is never in `pen` or a success colour, and never gets the check: a fresh week or a new account starts quiet (F13). Going over the goal stays `pen` with the check ("13 of 12 this week"); there is no over state for the week.
 
 ## Accessibility
 
 - Plain text in a `<p>`; it reads "10 of 12 this week". The check is decorative (`aria-hidden`): the words already say how many of how many. Don't make it a live region: the DayMark that changed it already announces.
-- `pen` as text meets 4.5:1 on `canvas` in every ink (the gate measures each ink on `canvas` and `panel`); `ink-secondary` meets 4.5:1 on `canvas`, `panel`, `tile` and `highlight`.
+- `pen` as text meets 4.5:1 on `canvas` and `panel` in both themes (measured by the gate); `ink-secondary` meets 4.5:1 on `canvas`, `panel`, `tile` and `highlight`.
 
 ## You provide
 

@@ -16,18 +16,11 @@
    by public/theme-init.js before first paint and by App.vue after. tokens.css matches it. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/*
- * The pen is the person's chosen ink (src/lib/inks.ts). App.vue sets its two values on <html>,
- * and each theme picks its own; before that, or without them, it is the default ink, Ink blue
- * (the `pen` token's own value). Everything reads `--pen`, never the user variables.
- */
 :root {
-  --pen: var(--user-pen-light, var(--ink-blue));
   color-scheme: light;
 }
 
 .dark {
-  --pen: var(--user-pen-dark, var(--ink-blue));
   color-scheme: dark;
 }
 
@@ -67,6 +60,8 @@
   --color-error-ink: var(--error-ink);
   --color-focus: var(--focus);
   --color-pen: var(--pen);
+  --color-pen-partial: var(--pen-partial);
+  --color-pen-missed: var(--pen-missed);
   --color-highlight: var(--highlight);
   --color-caution-ink: var(--caution-ink);
   --color-scrim: var(--scrim);
@@ -102,10 +97,9 @@
 
 /*
  * Printing gives a plain black-on-white sheet in either theme (WeekGrid card, Print): the roles
- * switch to the card's print values, so done squiggles print solid black, empty boxes grey, chips
- * outlined, and today's highlight disappears; "one extra" keeps its underline and words. These
- * are the only literal colours the system allows. The user's ink cannot leak through: --pen is
- * set here, and App.vue only sets --user-pen-*.
+ * switch to the card's print values, so every mark prints solid black (its shape still tells the
+ * three apart), empty boxes grey, chips outlined, and today's highlight disappears; "one extra"
+ * keeps its underline and words. These are the only literal colours the system allows.
  */
 @media print {
   @page {
@@ -126,6 +120,8 @@
     --error-ink: #000000;
     --caution-ink: #000000;
     --pen: #000000;
+    --pen-partial: #000000;
+    --pen-missed: #000000;
     --highlight: transparent;
     --shadow-overlay: none;
     color-scheme: light;

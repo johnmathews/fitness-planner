@@ -56,14 +56,18 @@ describe('planner store', () => {
     expect(localStorage.getItem(DATA_KEY)).toBe(v2)
   })
 
-  it('toggles a cell on and off', () => {
+  it('steps a cell through great, partial and missed, each counting, then back to empty', () => {
     const s = usePlannerStore()
+    for (const mark of ['great', 'partial', 'missed'] as const) {
+      s.toggle('pu', 0)
+      expect(s.markOf('pu', 0)).toBe(mark)
+      expect(s.isDone('pu', 0)).toBe(true)
+      expect(s.totalFor('pu')).toBe(1)
+    }
     s.toggle('pu', 0)
-    expect(s.isDone('pu', 0)).toBe(true)
-    expect(s.totalFor('pu')).toBe(1)
-    s.toggle('pu', 0)
+    expect(s.markOf('pu', 0)).toBeNull()
     expect(s.isDone('pu', 0)).toBe(false)
-    expect(s.log['2026-10-19']!.pu).toEqual([false, false, false, false, false, false, false])
+    expect(s.log['2026-10-19']!.pu).toEqual([null, null, null, null, null, null, null])
   })
 
   it('counts picks per day and the grand total across exercises', () => {
@@ -83,7 +87,7 @@ describe('planner store', () => {
     s.removeExercise('pu')
     expect(s.dayCounts[0]).toBe(1)
     expect(s.grandTotal).toBe(1)
-    expect(s.log['2026-10-19']?.pu?.[0]).toBe(true)
+    expect(s.log['2026-10-19']?.pu?.[0]).toBe('great')
   })
 
   it('knows the real current week whichever week is on screen', () => {
@@ -166,7 +170,7 @@ describe('planner store', () => {
     s.adopt(
       {
         plans: { '2026-10-19': plan },
-        log: { '2026-10-19': { a: [true, false, false, false, false, false, false] } },
+        log: { '2026-10-19': { a: ['great', null, null, null, null, null, null] } },
       },
       { accent: '#ff9f0a', dailyPick: 5 },
     )
@@ -185,13 +189,14 @@ describe('planner store', () => {
   it('clears the user’s data, the mode and the week on sign-out, but keeps the theme', () => {
     const s = usePlannerStore()
     s.toggle('pu', 0)
-    s.setAccent('#bf5af2')
+    s.changeDailyPick(1)
     s.setConfigMode(true)
     s.nextWeek()
     s.setTheme('dark')
     s.clear()
     expect(s.grandTotal).toBe(0)
-    expect(s.accent).toBe('#30d158')
+    expect(s.dailyPick).toBe(3)
+    expect(s.savedSettings()).toBeNull()
     expect(s.configMode).toBe(false)
     expect(s.weekOffset).toBe(0)
     expect(s.theme).toBe('dark')
@@ -200,8 +205,9 @@ describe('planner store', () => {
   it('clamps daily pick to 1–8, and a change counts as saved settings', () => {
     const s = usePlannerStore()
     expect(s.savedSettings()).toBeNull()
-    s.setAccent('#bf5af2')
-    expect(s.savedSettings()).toEqual({ accent: '#bf5af2', dailyPick: 3 })
+    s.changeDailyPick(1)
+    // The accent is kept as stored; nothing in the app changes it now.
+    expect(s.savedSettings()).toEqual({ accent: '#30d158', dailyPick: 4 })
     for (let i = 0; i < 10; i++) s.changeDailyPick(1)
     expect(s.dailyPick).toBe(8)
     for (let i = 0; i < 10; i++) s.changeDailyPick(-1)
@@ -218,7 +224,7 @@ describe('planner store', () => {
     expect(s.theme).toBe('light')
     // The accent and daily pick are the user's, from the server, not the device's.
     expect([s.accent, s.dailyPick]).toEqual(['#30d158', 3])
-    s.setAccent('#bf5af2')
+    s.changeDailyPick(1)
     s.setTheme('dark')
     await nextTick()
     expect(stored(SETTINGS_KEY)).toEqual({ accent: '#ff9f0a', dailyPick: 5, theme: 'dark' })
@@ -455,8 +461,8 @@ describe('savedSettings', () => {
     })
     const s = usePlannerStore()
     expect(s.savedSettings()).toBeNull()
-    s.setAccent('#0a84ff')
-    expect(s.savedSettings()).toEqual({ accent: '#0a84ff', dailyPick: 3 })
+    s.changeDailyPick(1)
+    expect(s.savedSettings()).toEqual({ accent: '#30d158', dailyPick: 4 })
   })
 
   it('treats adopted settings as saved, and none adopted as unsaved', () => {

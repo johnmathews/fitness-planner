@@ -50,9 +50,9 @@ function skipToToday(): void {
   The Header card (brand/design-system/project/components/Header): the wordmark, the week
   navigation at the centre, then "This week" while another week is on screen, the Edit plan
   switch, Settings (which opens the Settings page) and Print. On the Settings page the bar holds
-  only the wordmark. Every target is 44px on a phone. Below 640px the bar keeps the
-  monogram (under 480px), the centred arrows and week, and Settings on one row, and "This week"
-  and the switch take a second row at the right; the markup stays in the desktop order, which is
+  only the wordmark. Every target is 44px on a phone. Below 640px the planner's bar drops the
+  wordmark and keeps the centred arrows and week and Settings on one row, and "This week" and the
+  switch take a second row at the right (the Settings page keeps the monogram under 480px); the markup stays in the desktop order, which is
   the tab order.
 
   "Skip to today" comes first in the tab order (F15): hidden until it has focus, then shown over
@@ -77,7 +77,9 @@ function skipToToday(): void {
     <div
       class="mx-auto grid min-h-14 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-x-2 py-1 pr-2 pl-4 sm:gap-x-4 sm:px-6 lg:px-8"
     >
-      <div class="justify-self-start">
+      <!-- On a phone's planner the wordmark is left out (Header card): the week and Settings are
+           what the bar is for. Hidden rather than removed, so the week stays in the middle. -->
+      <div class="justify-self-start" :class="{ 'max-sm:invisible': page !== 'settings' }">
         <BrandMark class="max-[479px]:hidden" />
         <BrandMark variant="monogram" class="min-[480px]:hidden" />
       </div>

@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { BOX_PATH, DayMark, SQUIGGLE_PATH, dayMarkLabel } from '@/components/ui/day-mark'
+import { BOX_PATH, DayMark, MARK_PATHS, MARK_STROKES, dayMarkLabel } from '@/components/ui/day-mark'
+import { MARKS } from '@/lib/storage'
 
-const PROPS = { name: 'Squats', date: 'Thursday 22 October', done: false }
+const PROPS = { name: 'Squats', date: 'Thursday 22 October', mark: null }
 
 describe('DayMark', () => {
-  it('is a toggle button named by its row and full date, never by its state', () => {
+  it('is a toggle button named by its row and full date when empty', () => {
     const button = mount(DayMark, { props: PROPS }).get('button')
     expect(button.attributes('type')).toBe('button')
     expect(button.attributes('aria-label')).toBe('Squats, Thursday 22 October')
@@ -15,7 +16,7 @@ describe('DayMark', () => {
   })
 
   it('says "today" in the name and sets aria-current, so today never rests on the band', () => {
-    const wrapper = mount(DayMark, { props: { ...PROPS, done: true, today: true } })
+    const wrapper = mount(DayMark, { props: { ...PROPS, mark: 'great', today: true } })
     const button = wrapper.get('button')
     expect(button.attributes('aria-label')).toBe('Squats, Thursday 22 October, today')
     expect(button.attributes('aria-current')).toBe('date')
@@ -25,25 +26,47 @@ describe('DayMark', () => {
     expect(wrapper.classes()).not.toContain('bg-highlight')
   })
 
-  it('draws an empty hand-drawn box when not done, and a pen squiggle in it when done', async () => {
+  it('draws an empty hand-drawn box, and a stroke of its own shape and pen for each mark', async () => {
     const wrapper = mount(DayMark, { props: PROPS })
     const box = () => wrapper.get('[data-slot="day-mark-box"]')
     const outline = () => wrapper.get('[data-slot="day-mark-outline"]')
-    const squiggle = () => wrapper.find('[data-slot="day-mark-squiggle"]')
+    const stroke = () => wrapper.find('[data-slot="day-mark-stroke"]')
     expect(box().attributes('aria-hidden')).toBe('true')
-    expect(box().attributes('data-on')).toBe('false')
-    expect(box().classes()).toContain('size-10')
+    expect(box().attributes('data-mark')).toBeUndefined()
+    expect(box().classes()).toEqual(expect.arrayContaining(['size-10', 'overflow-visible']))
     expect(outline().attributes('d')).toBe(BOX_PATH)
     expect(outline().classes()).toEqual(
       expect.arrayContaining(['stroke-control-border', 'group-hover:stroke-ink']),
     )
-    expect(squiggle().exists()).toBe(false)
-    await wrapper.setProps({ done: true })
-    expect(box().attributes('data-on')).toBe('true')
-    expect(squiggle().attributes('d')).toBe(SQUIGGLE_PATH)
-    expect(squiggle().classes()).toContain('stroke-pen')
-    // Done, the box no longer darkens on hover: the squiggle says it all.
-    expect(outline().classes()).not.toContain('group-hover:stroke-ink')
+    expect(stroke().exists()).toBe(false)
+    for (const mark of MARKS) {
+      await wrapper.setProps({ mark })
+      expect(box().attributes('data-mark')).toBe(mark)
+      expect(stroke().attributes('d')).toBe(MARK_PATHS[mark])
+      expect(stroke().classes()).toContain(MARK_STROKES[mark])
+      expect(wrapper.get('button').attributes('aria-pressed')).toBe('true')
+      // Marked, the box no longer darkens on hover: the stroke says it all.
+      expect(outline().classes()).not.toContain('group-hover:stroke-ink')
+    }
+  })
+
+  it('gives each mark a different shape and a different pen, so none rests on colour', () => {
+    expect(new Set(Object.values(MARK_PATHS)).size).toBe(3)
+    expect(MARK_STROKES).toEqual({
+      great: 'stroke-pen',
+      partial: 'stroke-pen-partial',
+      missed: 'stroke-pen-missed',
+    })
+  })
+
+  it('names a partial or missed day’s kind; a great day is said by aria-pressed alone', async () => {
+    const wrapper = mount(DayMark, { props: { ...PROPS, mark: 'great' } })
+    const label = () => wrapper.get('button').attributes('aria-label')
+    expect(label()).toBe('Squats, Thursday 22 October')
+    await wrapper.setProps({ mark: 'partial', today: true })
+    expect(label()).toBe('Squats, Thursday 22 October, today, partly done')
+    await wrapper.setProps({ mark: 'missed', today: false })
+    expect(label()).toBe("Squats, Thursday 22 October, couldn't do it")
   })
 
   it('centres a 44px button in a 56 × 60px cell, and changes colour in 120ms at most', () => {

@@ -1,35 +1,35 @@
 {
-  "description": "Ticks are OR-ed per week, item and day: an import adds ticks and never clears one. Items and weeks only one side has are kept or added.",
+  "description": "An import fills empty days per week, item and day and never clears a marked one. Items and weeks only one side has are kept or added.",
   "existing": {
     "plans": {},
     "log": {
       "2026-10-19": {
-        "pu": [true, false, false, false, true, false, false],
-        "sq": [false, false, true, false, false, false, false]
+        "pu": ["great", null, null, null, "great", null, null],
+        "sq": [null, null, "great", null, null, null, null]
       },
-      "2026-10-05": { "pl": [false, false, false, false, false, true, false] }
+      "2026-10-05": { "pl": [null, null, null, null, null, "great", null] }
     }
   },
   "incoming": {
     "plans": {},
     "log": {
       "2026-10-19": {
-        "pu": [false, true, false, false, true, false, false],
-        "be": [false, false, false, true, false, false, false]
+        "pu": [null, "great", null, null, "great", null, null],
+        "be": [null, null, null, "great", null, null, null]
       },
-      "2026-10-12": { "pu": [true, true, false, false, false, false, false] }
+      "2026-10-12": { "pu": ["great", "great", null, null, null, null, null] }
     }
   },
   "expected": {
     "plans": {},
     "log": {
       "2026-10-19": {
-        "pu": [true, true, false, false, true, false, false],
-        "sq": [false, false, true, false, false, false, false],
-        "be": [false, false, false, true, false, false, false]
+        "pu": ["great", "great", null, null, "great", null, null],
+        "sq": [null, null, "great", null, null, null, null],
+        "be": [null, null, null, "great", null, null, null]
       },
-      "2026-10-12": { "pu": [true, true, false, false, false, false, false] },
-      "2026-10-05": { "pl": [false, false, false, false, false, true, false] }
+      "2026-10-12": { "pu": ["great", "great", null, null, null, null, null] },
+      "2026-10-05": { "pl": [null, null, null, null, null, "great", null] }
     }
   },
   "summary": { "weeks": 0, "ticks": 4 }

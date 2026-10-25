@@ -74,8 +74,7 @@ Sign-up is open by default: anyone who can reach the app can create an account u
   Content-Security-Policy of `default-src 'self'`. `style-src` also allows `'unsafe-inline'`, which
   the production bundle no longer needs: it writes no `style` attribute into markup and adds no
   `<style>` element. Its inline styles all go through the CSSOM, which CSP does not govern:
-  `App.vue` sets `--user-pen-light` and `--user-pen-dark` with `style.setProperty`, Reka UI
-  positions the popover through a Vue `:style` binding (which writes `element.style`), and a dialog
+  Reka UI positions the popover through a Vue `:style` binding (which writes `element.style`), and a dialog
   locks scrolling through `document.body.style`. Dropping it is a change to `nginx.conf` and to
   `nginx.spec.ts`, which pins the policy.
 - gzip compresses HTML, CSS, JavaScript and SVG.

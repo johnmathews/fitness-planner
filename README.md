@@ -9,43 +9,44 @@
 
 ## 1. What it does
 
-- **Exercises.** Each day, pick a few exercises (default three) and click their cells when done. The
-  **Week** column counts sessions against a weekly goal of 0–7 days, and turns to your ink with a
-  check once a non-zero goal is met. The **Picked** row counts each day's exercises against the
+- **Exercises.** Each day, pick a few exercises (default three) and mark their cells. A press steps
+  a day from empty to green (done well), amber (partly done), red (tried and couldn't) and back to
+  empty; each mark has its own shape too. The **Week** column counts every marked day against a
+  weekly goal of 0–7 days, and turns green with a check once a non-zero goal is met. The **Picked** row counts each day's exercises against the
   daily pick and says so in words when a day goes over ("one extra").
-- **Food.** Below the exercises, foods work the same way: tick each day you ate one, and its Week
+- **Food.** Below the exercises, foods work the same way, with one kind of mark: mark each day you ate one, and its Week
   column counts days against a goal. The section header shows how many food goals are met. Defaults
   are Vegetables (7), Fruit (5), Fish (2) and Nuts (3).
-- **Normal mode and config mode.** The app opens in normal mode, where you only tick cells. The
+- **Normal mode and config mode.** The app opens in normal mode, where you only mark cells. The
   **Edit plan** switch in the top bar turns on config mode for changing the plan:
   - add an exercise with a name, optional sets, reps or a time in seconds (a plank), "Per set" or
     "Each side", and an optional weight in kg (e.g. squats with a 12 kg kettlebell); add a food by
     name;
   - the pencil beside a name opens that item's dialog, where everything about it changes: for an
     exercise its sets, reps or seconds, weight and goal ("Times a week"), for a food its name and
-    goal; the bin at the end of a row removes the item after a confirmation (its ticks stay
+    goal; the bin at the end of a row removes the item after a confirmation (its marks stay
     stored). New items start with a goal of 3.
 - **Weekly plans.** Each week has its own plan, so reps, sets, weights and goals can change from week
   to week. A week you haven't changed carries over the latest earlier week's plan; it gets its own
-  copy the first time you change it or tick a cell. In config mode, **Copy plan to next week**
+  copy the first time you change it or mark a cell. In config mode, **Copy plan to next week**
   copies this week's exercises and foods over the next week's.
 - `‹` / `›` move between weeks for both sections; past weeks persist. **Print…** produces a
   black-on-white sheet. **Show weekly totals** in Settings hides or shows each section's total on
   this device.
 - **On a phone** the app opens on **Today**: today's exercises and foods, one mark each. A Today |
   Week switch leads to the week's grids, whose names stay put while the days scroll.
-- **Settings** sets the theme (System, Light or Dark), the ink that marks a day done (Ink blue,
-  Forest, Violet or Graphite) and the exercises-per-day target (1–8), and shows who is signed in,
-  with **Sign out**.
+- **Settings** is a page of its own. It sets the theme (System, Light or Dark), the exercises-per-day
+  target (1–8) and whether the weekly totals show, holds export and import, and shows who is signed
+  in, with **Sign out**.
 - **Accounts and sync.** Anyone can **Create an account** from the sign-in screen with an email and
   a password; people can also be invited by link, with a username. Sign-in takes either. Sign-up
   closes once `MAX_USERS` accounts exist (`docs/api.md` §4), and each account may store 5 MiB
-  (§3). Plans, ticks, the ink and the daily pick are stored on the
+  (§3). Plans, marks and the daily pick are stored on the
   server and sync across devices; the theme stays with each device. The app opens from a cached
   copy and keeps working offline, sending changes once the connection is back.
-- **Export and import.** Settings → **Export** downloads your plans, ticks, ink and daily pick as
+- **Export and import.** Settings → **Export** downloads your plans, marks and daily pick as
   a JSON file; **Import…** merges such a file into your account. An import only adds: weeks you
-  already have keep their plan, and no tick is ever cleared. The export is your own copy of your
+  already have keep their plan, and no mark is ever cleared or changed. The export is your own copy of your
   data.
 - **Moving a log from before accounts.** A browser that kept a log before accounts existed offers
   it once you sign in: **Add to my account** merges it in, **Not mine** stops the question for you
@@ -95,7 +96,7 @@ npm run preview            # serve dist/ locally
 ```
 
 In development, <http://localhost:5173/styleguide> shows the living style guide: every component
-in each state, in either theme and any ink, with no sign-in needed.
+in each state, in either theme, with no sign-in needed.
 
 [docs/development.md](docs/development.md) covers the toolchain, conventions and test layout, and
 [docs/brand.md](docs/brand.md) the brand and the design system.

@@ -6,8 +6,6 @@ import { expect, type Page } from '@playwright/test'
 /** Longer than the slowest transition (120ms in the primitives, 150ms in older screens). */
 export const SETTLE_MS = 400
 
-/** The inks a person can pick (src/lib/inks.ts); the style guide takes them as `?ink=`. */
-export const INKS = ['ink-blue', 'forest', 'violet', 'graphite'] as const
 export const THEMES = ['light', 'dark'] as const
 export type Theme = (typeof THEMES)[number]
 
@@ -18,10 +16,12 @@ export type Theme = (typeof THEMES)[number]
 export const TODAY = new Date('2026-10-21T12:00:00')
 const MONDAY = '2026-10-19'
 
-const T = true
-const F = false
+const G = 'great'
+const P = 'partial'
+const M = 'missed'
+const _ = null
 
-/** A week with a plan and some ticks, as GET /api/state returns it. */
+/** A week with a plan and every kind of mark, as GET /api/state returns it. */
 function state() {
   return {
     exercise: {
@@ -36,18 +36,18 @@ function state() {
       },
       log: {
         [MONDAY]: {
-          pu: [T, F, T, F, F, F, F],
-          pl: [T, F, F, F, F, F, F],
-          sq: [F, T, T, F, F, F, F],
-          be: [F, F, F, F, F, F, F],
-          kh: [F, T, F, F, F, F, F],
+          pu: [G, _, G, _, _, _, _],
+          pl: [G, _, P, _, _, _, _],
+          sq: [_, M, M, _, _, _, _],
+          be: [_, _, _, _, _, _, _],
+          kh: [_, P, _, _, _, _, _],
         },
       },
       revs: {},
     },
     diet: {
       plans: {},
-      log: { [MONDAY]: { veg: [T, T, F, F, F, F, F], fish: [T, F, F, F, F, F, F] } },
+      log: { [MONDAY]: { veg: [G, G, _, _, _, _, _], fish: [G, _, _, _, _, _, _] } },
       revs: {},
     },
     settings: null,
@@ -113,9 +113,9 @@ async function openSignedOut(page: Page, theme: Theme, path: string): Promise<vo
 /** Opens the style guide in a look, through the query string it reads (src/styleguide/look.ts). */
 export async function openStyleGuide(
   page: Page,
-  { theme = 'light', ink = 'ink-blue' }: { theme?: Theme; ink?: (typeof INKS)[number] } = {},
+  { theme = 'light' }: { theme?: Theme } = {},
 ): Promise<void> {
-  await page.goto(`/styleguide?theme=${theme}&ink=${ink}`)
+  await page.goto(`/styleguide?theme=${theme}`)
   await page.waitForSelector('#sg-main section')
   await settle(page)
 }

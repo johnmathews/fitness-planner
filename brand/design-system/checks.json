@@ -12,7 +12,6 @@
     "SegmentedControl",
     "Switch",
     "Stepper",
-    "InkPicker",
     "SearchField",
     "Dialog",
     "ConfirmDialog",
@@ -32,66 +31,6 @@
     "Banner"
   ],
   "extra_contrast_pairs": [
-    [
-      "ink-blue",
-      "canvas",
-      4.5
-    ],
-    [
-      "ink-blue",
-      "panel",
-      4.5
-    ],
-    [
-      "ink-blue",
-      "highlight",
-      3.0
-    ],
-    [
-      "forest",
-      "canvas",
-      4.5
-    ],
-    [
-      "forest",
-      "panel",
-      4.5
-    ],
-    [
-      "forest",
-      "highlight",
-      3.0
-    ],
-    [
-      "violet",
-      "canvas",
-      4.5
-    ],
-    [
-      "violet",
-      "panel",
-      4.5
-    ],
-    [
-      "violet",
-      "highlight",
-      3.0
-    ],
-    [
-      "graphite",
-      "canvas",
-      4.5
-    ],
-    [
-      "graphite",
-      "panel",
-      4.5
-    ],
-    [
-      "graphite",
-      "highlight",
-      3.0
-    ],
     [
       "pen",
       "highlight",
@@ -156,6 +95,51 @@
       "pen",
       "panel",
       4.5
+    ],
+    [
+      "pen-partial",
+      "canvas",
+      3.0
+    ],
+    [
+      "pen-partial",
+      "panel",
+      3.0
+    ],
+    [
+      "pen-partial",
+      "highlight",
+      3.0
+    ],
+    [
+      "pen-partial",
+      "tile",
+      3.0
+    ],
+    [
+      "pen-missed",
+      "canvas",
+      3.0
+    ],
+    [
+      "pen-missed",
+      "panel",
+      3.0
+    ],
+    [
+      "pen-missed",
+      "highlight",
+      3.0
+    ],
+    [
+      "pen-missed",
+      "tile",
+      3.0
+    ],
+    [
+      "pen",
+      "tile",
+      3.0
     ]
   ],
   "forbidden_words": [

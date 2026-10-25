@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, type Directive } from 'vue'
-import { todaySummary, type TodayItem } from '@/lib/tracker'
+import { EXERCISE_CYCLE, FOOD_CYCLE, nextMark, todaySummary, type TodayItem } from '@/lib/tracker'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import TodayList from '@/components/TodayList.vue'
 import ExampleGroup from '../parts/ExampleGroup.vue'
@@ -12,23 +12,24 @@ const DATE = 'Thursday 22 October'
 const PICK = 3
 
 const exercises = reactive<TodayItem[]>([
-  { id: 'pu', name: 'Push-ups', chips: ['3 × 12'], done: true, total: 3, target: 4 },
-  { id: 'pl', name: 'Pull-ups', chips: ['3 × 5'], done: false, total: 1, target: 3 },
-  { id: 'sq', name: 'Squats', chips: ['3 × 15', '16 kg'], done: true, total: 3, target: 3 },
-  { id: 'kh', name: 'Kettlebell halos', chips: ['8 each side'], done: false, total: 1, target: 2 },
+  { id: 'pu', name: 'Push-ups', chips: ['3 × 12'], mark: 'great', total: 3, target: 4 },
+  { id: 'pl', name: 'Pull-ups', chips: ['3 × 5'], mark: null, total: 1, target: 3 },
+  { id: 'sq', name: 'Squats', chips: ['3 × 15', '16 kg'], mark: 'partial', total: 3, target: 3 },
+  { id: 'kh', name: 'Kettlebell halos', chips: ['8 each side'], mark: null, total: 1, target: 2 },
 ])
 const foods = reactive<TodayItem[]>([
-  { id: 'veg', name: 'Vegetables', done: true, total: 5, target: 7 },
-  { id: 'fruit', name: 'Fruit', done: false, total: 3, target: 5 },
-  { id: 'fish', name: 'Fish', done: false, total: 1, target: 2 },
-  { id: 'nuts', name: 'Nuts', done: true, total: 2, target: 3 },
+  { id: 'veg', name: 'Vegetables', mark: 'great', total: 5, target: 7 },
+  { id: 'fruit', name: 'Fruit', mark: null, total: 3, target: 5 },
+  { id: 'fish', name: 'Fish', mark: null, total: 1, target: 2 },
+  { id: 'nuts', name: 'Nuts', mark: 'great', total: 2, target: 3 },
 ])
 
-/** A mark flips today and moves the week's count with it; nothing is saved. */
+/** A press steps today's mark and moves the week's count with it; nothing is saved. */
 function toggle(kind: 'exercise' | 'food', id: string): void {
   const item = (kind === 'exercise' ? exercises : foods).find((x) => x.id === id)!
-  item.done = !item.done
-  item.total += item.done ? 1 : -1
+  const was = item.mark
+  item.mark = nextMark(was, kind === 'exercise' ? EXERCISE_CYCLE : FOOD_CYCLE)
+  item.total += (item.mark === null ? 0 : 1) - (was === null ? 0 : 1)
 }
 
 const view = ref('today')
@@ -54,7 +55,7 @@ const vNestedHeadings: Directive<HTMLElement> = { mounted: nestHeadings, updated
 </script>
 
 <!-- The card's phone column, drawn by the app's own TodayList inside a 390px frame: the view switch,
-     the band, the summary, then Exercises and Food. Marks toggle; nothing is saved. In the app the
+     the band, the summary, then Exercises and Food. A press steps a mark; nothing is saved. In the app the
      list is the page's h1 and shows only below 640px. -->
 <template>
   <ExampleGroup>

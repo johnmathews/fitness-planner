@@ -2,8 +2,15 @@
 import { computed, reactive, ref } from 'vue'
 import type { Day } from '@/stores/planner'
 import { DAY_NAMES, addDays, dateKey, fullDate } from '@/lib/dates'
-import { dayCounts, pickedCount, totalFor, toggleDay, type Tracked } from '@/lib/tracker'
-import type { Log } from '@/lib/storage'
+import {
+  EXERCISE_CYCLE,
+  cycleDay,
+  dayCounts,
+  pickedCount,
+  totalFor,
+  type Tracked,
+} from '@/lib/tracker'
+import type { Log, Mark } from '@/lib/storage'
 import { Switch } from '@/components/ui/switch'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import ExampleGroup from '../parts/ExampleGroup.vue'
@@ -35,14 +42,17 @@ const rows = reactive<Row[]>([
   { id: 'sq', name: 'Squats', target: 3, chips: ['3 × 15', '16 kg'] },
   { id: 'kh', name: 'Kettlebell halos', target: 2, chips: ['8 each side'] },
 ])
-const T = true
-const F = false
+// Great, partial, missed and empty, so every kind of mark shows.
+const G = 'great'
+const P = 'partial'
+const M = 'missed'
+const _ = null
 const log = reactive<Log>({
   [WEEK]: {
-    pu: [T, F, T, T, F, F, F],
-    pl: [T, F, F, T, F, F, F],
-    sq: [F, T, T, T, F, F, F],
-    kh: [F, T, F, T, F, F, F],
+    pu: [G, _, P, G, _, _, _],
+    pl: [G, _, _, M, _, _, _],
+    sq: [_, G, G, P, _, _, _],
+    kh: [_, M, _, G, _, _, _],
   },
 })
 const week = computed(() => log[WEEK]!)
@@ -54,8 +64,8 @@ const KEYS: [string, string][] = [
   ['Arrows', 'Move cell by cell: names, days, totals and the Picked row. Never wrap.'],
   ['Home, End', 'First and last cell in the row.'],
   ['Ctrl+Home, Ctrl+End', 'First and last cell of the grid.'],
-  ['Space, Enter', 'Toggle a day’s mark. Nothing on any other cell.'],
-  ['Enter or F2, Escape', 'In Edit plan, on a name: into its goal, Edit and Remove; Escape back.'],
+  ['Space, Enter', 'Step a day’s mark: great, partial, missed, empty. Nothing elsewhere.'],
+  ['Enter or F2, Escape', 'In Edit plan, on a name: into its Edit button; Escape back.'],
 ]
 
 const picked = computed(() => ({
@@ -63,7 +73,7 @@ const picked = computed(() => ({
   counts: dayCounts(rows, week.value).map((n, i) => pickedCount(n, PICK, days[i]!.isFuture)),
 }))
 
-function flagsFor(id: string): boolean[] {
+function marksFor(id: string): (Mark | null)[] {
   return week.value[id] ?? []
 }
 function remove(id: string): void {
@@ -75,7 +85,7 @@ function remove(id: string): void {
 </script>
 
 <!-- The card's grid, drawn by the app's own TrackerGrid: today's band, the totals, the Picked row
-     with Thursday one over the pick, and Edit plan. Marks toggle; nothing is saved. -->
+     with Thursday one over the pick, and Edit plan. A press steps a mark; nothing is saved. -->
 <template>
   <ExampleGroup>
     <StateExample state="On screen. Today is Thursday; the pick is three a day." class="w-full">
@@ -86,13 +96,13 @@ function remove(id: string): void {
           table-label="Exercises, week of 19 October"
           :items="rows"
           :days="days"
-          :flags-for="flagsFor"
+          :marks-for="marksFor"
           :total-for="(id) => totalFor(week, id)"
           :details-for="(item) => (item as Row).chips"
           editable
           :config-mode="editing"
           :picked="picked"
-          @toggle="(id, day) => toggleDay(log, WEEK, id, day)"
+          @toggle="(id, day) => cycleDay(log, WEEK, id, day, EXERCISE_CYCLE)"
           @remove="remove"
         />
       </div>

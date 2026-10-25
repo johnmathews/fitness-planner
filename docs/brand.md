@@ -50,42 +50,39 @@ never a control border), `control-border` (inputs, outlined buttons, the day's b
 goals, hints), `error-ink` (form errors) and `focus` (the focus ring). `scrim` dims the page behind a
 dialog.
 
-Three project roles each mean one thing, and nothing else may use them:
+Five project roles each mean one thing, and nothing else may use them:
 
 | Role          | Means                                                                      | Never                      |
 | ------------- | -------------------------------------------------------------------------- | -------------------------- |
-| `pen`         | Done: a marked day, and a total or figure whose goal is met (with a check) | Links, buttons, decoration |
+| `pen`         | Great: a day's full squiggle, and a total or figure whose goal is met      | Links, buttons, decoration |
+| `pen-partial` | Partly done: a day's half squiggle                                         | Over the pick, warnings    |
+| `pen-missed`  | Tried and couldn't: a day's cross                                          | Errors                     |
 | `highlight`   | Today: the band down today's column, and the Today list's heading          | Anything but today         |
 | `caution-ink` | Over the daily pick, always with words and an underline ("4", "one extra") | Errors                     |
 
-The primary action is `ink`, not a brand colour (K8): one colour for "act", the `pen` for "done".
-No meaning rests on colour alone. A met total adds a check, today adds "today" to the name, and
-over the pick adds words.
+The primary action is `ink`, not a brand colour (K8): one colour for "act", the pens for "done".
+No meaning rests on colour alone. Each mark has its own shape, a met total adds a check, today adds
+"today" to the name, and over the pick adds words.
 
-## 4. Inks
+## 4. The three pens
 
-The person chooses the pen from four inks in Settings. Each has a light and a dark value, and every
-one reaches 4.5:1 as text on `canvas` and `panel` and 3:1 as a squiggle on `highlight` in its theme. None
-is red or orange, so `pen` can't be mistaken for `error-ink` or `caution-ink`.
+A day's mark comes in three kinds, like the green, amber and red markers by a whiteboard (K9, K10).
+The pens are fixed: there is no Ink setting any more.
 
-| Ink                | Light     | Dark      |
-| ------------------ | --------- | --------- |
-| Ink blue (default) | `#2b4c7e` | `#9db8e8` |
-| Forest             | `#2f5d46` | `#8fcbaa` |
-| Violet             | `#4b3b7a` | `#b9a9e8` |
-| Graphite           | `#3d3d3d` | `#cfcfcf` |
+| Pen           | Mark                              | Light     | Dark      |
+| ------------- | --------------------------------- | --------- | --------- |
+| `pen`         | Great: a squiggle filling the box | `#2e7a4c` | `#8fcbaa` |
+| `pen-partial` | Partial: a squiggle, lower half   | `#a56f00` | `#e6b450` |
+| `pen-missed`  | Missed: a cross                   | `#c0392b` | `#ee7d72` |
 
-**K3a: the stored setting keeps its old format.** The API, the export file and the shared fixtures
-still store the setting as `accent`, any `#rrggbb`, with `#30d158` as the default for missing or
-invalid input. `inkFor` in `src/lib/inks.ts` turns it into an ink:
+`pen` reaches 4.5:1 as text on `canvas` and `panel` (a met total), and all three reach 3:1 as a
+stroke on `canvas`, `panel`, `tile` and `highlight` in both themes; the gate measures every pair.
+`pen-missed` is not `error-ink`: a missed day is a record, not a fault, and `pen-partial` is not
+`caution-ink`.
 
-- No saved settings: Ink blue, whatever the default value says.
-- A saved accent from before inks (K3): `#0a84ff` and `#ff9f0a` give Ink blue, `#30d158` Forest,
-  `#bf5af2` Violet.
-- An ink's own light hex gives that ink. Anything else gives Ink blue.
-
-Choosing an ink stores its light hex. `App.vue` sets `--user-pen-light` and `--user-pen-dark` on
-`<html>`, and `main.css` picks `--pen` from them per theme.
+**The stored accent stays.** The API, the export file and the shared fixtures still carry the old
+setting as `accent`, any `#rrggbb`, with `#30d158` as the default (K3a). Nothing draws it now and
+nothing in the app changes it; it is kept so older data and exports round-trip unchanged.
 
 ## 5. Type
 
@@ -110,14 +107,20 @@ Labels are sentence case, never uppercase with letter-spacing.
 
 | Mark          | Look                                                              | Also carried by                            |
 | ------------- | ----------------------------------------------------------------- | ------------------------------------------ |
-| Done          | A `pen` marker squiggle in the hand-drawn box, in a 44px button   | `aria-pressed="true"`                      |
-| Not done      | The empty hand-drawn box, about 30px, in `control-border`         | `aria-pressed="false"`                     |
+| Great         | A `pen` squiggle filling the hand-drawn box, in a 44px button     | `aria-pressed="true"`                      |
+| Partial       | A `pen-partial` squiggle in the box's lower half                  | `aria-pressed="true"`, "partly done"       |
+| Missed        | A `pen-missed` cross over the box                                 | `aria-pressed="true"`, "couldn't do it"    |
+| Empty         | The empty hand-drawn box, about 30px, in `control-border`         | `aria-pressed="false"`                     |
 | Today         | The `highlight` band down the column                              | "today" in the name, `aria-current="date"` |
 | Over the pick | The day's count in `caution-ink`, underlined, "one extra" beneath | The words                                  |
 | Note          | A 10px folded corner in `ink-secondary` (NoteMark)                | "has a note" in the name                   |
 
-Print is black on white in either theme: squiggles solid black, boxes grey, the band gone, "one extra"
-kept. Icons are Lucide outline at 1.5px stroke, never Unicode glyphs or emoji. Colour transitions
+Each stroke runs a little past the box, as a quick hand does. A press steps an exercise's day from
+empty to great, partial, missed and back to empty; a food is eaten or not, so it steps between empty
+and great. Every mark counts towards the week, the Picked row and the Today summary.
+
+Print is black on white in either theme: every mark solid black (the shapes tell them apart), boxes
+grey, the band gone, "one extra" kept. Icons are Lucide outline at 1.5px stroke, never Unicode glyphs or emoji. Colour transitions
 last 120ms at most and stop under `prefers-reduced-motion`. Nothing celebrates.
 
 ## 7. Voice
@@ -138,14 +141,13 @@ all three and blames none, and creating an account asks for an email and a passw
 The tokens reach the app as `src/styles/tokens.css`, generated by `npm run tokens`, and
 `src/styles/main.css` maps each role to a Tailwind utility (`bg-canvas`, `text-ink-secondary`).
 Components are built from the primitives in `src/components/ui/`, which follow the cards, and the
-dev-only `/styleguide` route renders them in both themes and all four inks.
+dev-only `/styleguide` route renders them in both themes.
 [architecture.md](architecture.md) §6 describes the pipeline, and [development.md](development.md)
 §3 the rules for writing components.
 
 ## 9. Changing a token
 
-1. Edit `brand/design-system/project/tokens.json`. Change the ink values in `src/lib/inks.ts` too
-   when an ink changes: `inks.spec.ts` checks the two agree.
+1. Edit `brand/design-system/project/tokens.json`.
 2. Run the gate. It must exit 0 in both themes:
 
    ```bash

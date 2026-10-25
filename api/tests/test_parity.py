@@ -6,10 +6,14 @@ from typing import Any
 import pytest
 
 from fitness_planner_api.validate import (
+    Days,
     ExportError,
+    days_to_masks,
+    masks_to_days,
     merge_settings,
     merge_summary,
     merge_tracked,
+    normalise_mark,
     parse_export,
 )
 
@@ -28,8 +32,8 @@ def run_parse(text: str) -> dict[str, Any]:
 
 
 def test_finds_the_fixture_files() -> None:
-    assert len(PARSE) >= 11
-    assert len(MERGE) >= 5
+    assert len(PARSE) >= 14
+    assert len(MERGE) >= 6
     assert len(SETTINGS) >= 3
 
 
@@ -67,13 +71,45 @@ def test_json_numbers_keep_their_type() -> None:
 def test_merge_does_not_alias_its_inputs() -> None:
     incoming: Any = {
         "plans": {"2026-10-19": [{"id": "pu", "name": "Push-ups", "reps": 10, "target": 4}]},
-        "log": {"2026-10-19": {"pu": [True, False, False, False, False, False, False]}},
+        "log": {"2026-10-19": {"pu": ["great", None, None, None, None, None, None]}},
     }
     merged = merge_tracked({"plans": {}, "log": {}}, incoming)
     merged["plans"]["2026-10-19"][0]["reps"] = 99
-    merged["log"]["2026-10-19"]["pu"][1] = True
+    merged["log"]["2026-10-19"]["pu"][1] = "partial"
     assert incoming["plans"]["2026-10-19"][0]["reps"] == 10
-    assert incoming["log"]["2026-10-19"]["pu"][1] is False
+    assert incoming["log"]["2026-10-19"]["pu"][1] is None
+
+
+@pytest.mark.parametrize(
+    ("value", "mark"),
+    [
+        (True, "great"),
+        ("great", "great"),
+        ("partial", "partial"),
+        ("missed", "missed"),
+        (None, None),
+        (False, None),
+        (1, None),
+        (1.0, None),
+        ("true", None),
+        ("GREAT", None),
+        ("", None),
+        ({}, None),
+        (["great"], None),
+    ],
+)
+def test_normalise_mark(value: object, mark: str | None) -> None:
+    """Only a literal `True` stands for a mark from before marks had kinds; `1 == True` is not."""
+    assert normalise_mark(value) == mark
+
+
+def test_masks_round_trip_every_mark() -> None:
+    days: Days = ["great", "partial", "missed", None, "missed", "partial", "great"]
+    assert days_to_masks(days) == (0b1110111, 0b0100010, 0b0010100)
+    assert masks_to_days(*days_to_masks(days)) == days
+    assert days_to_masks([None] * 7) == (0, 0, 0)
+    # A row from before marks had kinds has only `days`: every marked day is great.
+    assert masks_to_days(0b0000101, 0, 0) == ["great", None, "great", None, None, None, None]
 
 
 def test_deliberate_divergences_from_javascript() -> None:

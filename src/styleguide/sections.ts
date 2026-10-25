@@ -10,7 +10,6 @@ import TextAreaSection from './sections/TextAreaSection.vue'
 import SegmentedControlSection from './sections/SegmentedControlSection.vue'
 import SwitchSection from './sections/SwitchSection.vue'
 import StepperSection from './sections/StepperSection.vue'
-import InkPickerSection from './sections/InkPickerSection.vue'
 import PopoverSection from './sections/PopoverSection.vue'
 import DialogSection from './sections/DialogSection.vue'
 import ConfirmDialogSection from './sections/ConfirmDialogSection.vue'
@@ -50,8 +49,7 @@ export const SECTIONS: readonly StyleGuideSection[] = [
   {
     id: 'sg-colour',
     title: 'Colour',
-    summary:
-      'The roles every component draws with, in the current theme. The pen follows the ink switch.',
+    summary: 'The roles every component draws with, in the current theme.',
     component: ColourSection,
   },
   {
@@ -122,13 +120,6 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     summary:
       'A small whole number changed one step at a time: a minus button, the value, and a plus button.',
     component: StepperSection,
-  },
-  {
-    id: 'sg-ink-picker',
-    title: 'InkPicker',
-    summary:
-      'The setting that chooses the pen: four inks as named dots in a radio group, the chosen one marked by a ring, a check and its name, never by colour alone.',
-    component: InkPickerSection,
   },
   {
     id: 'sg-popover',

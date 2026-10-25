@@ -8,7 +8,6 @@ import { useSyncStore } from '@/stores/sync'
 import { describeProblem } from '@/lib/problems'
 import { useImportSummary } from '@/composables/importSummary'
 import { MAX_DAILY_PICK, MIN_DAILY_PICK } from '@/lib/storage'
-import { INKS, inkFor, type InkId } from '@/lib/inks'
 import { THEMES, type Theme } from '@/lib/theme'
 import { countOf } from '@/lib/words'
 import { APP_NAME } from '@/lib/app'
@@ -21,7 +20,6 @@ import {
 } from '@/lib/transfer'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { InkPicker } from '@/components/ui/ink-picker'
 import { InlineMessage } from '@/components/ui/inline-message'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Stepper } from '@/components/ui/stepper'
@@ -64,13 +62,6 @@ const notice = ref<{ tone: 'error' | 'success'; text: string } | null>(null)
 const signOutProblem = ref<string | null>(null)
 const importing = ref(false)
 const summary = useImportSummary()
-
-// The ink the stored accent shows as (K3a): a legacy accent shows as its ink until one is chosen.
-const ink = computed(() => inkFor(store.accent, store.savedSettings() !== null))
-function chooseInk(id: InkId): void {
-  // Choosing an ink stores its light hex, the accent's wire format.
-  store.setAccent(INKS.find((i) => i.id === id)!.light)
-}
 
 const theme = computed({
   get: () => store.theme,
@@ -172,7 +163,7 @@ async function confirmSignOut(): Promise<void> {
 
 <!--
   The Settings page (brand/design-system/project/components/SettingsPage), at #/settings: a link
-  back to the week, the heading, then Appearance (Theme, Ink), Planner (Exercises a day, Show
+  back to the week, the heading, then Appearance (Theme), Planner (Exercises a day, Show
   weekly totals), Your data and Account, each a section under its own heading with a line rule
   between them. Settings take effect at once; there is no Save.
 -->
@@ -186,7 +177,6 @@ async function confirmSignOut(): Promise<void> {
     <section :aria-labelledby="ids.look" class="mt-8 flex flex-col gap-4">
       <h2 :id="ids.look" class="title-2 text-ink">Appearance</h2>
       <SegmentedControl v-model="theme" label="Theme" :options="THEME_OPTIONS" />
-      <InkPicker :model-value="ink.id" @update:model-value="chooseInk" />
     </section>
 
     <section

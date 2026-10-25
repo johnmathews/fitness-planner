@@ -32,9 +32,10 @@ export function useImportSummary() {
 
   function describe(data: ExportData): string {
     const { plans, ticks, settings } = additions(data)
-    // The settings as Settings names them: the Ink and Exercises a day (the accent is now an ink).
-    const extra = settings ? ', plus the ink and the number of exercises a day' : ''
-    return `Adds ${countOf(plans, 'weekly plan')} and ${countOf(ticks, 'tick')}${extra}. Existing plans and ticks stay as they are.`
+    // The setting as Settings names it: Exercises a day. The file's accent comes too, but nothing
+    // shows it any more, so the summary leaves it out.
+    const extra = settings ? ', plus the number of exercises a day' : ''
+    return `Adds ${countOf(plans, 'weekly plan')} and ${countOf(ticks, 'marked day')}${extra}. Existing plans and marks stay as they are.`
   }
 
   return { additions, addsAnything, describe }

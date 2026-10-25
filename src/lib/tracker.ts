@@ -1,12 +1,12 @@
 import { DAY_NAMES } from '@/lib/dates'
-import type { Log } from '@/lib/storage'
+import type { Days, Log, Mark } from '@/lib/storage'
 import { numberWord } from '@/lib/words'
 
 /** Anything tracked as a tick per day against a weekly goal: exercises and foods. */
 export type Tracked = { id: string; name: string; target: number }
 
 /** One row of the Today list: the item, its chips (exercises only), today's mark and the week. */
-export type TodayItem = Tracked & { chips?: string[]; done: boolean; total: number }
+export type TodayItem = Tracked & { chips?: string[]; mark: Mark | null; total: number }
 
 /**
  * A day's count in the Picked row against the daily pick (WeekGrid card): at the pick, over it,
@@ -42,15 +42,20 @@ export function todaySummary(done: number, pick: number): string {
   return `${numberWord(done, true)} today, ${numberWord(done - pick)} extra.`
 }
 
-/** One week of a log: item id → done flags Mon–Sun. */
-export type WeekLog = Record<string, boolean[]>
+/** One week of a log: item id → its days Mon–Sun. */
+export type WeekLog = Record<string, Days>
 
+export function markOf(week: WeekLog, id: string, day: number): Mark | null {
+  return week[id]?.[day] ?? null
+}
+
+/** Any mark counts as done: a partial day and a day tried and missed count towards the goal. */
 export function isDone(week: WeekLog, id: string, day: number): boolean {
-  return week[id]?.[day] === true
+  return markOf(week, id, day) !== null
 }
 
 export function totalFor(week: WeekLog, id: string): number {
-  return (week[id] ?? []).filter(Boolean).length
+  return (week[id] ?? []).filter((m) => m !== null).length
 }
 
 /** How many of `items` are ticked on each day. Log entries for removed items don't count. */
@@ -70,15 +75,35 @@ export function goalsMet(items: Tracked[], week: WeekLog): number {
   return items.filter((it) => goalMet(totalFor(week, it.id), it.target)).length
 }
 
-/** Flip one day in place, creating the week and the item's flags on first use. */
-export function toggleDay(log: Log, weekKey: string, id: string, day: number): void {
+/**
+ * The marks a press steps through, after an empty day and back to it (DayMark card): exercises
+ * go great, partial, missed; foods are eaten or not.
+ */
+export const EXERCISE_CYCLE: readonly Mark[] = ['great', 'partial', 'missed']
+export const FOOD_CYCLE: readonly Mark[] = ['great']
+
+/** The mark after `mark` in `cycle`, and empty after the last (or after one not in it). */
+export function nextMark(mark: Mark | null, cycle: readonly Mark[]): Mark | null {
+  if (mark === null) return cycle[0]!
+  const i = cycle.indexOf(mark)
+  return i >= 0 && i < cycle.length - 1 ? cycle[i + 1]! : null
+}
+
+/** Step one day to its next mark in place, creating the week and the item's days on first use. */
+export function cycleDay(
+  log: Log,
+  weekKey: string,
+  id: string,
+  day: number,
+  cycle: readonly Mark[],
+): void {
   // Read each level back through `log` rather than keeping the `??=` result: on a reactive log
   // that result is the raw object, and a change made to it would notify no watcher.
   log[weekKey] ??= {}
   const week = log[weekKey]!
-  week[id] ??= Array<boolean>(7).fill(false)
-  const flags = week[id]!
-  flags[day] = !flags[day]
+  week[id] ??= Array<Mark | null>(7).fill(null)
+  const days = week[id]!
+  days[day] = nextMark(days[day] ?? null, cycle)
 }
 
 export function newId(): string {

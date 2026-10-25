@@ -9,11 +9,15 @@ import {
   pickedCount,
   todaySummary,
   newId,
-  toggleDay,
+  cycleDay,
+  EXERCISE_CYCLE,
+  FOOD_CYCLE,
+  markOf,
+  nextMark,
   totalFor,
   type WeekLog,
 } from '@/lib/tracker'
-import type { Log } from '@/lib/storage'
+import type { Log, Mark } from '@/lib/storage'
 
 const items = [
   { id: 'a', name: 'A', target: 2 },
@@ -21,13 +25,16 @@ const items = [
   { id: 'c', name: 'C', target: 1 },
 ]
 const week: WeekLog = {
-  a: [true, true, false, false, false, false, false],
-  b: [true, false, false, false, false, false, false],
-  gone: [true, true, true, true, true, true, true],
+  a: ['great', 'missed', null, null, null, null, null],
+  b: ['great', null, null, null, null, null, null],
+  gone: ['great', 'great', 'great', 'great', 'great', 'great', 'great'],
 }
 
 describe('tracker helpers', () => {
   it('reads single days and per-item totals, treating missing items as empty', () => {
+    expect(markOf(week, 'a', 1)).toBe('missed')
+    expect(markOf(week, 'c', 1)).toBeNull()
+    // Every kind of mark counts, a missed day included.
     expect(isDone(week, 'a', 1)).toBe(true)
     expect(isDone(week, 'a', 2)).toBe(false)
     expect(isDone(week, 'c', 0)).toBe(false)
@@ -48,12 +55,26 @@ describe('tracker helpers', () => {
     expect(goalsMet(items, week)).toBe(1)
   })
 
-  it('toggles a day, creating the week and the flags on first use', () => {
+  it('steps a day through its marks, creating the week and the days on first use', () => {
     const log: Log = {}
-    toggleDay(log, '2026-10-19', 'a', 3)
-    expect(log).toEqual({ '2026-10-19': { a: [false, false, false, true, false, false, false] } })
-    toggleDay(log, '2026-10-19', 'a', 3)
-    expect(log['2026-10-19']!.a![3]).toBe(false)
+    cycleDay(log, '2026-10-19', 'a', 3, EXERCISE_CYCLE)
+    expect(log).toEqual({ '2026-10-19': { a: [null, null, null, 'great', null, null, null] } })
+    const seen = [1, 2, 3].map(() => {
+      cycleDay(log, '2026-10-19', 'a', 3, EXERCISE_CYCLE)
+      return log['2026-10-19']!.a![3]
+    })
+    expect(seen).toEqual(['partial', 'missed', null])
+  })
+
+  it('steps exercises through great, partial and missed, and foods on and off', () => {
+    expect(nextMark(null, EXERCISE_CYCLE)).toBe('great')
+    expect(nextMark('great', EXERCISE_CYCLE)).toBe('partial')
+    expect(nextMark('partial', EXERCISE_CYCLE)).toBe('missed')
+    expect(nextMark('missed', EXERCISE_CYCLE)).toBeNull()
+    expect(nextMark(null, FOOD_CYCLE)).toBe('great')
+    expect(nextMark('great', FOOD_CYCLE)).toBeNull()
+    // A food marked another way (an import, say) clears on the next press.
+    expect(nextMark('partial', FOOD_CYCLE)).toBeNull()
   })
 
   it('makes distinct x-prefixed ids', () => {
@@ -63,20 +84,20 @@ describe('tracker helpers', () => {
   })
 })
 
-describe('toggleDay on a reactive log', () => {
-  it('flips through the reactive proxy, so a watcher sees every change', () => {
+describe('cycleDay on a reactive log', () => {
+  it('steps through the reactive proxy, so a watcher sees every change', () => {
     const log = reactive<Log>({})
-    const seen: (boolean | undefined)[] = []
+    const seen: (Mark | null | undefined)[] = []
     watch(
       () => log['2026-10-19']?.pu?.[2],
       (v) => seen.push(v),
       { flush: 'sync' },
     )
-    toggleDay(log, '2026-10-19', 'pu', 2)
-    toggleDay(log, '2026-10-19', 'pu', 2)
-    toggleDay(log, '2026-10-19', 'sq', 0)
-    // Creating the flags is a change too (undefined → false), then each flip.
-    expect(seen).toEqual([false, true, false])
+    cycleDay(log, '2026-10-19', 'pu', 2, EXERCISE_CYCLE)
+    cycleDay(log, '2026-10-19', 'pu', 2, EXERCISE_CYCLE)
+    cycleDay(log, '2026-10-19', 'sq', 0, EXERCISE_CYCLE)
+    // Creating the days is a change too (undefined → null), then each step.
+    expect(seen).toEqual([null, 'great', 'partial'])
   })
 })
 

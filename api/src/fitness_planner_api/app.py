@@ -14,7 +14,16 @@ from . import auth, data
 from .backup import BackupThread
 from .config import Config
 from .db import connect, migrate
-from .validate import ExportError, Section, is_week, parse_export, parse_json
+from .validate import (
+    Days,
+    ExportError,
+    Mark,
+    Section,
+    is_mark,
+    is_week,
+    parse_export,
+    parse_json,
+)
 
 MAX_BODY = 1 << 20
 WRITES = frozenset({"POST", "PUT", "PATCH", "DELETE"})
@@ -176,6 +185,19 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         wait = e.retry_after
         return ApiError(AUTH_STATUS[e.code], e.code, {"Retry-After": str(wait)}, retryAfter=wait)
 
+    def tick_mark(body: dict[str, Any]) -> Mark | None:
+        """`{"mark": ...}`, or `{"done": bool}` from a client (or a queued tick) from before marks
+        had kinds: true is `great`, false clears the day."""
+        if "mark" in body:
+            mark = body["mark"]
+            if mark is not None and not is_mark(mark):
+                raise ApiError(400, "invalid")
+            return mark
+        done = body.get("done")
+        if not isinstance(done, bool):
+            raise ApiError(400, "invalid")
+        return "great" if done else None
+
     def week_key(week: str) -> str:
         if not is_week(week):
             raise ApiError(400, "invalid")
@@ -265,10 +287,7 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         body: Body,
         user: User,
         conn: Conn,
-    ) -> dict[str, list[bool]]:
-        done = body.get("done")
-        if not isinstance(done, bool):
-            raise ApiError(400, "invalid")
+    ) -> dict[str, Days]:
         days = data.set_tick(
             conn,
             user.id,
@@ -276,7 +295,7 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
             week_key(week),
             item_id,
             day,
-            done,
+            tick_mark(body),
             quota=config.user_quota_bytes,
         )
         return {"days": days}

@@ -13,6 +13,8 @@ import { useDietStore } from '@/stores/diet'
 import { PHONE_QUERY, VIEW_KEY } from '@/composables/phoneView'
 import { emptyState, signedIn } from '@/lib/__tests__/signedIn'
 import type { SyncState } from '@/stores/sync'
+import type { TodayItem } from '@/lib/tracker'
+import type { Days } from '@/lib/storage'
 
 // Friday 23 October 2026: today is the fifth day of the week of 19 October.
 const NOW = new Date(2026, 9, 23, 18, 0)
@@ -20,17 +22,17 @@ const WEEK = '2026-10-19'
 const TODAY = 4
 
 describe('TodayList', () => {
-  const props = {
+  const props: { date: string; pick: number; exercises: TodayItem[]; foods: TodayItem[] } = {
     date: 'Thursday 22 October',
     pick: 3,
     exercises: [
-      { id: 'pu', name: 'Push-ups', chips: ['3 × 12'], done: true, total: 3, target: 4 },
-      { id: 'pl', name: 'Pull-ups', chips: ['3 × 5'], done: false, total: 1, target: 3 },
-      { id: 'sq', name: 'Squats', chips: ['3 × 15', '16 kg'], done: true, total: 3, target: 3 },
+      { id: 'pu', name: 'Push-ups', chips: ['3 × 12'], mark: 'great', total: 3, target: 4 },
+      { id: 'pl', name: 'Pull-ups', chips: ['3 × 5'], mark: null, total: 1, target: 3 },
+      { id: 'sq', name: 'Squats', chips: ['3 × 15', '16 kg'], mark: 'great', total: 3, target: 3 },
     ],
     foods: [
-      { id: 'veg', name: 'Vegetables', done: true, total: 5, target: 7 },
-      { id: 'fish', name: 'Fish', done: false, total: 1, target: 2 },
+      { id: 'veg', name: 'Vegetables', mark: 'great', total: 5, target: 7 },
+      { id: 'fish', name: 'Fish', mark: null, total: 1, target: 2 },
     ],
   }
 
@@ -52,10 +54,13 @@ describe('TodayList', () => {
 
   it('says how far over the pick, and leaves foods out of the count', async () => {
     const wrapper = mount(TodayList, { props })
-    const four = [...props.exercises, { id: 'kh', name: 'Halos', done: true, total: 1, target: 2 }]
-    await wrapper.setProps({ exercises: four.map((e) => ({ ...e, done: true })) })
+    const four = [
+      ...props.exercises,
+      { id: 'kh', name: 'Halos', mark: 'great', total: 1, target: 2 },
+    ]
+    await wrapper.setProps({ exercises: four.map((e) => ({ ...e, mark: 'great' })) })
     expect(wrapper.get('[data-testid="today-summary"]').text()).toBe('Four today, one extra.')
-    await wrapper.setProps({ exercises: four.map((e) => ({ ...e, done: false })) })
+    await wrapper.setProps({ exercises: four.map((e) => ({ ...e, mark: null })) })
     expect(wrapper.get('[data-testid="today-summary"]').text()).toBe('None yet. Three to go.')
   })
 
@@ -208,7 +213,8 @@ describe('the phone’s Today view (K5)', () => {
   it('counts the day in words as marks go on, past the pick', async () => {
     screen(true)
     const state = emptyState()
-    const on = (day: number) => Array.from({ length: 7 }, (_, i) => i === day)
+    const on = (day: number): Days =>
+      Array.from({ length: 7 }, (_, i) => (i === day ? 'great' : null))
     state.exercise.log = { [WEEK]: { pu: on(TODAY), pl: on(TODAY) } }
     mountApp(state)
     const summary = () => list().get('[data-testid="today-summary"]').text()

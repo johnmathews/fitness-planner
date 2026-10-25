@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { INKS } from '@/lib/inks'
 import ExampleGroup from '../parts/ExampleGroup.vue'
 
 /** The colour roles (tokens.css), each named as its variable. */
@@ -15,13 +14,14 @@ const ROLES = [
   'error-ink',
   'focus',
   'pen',
+  'pen-partial',
+  'pen-missed',
   'highlight',
   'caution-ink',
 ] as const
 </script>
 
-<!-- Swatches read the variables, so they follow the theme; `pen` also follows the ink switch,
-     which is otherwise invisible until the planner components arrive. -->
+<!-- Swatches read the variables, so they follow the theme. -->
 <template>
   <div class="flex flex-col gap-8">
     <ExampleGroup title="Roles">
@@ -33,23 +33,6 @@ const ROLES = [
             aria-hidden="true"
           />
           <span class="caption">{{ role }}</span>
-        </li>
-      </ul>
-    </ExampleGroup>
-    <ExampleGroup title="Inks (the pen choices)">
-      <ul class="grid w-full grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7">
-        <li
-          v-for="ink in INKS"
-          :id="`sg-colour-ink-${ink.id}`"
-          :key="ink.id"
-          class="flex flex-col gap-1"
-        >
-          <span
-            class="h-12 rounded-md border border-line"
-            :style="{ background: `var(--${ink.id})` }"
-            aria-hidden="true"
-          />
-          <span class="caption">{{ ink.name }}</span>
         </li>
       </ul>
     </ExampleGroup>

@@ -2,6 +2,7 @@ import { ref, watch, type WatchStopHandle } from 'vue'
 import { defineStore } from 'pinia'
 import { request, type ApiError } from '@/lib/api'
 import {
+  isMark,
   isRecord,
   normaliseExercise,
   normaliseFood,
@@ -15,6 +16,7 @@ import {
   type Exercise,
   type Food,
   type Log,
+  type Mark,
   type PortableSettings,
 } from '@/lib/storage'
 import type { Plans } from '@/lib/plans'
@@ -39,7 +41,7 @@ type Section = (typeof SECTIONS)[number]
 
 export type Op =
   | { kind: 'plan'; section: Section; week: string }
-  | { kind: 'tick'; section: Section; week: string; item: string; day: number; done: boolean }
+  | { kind: 'tick'; section: Section; week: string; item: string; day: number; mark: Mark | null }
   | { kind: 'settings' }
 
 /**
@@ -84,7 +86,17 @@ function opKey(op: Op): string {
 
 const WEEK_KEY = /^\d{4}-\d{2}-\d{2}$/
 
-/** An outbox entry this version can send; a damaged or foreign one is skipped, not stuck on. */
+/** A tick queued before marks had kinds: `done: true` is a great day, `done: false` an empty one. */
+function upgradeQueued(v: unknown): unknown {
+  if (!isRecord(v) || v.kind !== 'tick' || 'mark' in v || typeof v.done !== 'boolean') return v
+  const { done, ...rest } = v
+  return { ...rest, mark: done ? 'great' : null }
+}
+
+/**
+ * An outbox entry this version can send; a damaged or foreign one is skipped, not stuck on. A tick
+ * queued before marks had kinds carries `done` instead of `mark`; `upgradeQueued` reads it.
+ */
 function isQueued(v: unknown): v is Queued {
   if (!isRecord(v) || typeof v.id !== 'string') return false
   if (v.kind === 'settings') return true
@@ -96,7 +108,7 @@ function isQueued(v: unknown): v is Queued {
     sectionOk &&
     weekOk &&
     typeof v.item === 'string' &&
-    typeof v.done === 'boolean' &&
+    (v.mark === null || isMark(v.mark)) &&
     Number.isInteger(v.day) &&
     (v.day as number) >= 0 &&
     (v.day as number) <= 6
@@ -151,9 +163,9 @@ export function diff(base: Snapshot, local: Snapshot): Op[] {
       const lw = l.log[week] ?? {}
       for (const item of new Set([...Object.keys(bw), ...Object.keys(lw)])) {
         for (let day = 0; day < 7; day++) {
-          const done = lw[item]?.[day] === true
-          if (done !== (bw[item]?.[day] === true)) {
-            ops.push({ kind: 'tick', section, week, item, day, done })
+          const mark = lw[item]?.[day] ?? null
+          if (mark !== (bw[item]?.[day] ?? null)) {
+            ops.push({ kind: 'tick', section, week, item, day, mark })
           }
         }
       }
@@ -208,7 +220,7 @@ export const useSyncStore = defineStore('sync', () => {
 
   function readOutbox(): Queued[] {
     const ops = parseJson(readKey(outboxKey()))
-    return Array.isArray(ops) ? ops.filter(isQueued) : []
+    return Array.isArray(ops) ? ops.map(upgradeQueued).filter(isQueued) : []
   }
 
   function writeOutbox(ops: Queued[]): void {
@@ -320,9 +332,11 @@ export const useSyncStore = defineStore('sync', () => {
         return 'done'
       }
     } else if (op.kind === 'tick') {
-      const { section, week, item, day, done } = op
+      const { section, week, item, day, mark } = op
       const path = `/ticks/${section}/${week}/${encodeURIComponent(item)}/${day}`
-      const res = await call('PUT', path, { done })
+      // `done` too, for an API from before marks had kinds (mid-deploy): it saves the day as done,
+      // and a current API reads `mark` and ignores it.
+      const res = await call('PUT', path, { mark, done: mark !== null })
       if (gen !== generation) return 'stop'
       if (res.ok) return 'done'
       error = res.error

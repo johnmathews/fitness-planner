@@ -87,6 +87,19 @@ on the owner's behalf, open to veto by ID. All were approved, and K3a was added 
 | K7  | "Have fun. Avoid injury. Don't stop." stay principles in the brand spec and never appear in the UI                                                                                                                          | A slogan on screen is the kind of gimmick the brand rules out                                                                                                        |
 | K8  | The primary action colour is `ink`, not a brand blue                                                                                                                                                                        | One colour for "act", and the `pen` for "done"                                                                                                                       |
 
+### 4.1 Three kinds of mark (2026-10-25)
+
+Asked for by the owner on a phone screenshot: green for a day done well, amber for part of one, red
+for a day tried and not managed, with a press stepping through them.
+
+| ID  | Decision                                                                                                                                                                                                                 | Why                                                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| K9  | A day's mark is great, partial or missed, and every kind counts towards the goal, the Picked row and the Today summary                                                                                                   | Showing up is what the planner records; a hard day tried still counts (the owner's call)                             |
+| K10 | Each kind has its own shape and its own fixed pen: a full squiggle in `pen` (green), a half squiggle in `pen-partial` (amber), a cross in `pen-missed` (red). The Ink setting is removed                                 | Colours that carry meaning can't be a personal choice, and shape keeps the kinds apart without colour. Supersedes K3 |
+| K11 | A press steps an exercise's day empty, great, partial, missed, empty; a food has one kind, eaten or not                                                                                                                  | "Partly ate vegetables" means little (the owner's call)                                                              |
+| K12 | A day is stored as `null`, `"great"`, `"partial"` or `"missed"`. The export file is version 2 and version 1 still imports (`true` reads as great). Import keeps a marked day's mark and fills an empty one from the file | Old data, caches, outboxes and files carry over as great days. Supersedes P1's version and P2's "ticks are OR-ed"    |
+| K13 | The stored accent stays in the settings, the API and the export, but nothing draws it or changes it                                                                                                                      | No change to the API's settings or the parity fixtures for a value that now means nothing. Amends K3a                |
+
 ## 5. Accepted risks
 
 Each is described where it applies:

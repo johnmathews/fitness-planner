@@ -1,4 +1,4 @@
-<!-- @dsCard group="Screens" height=1240 subtitle="Settings as a page of its own: appearance, planner, your data, account" -->
+<!-- @dsCard group="Screens" height=1060 subtitle="Settings as a page of its own: appearance, planner, your data, account" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -34,23 +34,6 @@
   @media (prefers-reduced-motion: no-preference) {
     .seg button { transition: background-color 120ms ease-out, color 120ms ease-out; }
   }
-
-  /* InkPicker, drawn as its own card: a radio group of rows, dot + name + check, two columns of two where each row gets 152px, else one column. */
-  .hint { margin: 0; color: var(--ink-secondary); }
-  .inks { display: grid; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); gap: var(--space-1) var(--space-2); }
-  .ink { display: flex; align-items: center; gap: var(--space-3); box-sizing: border-box; min-width: 0; height: 44px; padding: 0 var(--space-2) 0 var(--space-3); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--ink); font: 400 16px/24px var(--font-sans); text-align: left; cursor: pointer; }
-  .ink:hover { background: var(--tile); }
-  .ink .name { flex: 1; min-width: 0; }
-  .ink[aria-checked="true"] .name { font-weight: 600; }
-  .dot { flex: none; width: 24px; height: 24px; border-radius: var(--radius-full); }
-  .ink[aria-checked="true"] .dot { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .ink .tick { flex: none; display: inline-flex; width: 20px; height: 20px; visibility: hidden; }
-  .ink .tick svg { width: 20px; height: 20px; }
-  .ink[aria-checked="true"] .tick { visibility: visible; }
-  .dot.ink-blue { background: var(--ink-blue); }
-  .dot.forest { background: var(--forest); }
-  .dot.violet { background: var(--violet); }
-  .dot.graphite { background: var(--graphite); }
 
   /* Stepper, drawn as its own card: minus, value, plus in one bordered control, no separators. */
   .stepper-row { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-2); }
@@ -106,16 +89,6 @@
         <button type="button" tabindex="-1" aria-pressed="false">Dark</button>
       </div>
     </div>
-    <div class="group">
-      <span class="label" id="g-ink">Ink</span>
-      <p class="caption hint" id="g-ink-hint">The colour of a done mark.</p>
-      <div class="inks" role="radiogroup" aria-labelledby="g-ink" aria-describedby="g-ink-hint">
-        <button type="button" class="ink" role="radio" aria-checked="true" tabindex="0"><span class="dot ink-blue"></span><span class="name">Ink blue</span><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
-        <button type="button" class="ink" role="radio" aria-checked="false" tabindex="-1"><span class="dot forest"></span><span class="name">Forest</span><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
-        <button type="button" class="ink" role="radio" aria-checked="false" tabindex="-1"><span class="dot violet"></span><span class="name">Violet</span><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
-        <button type="button" class="ink" role="radio" aria-checked="false" tabindex="-1"><span class="dot graphite"></span><span class="name">Graphite</span><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></button>
-      </div>
-    </div>
     </section>
 
     <section aria-labelledby="s-plan">
@@ -167,13 +140,6 @@
   document.addEventListener('click', (e) => {
     const seg = e.target.closest('.seg button');
     if (seg) seg.parentElement.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-pressed', String(b === seg)); b.tabIndex = b === seg ? 0 : -1; });
-    const ink = e.target.closest('.ink');
-    if (ink) {
-      ink.parentElement.querySelectorAll('.ink').forEach((b) => {
-        b.setAttribute('aria-checked', String(b === ink));
-        b.tabIndex = b === ink ? 0 : -1;
-      });
-    }
     const step = e.target.closest('[data-step]');
     if (step) {
       const next = Number(pick.textContent) + Number(step.dataset.step);
@@ -195,17 +161,6 @@
     all.forEach((b) => (b.tabIndex = b === next ? 0 : -1));
     next.focus();
   }));
-  // The inks are one radio group: arrows move and choose, as a native radio group does.
-  document.querySelector('.inks').addEventListener('keydown', (e) => {
-    const all = [...e.currentTarget.querySelectorAll('.ink')];
-    const i = all.indexOf(e.target);
-    const to = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1 }[e.key];
-    if (to === undefined) return;
-    e.preventDefault();
-    const next = all[(to + all.length) % all.length];
-    next.focus();
-    next.click();
-  });
 })();
 </script>
 </body>

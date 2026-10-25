@@ -16,6 +16,7 @@ import {
   type SyncState,
 } from '@/stores/sync'
 import { DATA_KEY, DIET_KEY, LEGACY_DATA_KEY } from '@/lib/storage'
+import type { ExportData } from '@/lib/transfer'
 import { FakeApi } from '@/lib/__tests__/fakeApi'
 import { USER, cached, emptyState } from '@/lib/__tests__/signedIn'
 
@@ -135,25 +136,26 @@ describe('sync', () => {
 
   it('sends settings changes', async () => {
     const { planner } = await start(emptyState())
-    planner.setAccent('#bf5af2')
     planner.changeDailyPick(1)
     await settle()
-    expect(api.accounts.get(USER)!.settings).toEqual({ accent: '#bf5af2', dailyPick: 4 })
-    expect(cached().settings).toEqual({ accent: '#bf5af2', dailyPick: 4 })
+    expect(api.accounts.get(USER)!.settings).toEqual({ accent: '#30d158', dailyPick: 4 })
+    expect(cached().settings).toEqual({ accent: '#30d158', dailyPick: 4 })
   })
 
   it('ends on the latest value when a cell is toggled while its write is in flight', async () => {
     api.accounts.get(USER)!.plans.exercise[WEEK] = { items: [PUSHUPS], rev: 1 }
     const { planner } = await start(stateWith({ [WEEK]: [PUSHUPS] }, { [WEEK]: 1 }))
     const release = api.hold()
-    planner.toggle('pu', 0) // on: sent, reply held
+    planner.toggle('pu', 0) // great: sent, reply held
     await nextTick()
-    planner.toggle('pu', 0) // off: queued behind it, replacing nothing in flight
+    planner.toggle('pu', 0) // partial: queued behind it, replacing nothing in flight
     await nextTick()
     release()
     await flushPromises()
-    expect(planner.isDone('pu', 0)).toBe(false)
-    expect(api.accounts.get(USER)!.ticks.exercise[WEEK]).toEqual({ pu: 0 })
+    expect(planner.markOf('pu', 0)).toBe('partial')
+    expect(api.accounts.get(USER)!.ticks.exercise[WEEK]).toEqual({ pu: 1 })
+    expect(api.accounts.get(USER)!.partial.exercise[WEEK]).toEqual({ pu: 1 })
+    expect(api.calls.at(-1)!.body).toEqual({ mark: 'partial', done: true })
     expect(outbox()).toEqual([])
   })
 
@@ -250,7 +252,7 @@ describe('sync', () => {
     api.offline = true
     planner.toggle('pu', 2)
     await settle()
-    expect(outbox()).toMatchObject([{ kind: 'tick', item: 'pu', day: 2, done: true }])
+    expect(outbox()).toMatchObject([{ kind: 'tick', item: 'pu', day: 2, mark: 'great' }])
     expect(sync.status).toBe('offline')
   })
 
@@ -262,7 +264,7 @@ describe('sync', () => {
   it('keeps a settings write while offline', async () => {
     const { sync, planner } = await start(emptyState())
     api.offline = true
-    planner.setAccent('#ff9f0a')
+    planner.changeDailyPick(1)
     await settle()
     expect(sync.pending).toBe(1)
     expect(sync.status).toBe('offline')
@@ -510,7 +512,7 @@ describe('sync, after review', () => {
     const read = sync.refresh()
     await flushPromises()
     const other = emptyState()
-    other.exercise.log = { [WEEK]: { sq: [true, false, false, false, false, false, false] } }
+    other.exercise.log = { [WEEK]: { sq: ['great', null, null, null, null, null, null] } }
     localStorage.setItem(CACHE_PREFIX + USER, JSON.stringify(other))
     sync.onStorage(CACHE_PREFIX + USER)
     release()
@@ -531,6 +533,28 @@ describe('sync, after review', () => {
     await settle()
     expect(sync.pending).toBe(0)
     expect(api.paths('PUT')).toEqual(['PUT /settings'])
+  })
+
+  it('sends a tick queued before marks had kinds as the mark it meant', async () => {
+    const tick = { kind: 'tick', section: 'exercise', week: WEEK, item: 'sq' }
+    localStorage.setItem(
+      OUTBOX_PREFIX + USER,
+      JSON.stringify([
+        { ...tick, day: 0, done: true, id: 'a' },
+        { ...tick, day: 1, done: false, id: 'b' },
+        { ...tick, day: 2, done: 'yes', id: 'c' },
+        { ...tick, day: 3, mark: 'meh', id: 'd' },
+        { ...tick, day: 4, mark: 'missed', id: 'e' },
+      ]),
+    )
+    const { sync } = await start(emptyState())
+    await settle()
+    expect(sync.pending).toBe(0)
+    expect(api.calls.filter((c) => c.method === 'PUT').map((c) => [c.path, c.body])).toEqual([
+      [`/ticks/exercise/${WEEK}/sq/0`, { mark: 'great', done: true }],
+      [`/ticks/exercise/${WEEK}/sq/1`, { mark: null, done: false }],
+      [`/ticks/exercise/${WEEK}/sq/4`, { mark: 'missed', done: true }],
+    ])
   })
 
   it('drops a plan write for a week the stores no longer hold', async () => {
@@ -564,10 +588,10 @@ describe('importFile', () => {
     vi.unstubAllGlobals()
   })
 
-  const data = {
+  const data: ExportData = {
     exercise: {
       plans: { [WEEK]: [SQUATS], '2026-10-12': [SQUATS] },
-      log: { [WEEK]: { sq: [true, true, false, false, false, false, false] } },
+      log: { [WEEK]: { sq: ['great', 'great', null, null, null, null, null] } },
     },
     diet: { plans: {}, log: {} },
     settings: { accent: '#0a84ff', dailyPick: 5 },
@@ -687,15 +711,15 @@ describe('diff', () => {
 
   it('finds changed plans, set and cleared days, and settings', () => {
     const base = empty()
-    base.diet.log = { [WEEK]: { veg: [true, false, false, false, false, false, false] } }
+    base.diet.log = { [WEEK]: { veg: ['great', null, null, null, null, null, null] } }
     const local = empty()
     local.exercise.plans = { [WEEK]: [PUSHUPS] }
-    local.diet.log = { [WEEK]: { veg: [false, true, false, false, false, false, false] } }
+    local.diet.log = { [WEEK]: { veg: [null, 'great', null, null, null, null, null] } }
     local.settings.dailyPick = 4
     expect(diff(base, local)).toEqual([
       { kind: 'plan', section: 'exercise', week: WEEK },
-      { kind: 'tick', section: 'diet', week: WEEK, item: 'veg', day: 0, done: false },
-      { kind: 'tick', section: 'diet', week: WEEK, item: 'veg', day: 1, done: true },
+      { kind: 'tick', section: 'diet', week: WEEK, item: 'veg', day: 0, mark: null },
+      { kind: 'tick', section: 'diet', week: WEEK, item: 'veg', day: 1, mark: 'great' },
       { kind: 'settings' },
     ])
   })

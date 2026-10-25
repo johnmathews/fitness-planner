@@ -11,12 +11,15 @@ import json
 import math
 import re
 import sys
-from typing import Any, Literal, TypedDict
+from typing import Any, Literal, TypedDict, TypeIs
 
 EXPORT_FORMAT = "fitness-planner-export"
 #: Files exported before the app was renamed carry this format; they import as if current.
 OLD_EXPORT_FORMAT = "exercise-planner-export"
-EXPORT_VERSION = 1
+#: Version 2 files carry a mark per day (`great`, `partial`, `missed` or null).
+EXPORT_VERSION = 2
+#: Version 1 files carry a `true` per done day; they read as `great`.
+OLD_EXPORT_VERSION = 1
 
 MIN_TARGET, MAX_TARGET = 0, 7
 MIN_DAILY_PICK, MAX_DAILY_PICK = 1, 8
@@ -38,7 +41,12 @@ ACCENT_RE = re.compile(r"#[0-9a-fA-F]{6}")
 
 type Item = dict[str, Any]
 type Plans = dict[str, list[Item]]
-type Log = dict[str, dict[str, list[bool]]]
+#: A marked day: done well, done in part, or tried and couldn't. Every mark counts as done.
+type Mark = Literal["great", "partial", "missed"]
+MARKS: tuple[Mark, ...] = ("great", "partial", "missed")
+#: One item's week: a mark or None for each day, Monday first.
+type Days = list[Mark | None]
+type Log = dict[str, dict[str, Days]]
 
 
 class Tracked(TypedDict):
@@ -160,9 +168,21 @@ def is_week(key: str) -> bool:
     return WEEK_RE.fullmatch(key) is not None
 
 
-def normalise_days(v: list[Any]) -> list[bool]:
-    """Exactly seven flags; only a literal `true` ticks a day."""
-    return [i < len(v) and v[i] is True for i in range(7)]
+def is_mark(v: object) -> TypeIs[Mark]:
+    return isinstance(v, str) and v in MARKS
+
+
+def normalise_mark(v: object) -> Mark | None:
+    """One stored day: a mark as it is, a `true` from before marks had kinds as `great`, else
+    None. Nothing else counts: not `1`, `"true"` or `"GREAT"`."""
+    if v is True:
+        return "great"
+    return v if is_mark(v) else None
+
+
+def normalise_days(v: list[Any]) -> Days:
+    """Exactly seven days, each a mark or None."""
+    return [normalise_mark(v[i]) if i < len(v) else None for i in range(7)]
 
 
 def normalise_log(v: object) -> Log:
@@ -243,7 +263,7 @@ def parse_export(text: str) -> ExportData:
         raise ExportError("format")
     if parsed.get("format") not in (EXPORT_FORMAT, OLD_EXPORT_FORMAT):
         raise ExportError("format")
-    if as_number(parsed.get("version")) != EXPORT_VERSION:
+    if as_number(parsed.get("version")) not in (OLD_EXPORT_VERSION, EXPORT_VERSION):
         raise ExportError("version")
     settings = parsed.get("settings")
     return {
@@ -253,11 +273,12 @@ def parse_export(text: str) -> ExportData:
     }
 
 
-NO_DAYS = [False] * 7
+NO_DAYS: Days = [None] * 7
 
 
 def merge_tracked(existing: Tracked, incoming: Tracked) -> Tracked:
-    """Merge without deleting: existing weeks keep their plan, ticks are OR-ed. New objects."""
+    """Merge without deleting: existing weeks keep their plan, and per week, item and day a marked
+    day keeps its mark while an empty one takes the file's. Returns new objects."""
     plans = copy.deepcopy(existing["plans"])
     for week, items in incoming["plans"].items():
         if week not in plans:
@@ -268,7 +289,7 @@ def merge_tracked(existing: Tracked, incoming: Tracked) -> Tracked:
         theirs = incoming["log"].get(week, {})
         log[week] = {
             i: [
-                a is True or b is True
+                a if a is not None else b
                 for a, b in zip(mine.get(i, NO_DAYS), theirs.get(i, NO_DAYS), strict=True)
             ]
             for i in {**mine, **theirs}
@@ -277,13 +298,13 @@ def merge_tracked(existing: Tracked, incoming: Tracked) -> Tracked:
 
 
 def merge_summary(existing: Tracked, incoming: Tracked) -> Summary:
-    """What a merge would add: weeks that gain a plan, and day cells that gain a tick."""
+    """What a merge would add: weeks that gain a plan, and empty days that gain a mark."""
     weeks = sum(1 for w in incoming["plans"] if w not in existing["plans"])
     ticks = 0
     for week, entries in incoming["log"].items():
         for item_id, days in entries.items():
             mine = existing["log"].get(week, {}).get(item_id, NO_DAYS)
-            ticks += sum(1 for i, on in enumerate(days) if on and not mine[i])
+            ticks += sum(1 for i, m in enumerate(days) if m is not None and mine[i] is None)
     return {"weeks": weeks, "ticks": ticks}
 
 
@@ -292,10 +313,27 @@ def merge_settings(existing: Portable | None, incoming: Portable | None) -> Port
     return existing if existing is not None else incoming
 
 
-def days_to_mask(days: list[bool]) -> int:
-    """Seven flags as a 7-bit mask, Monday in bit 0."""
-    return sum(1 << i for i, on in enumerate(days[:7]) if on)
+def _mask(days: Days, keep: tuple[Mark, ...]) -> int:
+    return sum(1 << i for i, m in enumerate(days[:7]) if m in keep)
 
 
-def mask_to_days(mask: int) -> list[bool]:
-    return [bool(mask >> i & 1) for i in range(7)]
+def days_to_masks(days: Days) -> tuple[int, int, int]:
+    """Seven marks as the `ticks` row's 7-bit masks, Monday in bit 0: `days` holds every marked
+    day, `partial` and `missed` the days with that mark (so both are inside `days`)."""
+    return _mask(days, MARKS), _mask(days, ("partial",)), _mask(days, ("missed",))
+
+
+def masks_to_days(days: int, partial: int, missed: int) -> Days:
+    """A `ticks` row's masks as seven marks: a marked day in neither subset is `great`."""
+    out: Days = []
+    for i in range(7):
+        bit = 1 << i
+        if not days & bit:
+            out.append(None)
+        elif partial & bit:
+            out.append("partial")
+        elif missed & bit:
+            out.append("missed")
+        else:
+            out.append("great")
+    return out

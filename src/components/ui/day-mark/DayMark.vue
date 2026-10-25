@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
-import { BOX_PATH, SQUIGGLE_PATH, dayMarkLabel } from '.'
+import type { Mark } from '@/lib/storage'
+import { BOX_PATH, MARK_PATHS, MARK_STROKES, dayMarkLabel } from '.'
 
 const props = withDefaults(
   defineProps<{
@@ -9,7 +10,8 @@ const props = withDefaults(
     name: string
     /** The full date for the name: "Thursday 22 October". The visible header can stay "Thu 22". */
     date: string
-    done: boolean
+    /** The day's mark, or `null` for an empty box. */
+    mark: Mark | null
     /** Adds "today" to the name and aria-current="date". The band is the grid cell's to draw. */
     today?: boolean
     /** Draws the folded corner and adds "has a note" to the name. Only where a note exists. */
@@ -26,9 +28,10 @@ const label = computed(() => dayMarkLabel(props))
 
 <!--
   One day of one row (brand/design-system/project/components/DayMark): a 44px button centred in a
-  56 × 60px cell, drawing a hand-drawn box about 30px across in control-border, filled with a pen
-  marker squiggle when done. The rest of the cell is quiet space, so the 2px focus ring at 2px
-  offset never touches a neighbour.
+  56 × 60px cell, drawing a hand-drawn box about 30px across in control-border. A marked day adds a
+  marker stroke that runs a little past the box: a full squiggle (great), a half one (partial) or
+  a cross (missed), each in its own pen. The rest of the cell is quiet space, so the 2px focus
+  ring at 2px offset never touches a neighbour.
 -->
 <template>
   <div
@@ -40,7 +43,7 @@ const label = computed(() => dayMarkLabel(props))
       type="button"
       data-slot="day-mark-button"
       class="group grid size-11 place-items-center rounded-md"
-      :aria-pressed="done"
+      :aria-pressed="mark !== null"
       :aria-label="label"
       :aria-current="today ? 'date' : undefined"
       @click="$emit('toggle')"
@@ -49,7 +52,7 @@ const label = computed(() => dayMarkLabel(props))
         data-slot="day-mark-box"
         aria-hidden="true"
         viewBox="0 0 36 36"
-        :data-on="done"
+        :data-mark="mark ?? undefined"
         fill="none"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -62,16 +65,16 @@ const label = computed(() => dayMarkLabel(props))
           :class="
             cn(
               'stroke-control-border motion-safe:transition-[stroke] motion-safe:duration-120 motion-safe:ease-out',
-              !done && 'group-hover:stroke-ink',
+              mark === null && 'group-hover:stroke-ink',
             )
           "
         />
         <path
-          v-if="done"
-          :d="SQUIGGLE_PATH"
-          data-slot="day-mark-squiggle"
+          v-if="mark"
+          :d="MARK_PATHS[mark]"
+          data-slot="day-mark-stroke"
           stroke-width="3.5"
-          class="stroke-pen"
+          :class="MARK_STROKES[mark]"
         />
       </svg>
     </button>

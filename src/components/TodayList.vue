@@ -17,7 +17,7 @@ defineEmits<{ toggle: [kind: 'exercise' | 'food', id: string] }>()
 
 /** "Two of three. One to go.": exercises only, since foods have no daily pick. */
 const summary = computed(() =>
-  todaySummary(props.exercises.filter((e) => e.done).length, props.pick),
+  todaySummary(props.exercises.filter((e) => e.mark !== null).length, props.pick),
 )
 
 const groups = computed(() =>
@@ -41,7 +41,7 @@ const groups = computed(() =>
   cell; its button is the grid's 44px. No Edit plan here: the plan is edited in the Week view.
 -->
 <template>
-  <div data-slot="today-list" class="pb-6">
+  <div data-slot="today-list" class="pt-4 pb-6">
     <header data-testid="today-band" class="-mx-4 bg-highlight p-4">
       <h1 class="title-2 text-ink"><span class="sr-only">Today, </span>{{ date }}</h1>
       <p v-if="exercises.length > 0" data-testid="today-summary" class="body-large mt-1 text-ink">
@@ -72,7 +72,7 @@ const groups = computed(() =>
               :name="it.name"
               :date="date"
               today
-              :done="it.done"
+              :mark="it.mark"
               @toggle="$emit('toggle', g.kind, it.id)"
             />
           </div>

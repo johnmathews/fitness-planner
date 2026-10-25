@@ -16,6 +16,33 @@ def test_migrates_a_fresh_database_once(tmp_path: Path) -> None:
     c.close()
 
 
+def test_marks_migration_reads_existing_ticks_as_great(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A database at schema 1 keeps its ticks through step 2, and every one of them is `great`."""
+    from fitness_planner_api import db
+    from fitness_planner_api.data import load_tracked
+
+    c = connect(tmp_path / "f.db")
+    monkeypatch.setattr(db, "MIGRATIONS", db.MIGRATIONS[:1])
+    db.migrate(c)
+    c.execute("INSERT INTO users (id, username, password_hash, created_at) VALUES (1, 'a', 'h', 0)")
+    c.execute("INSERT INTO ticks VALUES (1, 'exercise', '2026-10-19', 'pu', 5)")
+    c.execute("INSERT INTO ticks VALUES (1, 'exercise', '2026-10-19', 'sq', 0)")
+    monkeypatch.undo()
+    db.migrate(c)
+    assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 2
+    rows = [tuple(r) for r in c.execute("SELECT item_id, days, partial, missed FROM ticks")]
+    assert sorted(rows) == [("pu", 5, 0, 0), ("sq", 0, 0, 0)]
+    assert load_tracked(c, 1, "exercise")["log"] == {
+        "2026-10-19": {
+            "pu": ["great", None, "great", None, None, None, None],
+            "sq": [None] * 7,
+        }
+    }
+    c.close()
+
+
 def test_connections_use_wal_and_foreign_keys(tmp_path: Path) -> None:
     c = connect(tmp_path / "f.db")
     migrate(c)
@@ -30,7 +57,7 @@ def test_deleting_a_user_cascades_to_their_rows(conn: sqlite3.Connection) -> Non
     )
     conn.execute("INSERT INTO settings VALUES (1, '#30d158', 3)")
     conn.execute("INSERT INTO plans VALUES (1, 'exercise', '2026-10-19', '[]', 1)")
-    conn.execute("INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 5)")
+    conn.execute("INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 5, 0, 0)")
     conn.execute("INSERT INTO sessions VALUES ('t', 1, 0, 0, 0)")
     conn.execute("DELETE FROM users WHERE id = 1")
     for table in ("settings", "plans", "ticks", "sessions"):
@@ -46,8 +73,11 @@ def test_constraints_reject_bad_rows(conn: sqlite3.Connection) -> None:
         "INSERT INTO users (username, password_hash, created_at) VALUES ('ann', 'h', 0)",
         "INSERT INTO plans VALUES (1, 'other', '2026-10-19', '[]', 1)",
         "INSERT INTO plans VALUES (1, 'exercise', '2026-10-19', '[]', 0)",
-        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 128)",
-        "INSERT INTO ticks VALUES (2, 'diet', '2026-10-19', 'veg', 1)",  # no such user
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 128, 0, 0)",
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 128, 0)",
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 0, -1)",
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 'x', 0)",  # STRICT
+        "INSERT INTO ticks VALUES (2, 'diet', '2026-10-19', 'veg', 1, 0, 0)",  # no such user
         # A reset link names its user; an invite does not.
         "INSERT INTO invites VALUES ('t', 'reset', 'Ann', NULL, 0, 0, NULL)",
         "INSERT INTO invites VALUES ('t', 'invite', 'bob', 1, 0, 0, NULL)",
