@@ -130,7 +130,7 @@ services:
       MAX_USERS: '50' # sign-up closes at this many accounts; '0' = invites only
       # Optional: email for confirming addresses and resetting passwords (docs/api.md §4.1)
       # RESEND_API_KEY: re_...
-      # MAIL_FROM: Fitness Planner <planner@updates.example.com>
+      # MAIL_FROM: Fitness Planner <planner@fitness.example.com>
     volumes:
       - ./fitness-data:/data # owned by uid 10001
     mem_limit: 160m
