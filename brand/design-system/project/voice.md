@@ -7,7 +7,7 @@ Plain, calm and brief, in the second person. Facts first, then the next step. Th
 - **Small numbers as words** in sentences: "Two of three. One to go." Figures in grids and totals.
 - **No exclamation marks.** Nothing is that surprising.
 - **No hype:** never "crushed it", "beast mode", "amazing", "awesome".
-- **No guilt:** never "You missed 3 days". An empty ring says it already.
+- **No guilt:** never "You missed 3 days". An empty box says it already.
 - **No streaks**, scores or rankings, in words or numbers.
 - **Notes belong to the person.** The app never prompts for one and never quotes one back as advice.
 - **Errors say what happened and what to do:** "That password didn't match. Try again, or ask for a new invite."

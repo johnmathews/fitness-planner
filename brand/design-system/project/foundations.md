@@ -6,13 +6,13 @@ Three project roles each mean exactly one thing:
 
 | Role | Means | Never |
 | --- | --- | --- |
-| `pen` | Done: the session dot and a met total | Links, buttons, decoration |
+| `pen` | Done: the session squiggle and a met total | Links, buttons, decoration |
 | `highlight` | Today: the band down today's column | Anything but today |
 | `caution-ink` | Over the daily pick, always with words ("one extra") | Errors |
 
 **Inks.** The person picks the pen: `ink-blue` (default), `forest`, `violet` or `graphite`. Each reaches 4.5:1 as text on `canvas` and `panel` and 3:1 as a dot on `highlight`, in its theme. One pen colour shows at a time.
 
-**Print** is black on white in either theme: dots solid black, rings grey, the highlight gone, "one extra" keeps its words.
+**Print** is black on white in either theme: squiggles solid black, boxes grey, the highlight gone, "one extra" keeps its words.
 
 ## Type
 
@@ -31,8 +31,8 @@ Three project roles each mean exactly one thing:
 
 ## The marks
 
-- **Done:** a filled `pen` dot, 24px, centred in a cell at least 44px tall.
-- **Not done:** a 1.5px `control-border` ring of the same size.
+- **Done:** a `pen` marker squiggle filling the day's box, centred in a cell at least 44px tall.
+- **Not done:** the empty box, drawn by hand in `control-border`, about 30px across.
 - **Today:** the `highlight` band down the column, and "today" in the accessible name.
 - **Note:** a small `ink-secondary` mark in the cell's top-right corner; "has a note" in the accessible name.
 - **Over the pick:** the day's count in `caution-ink`, underlined, with "one extra" beneath.

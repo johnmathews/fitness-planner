@@ -15,7 +15,7 @@ The app's three cases, rewritten in voice:
 | --- | --- | --- |
 | `TrackerRow.vue`, remove in Edit plan | "Remove Push-ups?" | **Remove Push-ups?** It comes off this week's plan. Weeks with their own plan keep it, and its marks stay. · Cancel · Remove |
 | `WeekHeader.vue`, Copy plan to next week | "Replace the plan for Oct 26 – Nov 1, 2026 with this week's?" | **Replace next week's plan?** The week of 26 October already has its own plan. Copying replaces it with this week's exercises and foods. · Cancel · Replace |
-| `SettingsPopover.vue`, Sign out | "2 changes haven't synced yet. Sign out anyway?" | **Sign out now?** Two changes on this device haven't reached the server yet. Signing out now loses them. · Cancel · Sign out |
+| `SettingsPage.vue`, Sign out | "2 changes haven't synced yet. Sign out anyway?" | **Sign out now?** Two changes on this device haven't reached the server yet. Signing out now loses them. · Cancel · Sign out |
 
 Removing a food uses the first pattern ("Remove Fish?"). The removal touches only this week's plan and the weeks that follow it without a plan of their own; it never deletes the log.
 

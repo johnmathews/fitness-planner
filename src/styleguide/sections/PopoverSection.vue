@@ -35,9 +35,10 @@ async function signOut(): Promise<void> {
 }
 </script>
 
-<!-- The Settings popover (components/Popover/preview.html) under its IconButton in a stand-in
-     header, with the panel's contents as SettingsPopover.vue has them. The panel renders in place, so
-     Tab from its last control moves on to the next section, and that closes it. -->
+<!-- The card's popover (components/Popover/preview.html) under its IconButton in a stand-in
+     header, with the old Settings panel's contents, which SettingsPage.vue now shows as a page. The
+     panel renders in place, so Tab from its last control moves on to the next section, and that
+     closes it. -->
 <template>
   <div
     class="flex items-center justify-between gap-4 rounded-lg border border-line bg-panel py-1 pr-1 pl-4"
