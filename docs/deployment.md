@@ -80,12 +80,12 @@ All headers are set once at server level; `Cache-Control` varies through a `map`
 
 ## 3. CI and publishing
 
-| Workflow                           | Trigger                      | Does                                                                                                                                                                                                                                                        |
-| ---------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.github/workflows/ci.yml` `check` | pull request, push to `main` | lint, format, types, tests with coverage, build, the design-system gate, and "tokens.css is current" (`npm run tokens`, then `git diff --exit-code src/styles/tokens.css`)                                                                                  |
-| `.github/workflows/ci.yml` `e2e`   | pull request, push to `main` | installs Chromium and runs `npm run test:e2e` (Playwright with axe, §3.3 of [development.md](development.md)): a 10-minute timeout, one retry for a failing test, and `test-results/` uploaded as the `playwright-traces` artifact (kept 7 days) on failure |
-| `.github/workflows/ci.yml` `api`   | pull request, push to `main` | ruff, mypy, pytest with coverage, `pip-audit`                                                                                                                                                                                                               |
-| `.github/workflows/docker.yml`     | pull request, push to `main` | `build` and `compose` on PRs; `publish` on `main`; build and publish run once per image                                                                                                                                                                     |
+| Workflow                           | Trigger                           | Does                                                                                                                                                                                                                                                        |
+| ---------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/workflows/ci.yml` `check` | pull request, push to `main`      | lint, format, types, tests with coverage, build, the design-system gate, and "tokens.css is current" (`npm run tokens`, then `git diff --exit-code src/styles/tokens.css`)                                                                                  |
+| `.github/workflows/ci.yml` `e2e`   | pull request, push to `main`      | installs Chromium and runs `npm run test:e2e` (Playwright with axe, §3.3 of [development.md](development.md)): a 10-minute timeout, one retry for a failing test, and `test-results/` uploaded as the `playwright-traces` artifact (kept 7 days) on failure |
+| `.github/workflows/ci.yml` `api`   | pull request, push to `main`      | ruff, mypy, pytest with coverage, `pip-audit`                                                                                                                                                                                                               |
+| `.github/workflows/docker.yml`     | pull request, CI passed on `main` | `build` and `compose` on PRs; `publish` only after CI succeeds on a push to `main`; build and publish run once per image                                                                                                                                    |
 
 `build` and `publish` build `linux/amd64` and `linux/arm64` for each image, so a PR proves the
 multi-arch build before `main` publishes it; `compose` builds for the runner's own architecture. For the API, the PR build also smoke-tests each architecture: the amd64
@@ -93,7 +93,10 @@ image must answer `/api/healthz`, and the arm64 image, run under QEMU, must impo
 modules. The `build` job builds without pushing and holds only `contents: read`. The `publish` job
 is the only one granted `packages: write`. It logs in to `ghcr.io` with `GITHUB_TOKEN` and pushes
 `ghcr.io/johnmathews/fitness-planner` and `ghcr.io/johnmathews/fitness-planner-api`, each tagged
-`latest` and `sha-<short sha>`. Every checkout sets `persist-credentials: false`. Before
+`latest` and `sha-<short sha>`. `publish` runs on `workflow_run` after the `CI` workflow succeeds
+on a push to `main`, and checks out and tags exactly the commit CI passed (`workflow_run.head_sha`,
+metadata-action `context: git`). The home server auto-deploys `latest` (What's Up Docker), so a red
+commit must never publish. Every checkout sets `persist-credentials: false`. Before
 2026-10-24 the project was called exercise-planner and published `exercise-planner` and
 `exercise-planner-api`. Those images still exist but no longer update, so a host must pull the new
 names.
