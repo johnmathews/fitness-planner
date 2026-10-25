@@ -1,4 +1,10 @@
-This is the Fitness Planner design system. A design system is the agreed set of parts a product is built from, and the rules for using them: colours, type, spacing, the day marks, the components and how the app writes. One set means every screen looks and behaves like the same app. This document defines that set for Fitness Planner and shows each part in light and dark; new screens are built from it and the app is checked against it. It does not describe how the app works, its data or its code, and it is not a picture of every screen: those live in the repository's docs and in the app itself.
+## About this document
+
+This is the Fitness Planner design system. A design system is a product's design language (its colours, type, spacing, marks and the way it writes), plus the components built from it and the rules for using them. This design system is not the app's code, but the code follows it closely. The app's styles are generated from its tokens, and the app's components are built from its cards.
+
+This document shows each part of the Fitness Planner web app in light and dark. New screens are built off of this design system, and the app is checked against it. This document does not describe how the app works, the data model or the code itself. It is also not a picture of every screen.
+
+## Introduction
 
 Fitness Planner should feel like a well-made notebook kept for years: plain, dependable and calm, with today and this week in one bold, obvious place and everything older quiet and dense.
 

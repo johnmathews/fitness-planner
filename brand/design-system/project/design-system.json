@@ -195,12 +195,15 @@
   "blobs": {},
   "docs": {
     "readme": "project/README.md",
-    "sections": []
+    "sections": [
+      "project/foundations.md",
+      "project/voice.md"
+    ]
   },
   "lastChange": {
+    "at": "2026-10-25T12:05:00Z",
     "by": "John Mathews",
-    "at": "2026-10-25T11:51:00Z",
-    "via": "Claude Code",
-    "note": "Named as a design system: the title and the cover say \"Fitness Planner design system\", and the README opens with what a design system is and what this document does and does not do"
+    "note": "The README's first paragraph names what a design system holds (the design language, the components and the rules) instead of \"parts\", and says how it relates to the app's code; on top of the owner's edits (About this document, Introduction)",
+    "via": "Claude Code"
   }
 }
