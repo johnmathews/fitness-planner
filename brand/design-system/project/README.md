@@ -7,7 +7,7 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 - **Simple and durable.** A tool for years of ordinary weeks. Nothing in it wears out or goes out of fashion: hairline rules, two typefaces, almost no shadow.
 - **Rooted in now.** Today gets the `highlight` band; this week gets the big date. Nothing archival competes with them. This is what the whiteboard lends.
 - **Quiet record.** Months and years sit below, small and dense. A week off shows as empty rings, plainly, without comment. This is what Apple Notes and the Moleskine lend: restraint and quality, not their look.
-- **A mark per session.** The done dot is the whole reward. No streaks, badges, confetti or slogans.
+- **A mark per session.** The done squiggle is the whole reward. No streaks, badges, confetti or slogans.
 
 ## Two layers, one system
 

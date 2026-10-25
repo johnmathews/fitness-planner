@@ -393,7 +393,7 @@ describe('AddExerciseForm', () => {
   })
 })
 
-describe('SettingsPopover', () => {
+describe('the Settings page', () => {
   beforeEach(() => {
     localStorage.clear()
   })
