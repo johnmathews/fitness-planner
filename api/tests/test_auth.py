@@ -1,6 +1,7 @@
 import sqlite3
 import threading
 import time
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -320,3 +321,163 @@ def test_a_login_that_waits_too_long_for_the_hasher_is_turned_away(
         auth.verify_password("h", "pw")
     assert auth._WAITING.acquire(blocking=False)  # the queue slot was given back
     auth._WAITING.release()
+
+
+# --- sign-up ------------------------------------------------------------------------------------
+
+
+def test_signup_stores_the_email_lower_cased_and_signs_in_by_it(
+    conn: sqlite3.Connection, config: Config
+) -> None:
+    uid = auth.signup(conn, config, "  Bob@Example.COM ", PASSWORD)
+    row = conn.execute("SELECT username FROM users WHERE id = ?", (uid,)).fetchone()
+    assert row["username"] == "bob@example.com"
+    assert auth.login(conn, config, "bob@example.com", PASSWORD) == uid
+    assert auth.login(conn, config, "BOB@example.com", PASSWORD) == uid
+
+
+@pytest.mark.parametrize(
+    "email",
+    [
+        "",
+        "bob",
+        "bob@",
+        "@example.com",
+        "bob@example",
+        "bob@.com",
+        "bob@example..com",
+        "b ob@example.com",
+        "bob@exa_mple.com",
+        "a@b@example.com",
+        "jö@example.com",  # Latin-1: a header could carry it, but the rule is ASCII
+        "用户@example.com",  # beyond Latin-1: fetch cannot send it in X-Expected-User
+        "a" * 243 + "@example.com",  # 255 characters
+    ],
+)
+def test_signup_refuses_what_is_not_an_ascii_email(
+    conn: sqlite3.Connection, config: Config, email: str
+) -> None:
+    with pytest.raises(AuthError) as e:
+        auth.signup(conn, config, email, PASSWORD)
+    assert e.value.code == "email"
+
+
+def test_signup_accepts_a_254_character_email(conn: sqlite3.Connection, config: Config) -> None:
+    email = "a" * 242 + "@example.com"
+    assert len(email) == 254
+    auth.signup(conn, config, email, PASSWORD)
+
+
+@pytest.mark.parametrize("password", ["x" * 9, "x" * 257])
+def test_signup_password_length(conn: sqlite3.Connection, config: Config, password: str) -> None:
+    with pytest.raises(AuthError) as e:
+        auth.signup(conn, config, "bob@example.com", password)
+    assert e.value.code == "password"
+
+
+def test_signup_refuses_a_taken_email_in_any_case(conn: sqlite3.Connection, config: Config) -> None:
+    auth.signup(conn, config, "bob@example.com", PASSWORD)
+    with pytest.raises(AuthError) as e:
+        auth.signup(conn, config, "Bob@Example.com", PASSWORD)
+    assert e.value.code == "exists"
+
+
+@pytest.mark.parametrize("max_users", [0, 1])
+def test_signup_closes_at_max_users_counting_invited_accounts(
+    conn: sqlite3.Connection, config: Config, max_users: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = replace(config, max_users=max_users)
+    if max_users:
+        make_user(conn, config)  # an invited account takes the one place
+    hashed: list[str] = []
+
+    def counting(password: str) -> str:
+        hashed.append(password)
+        return "h"
+
+    monkeypatch.setattr(auth, "hash_password", counting)
+    with pytest.raises(AuthError) as e:
+        auth.signup(conn, config, "bob@example.com", PASSWORD)
+    assert e.value.code == "closed"
+    assert hashed == []  # refused before paying for a hash
+
+
+def test_signup_allows_ten_an_hour(conn: sqlite3.Connection, config: Config, clock: Clock) -> None:
+    for i in range(10):
+        auth.signup(conn, config, f"u{i}@example.com", PASSWORD)
+        clock.advance(60)
+    with pytest.raises(AuthError) as e:
+        auth.signup(conn, config, "late@example.com", PASSWORD)
+    assert e.value.code == "too-many"
+    assert e.value.retry_after == 3600 - 600  # until the first of the ten leaves the hour
+    clock.advance(3600 - 600)
+    auth.signup(conn, config, "late@example.com", PASSWORD)
+
+
+def test_invited_accounts_do_not_count_towards_the_hourly_limit(
+    conn: sqlite3.Connection, config: Config
+) -> None:
+    for i in range(10):
+        make_user(conn, config, f"friend{i}")
+    auth.signup(conn, config, "bob@example.com", PASSWORD)
+
+
+def test_parallel_signups_cannot_pass_the_cap(conn: sqlite3.Connection, config: Config) -> None:
+    config = replace(config, max_users=1)
+    second = connect(config.db_path)
+    results: list[Any] = []
+    barrier = threading.Barrier(2)
+
+    def go(c: sqlite3.Connection, email: str) -> None:
+        barrier.wait()
+        try:
+            results.append(auth.signup(c, config, email, PASSWORD))
+        except AuthError as e:
+            results.append(e.code)
+
+    threads = [
+        threading.Thread(target=go, args=(c, e))
+        for c, e in ((conn, "a@example.com"), (second, "b@example.com"))
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    second.close()
+    assert sorted(map(str, results))[1] == "closed"
+    assert conn.execute("SELECT count(*) FROM users").fetchone()[0] == 1
+
+
+def test_parallel_signups_for_one_email_make_one_account(
+    conn: sqlite3.Connection, config: Config
+) -> None:
+    second = connect(config.db_path)
+    results: list[Any] = []
+    barrier = threading.Barrier(2)
+
+    def go(c: sqlite3.Connection) -> None:
+        barrier.wait()
+        try:
+            results.append(auth.signup(c, config, "bob@example.com", PASSWORD))
+        except AuthError as e:
+            results.append(e.code)
+
+    threads = [threading.Thread(target=go, args=(c,)) for c in (conn, second)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    second.close()
+    assert sorted(map(str, results))[1] == "exists"
+    assert conn.execute("SELECT count(*) FROM users").fetchone()[0] == 1
+
+
+def test_a_signed_up_account_can_be_reset_but_not_invited(
+    conn: sqlite3.Connection, config: Config
+) -> None:
+    auth.signup(conn, config, "bob@example.com", PASSWORD)
+    token = auth.mint_link(conn, config, "reset", "bob@example.com")
+    assert auth.link_info(conn, config, token) == ("reset", "bob@example.com")
+    with pytest.raises(AuthError) as e:
+        auth.mint_link(conn, config, "invite", "carol@example.com")
+    assert e.value.code == "username"

@@ -8,6 +8,7 @@ import {
   CACHE_PREFIX,
   CONFLICT_NOTICE,
   OUTBOX_PREFIX,
+  QUOTA_NOTICE,
   REFUSED_NOTICE,
   useSyncStore,
 } from '@/stores/sync'
@@ -109,7 +110,7 @@ describe('signing in', () => {
       'a wrong password',
       'invalid',
       undefined,
-      'Wrong username or password. Check both and try again.',
+      'Wrong email, username or password. Check them and try again.',
     ],
     ['a locked account', 'locked', 600, 'Too many attempts. Try again in ten minutes.'],
     ['a lock about to end', 'locked', 30, 'Too many attempts. Try again in one minute.'],
@@ -170,6 +171,197 @@ describe('signing in', () => {
     release()
     await flushPromises()
     expect(api.paths('POST /auth/login')).toHaveLength(1)
+  })
+})
+
+describe('creating an account', () => {
+  async function fill(email: string, password: string, confirm = password): Promise<void> {
+    await wrapper.get('#signup-email').setValue(email)
+    await wrapper.get('#signup-password').setValue(password)
+    await wrapper.get('#signup-confirm').setValue(confirm)
+  }
+
+  async function submit(): Promise<void> {
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+  }
+
+  function openSignup(): void {
+    history.replaceState(null, '', '/#/signup')
+  }
+
+  it('is linked from sign-in, which takes an email or a username', async () => {
+    api = signedOut()
+    mountApp()
+    await flushPromises()
+    expect(wrapper.get('label[for="login-username"]').text()).toBe('Email or username')
+    const link = wrapper.findAll('a').find((a) => a.text() === 'Create an account')!
+    expect(link.attributes('href')).toBe('#/signup')
+    expect(wrapper.text()).not.toContain('invitation')
+    location.hash = '#/signup'
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+    await flushPromises()
+    expect(heading()).toBe('Create an account')
+  })
+
+  it('creates the account, signs in by its email, and clears the address bar', async () => {
+    api = signedOut()
+    openSignup()
+    mountApp()
+    await flushPromises()
+    expect(heading()).toBe('Create an account')
+    expect(wrapper.get('#signup-email').attributes('type')).toBe('email')
+    expect(wrapper.get('#signup-email').attributes('autocomplete')).toBe('username')
+    expect(wrapper.get('#signup-password-hint').text()).toBe('At least 10 characters.')
+    await fill(' New@Example.com ', 'a long new password')
+    await submit()
+    expect(api.calls.find((c) => c.path === '/auth/signup')!.body).toEqual({
+      email: 'New@Example.com',
+      password: 'a long new password',
+    })
+    expect(heading()).toBe('19–25 October')
+    expect(location.hash).toBe('')
+    expect(JSON.parse(localStorage.getItem(SESSION_KEY)!)).toEqual({ user: 'new@example.com' })
+  })
+
+  it('checks the two passwords match before sending, and returns to the repeat field', async () => {
+    api = signedOut()
+    openSignup()
+    mountApp()
+    await flushPromises()
+    await fill('new@example.com', 'a long new password', 'something else')
+    await submit()
+    expect(wrapper.get('#signup-confirm-error').text()).toBe(
+      'The passwords don’t match. Type the same password in both fields.',
+    )
+    expect(document.activeElement).toBe(wrapper.get('#signup-confirm').element)
+    expect(api.paths('/auth/signup')).toEqual([])
+  })
+
+  it.each([
+    [
+      'a malformed email',
+      400,
+      'email',
+      undefined,
+      '#signup-email-error',
+      'Enter an email address, like name@example.com.',
+    ],
+    [
+      'a taken email',
+      409,
+      'exists',
+      undefined,
+      '#signup-email-error',
+      'There’s already an account for that email. Go to sign in.',
+    ],
+    [
+      'a short password',
+      400,
+      'password',
+      undefined,
+      '#signup-password-error',
+      'Use 10 to 256 characters.',
+    ],
+    [
+      'sign-up being closed',
+      403,
+      'closed',
+      undefined,
+      '[data-testid="signup-problem"]',
+      'New accounts are closed for now. Ask whoever runs this planner for an invite.',
+    ],
+    [
+      'the hourly limit',
+      429,
+      'too-many',
+      720,
+      '[data-testid="signup-problem"]',
+      'Too many new accounts at once. Try again in 12 minutes.',
+    ],
+    [
+      'a busy server',
+      503,
+      'busy',
+      1,
+      '[data-testid="signup-problem"]',
+      'The server is busy. Try again in a moment.',
+    ],
+  ])('explains %s where it belongs', async (_, status, code, retryAfter, where, message) => {
+    api = signedOut()
+    api.failNext('POST', '/auth/signup', status, { error: code, retryAfter })
+    openSignup()
+    mountApp()
+    await flushPromises()
+    await fill('new@example.com', 'a long new password')
+    await submit()
+    expect(wrapper.get(where).text()).toBe(message)
+    expect(heading()).toBe('Create an account')
+    expect(wrapper.findAll('[role="alert"]')).toHaveLength(1)
+  })
+
+  it('moves to the email when the server refuses it, and clears the error once it changes', async () => {
+    api = signedOut()
+    api.addUser('new@example.com')
+    openSignup()
+    mountApp()
+    await flushPromises()
+    await fill('new@example.com', 'a long new password')
+    await submit()
+    expect(wrapper.get('#signup-email').attributes('aria-invalid')).toBe('true')
+    expect(document.activeElement).toBe(wrapper.get('#signup-email').element)
+    await wrapper.get('#signup-email').setValue('other@example.com')
+    expect(wrapper.find('#signup-email-error').exists()).toBe(false)
+  })
+
+  it('explains being offline and keeps what was typed', async () => {
+    api = signedOut()
+    openSignup()
+    mountApp()
+    await flushPromises()
+    api.offline = true
+    await fill('new@example.com', 'a long new password')
+    await submit()
+    expect(wrapper.get('[data-testid="signup-problem"]').text()).toBe(
+      'Can’t reach the server. Check the connection and try again.',
+    )
+    expect((wrapper.get('#signup-email').element as HTMLInputElement).value).toBe('new@example.com')
+  })
+
+  it('sends one sign-up however often the button is pressed', async () => {
+    api = signedOut()
+    openSignup()
+    mountApp()
+    await flushPromises()
+    await fill('new@example.com', 'a long new password')
+    const release = api.hold()
+    await wrapper.get('form').trigger('submit')
+    await wrapper.get('form').trigger('submit')
+    expect(wrapper.get('button[type="submit"]').text()).toBe('Creating account…')
+    release()
+    await flushPromises()
+    expect(api.paths('/auth/signup')).toHaveLength(1)
+  })
+
+  it('goes back to sign in and takes #/signup out of the address bar', async () => {
+    api = signedOut()
+    openSignup()
+    mountApp()
+    await flushPromises()
+    const back = wrapper.findAll('a').find((a) => a.text() === 'Go to sign in')!
+    await back.trigger('click')
+    await flushPromises()
+    expect(heading()).toBe('Sign in')
+    expect(location.hash).toBe('')
+  })
+
+  it('shows the planner, not the form, to someone already signed in', async () => {
+    api = signedIn()
+    openSignup()
+    mountApp()
+    await flushPromises()
+    expect(heading()).toBe('19–25 October')
+    expect(location.hash).toBe('')
   })
 })
 
@@ -588,6 +780,19 @@ describe('sync status', () => {
     expect(notice.get('p').text()).toBe(`Your change wasn’t kept. ${CONFLICT_NOTICE}`)
     await notice.get('button').trigger('click')
     expect(wrapper.find('[data-testid="sync-notice"]').exists()).toBe(false)
+  })
+
+  it('says a change refused for quota was not saved because the account is full', async () => {
+    api = signedIn()
+    mountApp()
+    await flushPromises()
+    useSyncStore().notice = QUOTA_NOTICE
+    await flushPromises()
+    const notice = wrapper.get('[data-testid="sync-notice"]')
+    expect(notice.attributes('data-tone')).toBe('error')
+    expect(notice.get('p').text()).toBe(
+      'Your change wasn’t saved. Your account is full, so it was undone here. Ask whoever runs this planner for more room.',
+    )
   })
 
   it('says a refused change was not saved, and what to do', async () => {

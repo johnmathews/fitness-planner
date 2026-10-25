@@ -31,7 +31,7 @@
 <body>
 <div class="grid">
   <div class="cell"><p class="caption state">Default</p>
-    <div class="field"><label class="label" for="f1">Username</label>
+    <div class="field"><label class="label" for="f1">Email or username</label>
       <input class="input" id="f1" autocomplete="username" autocapitalize="none" spellcheck="false"></div></div>
   <div class="cell"><p class="caption state">With a hint</p>
     <div class="field"><label class="label" for="f2">Password</label>
@@ -50,14 +50,14 @@
       <p class="caption error" id="f5-err" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span>The passwords don't match. Type the same password in both fields.</span></p></div></div>
   <div class="cell"><p class="caption state">Form-level error: one message for both fields</p>
     <div class="form">
-      <div class="field"><label class="label" for="f7">Username</label>
+      <div class="field"><label class="label" for="f7">Email or username</label>
         <input class="input" id="f7" value="anna" autocomplete="username" autocapitalize="none" spellcheck="false" aria-invalid="true" aria-describedby="f-login-err"></div>
       <div class="field"><label class="label" for="f8">Password</label>
         <input class="input" id="f8" type="password" value="correct-horse" autocomplete="current-password" aria-invalid="true" aria-describedby="f-login-err"></div>
-      <p class="caption error" id="f-login-err" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span>Wrong username or password. Check both and try again.</span></p>
+      <p class="caption error" id="f-login-err" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span>Wrong email, username or password. Check them and try again.</span></p>
     </div></div>
   <div class="cell"><p class="caption state">Disabled</p>
-    <div class="field is-disabled"><label class="label" for="f6">Username</label>
+    <div class="field is-disabled"><label class="label" for="f6">Email or username</label>
       <input class="input" id="f6" value="anna" disabled></div></div>
 </div>
 <script></script>

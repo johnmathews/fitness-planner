@@ -26,6 +26,9 @@ AUTH_STATUS = {
     "password": 400,
     "gone": 410,
     "exists": 409,
+    "email": 400,
+    "closed": 403,
+    "too-many": 429,
 }
 
 
@@ -88,6 +91,10 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
     @app.exception_handler(ApiError)
     async def on_api_error(_: Request, e: ApiError) -> JSONResponse:
         return error_response(e.status, e.code, e.headers, **e.extra)
+
+    @app.exception_handler(data.QuotaExceeded)
+    async def on_quota(_: Request, __: data.QuotaExceeded) -> JSONResponse:
+        return error_response(413, "quota")
 
     @app.exception_handler(RequestValidationError)
     async def on_invalid(_: Request, __: RequestValidationError) -> JSONResponse:
@@ -190,6 +197,17 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         name = conn.execute("SELECT username FROM users WHERE id = ?", (uid,)).fetchone()[0]
         return {"username": name}
 
+    @app.post("/api/auth/signup")
+    def signup(body: Body, response: Response, conn: Conn) -> dict[str, str]:
+        email, password = strings(body, "email", "password")
+        try:
+            uid = auth.signup(conn, config, email, password)
+        except auth.AuthError as e:
+            raise refused(e) from None
+        set_session_cookie(response, auth.create_session(conn, config, uid))
+        name = conn.execute("SELECT username FROM users WHERE id = ?", (uid,)).fetchone()[0]
+        return {"username": name}
+
     @app.post("/api/auth/logout", status_code=204)
     def logout(_: Body, request: Request, response: Response, conn: Conn) -> None:
         token = request.cookies.get(config.cookie_name)
@@ -231,7 +249,9 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         items, rev = body.get("items"), body.get("rev")
         if not isinstance(items, list) or type(rev) is not int or rev < 0:
             raise ApiError(400, "invalid")
-        result = data.put_plan(conn, user.id, section, week_key(week), items, rev)
+        result = data.put_plan(
+            conn, user.id, section, week_key(week), items, rev, quota=config.user_quota_bytes
+        )
         if isinstance(result, data.PlanConflict):
             raise ApiError(409, "conflict", items=result.items, rev=result.rev)
         return {"rev": result.rev}
@@ -249,7 +269,17 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         done = body.get("done")
         if not isinstance(done, bool):
             raise ApiError(400, "invalid")
-        return {"days": data.set_tick(conn, user.id, section, week_key(week), item_id, day, done)}
+        days = data.set_tick(
+            conn,
+            user.id,
+            section,
+            week_key(week),
+            item_id,
+            day,
+            done,
+            quota=config.user_quota_bytes,
+        )
+        return {"days": days}
 
     @app.put("/api/settings")
     def put_settings(body: Body, user: User, conn: Conn) -> dict[str, Any]:
@@ -270,7 +300,7 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
             parsed = parse_export(text)
         except ExportError as e:
             raise ApiError(400, e.code) from None
-        return dict(data.import_data(conn, user.id, parsed))
+        return dict(data.import_data(conn, user.id, parsed, quota=config.user_quota_bytes))
 
     return app
 

@@ -1,7 +1,15 @@
 // Phone width (375px): nothing scrolls the page sideways, and in the week grid the keyboard never
 // leaves a focused cell under the sticky name column.
 import { expect, test } from '@playwright/test'
-import { THEMES, expectNoSidewaysScroll, openApp, openStyleGuide, settle } from './support'
+import {
+  THEMES,
+  expectNoSidewaysScroll,
+  openApp,
+  openSignIn,
+  openSignUp,
+  openStyleGuide,
+  settle,
+} from './support'
 
 test.use({ viewport: { width: 375, height: 800 } })
 
@@ -12,6 +20,16 @@ test.describe('no sideways scroll at 375px', () => {
       await expectNoSidewaysScroll(page)
     })
   }
+
+  test('sign-in', async ({ page }) => {
+    await openSignIn(page, 'light')
+    await expectNoSidewaysScroll(page)
+  })
+
+  test('create an account', async ({ page }) => {
+    await openSignUp(page, 'light')
+    await expectNoSidewaysScroll(page)
+  })
 
   test('the app, Today view', async ({ page }) => {
     await openApp(page, { view: 'today' })

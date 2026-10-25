@@ -72,7 +72,8 @@ export async function request<T = unknown>(
   if (res.status === 401 && (code === null || code === 'auth')) {
     return { ok: false, error: { kind: 'auth' } }
   }
-  if (res.status === 409 && json !== null) {
+  // Only a plan write conflicts; any other 409 (a sign-up's `exists`) is a refusal like the rest.
+  if (res.status === 409 && json !== null && code === 'conflict') {
     return { ok: false, error: { kind: 'conflict', body: json as { items: unknown; rev: number } } }
   }
   if (res.status >= 500 && code === null)

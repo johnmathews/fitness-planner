@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import { CircleAlert, CloudOff } from '@lucide/vue'
-import { CONFLICT_NOTICE, REFUSED_NOTICE, useSyncStore } from '@/stores/sync'
+import { CONFLICT_NOTICE, QUOTA_NOTICE, REFUSED_NOTICE, useSyncStore } from '@/stores/sync'
 import { countOf } from '@/lib/words'
 import { Banner } from '@/components/ui/banner'
 import { Button } from '@/components/ui/button'
@@ -42,6 +42,10 @@ const status = computed<Words | null>(() => {
 /** A change the person made that was lost: the error tone, with a lead saying what happened. */
 const NOTICES: Record<string, Words> = {
   [CONFLICT_NOTICE]: { lead: 'Your change wasn’t kept.', text: CONFLICT_NOTICE },
+  [QUOTA_NOTICE]: {
+    lead: 'Your change wasn’t saved.',
+    text: 'Your account is full, so it was undone here. Ask whoever runs this planner for more room.',
+  },
   [REFUSED_NOTICE]: {
     lead: 'Your change wasn’t saved.',
     text: 'The server refused it, so it was undone here. Reload to see what was saved.',

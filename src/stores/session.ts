@@ -11,7 +11,18 @@ export const SESSION_KEY = 'fitness-planner-session-v1'
 
 /** Why a sign-in, a link or a sign-out did not work; the forms turn these into sentences. */
 export type AuthProblem = {
-  code: 'invalid' | 'locked' | 'busy' | 'offline' | 'gone' | 'password' | 'error'
+  code:
+    | 'invalid'
+    | 'locked'
+    | 'busy'
+    | 'offline'
+    | 'gone'
+    | 'password'
+    | 'email'
+    | 'exists'
+    | 'closed'
+    | 'too-many'
+    | 'error'
   retryAfter?: number
 }
 
@@ -20,7 +31,17 @@ export type LinkKind = 'invite' | 'reset'
 function problem(error: ApiError): AuthProblem {
   if (error.kind === 'offline') return { code: 'offline' }
   if (error.kind !== 'refused') return { code: 'error' }
-  const known = ['invalid', 'locked', 'busy', 'gone', 'password'] as const
+  const known = [
+    'invalid',
+    'locked',
+    'busy',
+    'gone',
+    'password',
+    'email',
+    'exists',
+    'closed',
+    'too-many',
+  ] as const
   const code = known.find((c) => c === error.code) ?? 'error'
   return error.retryAfter === undefined ? { code } : { code, retryAfter: error.retryAfter }
 }
@@ -87,6 +108,13 @@ export const useSessionStore = defineStore('session', () => {
     )
   }
 
+  /** Create an account named by its email (docs/api.md §4) and sign in as it. */
+  async function signup(email: string, password: string): Promise<AuthProblem | null> {
+    return signedIn(
+      await request<{ username: string }>('POST', '/auth/signup', { email, password }),
+    )
+  }
+
   async function lookup(
     token: string,
   ): Promise<{ kind: LinkKind; username: string } | AuthProblem> {
@@ -139,5 +167,5 @@ export const useSessionStore = defineStore('session', () => {
     if (remembered) await init()
   }
 
-  return { status, user, expired, init, login, lookup, redeem, logout, onStorage }
+  return { status, user, expired, init, login, signup, lookup, redeem, logout, onStorage }
 })

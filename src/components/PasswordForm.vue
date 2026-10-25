@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useSessionStore, type AuthProblem, type LinkKind } from '@/stores/session'
-import { describeProblem } from '@/lib/problems'
+import { MISMATCH, describeProblem } from '@/lib/problems'
 import AuthCard from '@/components/AuthCard.vue'
 import { Button } from '@/components/ui/button'
 import { InlineMessage } from '@/components/ui/inline-message'
@@ -19,7 +19,6 @@ const emit = defineEmits<{
 }>()
 
 const MIN = 10
-const MISMATCH = 'The passwords don’t match. Type the same password in both fields.'
 const session = useSessionStore()
 const link = ref<{ kind: LinkKind; username: string } | null>(null)
 const problem = ref<AuthProblem | null>(null)

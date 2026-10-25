@@ -12,27 +12,27 @@ in SQLite at `$DATA_DIR/fitness.db` (WAL mode, foreign keys on). The web contain
 `/api/` to it, so the browser sees one origin and the CSP stays unchanged. Every user's rows are
 scoped by `user_id`, and no endpoint reads another user's data.
 
-| Module        | Holds                                                         |
-| ------------- | ------------------------------------------------------------- |
-| `config.py`   | `Config`, read from the environment (§6)                      |
-| `db.py`       | connections, the schema and its migrations                    |
-| `validate.py` | the port of `src/lib/storage.ts` and `src/lib/transfer.ts`    |
-| `auth.py`     | password hashing, lockout, sessions, invite and reset tokens  |
-| `data.py`     | reading and writing plans, ticks and settings; import, export |
-| `app.py`      | the HTTP layer: routes, the write checks, error mapping       |
-| `backup.py`   | the daily `VACUUM INTO` copy                                  |
-| `cli.py`      | `fp-admin`                                                    |
+| Module        | Holds                                                                              |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `config.py`   | `Config`, read from the environment (§6)                                           |
+| `db.py`       | connections, the schema and its migrations                                         |
+| `validate.py` | the port of `src/lib/storage.ts` and `src/lib/transfer.ts`                         |
+| `auth.py`     | password hashing, lockout, sessions, sign-up and its caps, invite and reset tokens |
+| `data.py`     | reading and writing plans, ticks and settings; import, export; the quota (`usage`) |
+| `app.py`      | the HTTP layer: routes, the write checks, error mapping                            |
+| `backup.py`   | the daily `VACUUM INTO` copy                                                       |
+| `cli.py`      | `fp-admin`                                                                         |
 
 ## 2. Data model
 
-| Table      | Key                                 | Columns                                                                                            |
-| ---------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `users`    | `id`                                | `username` (unique, case-insensitive), `password_hash`, `disabled`, lockout counters, `created_at` |
-| `sessions` | `token_hash`                        | `user_id`, `created_at`, `last_seen`, `expires_at`                                                 |
-| `invites`  | `token_hash`                        | `kind` (`invite` or `reset`), `username`, `user_id` (resets), `expires_at`, `used_at`              |
-| `settings` | `user_id`                           | `accent`, `daily_pick`                                                                             |
-| `plans`    | `(user_id, section, week)`          | `items_json`, `rev`                                                                                |
-| `ticks`    | `(user_id, section, week, item_id)` | `days`, a 7-bit mask (bit 0 is Monday)                                                             |
+| Table      | Key                                 | Columns                                                                                                                                           |
+| ---------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users`    | `id`                                | `username` (unique, case-insensitive; the lower-cased email for a signed-up account), `password_hash`, `disabled`, lockout counters, `created_at` |
+| `sessions` | `token_hash`                        | `user_id`, `created_at`, `last_seen`, `expires_at`                                                                                                |
+| `invites`  | `token_hash`                        | `kind` (`invite` or `reset`), `username`, `user_id` (resets), `expires_at`, `used_at`                                                             |
+| `settings` | `user_id`                           | `accent`, `daily_pick`                                                                                                                            |
+| `plans`    | `(user_id, section, week)`          | `items_json`, `rev`                                                                                                                               |
+| `ticks`    | `(user_id, section, week, item_id)` | `days`, a 7-bit mask (bit 0 is Monday)                                                                                                            |
 
 `section` is `exercise` or `diet`. Every row cascades from its user. Tokens and session ids are
 stored only as SHA-256 hashes. A database lookup with a stolen copy of the file cannot recover a
@@ -60,6 +60,7 @@ cut off at the limit rather than read whole. A body with nothing to send, such a
 | ------------------------------------------ | ------- | -------------------------------------------------------------------- |
 | `GET /healthz`                             | no      | `SELECT 1`; `{"ok": true}`                                           |
 | `POST /auth/login`                         | no      | `{username, password}` → `{username}` and the session cookie         |
+| `POST /auth/signup`                        | no      | `{email, password}` creates an account → `{username}` and the cookie |
 | `POST /auth/logout`                        | session | ends this session and clears the cookie; 204                         |
 | `GET /auth/me`                             | session | `{username}`                                                         |
 | `POST /invites/lookup`                     | no      | `{token}` → `{kind, username}` for a live link; 410 `gone` otherwise |
@@ -85,6 +86,14 @@ rules as stored data, so a bad item drops out rather than failing the write.
 **Ticks** set or clear one day for one item (an item id of 1 to 128 characters), so two devices ticking different days never collide.
 `day` is 0 (Monday) to 6.
 
+**Quota.** Each user may store 5 MiB: the bytes of their plans' JSON plus 64 for each tick row.
+A plan write, a tick that would add a row, or an import that would take the account over it gets
+413 `quota` and changes nothing. Writes that keep usage level or shrink it always succeed, so a full
+account can still change existing ticks and trim its plans. Settings do not count and are never
+refused. The quota measures what the account holds, not the bytes on disk, which include keys and
+indexes. The client drops a refused write with a notice that the account is full (`architecture.md`
+§7), and an import says the same.
+
 **Import** applies the merge rule from `architecture.md` §4: existing weeks keep their plan, ticks
 are OR-ed, and settings apply only when the account has none. It returns what it added, in one
 transaction. A file that fails to parse gets 400 with `json`, `format` or `version`, the same codes
@@ -92,7 +101,21 @@ the client shows.
 
 ## 4. Accounts and sessions
 
-- **No sign-up.** `fp-admin invite <username>` mints a single-use link,
+- **Sign-up.** `POST /auth/signup` with `{email, password}` creates an account and signs it in.
+  The email is trimmed and lower-cased, then stored as the account's username, so it is what the
+  person signs in with and what `X-Expected-User`, the cache keys and `fp-admin` name. It must be
+  at most 254 characters, with printable ASCII before the `@` (no spaces, no second `@`) and a
+  domain of letters, digits and hyphens with at least one dot; otherwise 400 `email`. It is ASCII
+  because the name travels in a header. Invite usernames never contain `@`, so the two kinds
+  cannot collide. No mail is sent: the address is not verified, and a forgotten password still
+  needs `fp-admin reset <email>`. A taken email gets 409 `exists`, a password outside 10 to 256
+  characters 400 `password`. When `MAX_USERS` accounts exist (every account counts, invited or not)
+  or `MAX_USERS` is 0, sign-up gets 403 `closed`; a disabled account still counts. At most 10
+  sign-ups land in any rolling hour (invited accounts do not count); beyond that, 429 `too-many`
+  with `Retry-After` saying when the oldest of them leaves the hour. The caps are checked before the password is
+  hashed and again under the write lock with the insert, so parallel sign-ups cannot pass them.
+  Sign-ups wait for the same bounded hasher as logins and get 503 `busy` the same way.
+- **Invites.** `fp-admin invite <username>` mints a single-use link,
   `$PUBLIC_ORIGIN/#/invite/<token>`, valid for 7 days. The person opens it and chooses a password
   (10 to 256 characters). The username is fixed by the invite: 1 to 32 letters, digits, `.`, `_`
   or `-`, unique regardless of case. Inviting a name that already exists fails; use `reset`. `fp-admin reset <username>` mints a
@@ -105,7 +128,7 @@ the client shows.
 - **Passwords** are hashed with argon2id at argon2-cffi's defaults (64 MiB, 3 passes,
   parallelism 4). One hash runs at a time (a process-wide semaphore), so concurrent logins queue
   instead of multiplying memory. At most eight requests hold a place (one hashing, seven waiting,
-  logins and invite redemptions alike), each waiting at most five seconds. The rest get 503
+  logins, sign-ups and invite redemptions alike), each waiting at most five seconds. The rest get 503
   `busy` with `Retry-After: 1`, so a flood of logins cannot occupy every worker thread.
 - **Lockout.** Five wrong passwords within 15 minutes lock the account for 15 minutes. While
   locked, every login gets 423 `locked`, even with the right password. A success resets the count.
@@ -126,6 +149,7 @@ the client shows.
 ```sh
 docker compose exec fitness-api fp-admin invite alice     # prints the invite link
 docker compose exec fitness-api fp-admin reset alice      # prints a reset link
+docker compose exec fitness-api fp-admin reset bob@example.com  # a signed-up account, by its email
 docker compose exec fitness-api fp-admin users            # username, created, disabled, sessions
 docker compose exec fitness-api fp-admin disable alice    # blocks login and ends sessions
 docker compose exec fitness-api fp-admin enable alice
@@ -140,6 +164,7 @@ docker compose exec fitness-api fp-admin revoke-sessions alice
 | `PUBLIC_ORIGIN` | (required) | e.g. `https://fitness.itsa-pizza.com`; checked on writes, used in links |
 | `COOKIE_SECURE` | `true`     | `false` for plain-http local runs; the cookie is then `session`         |
 | `BACKUP_KEEP`   | `7`        | daily copies kept in `$DATA_DIR/backup/`                                |
+| `MAX_USERS`     | `50`       | sign-up closes once this many accounts exist; `0` turns sign-up off     |
 
 ## 7. Backups
 
@@ -150,17 +175,28 @@ Export gives each person a JSON copy of their own data as well.
 
 ## 8. Accepted risks
 
-Reviewed and kept on purpose, for a service with a handful of invited users:
+Reviewed and kept on purpose, for a small service with open sign-up (D9 in
+[decisions.md](decisions.md)):
 
+- **Sign-up reveals which emails have accounts.** A taken email gets 409 `exists`, because with no
+  mail the only way to tell someone they already have an account is to say so on screen. It widens
+  the lockout's existing leak (below) rather than opening a new kind.
+- **Anyone can claim any email.** Nothing is verified, so a person can sign up with an address
+  that is not theirs, and its owner then gets 409 `exists`. `fp-admin disable` blocks the account;
+  there is no delete, so the owner needs an invite under another name, or a reset of that account.
+- **Strangers can fill the account cap, or the hour.** Ten sign-ups an hour fill the default
+  `MAX_USERS` of 50 in five hours, after which sign-up says it is closed; ten at once block real
+  sign-ups for up to an hour. Nothing else is harmed: invited and existing accounts keep working,
+  and each stranger's data is bounded by the quota. `fp-admin users` shows who signed up and
+  `disable` blocks one, but a disabled account still counts towards `MAX_USERS`, so only raising
+  it reopens sign-up.
 - **Lockout reveals and can block a username.** Five wrong passwords lock a real account, but an
-  unknown name never locks, so guessing shows which names exist. The same five guesses every 15
+  unknown name never locks, so guessing shows which names exist. Sign-in names are now often
+  emails, which are easier to guess than invite usernames. The same five guesses every 15
   minutes keep someone out. The lock is per account because the LAN port means no client IP can
   be trusted. `fp-admin reset` clears it.
 - **Sessions have no absolute lifetime.** A session used at least every 90 days lasts
   indefinitely. Logout, `revoke-sessions`, a reset and `disable` all end it.
-- **A signed-in user can grow their own data without a cap.** Week keys only need the
-  `YYYY-MM-DD` shape, and plans and logs have no size limit beyond 1 MiB per request. A cap would
-  change the export format on both sides, so it waits until it is needed.
 
 ## 9. Validation parity
 
@@ -201,9 +237,13 @@ Tests sit in `api/tests/`:
 - `test_parity.py`: every case in `fixtures/transfer/`, the same files Vitest runs, plus the
   deliberate divergences from JavaScript (§9).
 - `test_api.py`: the HTTP layer: the write guard, error shapes, body limits (chunked too), every
-  data endpoint, user isolation, `X-Expected-User`, import and export (the sample round trip).
+  data endpoint, user isolation, `X-Expected-User`, sign-up and its refusals (closed included),
+  the quota on plans, ticks and imports, import and export (the sample round trip).
 - `test_auth.py`: hashing one at a time and the busy queue, login, lockout and its window and
-  races, sessions sliding and expiring, invite and reset links, races between redemptions.
+  races, sessions sliding and expiring, invite and reset links, races between redemptions;
+  sign-up's email rule (254 characters, ASCII), password length, taken emails, `MAX_USERS`, the
+  hourly limit (invites not counted), parallel sign-ups against the cap and for one email, and a
+  reset for an email account.
 - `test_db.py`, `test_config.py`, `test_backup.py`, `test_cli.py`: migrations (including racing
   ones and the WAL switch), configuration from the environment, daily copies, `fp-admin`.
 - `conftest.py` gives each test a temporary database, a controllable clock and a cheap hasher;

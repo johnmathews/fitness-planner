@@ -142,6 +142,16 @@ export class FakeApi {
       this.signedIn = String(body.username)
       return Response.json({ username: this.signedIn })
     }
+    if (method === 'POST' && path === '/auth/signup') {
+      const email = String(body.email).trim().toLowerCase()
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return error(400, 'email')
+      const password = String(body.password)
+      if (password.length < 10 || password.length > 256) return error(400, 'password')
+      if (this.accounts.has(email)) return error(409, 'exists')
+      this.addUser(email, password)
+      this.signedIn = email
+      return Response.json({ username: email })
+    }
     if (method === 'POST' && path === '/invites/lookup') {
       const link = this.links.get(String(body.token))
       return link ? Response.json(link) : error(410, 'gone')
