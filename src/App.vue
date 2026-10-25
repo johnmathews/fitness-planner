@@ -19,7 +19,6 @@ import { usePhoneView } from '@/composables/phoneView'
 import { dismissConfirm } from '@/composables/useConfirm'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { isDark } from '@/lib/theme'
-import { inkFor } from '@/lib/inks'
 import { useSessionStore } from '@/stores/session'
 import { useSyncStore } from '@/stores/sync'
 
@@ -108,12 +107,12 @@ const today = computed(() => {
     exercises: store.exercises.map((e) => ({
       ...e,
       chips: exerciseDetails(e),
-      done: store.isDone(e.id, i),
+      mark: store.markOf(e.id, i),
       total: store.totalFor(e.id),
     })),
     foods: diet.foods.map((f) => ({
       ...f,
-      done: diet.isEaten(f.id, i),
+      mark: diet.markOf(f.id, i),
       total: diet.totalFor(f.id),
     })),
   }
@@ -123,15 +122,6 @@ function markToday(kind: 'exercise' | 'food', id: string): void {
   if (kind === 'exercise') store.toggle(id, todayIndex.value)
   else diet.toggle(id, todayIndex.value)
 }
-
-// The ink is a user setting, so it lives in CSS variables rather than in the stylesheets: one value
-// per theme, from which main.css picks the pen. The stored accent keeps its old format (K3a).
-watchEffect(() => {
-  const ink = inkFor(store.accent, store.savedSettings() !== null)
-  const style = document.documentElement.style
-  style.setProperty('--user-pen-light', ink.light)
-  style.setProperty('--user-pen-dark', ink.dark)
-})
 
 // matchMedia is missing in some environments (jsdom), so "System" falls back to light there.
 const systemDark = useMediaQuery('(prefers-color-scheme: dark)')

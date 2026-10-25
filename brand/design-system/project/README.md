@@ -7,7 +7,7 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 - **Simple and durable.** A tool for years of ordinary weeks. Nothing in it wears out or goes out of fashion: hairline rules, two typefaces, almost no shadow.
 - **Rooted in now.** Today gets the `highlight` band; this week gets the big date. Nothing archival competes with them. This is what the whiteboard lends.
 - **Quiet record.** Months and years sit below, small and dense. A week off shows as empty rings, plainly, without comment. This is what Apple Notes and the Moleskine lend: restraint and quality, not their look.
-- **A mark per session.** The done squiggle is the whole reward. No streaks, badges, confetti or slogans.
+- **A mark per session.** The marker stroke is the whole reward: green for a day done well, amber for part of one, red for a day tried and missed, all of them counted. No streaks, badges, confetti or slogans, and no guilt for a red one.
 
 ## Two layers, one system
 
@@ -21,12 +21,12 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 1. Read **Foundations** for colour, type, marks, shape and motion, and **Voice** for how the app writes.
 2. Build from the components. Each one's guidelines say when to use it, its states, and what the consumer provides. If something is missing, add it to the system first (preview and README), then use it.
 3. Use tokens by name (`var(--ink)`, `var(--radius-md)`, the `.caption` class). Never paste a raw value.
-4. Check every screen in light and dark, in all four inks, and at 375px wide.
+4. Check every screen in light and dark, and at 375px wide.
 
 ## Never
 
 - Fake paper texture, handwriting fonts, leather, binding or any skeuomorphism.
 - Confetti, streak flames, badges, points, motivational slogans, exclamation marks.
-- The `pen` colour on anything but a done mark or a met total; the `highlight` on anything but today.
-- Red or orange inks: `pen` must never be mistaken for `error-ink` or `caution-ink`.
+- The `pen` colours on anything but their marks (and `pen` on a met total); the `highlight` on anything but today.
+- A mark told from another by colour alone: each kind keeps its own shape. `pen-missed` is a record, never an error, so it never stands in for `error-ink`.
 - Uppercase letter-spaced labels, monospace numbers, gradients, glows, emoji.

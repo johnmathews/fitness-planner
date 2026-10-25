@@ -8,6 +8,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
 import { emptyState, signedIn } from '@/lib/__tests__/signedIn'
 import type { SyncState } from '@/stores/sync'
+import type { Days } from '@/lib/storage'
 
 // Friday 23 October 2026: today is the fifth column; Saturday and Sunday are still to come.
 const NOW = new Date(2026, 9, 23, 18, 0)
@@ -37,7 +38,7 @@ const counts = () => ex().findAll('[data-testid="day-count"]')
 /** A week where Monday has four exercises marked, one over the default pick of three. */
 function overPicked(n = 4): SyncState {
   const state = emptyState()
-  const on = [true, false, false, false, false, false, false]
+  const on: Days = ['great', null, null, null, null, null, null]
   const ids = ['pu', 'pl', 'sq', 'be', 'kh'].slice(0, n)
   state.exercise.log = { [WEEK]: Object.fromEntries(ids.map((id) => [id, [...on]])) }
   return state
@@ -136,13 +137,17 @@ describe('the planner grids (W10)', () => {
       ])
     })
 
-    it('draws the mark as a pen squiggle in its box when done, an empty box when not', async () => {
+    it('draws each mark in its own pen in the box, and an empty box when not marked', async () => {
       mountApp()
       const mark = marks('Push-ups')[1]!
-      expect(mark.find('[data-slot="day-mark-squiggle"]').exists()).toBe(false)
-      await mark.trigger('click')
-      expect(mark.attributes('aria-pressed')).toBe('true')
-      expect(mark.get('[data-slot="day-mark-squiggle"]').classes()).toContain('stroke-pen')
+      const stroke = () => mark.find('[data-slot="day-mark-stroke"]')
+      expect(stroke().exists()).toBe(false)
+      for (const pen of ['stroke-pen', 'stroke-pen-partial', 'stroke-pen-missed']) {
+        await mark.trigger('click')
+        expect(mark.attributes('aria-pressed')).toBe('true')
+        expect(stroke().classes()).toContain(pen)
+      }
+      expect(mark.attributes('aria-label')).toBe("Push-ups, Tuesday 20 October, couldn't do it")
       expect(mark.text()).toBe('')
     })
   })
@@ -174,7 +179,7 @@ describe('the planner grids (W10)', () => {
     it('marks a met section figure with a check as well as the pen (F6)', async () => {
       const state = emptyState()
       state.diet.plans = { [WEEK]: [{ id: 'fish', name: 'Fish', target: 1 }] }
-      state.diet.log = { [WEEK]: { fish: [true, false, false, false, false, false, false] } }
+      state.diet.log = { [WEEK]: { fish: ['great', null, null, null, null, null, null] } }
       mountApp(state)
       const foods = wrapper.get('[data-testid="diet-goals-met"]')
       expect(foods.text()).toBe('1 of 1 goals met')

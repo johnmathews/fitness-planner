@@ -65,6 +65,14 @@ MIGRATIONS = [
         PRIMARY KEY (user_id, section, week, item_id)
     ) STRICT, WITHOUT ROWID;
     """,
+    # Marks have kinds. `days` stays the mask of every marked day; `partial` and `missed` are
+    # disjoint subsets of it, and a marked day in neither is `great`, as every older tick reads.
+    """
+    ALTER TABLE ticks ADD COLUMN partial INTEGER NOT NULL DEFAULT 0
+        CHECK (partial BETWEEN 0 AND 127);
+    ALTER TABLE ticks ADD COLUMN missed INTEGER NOT NULL DEFAULT 0
+        CHECK (missed BETWEEN 0 AND 127);
+    """,
 ]
 SCHEMA_VERSION = len(MIGRATIONS)
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Day } from '@/stores/planner'
+import type { Mark } from '@/lib/storage'
 import type { CountTone, PickedCount, Tracked } from '@/lib/tracker'
 import { useGridNav } from '@/composables/gridNav'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -12,7 +13,7 @@ const props = defineProps<{
   tableLabel: string
   items: Tracked[]
   days: Day[]
-  flagsFor: (id: string) => boolean[]
+  marksFor: (id: string) => (Mark | null)[]
   totalFor: (id: string) => number
   detailsFor?: (item: Tracked) => string[]
   /** Adds an edit button to each row in config mode, which emits `edit`. */
@@ -170,7 +171,7 @@ function reveal(ev: FocusEvent): void {
           :editable="editable"
           :config-mode="configMode"
           :days="days"
-          :flags="flagsFor(it.id)"
+          :marks="marksFor(it.id)"
           :total="totalFor(it.id)"
           @toggle="$emit('toggle', it.id, $event)"
           @remove="$emit('remove', it.id)"

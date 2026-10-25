@@ -35,7 +35,7 @@ describe('parsePlannerData', () => {
         ],
         '2026-10-26': [],
       },
-      log: { '2026-10-19': { sq: [true, false, false, false, false, false, false] } },
+      log: { '2026-10-19': { sq: ['great', null, null, null, null, null, null] } },
     }
     const parsed = parsePlannerData(JSON.stringify(data), '{"exercises":[]}', WEEK)
     expect(JSON.stringify(parsed)).toBe(JSON.stringify(data))
@@ -64,7 +64,7 @@ describe('parsePlannerData', () => {
         { id: 'pu', name: 'Push-ups', reps: 10, target: 4 },
         { id: 'kh', name: 'Kettlebell halos', reps: 8, perSide: true, target: 3 },
       ],
-      log: { '2026-10-05': { pu: [true, false, true, false, false, false, false] } },
+      log: { '2026-10-05': { pu: ['great', null, 'great', null, null, null, null] } },
     }
     const parsed = parsePlannerData(null, JSON.stringify(prototype), WEEK)
     expect(Object.keys(parsed.plans).sort()).toEqual(['2026-10-05', WEEK])
@@ -88,7 +88,7 @@ describe('parsePlannerData', () => {
   })
 
   it('keeps the legacy log when exercises is missing, restoring default exercises', () => {
-    const log = { [WEEK]: { pu: [true, true, false, false, false, false, false] } }
+    const log = { [WEEK]: { pu: ['great', 'great', null, null, null, null, null] } }
     const parsed = legacy(JSON.stringify({ log }))
     expect(parsed.exercises).toEqual(defaultExercises())
     expect(parsed.log).toEqual(log)
@@ -116,7 +116,27 @@ describe('parsePlannerData', () => {
     ])
   })
 
-  it('normalises log arrays to seven booleans and drops bad weeks', () => {
+  it('keeps each kind of mark, reads an old `true` as great, and empties anything else', () => {
+    const parsed = parsePlannerData(
+      JSON.stringify({
+        plans: {},
+        log: { '2026-10-19': { a: ['great', 'partial', 'missed', true, 1, 'GREAT', {}] } },
+      }),
+      null,
+      '2026-10-19',
+    )
+    expect(parsed.log['2026-10-19']!.a).toEqual([
+      'great',
+      'partial',
+      'missed',
+      'great',
+      null,
+      null,
+      null,
+    ])
+  })
+
+  it('normalises log arrays to seven marks and drops bad weeks', () => {
     const parsed = legacy(
       JSON.stringify({
         exercises: [],
@@ -128,7 +148,7 @@ describe('parsePlannerData', () => {
       }),
     )
     expect(parsed.log).toEqual({
-      '2026-10-19': { a: [true, false, false, false, false, false, false] },
+      '2026-10-19': { a: ['great', null, null, null, null, null, null] },
     })
   })
 })
@@ -182,7 +202,7 @@ describe('parseDietData', () => {
   it('round-trips a v2 payload byte for byte', () => {
     const data = {
       plans: { [WEEK]: [{ id: 'veg', name: 'Vegetables', target: 7 }] },
-      log: { [WEEK]: { veg: [true, false, false, false, false, false, true] } },
+      log: { [WEEK]: { veg: ['great', null, null, null, null, null, 'great'] } },
     }
     expect(JSON.stringify(parseDietData(JSON.stringify(data), null, WEEK))).toBe(
       JSON.stringify(data),

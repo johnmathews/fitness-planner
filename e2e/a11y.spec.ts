@@ -1,5 +1,5 @@
 // Accessibility gate (from the design-system skill's a11y.spec.ts): axe (WCAG 2.2 A and AA, and
-// its best practices) on the style guide in both themes and all four inks, and on the app (signed
+// its best practices) on the style guide in both themes, and on the app (signed
 // in, /api mocked) in both themes at desktop and phone width; and the focus ring's shape.
 //
 // The theme is the app's own `.dark` class on <html>, which tokens.css's dark block matches
@@ -7,7 +7,6 @@
 // changes nothing, so a "dark" audit can never quietly re-run light.
 import { expect, test, type Page } from '@playwright/test'
 import {
-  INKS,
   THEMES,
   canvasToken,
   expectNoAxeViolations,
@@ -43,12 +42,10 @@ test.describe('dark really is dark', () => {
 
 test.describe('the style guide passes axe', () => {
   for (const theme of THEMES) {
-    for (const ink of INKS) {
-      test(`${theme}, ${ink}`, async ({ page }) => {
-        await openStyleGuide(page, { theme, ink })
-        await expectNoAxeViolations(page)
-      })
-    }
+    test(theme, async ({ page }) => {
+      await openStyleGuide(page, { theme })
+      await expectNoAxeViolations(page)
+    })
   }
 })
 

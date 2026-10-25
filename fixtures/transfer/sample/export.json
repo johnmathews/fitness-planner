@@ -1,6 +1,6 @@
 {
   "format": "fitness-planner-export",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-10-23T16:00:00.000Z",
   "exercise": {
     "plans": {
@@ -49,32 +49,32 @@
     },
     "log": {
       "2026-09-21": {
-        "pu": [true, false, true, false, false, true, false],
-        "pl": [false, true, false, true, false, false, true],
-        "sq": [false, false, true, false, true, false, false],
-        "be": [true, false, false, true, false, true, false],
-        "kh": [false, true, false, false, true, false, true]
+        "pu": ["great", null, "great", null, null, "great", null],
+        "pl": [null, "great", null, "great", null, null, "great"],
+        "sq": [null, null, "great", null, "great", null, null],
+        "be": ["great", null, null, "great", null, "great", null],
+        "kh": [null, "great", null, null, "great", null, "great"]
       },
       "2026-10-05": {
-        "pu": [false, false, true, false, true, false, false],
-        "pl": [true, false, false, true, false, true, false],
-        "sq": [false, true, false, false, true, false, true],
-        "be": [true, false, true, false, false, true, false],
-        "kh": [false, true, false, true, false, false, true]
+        "pu": [null, null, "great", null, "great", null, null],
+        "pl": ["great", null, null, "partial", null, "great", null],
+        "sq": [null, "great", null, null, "great", null, "missed"],
+        "be": ["great", null, "great", null, null, "great", null],
+        "kh": [null, "great", null, "great", null, null, "great"]
       },
       "2026-10-12": {
-        "pu": [true, false, false, true, false, true, false],
-        "pl": [false, true, false, false, true, false, true],
-        "sq": [true, false, true, false, false, true, false],
-        "kh": [false, true, false, true, false, false, true],
-        "xmgk3p1a": [false, false, true, false, true, false, false]
+        "pu": ["great", null, null, "great", null, "missed", null],
+        "pl": [null, "great", null, null, "great", null, "great"],
+        "sq": ["great", null, "partial", null, null, "great", null],
+        "kh": [null, "great", null, "great", null, null, "great"],
+        "xmgk3p1a": [null, null, "great", null, "partial", null, null]
       },
       "2026-10-19": {
-        "pu": [false, true, false, false, true, false, false],
-        "pl": [true, false, true, false, false, false, false],
-        "sq": [false, true, false, true, false, false, false],
-        "kh": [false, false, true, false, true, false, false],
-        "xmgk3p1a": [true, false, false, true, false, false, false]
+        "pu": [null, "great", null, null, "great", null, null],
+        "pl": ["great", null, "partial", null, null, null, null],
+        "sq": [null, "great", null, "missed", null, null, null],
+        "kh": [null, null, "great", null, "great", null, null],
+        "xmgk3p1a": ["great", null, null, "great", null, null, null]
       }
     }
   },
@@ -96,31 +96,31 @@
     },
     "log": {
       "2026-09-21": {
-        "veg": [true, false, false, true, false, true, false],
-        "fruit": [false, true, false, false, true, false, true],
-        "fish": [true, false, true, false, false, true, false],
-        "nuts": [false, true, false, true, false, false, true]
+        "veg": ["great", null, null, "great", null, "great", null],
+        "fruit": [null, "great", null, null, "great", null, "great"],
+        "fish": ["great", null, "great", null, null, "great", null],
+        "nuts": [null, "great", null, "great", null, null, "great"]
       },
       "2026-10-05": {
-        "veg": [false, true, false, false, true, false, true],
-        "fruit": [true, false, true, false, false, true, false],
-        "fish": [false, true, false, true, false, false, true],
-        "nuts": [false, false, true, false, true, false, false],
-        "xmgk40qd": [true, false, false, true, false, true, false]
+        "veg": [null, "great", null, null, "great", null, "great"],
+        "fruit": ["great", null, "great", null, null, "great", null],
+        "fish": [null, "great", null, "great", null, null, "great"],
+        "nuts": [null, null, "great", null, "great", null, null],
+        "xmgk40qd": ["great", null, null, "great", null, "great", null]
       },
       "2026-10-12": {
-        "veg": [false, false, true, false, true, false, false],
-        "fruit": [true, false, false, true, false, true, false],
-        "fish": [false, true, false, false, true, false, true],
-        "nuts": [true, false, true, false, false, true, false],
-        "xmgk40qd": [false, true, false, true, false, false, true]
+        "veg": [null, null, "great", null, "great", null, null],
+        "fruit": ["great", null, null, "great", null, "great", null],
+        "fish": [null, "great", null, null, "great", null, "great"],
+        "nuts": ["great", null, "great", null, null, "great", null],
+        "xmgk40qd": [null, "great", null, "great", null, null, "great"]
       },
       "2026-10-19": {
-        "veg": [true, false, true, false, false, false, false],
-        "fruit": [false, true, false, true, false, false, false],
-        "fish": [false, false, true, false, true, false, false],
-        "nuts": [true, false, false, true, false, false, false],
-        "xmgk40qd": [false, true, false, false, true, false, false]
+        "veg": ["great", null, "great", null, null, null, null],
+        "fruit": [null, "great", null, "great", null, null, null],
+        "fish": [null, null, "great", null, "great", null, null],
+        "nuts": ["great", null, null, "great", null, null, null],
+        "xmgk40qd": [null, "great", null, null, "great", null, null]
       }
     }
   },

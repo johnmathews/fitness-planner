@@ -1,4 +1,4 @@
-<!-- @dsCard group="Planner" height=330 subtitle="A folded corner: this day has a note" -->
+<!-- @dsCard group="Planner" height=360 subtitle="A folded corner: this day has a note" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -16,12 +16,14 @@
   .cell { position: relative; width: 56px; height: 60px; display: grid; place-items: center; border-top: 1px solid var(--line); }
   .cell.today { background: var(--highlight); }
   .mark { width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; }
-  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border; a done day adds the marker squiggle, filled with pen. Same paths as the app's DayMark. */
+  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border; a marked day adds its stroke, a mask filled with its pen: a full squiggle for great, the lower half for partial, a cross for missed. The strokes run a little past the box, so the masks fill the whole 44px button (the 36-unit paths at 40px, with room round them). Same paths as the app's DayMark. */
   .mark { position: relative; }
-  .mark::before, .mark::after { content: ""; position: absolute; inset: 2px; -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
-  .mark::before { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--control-border); }
-  .mark[aria-pressed="true"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M9 10.5C13 9.5 19 9 26.5 9.2C20 11.5 14 14 9.4 17.2C15.5 15.8 21.5 14.8 27 14.6C20.5 17.4 14.5 20.6 9.6 24C16 22.6 22 21.8 27.2 21.8C23 23.6 19 25.4 15.5 27.4' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen); }
-  .mark[aria-pressed="false"]:hover::before { background: var(--ink); }
+  .mark::before, .mark::after { content: ""; position: absolute; inset: 0; -webkit-mask: var(--m) center / 100% 100% no-repeat; mask: var(--m) center / 100% 100% no-repeat; }
+  .mark::before { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--control-border); }
+  .mark[data-mark="great"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.2 7.4C11 5.4 21.5 4.6 33.4 5.4C24.5 9 14 13.2 3.8 18.6C13.5 16.3 24.2 14.8 34 15C24.2 19.4 13.6 24 4.4 29.8C14 27.6 24.6 26.4 33.4 26.9C27.2 29.6 21 32.2 15.2 34.6' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen); }
+  .mark[data-mark="partial"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.6 19.2C12 17.6 22.5 16.8 33.6 17.2C24.6 21 14.2 25.4 4.2 30.6C14 28.6 24.4 27.6 33.2 28.2' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-partial); }
+  .mark[data-mark="missed"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M4.4 4.6C13 12.8 22.4 22.4 33 33.2M32.6 3.8C24.2 12.2 14 22.6 3.6 32.8' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-missed); }
+  .mark:not([data-mark]):hover::before { background: var(--ink); }
   .mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
   /* The NoteMark: a 10px right triangle, flush in the cell's top-right corner. */
@@ -40,15 +42,23 @@
   <h2 id="h-cell" class="label">At cell size</h2>
   <ul class="row">
     <li>
-      <div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Squats, Wednesday 21 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div>
-      <span class="caption">Done</span>
-    </li>
-    <li>
       <div class="cell"><button type="button" class="mark" aria-pressed="false" aria-label="Squats, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div>
-      <span class="caption">Not done</span>
+      <span class="caption">Empty</span>
     </li>
     <li>
-      <div class="cell today"><button type="button" class="mark" aria-pressed="true" aria-label="Squats, Thursday 22 October, today, has a note"></button><span class="note-mark" aria-hidden="true"></span></div>
+      <div class="cell"><button type="button" data-mark="great" class="mark" aria-pressed="true" aria-label="Squats, Wednesday 21 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div>
+      <span class="caption">Great</span>
+    </li>
+    <li>
+      <div class="cell"><button type="button" data-mark="partial" class="mark" aria-pressed="true" aria-label="Push-ups, Monday 19 October, has a note, partly done"></button><span class="note-mark" aria-hidden="true"></span></div>
+      <span class="caption">Partial</span>
+    </li>
+    <li>
+      <div class="cell"><button type="button" data-mark="missed" class="mark" aria-pressed="true" aria-label="Pull-ups, Wednesday 21 October, has a note, couldn't do it"></button><span class="note-mark" aria-hidden="true"></span></div>
+      <span class="caption">Missed</span>
+    </li>
+    <li>
+      <div class="cell today"><button type="button" data-mark="great" class="mark" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note"></button><span class="note-mark" aria-hidden="true"></span></div>
       <span class="caption">Today</span>
     </li>
   </ul>
@@ -61,10 +71,27 @@
   </div>
 </section>
 <script>
+(() => {
+  // A press steps the day's mark: an exercise goes empty, great, partial, missed and back to
+  // empty; a food (in a [data-cycle="food"] row) is eaten or not. aria-pressed is true for any
+  // mark; the name adds only a partial or missed day's kind.
+  const CYCLES = { exercise: ['great', 'partial', 'missed'], food: ['great'] };
+  const MARK_WORDS = { great: '', partial: ', partly done', missed: ", couldn't do it" };
+  const baseName = (mark) => mark.dataset.name || (mark.dataset.name = mark.getAttribute('aria-label').replace(/, (partly done|couldn't do it)$/, ''));
+  function step(mark) {
+    const cycle = CYCLES[mark.closest('[data-cycle]')?.dataset.cycle || 'exercise'];
+    const i = cycle.indexOf(mark.dataset.mark);
+    const next = !mark.dataset.mark ? cycle[0] : i >= 0 ? cycle[i + 1] : undefined;
+    const name = baseName(mark);
+    if (next) mark.dataset.mark = next; else delete mark.dataset.mark;
+    mark.setAttribute('aria-pressed', String(Boolean(next)));
+    mark.setAttribute('aria-label', name + (next ? MARK_WORDS[next] : ''));
+  }
   document.addEventListener('click', (e) => {
     const mark = e.target.closest('.mark');
-    if (mark) mark.setAttribute('aria-pressed', String(mark.getAttribute('aria-pressed') !== 'true'));
+    if (mark) step(mark);
   });
+})();
 </script>
 </body>
 </html>

@@ -1,49 +1,34 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { DEFAULT_INK, INKS } from '@/lib/inks'
-import { applyLook, inkById, lookSearch, readLook } from '../look'
+import { applyLook, lookSearch, readLook } from '../look'
 
 describe('readLook', () => {
-  it('takes the theme and ink from the query', () => {
-    expect(readLook('?theme=dark&ink=violet', false)).toEqual({ theme: 'dark', ink: 'violet' })
-    expect(readLook('?theme=light&ink=forest', true)).toEqual({ theme: 'light', ink: 'forest' })
+  it('takes the theme from the query', () => {
+    expect(readLook('?theme=dark', false)).toEqual({ theme: 'dark' })
+    expect(readLook('?theme=light', true)).toEqual({ theme: 'light' })
   })
 
-  it("keeps the page's theme and uses Ink blue when the query says nothing usable", () => {
-    expect(readLook('', true)).toEqual({ theme: 'dark', ink: 'ink-blue' })
-    expect(readLook('?theme=sepia&ink=orange', false)).toEqual({ theme: 'light', ink: 'ink-blue' })
+  it("keeps the page's theme when the query says nothing usable", () => {
+    expect(readLook('', true)).toEqual({ theme: 'dark' })
+    expect(readLook('?theme=sepia', false)).toEqual({ theme: 'light' })
   })
 })
 
 describe('lookSearch', () => {
   it('round-trips through readLook', () => {
-    const look = { theme: 'dark', ink: 'graphite' } as const
-    expect(lookSearch(look)).toBe('?theme=dark&ink=graphite')
+    const look = { theme: 'dark' } as const
+    expect(lookSearch(look)).toBe('?theme=dark')
     expect(readLook(lookSearch(look), false)).toEqual(look)
-  })
-})
-
-describe('inkById', () => {
-  it('finds an ink, or falls back to the default', () => {
-    expect(inkById('forest')).toBe(INKS[1])
-    expect(inkById(null)).toBe(DEFAULT_INK)
   })
 })
 
 describe('applyLook', () => {
   const root = document.documentElement
-  afterEach(() => {
-    root.classList.remove('dark')
-    root.removeAttribute('style')
-  })
+  afterEach(() => root.classList.remove('dark'))
 
-  it('sets the dark class and both pen variables, as App.vue does', () => {
-    applyLook(root, { theme: 'dark', ink: 'violet' })
+  it('sets the dark class, as App.vue does', () => {
+    applyLook(root, { theme: 'dark' })
     expect(root.classList.contains('dark')).toBe(true)
-    expect(root.style.getPropertyValue('--user-pen-light')).toBe('#4b3b7a')
-    expect(root.style.getPropertyValue('--user-pen-dark')).toBe('#b9a9e8')
-
-    applyLook(root, { theme: 'light', ink: 'ink-blue' })
+    applyLook(root, { theme: 'light' })
     expect(root.classList.contains('dark')).toBe(false)
-    expect(root.style.getPropertyValue('--user-pen-light')).toBe('#2b4c7e')
   })
 })

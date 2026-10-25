@@ -17,6 +17,7 @@ export function stickyName(configMode: boolean): string {
 import { computed, ref } from 'vue'
 import { Check, Pencil, Trash2 } from '@lucide/vue'
 import type { Day } from '@/stores/planner'
+import type { Mark } from '@/lib/storage'
 import { goalMet, type Tracked } from '@/lib/tracker'
 import { useConfirm } from '@/composables/useConfirm'
 import { Chip } from '@/components/ui/chip'
@@ -34,7 +35,8 @@ const props = defineProps<{
    * own at the end of the row. */
   configMode: boolean
   days: Day[]
-  flags: boolean[]
+  /** Each day's mark, Monday first; `null` is an empty box. */
+  marks: (Mark | null)[]
   total: number
 }>()
 const emit = defineEmits<{
@@ -141,7 +143,7 @@ async function remove(event: MouseEvent): Promise<void> {
         :name="item.name"
         :date="d.full"
         :today="d.isToday"
-        :done="flags[i] === true"
+        :mark="marks[i] ?? null"
         @toggle="emit('toggle', i)"
       />
     </td>

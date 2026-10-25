@@ -4,6 +4,7 @@
  * single-day ticks, settings, sessions and invite links. Controls let a test go offline, fail
  * a request, or hold replies back to provoke races.
  */
+import type { Days } from '@/lib/storage'
 import { mergeSummary, parseExport } from '@/lib/transfer'
 
 type Section = 'exercise' | 'diet'
@@ -13,7 +14,11 @@ type Settings = { accent: string; dailyPick: number }
 export type Account = {
   password: string
   plans: Record<Section, Record<string, Plan>>
+  /** Week → item → a 7-bit mask of its marked days, Monday in bit 0, as the API's `days`. */
   ticks: Record<Section, Record<string, Record<string, number>>>
+  /** The marked days that are partial, and those missed, as the API's `partial` and `missed`. */
+  partial: Record<Section, Record<string, Record<string, number>>>
+  missed: Record<Section, Record<string, Record<string, number>>>
   settings: Settings | null
 }
 
@@ -24,12 +29,33 @@ function emptyAccount(password: string): Account {
     password,
     plans: { exercise: {}, diet: {} },
     ticks: { exercise: {}, diet: {} },
+    partial: { exercise: {}, diet: {} },
+    missed: { exercise: {}, diet: {} },
     settings: null,
   }
 }
 
-function maskToDays(mask: number): boolean[] {
-  return Array.from({ length: 7 }, (_, i) => ((mask >> i) & 1) === 1)
+const bitOf = (mask: number | undefined, i: number) => (((mask ?? 0) >> i) & 1) === 1
+
+/** An item's seven marks from the three masks, as the API reads them back. */
+function marksOf(a: Account, s: Section, week: string, id: string): Days {
+  return Array.from({ length: 7 }, (_, i) => {
+    if (!bitOf(a.ticks[s][week]?.[id], i)) return null
+    if (bitOf(a.partial[s][week]?.[id], i)) return 'partial'
+    return bitOf(a.missed[s][week]?.[id], i) ? 'missed' : 'great'
+  })
+}
+
+/** Set one mask's bit, creating the week on first use. */
+function setBit(
+  masks: Record<string, Record<string, number>>,
+  week: string,
+  id: string,
+  bit: number,
+  on: boolean,
+): void {
+  const w = (masks[week] ??= {})
+  w[id] = on ? (w[id] ?? 0) | bit : (w[id] ?? 0) & ~bit
 }
 
 export class FakeApi {
@@ -90,7 +116,7 @@ export class FakeApi {
       log: Object.fromEntries(
         Object.entries(a.ticks[s]).map(([w, items]) => [
           w,
-          Object.fromEntries(Object.entries(items).map(([id, m]) => [id, maskToDays(m)])),
+          Object.fromEntries(Object.keys(items).map((id) => [id, marksOf(a, s, w, id)])),
         ]),
       ),
       revs: Object.fromEntries(Object.entries(a.plans[s]).map(([w, p]) => [w, p.rev])),
@@ -201,16 +227,20 @@ export class FakeApi {
     }
     m = path.match(/^\/ticks\/(exercise|diet)\/(\d{4}-\d{2}-\d{2})\/([^/]+)\/([0-6])$/)
     if (method === 'PUT' && m) {
-      const week = (a.ticks[m[1] as Section][m[2]!] ??= {})
+      const [s, week] = [m[1] as Section, m[2]!]
       const id = decodeURIComponent(m[3]!)
       const bit = 1 << Number(m[4])
-      week[id] = body.done ? (week[id] ?? 0) | bit : (week[id] ?? 0) & ~bit
-      return Response.json({ days: maskToDays(week[id]) })
+      // `done` is the body from before marks had kinds, which the API still takes.
+      const mark = 'mark' in body ? body.mark : body.done ? 'great' : null
+      setBit(a.ticks[s], week, id, bit, mark != null)
+      setBit(a.partial[s], week, id, bit, mark === 'partial')
+      setBit(a.missed[s], week, id, bit, mark === 'missed')
+      return Response.json({ days: marksOf(a, s, week, id) })
     }
     return error(404, 'not-found')
   }
 
-  /** The API's merge: existing weeks keep their plan, ticks are OR-ed, settings only if none. */
+  /** The API's merge: existing weeks keep their plan and marks, settings only if none. */
   private import(a: Account, body: unknown): Response {
     const parsed = parseExport(JSON.stringify(body))
     if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 })
@@ -226,10 +256,16 @@ export class FakeApi {
         a.plans[section][week] ??= { items, rev: 1 }
       }
       for (const [week, entries] of Object.entries(incoming.log)) {
-        const stored = (a.ticks[section][week] ??= {})
         for (const [id, days] of Object.entries(entries)) {
-          const mask = days.reduce((m, on, i) => (on ? m | (1 << i) : m), 0)
-          stored[id] = (stored[id] ?? 0) | mask
+          // A marked day keeps its mark; an empty one takes the file's.
+          const before = marksOf(a, section, week, id)
+          days.forEach((mark, i) => {
+            const kept = before[i] ?? mark
+            const bit = 1 << i
+            setBit(a.ticks[section], week, id, bit, kept !== null)
+            setBit(a.partial[section], week, id, bit, kept === 'partial')
+            setBit(a.missed[section], week, id, bit, kept === 'missed')
+          })
         }
       }
     }

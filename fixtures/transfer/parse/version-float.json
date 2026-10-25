@@ -1,0 +1,12 @@
+{
+  "description": "A version written 2.0 is the number 2, as JSON.parse reads it.",
+  "inputText": "{\"format\": \"fitness-planner-export\", \"version\": 2.0}",
+  "expected": {
+    "ok": true,
+    "data": {
+      "exercise": { "plans": {}, "log": {} },
+      "diet": { "plans": {}, "log": {} },
+      "settings": null
+    }
+  }
+}

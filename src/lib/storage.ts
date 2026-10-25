@@ -24,8 +24,18 @@ export type Food = {
   target: number
 }
 
-/** Week Monday `YYYY-MM-DD` → item id → done flags Mon–Sun. */
-export type Log = Record<string, Record<string, boolean[]>>
+/**
+ * A marked day (DayMark card): done well, done in part, or tried and couldn't. Every mark counts
+ * towards the week; an empty day is `null`. Foods only ever take `great`.
+ */
+export type Mark = 'great' | 'partial' | 'missed'
+export const MARKS: readonly Mark[] = ['great', 'partial', 'missed']
+
+/** One item's week: a mark or `null` for each day, Monday first. */
+export type Days = (Mark | null)[]
+
+/** Week Monday `YYYY-MM-DD` → item id → its days Mon–Sun. */
+export type Log = Record<string, Record<string, Days>>
 
 export type PlannerData = { plans: Plans<Exercise>; log: Log }
 
@@ -143,15 +153,25 @@ export function normaliseFood(v: unknown): Food | null {
   }
 }
 
+export function isMark(v: unknown): v is Mark {
+  return v === 'great' || v === 'partial' || v === 'missed'
+}
+
+/** One stored day: a mark as it is, a `true` from before marks had kinds as `great`, else empty. */
+export function normaliseMark(v: unknown): Mark | null {
+  if (v === true) return 'great'
+  return isMark(v) ? v : null
+}
+
 export function normaliseLog(v: unknown): Log {
   const log: Log = {}
   if (!isRecord(v)) return log
   for (const [week, entries] of Object.entries(v)) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(week) || !isRecord(entries)) continue
-    const out: Record<string, boolean[]> = {}
+    const out: Record<string, Days> = {}
     for (const [id, days] of Object.entries(entries)) {
       if (!Array.isArray(days)) continue
-      out[id] = Array.from({ length: 7 }, (_, i) => days[i] === true)
+      out[id] = Array.from({ length: 7 }, (_, i) => normaliseMark(days[i]))
     }
     log[week] = out
   }

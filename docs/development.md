@@ -83,9 +83,9 @@ build and coverage output. ESLint also ignores Playwright's `playwright-report/`
 ### 3.1 The style guide
 
 `npm run dev` serves the living style guide at <http://localhost:5173/styleguide>: every primitive
-and planner component, in each state, rendered by its real source. Its Theme and Ink menus switch
-the look, and the address keeps it (`/styleguide?theme=dark&ink=forest`), so a link or a browser
-test opens any combination. It needs no API and no sign-in, and the production build leaves it out.
+and planner component, in each state, rendered by its real source. Its Theme menu switches the
+look, and the address keeps it (`/styleguide?theme=dark`), so a link or a browser test opens
+either theme. It needs no API and no sign-in, and the production build leaves it out.
 Add a section for each new component in `src/styleguide/sections/` and one entry in
 `src/styleguide/sections.ts`.
 
@@ -98,7 +98,7 @@ it, run the gate, which must exit 0:
 python3 scripts/check_design_system.py brand/design-system --complete
 ```
 
-It checks contrast in both themes for every role pair and ink, the token shapes, the banned words,
+It checks contrast in both themes for every role pair, the three pens included, the token shapes, the banned words,
 and that every required component has a card. After a change to `tokens.json`, regenerate the app's
 tokens with `npm run tokens` and commit `src/styles/tokens.css` with it. Never edit that file by
 hand.
@@ -127,8 +127,8 @@ hand.
 `PLAYWRIGHT=1`, which turns the Vue DevTools overlay off). `/api` is mocked with `page.route` and the
 clock is fixed to Wednesday 21 October 2026, so every run sees the same week.
 
-- `a11y.spec.ts`: axe (WCAG 2.0–2.2 A and AA plus best practice) on the style guide in both themes and
-  all four inks, and on the app's week view, Edit plan, open Settings, the phone Today view,
+- `a11y.spec.ts`: axe (WCAG 2.0–2.2 A and AA plus best practice) on the style guide in both themes,
+  and on the app's (its mocked week holds every kind of mark) week view, Edit plan, open Settings, the phone Today view,
   sign-in, and create an account (empty and with errors showing), in light and dark; and the focus ring's shape, a solid 2px outline at 2px offset. Two
   "dark really is dark" tests guard the audit: on the style guide and on the app, the `.dark` class
   must be set and `--canvas` must differ from light, so a dark audit can never quietly re-run
@@ -179,14 +179,12 @@ listed in [api.md](api.md) §10):
 - `src/lib/__tests__/nginx.spec.ts`: reads `nginx.conf`: the CSP is unchanged, and `/api/` proxies
   to `fitness-api:8000` through a variable upstream with the body cap and one `Cache-Control`.
 - `src/lib/__tests__/fakeApi.ts` (a helper, not a spec): an in-memory API installed as `fetch`. It
-  keeps plan revisions and 409s, identical-item creates, single-day ticks, settings, sessions,
+  keeps plan revisions and 409s, identical-item creates, single-day marks (in the API's three masks,
+  and the old `done` body), settings, sessions,
   sign-up (`email`, `password` and `exists` refusals) and invite links. Controls let a test go offline, fail the next matching request, `hold()` every
   reply, `holdNext()` one, or `stall()` one forever. `signedIn.ts` sets up a browser already signed
   in as alice: the fake API, the remembered session, and an empty or given cache.
 - `src/lib/__tests__/theme.spec.ts`: theme names and how System, Light and Dark resolve.
-- `src/lib/__tests__/inks.spec.ts`: the four inks match `tokens.json`, and `inkFor` (K3a): Ink blue
-  with no saved settings, each legacy accent per K3, each ink's own hex in either case, and Ink
-  blue for anything else.
 - `src/lib/__tests__/words.spec.ts`: small numbers as words (capitalised to open a sentence),
   singular and plural, and the app name with its monogram.
 - `src/lib/__tests__/utils.spec.ts`: `cn` (conflicting utilities, role colours kept apart from text
@@ -201,16 +199,16 @@ listed in [api.md](api.md) §10):
   Ctrl, the hidden Picked cell never landed on, Space and Enter left to the DayMark, Edit plan's
   controls (Enter or F2 in, Escape out, parked when focus leaves), and rows coming and going.
 - `src/components/ui/__tests__/`: one spec per primitive (Banner, BrandMark, Button, Chip,
-  ConfirmDialog, DayMark, Dialog, IconButton, InkPicker, InlineMessage, Popover, SectionHeader,
+  ConfirmDialog, DayMark, Dialog, IconButton, InlineMessage, Popover, SectionHeader,
   SegmentedControl, StatFigure, Stepper, Switch, TextArea, TextField, TextLink), each checking its
   roles, accessible names, sizes, states and the role colours its card names. Examples: an
   IconButton renders nothing without a label, the Popover closes when focus leaves it (F14), the
   Stepper's limits stay focusable with `aria-disabled`, and a met StatFigure adds a check (F6).
   `transitions.spec.ts` checks no primitive animates `outline-color`, so the focus ring never fades
   in. `setup.ts` fills the jsdom gaps Reka UI's overlays reach for.
-- `src/styleguide/__tests__/look.spec.ts`: the style guide's theme and ink from the query string,
-  the round trip back to it, and the class and pen variables it sets.
-- `src/stores/__tests__/planner.spec.ts`: toggling, totals, week navigation, goal clamping, adding,
+- `src/styleguide/__tests__/look.spec.ts`: the style guide's theme from the query string, the
+  round trip back to it, and the class it sets.
+- `src/stores/__tests__/planner.spec.ts`: stepping a day through its marks, totals, week navigation, goal clamping, adding,
   removal's effect on totals, settings, detail chips, editing exercises, sets, weekly plans
   (defaults, carry forward, a week getting its own plan, copying to the next week), config mode,
   the midnight refresh, `adopt`, `adoptWeek` and `clear`, the theme being the only thing stored
@@ -245,9 +243,9 @@ listed in [api.md](api.md) §10):
   still-valid cookie, switching user, every login refusal, invite links, sign-out forgetting the
   device's data, and sign-out refused offline.
 - `src/components/__tests__/App.spec.ts`: the mounted app in jsdom. Covers rendering, the today
-  column, cell toggling and `aria-pressed`, the goal stepper and its bounds,
+  column, stepping a cell through its marks with `aria-pressed` (a food only on and off), the goal stepper and its bounds,
   navigation, confirm-before-remove, print, the visibility and one-minute clock refresh, another
-  tab's writes to the cache, the add form, the Settings page (the hash, focus on arrival and on the way back), the ink (the pen variables per K3a), and the
+  tab's writes to the cache, the add form, the Settings page (the hash, focus on arrival and on the way back; no Ink setting, and a saved accent kept as it is), and the
   theme: the `dark` class following the OS (with a stubbed `matchMedia`), the theme control and
   its persistence. Also the weight and sets fields, the edit dialog (found by `role="dialog"` on
   `document.body`, where Reka's portal renders it), normal mode hiding every editing control, export (with

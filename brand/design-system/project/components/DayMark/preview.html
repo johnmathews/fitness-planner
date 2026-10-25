@@ -1,4 +1,4 @@
-<!-- @dsCard group="Planner" height=560 subtitle="Done, not done, today, note and focus, in all four inks" -->
+<!-- @dsCard group="Planner" height=680 subtitle="Empty, great, partial and missed, on the page and on today's band; a note, focus and print" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -14,16 +14,18 @@
   .cell { position: relative; width: 56px; height: 60px; display: grid; place-items: center; }
   .cell.today { background: var(--highlight); }
 
-    .mark { width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; color: inherit; }
-  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border; a done day adds the marker squiggle, filled with pen. Same paths as the app's DayMark. */
+  .mark { width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; color: inherit; }
+  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border; a marked day adds its stroke, a mask filled with its pen: a full squiggle for great, the lower half for partial, a cross for missed. The strokes run a little past the box, so the masks fill the whole 44px button (the 36-unit paths at 40px, with room round them). Same paths as the app's DayMark. */
   .mark { position: relative; }
-  .mark::before, .mark::after { content: ""; position: absolute; inset: 2px; -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
-  .mark::before { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--control-border); }
-  .mark[aria-pressed="true"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M9 10.5C13 9.5 19 9 26.5 9.2C20 11.5 14 14 9.4 17.2C15.5 15.8 21.5 14.8 27 14.6C20.5 17.4 14.5 20.6 9.6 24C16 22.6 22 21.8 27.2 21.8C23 23.6 19 25.4 15.5 27.4' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen); }
-  .mark[aria-pressed="false"]:hover::before { background: var(--ink); }
+  .mark::before, .mark::after { content: ""; position: absolute; inset: 0; -webkit-mask: var(--m) center / 100% 100% no-repeat; mask: var(--m) center / 100% 100% no-repeat; }
+  .mark::before { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--control-border); }
+  .mark[data-mark="great"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.2 7.4C11 5.4 21.5 4.6 33.4 5.4C24.5 9 14 13.2 3.8 18.6C13.5 16.3 24.2 14.8 34 15C24.2 19.4 13.6 24 4.4 29.8C14 27.6 24.6 26.4 33.4 26.9C27.2 29.6 21 32.2 15.2 34.6' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen); }
+  .mark[data-mark="partial"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.6 19.2C12 17.6 22.5 16.8 33.6 17.2C24.6 21 14.2 25.4 4.2 30.6C14 28.6 24.4 27.6 33.2 28.2' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-partial); }
+  .mark[data-mark="missed"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M4.4 4.6C13 12.8 22.4 22.4 33 33.2M32.6 3.8C24.2 12.2 14 22.6 3.6 32.8' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-missed); }
+  .mark:not([data-mark]):hover::before { background: var(--ink); }
   .mark:focus-visible, .mark.is-focus { outline: 2px solid var(--focus); outline-offset: 2px; }
   @media (prefers-reduced-motion: no-preference) {
-    .mark::before, .mark::after { transition: background-color 120ms; }
+    .mark::before { transition: background-color 120ms; }
   }
 
   /* NoteMark: a folded corner, 10px, in the cell's top-right corner. */
@@ -34,110 +36,117 @@
   .states li { width: 100px; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; }
   .states .caption { color: var(--ink-secondary); }
 
-  /* Inks: one row per ink, each overriding --pen locally. */
-  .inks { border-collapse: collapse; }
-  .inks th { text-align: left; font-weight: inherit; padding: 0 var(--space-3) 0 0; }
-  .inks thead th { color: var(--ink-secondary); text-align: center; padding: 0 0 var(--space-1); width: 56px; }
-  .inks thead th:first-child { text-align: left; }
-  .inks tbody th { white-space: nowrap; }
-  .inks tbody tr { border-top: 1px solid var(--line); }
-  .inks td { padding: 0; }
-  .ink-blue { --pen: var(--ink-blue); }
-  .forest { --pen: var(--forest); }
-  .violet { --pen: var(--violet); }
-  .graphite { --pen: var(--graphite); }
-  .default { color: var(--ink-secondary); font-weight: 400; }
+  /* Print: black on white in either theme; the three kinds differ by shape alone. The one place
+     this system allows literal colours. In the app the same overrides sit under @media print. */
+  .print {
+    --canvas: #ffffff; --ink-secondary: #3d3d3d; --control-border: #767676; --highlight: transparent;
+    --pen: #000000; --pen-partial: #000000; --pen-missed: #000000;
+    display: inline-block; background: var(--canvas); padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm);
+  }
+  .print .mark { cursor: default; }
 
   @media (max-width: 639px) {
     body { padding: var(--space-4); }
-    .inks thead th { width: 52px; }
-    .inks .cell { width: 52px; }
+    .states li { width: 76px; }
+    .print { padding: var(--space-2); }
+    .print .states { column-gap: var(--space-1); }
   }
 </style>
 </head>
 <body>
-<section aria-labelledby="states-h">
-  <h2 id="states-h" class="label">States, in the default ink</h2>
+<section aria-labelledby="page-h">
+  <h2 id="page-h" class="label">On the page</h2>
   <ul class="states">
     <li>
       <div class="cell"><button type="button" class="mark" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div>
-      <span class="caption">Not done</span>
+      <span class="caption">Empty</span>
     </li>
     <li>
-      <div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div>
-      <span class="caption">Done</span>
+      <div class="cell"><button type="button" class="mark" data-mark="great" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div>
+      <span class="caption">Great</span>
     </li>
     <li>
-      <div class="cell today"><button type="button" class="mark" aria-pressed="false" aria-current="date" aria-label="Squats, Thursday 22 October, today"></button></div>
-      <span class="caption">Today</span>
+      <div class="cell"><button type="button" class="mark" data-mark="partial" aria-pressed="true" aria-label="Pull-ups, Monday 19 October, partly done"></button></div>
+      <span class="caption">Partial</span>
     </li>
     <li>
-      <div class="cell today"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div>
-      <span class="caption">Today, done</span>
+      <div class="cell"><button type="button" class="mark" data-mark="missed" aria-pressed="true" aria-label="Squats, Wednesday 21 October, couldn't do it"></button></div>
+      <span class="caption">Missed</span>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="today-h">
+  <h2 id="today-h" class="label">Today, on the band</h2>
+  <ul class="states">
+    <li>
+      <div class="cell today"><button type="button" class="mark" aria-pressed="false" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div>
+      <span class="caption">Empty</span>
     </li>
     <li>
-      <div class="cell today"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note"></button><span class="note-mark" aria-hidden="true"></span></div>
+      <div class="cell today"><button type="button" class="mark" data-mark="great" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div>
+      <span class="caption">Great</span>
+    </li>
+    <li>
+      <div class="cell today"><button type="button" class="mark" data-mark="partial" aria-pressed="true" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today, partly done"></button></div>
+      <span class="caption">Partial</span>
+    </li>
+    <li>
+      <div class="cell today"><button type="button" class="mark" data-mark="missed" aria-pressed="true" aria-current="date" aria-label="Plank, Thursday 22 October, today, couldn't do it"></button></div>
+      <span class="caption">Missed</span>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="more-h">
+  <h2 id="more-h" class="label">Note and focus</h2>
+  <ul class="states">
+    <li>
+      <div class="cell today"><button type="button" class="mark" data-mark="partial" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note, partly done"></button><span class="note-mark" aria-hidden="true"></span></div>
       <span class="caption">Has a note</span>
     </li>
     <li>
-      <div class="cell today"><button type="button" class="mark is-focus" aria-pressed="true" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today"></button></div>
+      <div class="cell today"><button type="button" class="mark is-focus" data-mark="great" aria-pressed="true" aria-current="date" aria-label="Lunges, Thursday 22 October, today"></button></div>
       <span class="caption">Keyboard focus</span>
     </li>
   </ul>
 </section>
 
-<section aria-labelledby="inks-h">
-  <h2 id="inks-h" class="label">The four inks</h2>
-  <table class="inks">
-    <thead>
-      <tr>
-        <th class="caption" scope="col">Ink</th>
-        <th class="caption" scope="col">Not done</th>
-        <th class="caption" scope="col">Done</th>
-        <th class="caption" scope="col">Today</th>
-        <th class="caption" scope="col">Note</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="ink-blue">
-        <th scope="row" class="label">Ink blue <span class="default">(default)</span></th>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div></td>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Push-ups, Wednesday 21 October"></button></div></td>
-        <td><div class="cell today"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div></td>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Push-ups, Monday 19 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
-      </tr>
-      <tr class="forest">
-        <th scope="row" class="label">Forest</th>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="false" aria-label="Pull-ups, Tuesday 20 October"></button></div></td>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Pull-ups, Wednesday 21 October"></button></div></td>
-        <td><div class="cell today"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today"></button></div></td>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Pull-ups, Monday 19 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
-      </tr>
-      <tr class="violet">
-        <th scope="row" class="label">Violet</th>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="false" aria-label="Squats, Tuesday 20 October"></button></div></td>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Squats, Wednesday 21 October"></button></div></td>
-        <td><div class="cell today"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today"></button></div></td>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Squats, Monday 19 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
-      </tr>
-      <tr class="graphite">
-        <th scope="row" class="label">Graphite</th>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="false" aria-label="Kettlebell halos, Tuesday 20 October"></button></div></td>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Kettlebell halos, Wednesday 21 October"></button></div></td>
-        <td><div class="cell today"><button type="button" class="mark" aria-pressed="true" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div></td>
-        <td><div class="cell"><button type="button" class="mark" aria-pressed="true" aria-label="Kettlebell halos, Monday 19 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
-      </tr>
-    </tbody>
-  </table>
+<section aria-labelledby="print-h">
+  <h2 id="print-h" class="label">Printed, from either theme</h2>
+  <div class="print" inert>
+    <ul class="states">
+      <li><div class="cell"><span class="mark" aria-hidden="true"></span></div><span class="caption">Empty</span></li>
+      <li><div class="cell"><span class="mark" data-mark="great" aria-hidden="true"></span></div><span class="caption">Great</span></li>
+      <li><div class="cell"><span class="mark" data-mark="partial" aria-hidden="true"></span></div><span class="caption">Partial</span></li>
+      <li><div class="cell"><span class="mark" data-mark="missed" aria-hidden="true"></span></div><span class="caption">Missed</span></li>
+    </ul>
+  </div>
 </section>
 <script>
-  // A mark toggles on click, Enter or Space; aria-pressed carries the state.
+(() => {
+  // A press steps the day's mark: an exercise goes empty, great, partial, missed and back to
+  // empty; a food (in a [data-cycle="food"] row) is eaten or not. aria-pressed is true for any
+  // mark; the name adds only a partial or missed day's kind.
+  const CYCLES = { exercise: ['great', 'partial', 'missed'], food: ['great'] };
+  const MARK_WORDS = { great: '', partial: ', partly done', missed: ", couldn't do it" };
+  const baseName = (mark) => mark.dataset.name || (mark.dataset.name = mark.getAttribute('aria-label').replace(/, (partly done|couldn't do it)$/, ''));
+  function step(mark) {
+    const cycle = CYCLES[mark.closest('[data-cycle]')?.dataset.cycle || 'exercise'];
+    const i = cycle.indexOf(mark.dataset.mark);
+    const next = !mark.dataset.mark ? cycle[0] : i >= 0 ? cycle[i + 1] : undefined;
+    const name = baseName(mark);
+    if (next) mark.dataset.mark = next; else delete mark.dataset.mark;
+    mark.setAttribute('aria-pressed', String(Boolean(next)));
+    mark.setAttribute('aria-label', name + (next ? MARK_WORDS[next] : ''));
+  }
   document.addEventListener('click', (e) => {
-    const mark = e.target.closest('.mark');
+    const mark = e.target.closest('button.mark');
     if (!mark) return;
     mark.classList.remove('is-focus');
-    mark.setAttribute('aria-pressed', String(mark.getAttribute('aria-pressed') !== 'true'));
+    step(mark);
   });
+})();
 </script>
 </body>
 </html>

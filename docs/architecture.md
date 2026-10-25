@@ -13,7 +13,7 @@ the app syncs with it through the same origin (§7). Two Pinia stores hold what 
 `planner` (exercise plans, the log, the visible week, settings, the mode) and `diet` (food plans and
 their log), which takes its week from `planner`. Two more run the account: `session` (who is signed
 in) and `sync` (the per-user cache, the outbox of unsent writes, and reads). Both data stores track
-the same thing, a tick per day against a weekly goal, through the pure helpers in
+the same thing, a mark per day against a weekly goal, through the pure helpers in
 `src/lib/tracker.ts`. The same module words the counts: `pickedCount` gives each Picked cell its
 tone (at the pick, over it with "one extra", under it, or a day to come shown as an en dash), and
 `todaySummary` writes the Today list's line ("Two of three. One to go."). `src/lib/words.ts` writes
@@ -23,8 +23,8 @@ shows; `src/lib/dates.ts` holds the week maths (Monday of a week, `YYYY-MM-DD` k
 labels, `DAY_NAMES`); `src/lib/theme.ts` holds the theme names and `isDark`.
 
 Every screen is built from the primitives in `src/components/ui/` (§6.3), which follow the design
-system's cards ([brand.md](brand.md)). `TrackerGrid` and `TrackerRow` (on the `DayMark`, `Chip`,
-`Stepper` and `IconButton` primitives) take props, emit events, and serve both sections.
+system's cards ([brand.md](brand.md)). `TrackerGrid` and `TrackerRow` (on the `DayMark`, `Chip`
+and `IconButton` primitives) take props, emit events, and serve both sections.
 `TrackerGrid` runs the grid's keyboard model (`useGridNav`, §6.5). `TrackerRow` asks the
 `ConfirmDialog` (through `useConfirm`, §6.4) before emitting `remove`, and names where focus goes
 once the row has gone. `ExerciseGrid` and `DietSection` wire them to their store. `AddExerciseForm` and `EditExerciseDialog` share their field
@@ -34,8 +34,8 @@ sign-out refusal into a sentence for the forms; `src/composables/importSummary.t
 for Settings → Import… and the first-login prompt.
 
 ```
-App.vue                 picks the screen (link, planner, sign-up or sign-in), the pen variables
-│                       (inkFor), .dark class, clock refresh, sync triggers (focus, visibility, online, minute
+App.vue                 picks the screen (link, planner, sign-up or sign-in), the
+│                       .dark class, clock refresh, sync triggers (focus, visibility, online, minute
 │                       tick, storage), the phone's Today | Week switch, and the one ConfirmHost
 ├── PasswordForm.vue    an invite or reset link (#/invite/<t>, #/reset/<t>): choose a password
 ├── SignupForm.vue      #/signup: email and password twice; field and form-level refusals
@@ -45,7 +45,7 @@ App.vue                 picks the screen (link, planner, sign-up or sign-in), th
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
 │                       the Edit plan Switch, Settings (to the Settings page) and Print…
 ├── SettingsPage.vue    the SettingsPage card, at #/settings: Back to the week, then Appearance
-│                       (Theme, Ink), Planner (Exercises a day, Show weekly totals), Your data
+│                       (Theme), Planner (Exercises a day, Show weekly totals), Your data
 │                       (Export and Import…, see §4) and Account (who is signed in, Sign out)
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
@@ -94,8 +94,8 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 | State                 | Kept by                                    | Notes                                                                      |
 | --------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
 | `plans`               | the sync store: server and per-user cache  | week → `{ id, name, sets?, reps, duration?, perSide?, weight?, target }[]` |
-| `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven booleans                    |
-| `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is drawn as an ink (§6.2)           |
+| `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven marks (`Days`, below)       |
+| `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is kept but draws nothing (K13)     |
 | `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                                      |
 | `showTotals`          | `fitness-planner-settings-v1` (the device) | `true` (default): the sections' StatFigures show                           |
 | `configMode`          | no                                         | `false` (normal mode) on every load                                        |
@@ -117,7 +117,7 @@ exercises, so a removed exercise's history stays in `log` without inflating the 
 names one), `updateExercise` (replaces name, sets, reps or duration, per-side, weight and, when
 given, the goal, keeping the id and history; `false` for an empty name or an id not in the week).
 An exercise counts reps or time, never both: a duration stores reps as 0. Then `removeExercise`, `copyToNextWeek`, `setConfigMode`,
-`prevWeek`, `nextWeek`, `thisWeek`, `refreshNow`, `setAccent`, `changeDailyPick` (clamps 1–8),
+`prevWeek`, `nextWeek`, `thisWeek`, `refreshNow`, `changeDailyPick` (clamps 1–8),
 `setTheme`, `savedSettings` (the accent and daily pick, or null while the user has none of their own), `adopt`
 (replace the data and settings wholesale), `adoptWeek` (replace one week's plan) and `clear` (forget
 the user on sign-out, keeping the theme). The module also exports `exerciseDetails`, which gives the chips under a name:
@@ -181,7 +181,8 @@ v2; now the conversion only feeds the import.
 - `sets` is kept only as a whole number from 1 to 20 (larger values cap at 20); `weight` (kg) only
   as a positive number, rounded to 2 decimals and capped at 500. Otherwise the key is left out.
 - Log weeks whose key is not `YYYY-MM-DD`, and entries that are not arrays, drop out; the rest
-  normalise to exactly seven booleans.
+  normalise to exactly seven days (`normaliseMark`): `"great"`, `"partial"` and `"missed"` stay,
+  a `true` from before marks had kinds reads as `"great"`, and anything else is an empty day (`null`).
 - When migrating, a v1 payload that is not a JSON object, or whose list is not an array, yields the
   defaults; an empty list stays empty. The prototype trusted its stored data and crashed outright on
   a payload without `log`.
@@ -189,8 +190,7 @@ v2; now the conversion only feeds the import.
 `parseDietData` applies the same rules to foods, with four default foods (Vegetables 7, Fruit 5,
 Fish 2, Nuts 3).
 
-`parseSettings` accepts any `#rrggbb` accent (not only the four inks' values, K3a in
-[brand.md](brand.md) §4), clamps the daily pick to
+`parseSettings` accepts any `#rrggbb` accent (K3a, K13), clamps the daily pick to
 1–8, and accepts only `system`, `light` or `dark` as the theme, falling back to the defaults
 otherwise. Settings saved before the theme option existed load as `system`.
 
@@ -199,7 +199,7 @@ otherwise. Settings saved before the theme option existed load as `system`.
 ```json
 {
   "format": "fitness-planner-export",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-10-24T09:30:00.000Z",
   "exercise": { "plans": {}, "log": {} },
   "diet": { "plans": {}, "log": {} },
@@ -209,7 +209,8 @@ otherwise. Settings saved before the theme option existed load as `system`.
 
 The theme is not exported, because it belongs to the device rather than the person. Import… reads a
 file through `parseExport` (`src/lib/transfer.ts`), which rejects anything that is not JSON, has
-another `format`, or has a `version` other than 1. Files exported before the rename carry
+another `format`, or has a `version` other than 2 or 1 (a version 1 file's `true` days read as
+`"great"`, K12). Files exported before the rename carry
 `"format": "exercise-planner-export"` and import the same way (`OLD_EXPORT_FORMAT`, in both
 languages). It validates the rest with the same normalisers
 as storage, so a hand-edited file loads the way a hand-edited `localStorage` value would. Missing
@@ -219,7 +220,8 @@ An import **merges and never deletes** (`mergeTracked`, `mergeSettings`; the API
 applies the same rules):
 
 - A week that already has a plan keeps it; a week with no plan takes the file's.
-- Ticks are OR-ed per week, item and day, so an import can add ticks but never clears one.
+- Per week, item and day, a marked day keeps its mark and an empty one takes the file's, so an
+  import can add marks but never clears or changes one.
 - The file's accent and daily pick apply only when the account has no settings of their own yet.
 
 Confirming sends the file to `POST /api/import` (`sync.importFile`): the server merges it against
@@ -228,7 +230,7 @@ read already in flight, which predates the import). Local writes still queued go
 server merges against everything this device has; if they cannot be sent, nothing is imported. When
 the import cannot be done, the Settings page says why (offline, a server failure, an ended session,
 a full account) and
-keeps the file ready to try again. The confirm step names how many weeks and ticks the file adds
+keeps the file ready to try again. The confirm step names how many weeks and marked days the file adds
 (`mergeSummary`, through `useImportSummary`, which the first-login prompt shares) before anything
 is written. It is computed from the current state, so it stays right if another tab or a settings
 change lands while it is open. Importing the same file twice adds nothing the second time. Adding a week can change what
@@ -259,11 +261,10 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   `#/settings`) so it has room to grow. App reads the hash (as it does for invite and reset links)
   and shows the page in place of the week; the Header then holds only the wordmark. Arriving moves
   focus to the page's heading, and coming back to the week puts it on the Settings button. Signing
-  out there drops the hash, so the next sign-in opens on the week. The accent is a choice of four
-  inks, Ink blue by default, and the stored value keeps its old format (K3a, [brand.md](brand.md)
-  §4). The theme and per-side choices are SegmentedControls: `aria-pressed` buttons in a
+  out there drops the hash, so the next sign-in opens on the week. The marks' pens are fixed, so
+  there is no Ink setting (K10). The theme and per-side choices are SegmentedControls: `aria-pressed` buttons in a
   `role="group"`.
-- **Config mode and normal mode.** Normal mode, the default on every load, only ticks cells. The
+- **Config mode and normal mode.** Normal mode, the default on every load, only marks cells. The
   "Edit plan" Switch in the navbar (a `role="switch"` button) turns on config mode, which shows the
   edit and remove IconButtons, the add forms and "Copy plan to next week". An item is changed only
   in its dialog (Edit exercise, Edit food), so rows have no Stepper; the remove button ends each
@@ -323,7 +324,7 @@ have no `<style>` blocks. Everything global is in `src/styles/main.css`.
 - **Generated tokens.** `npm run tokens` writes `src/styles/tokens.css` from
   `brand/design-system/project/tokens.json` (through `scripts/design_preview.py --tokens-css` with
   `--dark-selector .dark`) and drops the generated `@font-face` rules. It holds every role's light
-  value on `:root` and dark value on `.dark`, the four ink values, spacing, radius, the font
+  value on `:root` and dark value on `.dark`, spacing, radius, the font
   families and the type-style classes. Nobody edits it by hand, and `.prettierignore` keeps
   Prettier off it, so a regeneration diff is always the tokens' own change.
 - **Role utilities.** `main.css` imports Tailwind, then `tokens.css` into Tailwind's `components`
@@ -331,7 +332,8 @@ have no `<style>` blocks. Everything global is in `src/styles/main.css`.
   Tailwind colour in `@theme inline` (`--color-canvas: var(--canvas)`). Templates write
   `bg-canvas`, `text-ink-secondary` or `border-control-border`, and both themes follow without
   `dark:` variants. The roles are `canvas`, `panel`, `tile`, `line`, `control-border`, `ink`,
-  `on-ink`, `ink-secondary`, `error-ink`, `focus`, `pen`, `highlight`, `caution-ink` and `scrim`.
+  `on-ink`, `ink-secondary`, `error-ink`, `focus`, `pen`, `pen-partial`, `pen-missed`, `highlight`,
+  `caution-ink` and `scrim`.
 - **No palette.** `--color-*: initial` switches Tailwind's default colours off, keeping only
   `transparent` and `current`, so a palette class such as `bg-red-500` or `text-white` generates
   nothing. Every colour on screen comes from a role.
@@ -348,13 +350,14 @@ have no `<style>` blocks. Everything global is in `src/styles/main.css`.
   outline at a 2px offset on every interactive element. `scroll-padding-top` on `<html>` keeps
   keyboard-focused content from scrolling under the sticky navbar.
 
-### 6.2 The pen and the inks
+### 6.2 The marks' pens
 
-The pen is the person's ink, so it lives in variables rather than in the stylesheet. `App.vue` runs
-the stored accent through `inkFor` (`src/lib/inks.ts`, K3a) and sets `--user-pen-light` and
-`--user-pen-dark` on `<html>`. `main.css` sets `--pen` from the first on `:root` and from the second
-on `.dark`, falling back to Ink blue (`--ink-blue`) before they are set. Everything reads `--pen`
-(`bg-pen`, `text-pen`), never the user variables. [brand.md](brand.md) §4 has the mapping.
+`pen`, `pen-partial` and `pen-missed` are ordinary roles with fixed values (K10), mapped to
+`stroke-pen`, `stroke-pen-partial` and `stroke-pen-missed`. `DayMark` draws the box and, for a
+marked day, the kind's own stroke (`MARK_PATHS`, `MARK_STROKES` in `src/components/ui/day-mark`),
+which runs a little past the box. A press emits `toggle`; the stores step the day with `cycleDay`
+and `nextMark` (`src/lib/tracker.ts`): `EXERCISE_CYCLE` for exercises, `FOOD_CYCLE` for foods.
+`isDone` and the totals count every kind. [brand.md](brand.md) §4 has the values.
 
 ### 6.3 The primitives
 
@@ -367,7 +370,7 @@ component's own.
 | Group    | Primitives                                                                                                                            |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | Basics   | Button (primary, secondary and quiet, 44px tall, `sm` 36px from 640px up), IconButton (44px, a required `label`), TextLink, BrandMark |
-| Forms    | TextField, TextArea, SegmentedControl, Switch, Stepper, InkPicker                                                                     |
+| Forms    | TextField, TextArea, SegmentedControl, Switch, Stepper                                                                                |
 | Overlays | Dialog, ConfirmDialog with ConfirmHost, Popover                                                                                       |
 | Planner  | DayMark, Chip, SectionHeader, StatFigure                                                                                              |
 | Feedback | InlineMessage, Banner                                                                                                                 |
@@ -424,8 +427,8 @@ the names.
 
 The `@media print` block in `main.css` gives a black-on-white landscape sheet from either theme. It
 re-points the roles at black, white and greys, the only literal colours the system allows: done
-squiggles print black, boxes grey, chips outlined, and `--highlight` goes transparent. `--pen` is set
-there too, so the user's ink can't leak through. Shadows and transitions are off.
+every mark prints black (its shape tells the three apart), boxes grey, chips outlined, and
+`--highlight` goes transparent. Shadows and transitions are off.
 
 - Anything marked `data-noprint` is hidden: the navbar, the phone's view switch, the sync status,
   the import prompt, Edit plan's controls and add forms, and a section's hint line if it has one. Dialogs, the
@@ -440,9 +443,9 @@ there too, so the user's ink can't leak through. Shadows and transitions are off
 
 `src/styleguide/` is the living style guide (K2): every primitive and planner component rendered by
 its real source, in each state. `src/main.ts` mounts it instead of the app at `/styleguide` when
-`import.meta.env.DEV` is true, so a production build drops it. The page's Theme and Ink menus set
-the same `.dark` class and pen variables the app does (`src/styleguide/look.ts`), and the address
-carries them (`/styleguide?theme=dark&ink=forest`), so a browser test can open any combination.
+`import.meta.env.DEV` is true, so a production build drops it. The page's Theme menu sets the same
+`.dark` class the app does (`src/styleguide/look.ts`), and the address carries it
+(`/styleguide?theme=dark`), so a browser test can open either theme.
 Each section is one entry in `src/styleguide/sections.ts`. Coverage excludes the folder, and the
 browser checks run against it.
 
@@ -476,7 +479,9 @@ against `base`, the state the server is known to hold, and turns each difference
 in the outbox:
 
 - `plan`: a week's plan, sent as `PUT /api/plans/<section>/<week>` with the revision last seen;
-- `tick`: one day of one item, `PUT /api/ticks/…`, so devices ticking different days never collide;
+- `tick`: one day of one item and its mark (or `null`), `PUT /api/ticks/…` with `{ "mark": … }`,
+  so devices marking different days never collide. An outbox saved before marks had kinds holds
+  `done` instead; it is read as `"great"` or `null` on load;
 - `settings`: the accent and daily pick.
 
 A newer operation for the same plan, cell or settings replaces a queued one. Each carries an id, so

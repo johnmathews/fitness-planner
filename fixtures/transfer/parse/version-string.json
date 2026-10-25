@@ -1,5 +1,5 @@
 {
-  "description": "The version must be the number 1, not the string.",
-  "input": { "format": "fitness-planner-export", "version": "1" },
+  "description": "The version must be the number 1 or 2, not a string.",
+  "input": { "format": "fitness-planner-export", "version": "2" },
   "expected": { "ok": false, "error": "version" }
 }

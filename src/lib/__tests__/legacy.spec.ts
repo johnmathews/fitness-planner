@@ -19,11 +19,11 @@ describe('readLegacyData', () => {
   it('reads the v2 keys and the accent and daily pick, but never the theme', () => {
     const exercise = {
       plans: { [WEEK]: [{ id: 'sq', name: 'Squats', reps: 15, target: 4 }] },
-      log: { [WEEK]: { sq: [true, false, false, false, false, false, false] } },
+      log: { [WEEK]: { sq: ['great', null, null, null, null, null, null] } },
     }
     const diet = {
       plans: {},
-      log: { [WEEK]: { veg: [false, true, false, false, false, false, false] } },
+      log: { [WEEK]: { veg: [null, 'great', null, null, null, null, null] } },
     }
     localStorage.setItem(DATA_KEY, JSON.stringify(exercise))
     localStorage.setItem(DIET_KEY, JSON.stringify(diet))
@@ -43,7 +43,7 @@ describe('readLegacyData', () => {
       LEGACY_DATA_KEY,
       JSON.stringify({
         exercises: [{ id: 'a', name: 'A', reps: 1, target: 2 }],
-        log: { '2026-10-12': { a: [true, false, false, false, false, false, false] } },
+        log: { '2026-10-12': { a: ['great', null, null, null, null, null, null] } },
       }),
     )
     localStorage.setItem(LEGACY_DIET_KEY, JSON.stringify({ foods: [], log: {} }))

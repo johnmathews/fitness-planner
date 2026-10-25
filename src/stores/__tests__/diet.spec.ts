@@ -43,11 +43,15 @@ describe('diet store', () => {
     d.toggle('fish', 3)
     d.toggle('veg', 3)
     expect(d.isEaten('fish', 3)).toBe(true)
+    expect(d.markOf('fish', 3)).toBe('great')
     expect(d.totalFor('fish')).toBe(2)
     expect(d.dayCounts).toEqual([1, 0, 0, 2, 0, 0, 0])
     expect(d.grandTotal).toBe(3)
     expect(d.goalsMet).toBe(1)
-    expect(d.log['2026-10-19']!.fish).toEqual([true, false, false, true, false, false, false])
+    expect(d.log['2026-10-19']!.fish).toEqual(['great', null, null, 'great', null, null, null])
+    // Foods have one kind of mark: the next press clears it.
+    d.toggle('fish', 3)
+    expect(d.markOf('fish', 3)).toBeNull()
   })
 
   it('follows week navigation from the planner store', () => {
@@ -91,7 +95,7 @@ describe('diet store', () => {
     d.removeFood('nuts')
     expect(d.foods.map((f) => f.id)).not.toContain('nuts')
     expect(d.grandTotal).toBe(0)
-    expect(d.log['2026-10-19']?.nuts?.[0]).toBe(true)
+    expect(d.log['2026-10-19']?.nuts?.[0]).toBe('great')
   })
 
   it('adopts food data wholesale or a week at a time, and clears', () => {

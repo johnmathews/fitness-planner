@@ -39,15 +39,17 @@
   /* Today: the highlight band down the whole column. */
   .today { background: var(--highlight); }
 
-  /* DayMark: 44px button, its hand-drawn box and squiggle, in a 60px cell. */
+  /* DayMark: 44px button, its hand-drawn box and mark, in a 60px cell. */
   .day { position: relative; width: 56px; height: 60px; margin: 0 auto; display: grid; place-items: center; }
   .mark { width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; }
-  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border; a done day adds the marker squiggle, filled with pen. Same paths as the app's DayMark. */
+  /* The mark (DayMark card): a hand-drawn box about 30px across, its stroke a mask filled with control-border; a marked day adds its stroke, a mask filled with its pen: a full squiggle for great, the lower half for partial, a cross for missed. The strokes run a little past the box, so the masks fill the whole 44px button (the 36-unit paths at 40px, with room round them). Same paths as the app's DayMark. */
   .mark { position: relative; }
-  .mark::before, .mark::after { content: ""; position: absolute; inset: 2px; -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
-  .mark::before { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--control-border); }
-  .mark[aria-pressed="true"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M9 10.5C13 9.5 19 9 26.5 9.2C20 11.5 14 14 9.4 17.2C15.5 15.8 21.5 14.8 27 14.6C20.5 17.4 14.5 20.6 9.6 24C16 22.6 22 21.8 27.2 21.8C23 23.6 19 25.4 15.5 27.4' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen); }
-  .mark[aria-pressed="false"]:hover::before { background: var(--ink); }
+  .mark::before, .mark::after { content: ""; position: absolute; inset: 0; -webkit-mask: var(--m) center / 100% 100% no-repeat; mask: var(--m) center / 100% 100% no-repeat; }
+  .mark::before { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--control-border); }
+  .mark[data-mark="great"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.2 7.4C11 5.4 21.5 4.6 33.4 5.4C24.5 9 14 13.2 3.8 18.6C13.5 16.3 24.2 14.8 34 15C24.2 19.4 13.6 24 4.4 29.8C14 27.6 24.6 26.4 33.4 26.9C27.2 29.6 21 32.2 15.2 34.6' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen); }
+  .mark[data-mark="partial"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M3.6 19.2C12 17.6 22.5 16.8 33.6 17.2C24.6 21 14.2 25.4 4.2 30.6C14 28.6 24.4 27.6 33.2 28.2' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-partial); }
+  .mark[data-mark="missed"]::after { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-1.8 -1.8 39.6 39.6'%3E%3Cpath d='M4.4 4.6C13 12.8 22.4 22.4 33 33.2M32.6 3.8C24.2 12.2 14 22.6 3.6 32.8' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background: var(--pen-missed); }
+  .mark:not([data-mark]):hover::before { background: var(--ink); }
   .mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   /* Cells without a mark take focus themselves; their ring sits inside the cell so the scroller never clips it. */
   th[role="rowheader"]:focus-visible, td[role="gridcell"]:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
@@ -61,7 +63,7 @@
   .total .fig { font-weight: 600; }
   .total .fig.met { color: var(--pen); }
   .total .of { color: var(--ink-secondary); }
-  /* Met is pen plus a check, never colour alone (Graphite's pen is close to ink). */
+  /* Met is pen plus a check, never colour alone (colour-blind people, print). */
   .total .check { display: inline-block; width: 16px; height: 16px; margin-left: 4px; vertical-align: -2px; color: var(--pen); }
 
   /* The picked row: how many exercises each day, against the daily pick. */
@@ -78,7 +80,8 @@
      same overrides sit under @media print. */
   .print {
     --canvas: #ffffff; --panel: #ffffff; --tile: #ffffff; --line: #b3b3b3;
-    --ink: #000000; --ink-secondary: #3d3d3d; --pen: #000000; --control-border: #767676;
+    --ink: #000000; --ink-secondary: #3d3d3d; --control-border: #767676;
+    --pen: #000000; --pen-partial: #000000; --pen-missed: #000000;
     --caution-ink: #000000; --highlight: transparent;
     background: var(--canvas); color: var(--ink); padding: var(--space-4); border-radius: var(--radius-sm);
   }
@@ -97,7 +100,7 @@
 </style>
 </head>
 <body>
-<p class="variant label">On screen. Today is Thursday; the pick is three a day.</p>
+<p class="variant label">On screen. Today is Thursday; the pick is three a day. Press a day to step its mark.</p>
 <div class="scroller" id="screen">
   <table class="grid" role="grid" aria-label="Exercises, week of 19 October">
     <colgroup><col class="c-name"><col span="7"><col class="c-total"></colgroup>
@@ -111,10 +114,10 @@
     <tbody>
       <tr role="row" data-goal="4">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Push-ups</span><span class="meta"><span class="chip label">3 × 12</span></span></th>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Wednesday 21 October"></button></div></td>
-        <td role="gridcell" class="d today"><div class="day"><button type="button" class="mark" tabindex="0" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="partial" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Wednesday 21 October, partly done"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="0" aria-pressed="true" aria-current="date" aria-label="Push-ups, Thursday 22 October, today"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Friday 23 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Saturday 24 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Sunday 25 October"></button></div></td>
@@ -122,10 +125,10 @@
       </tr>
       <tr role="row" data-goal="3">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Pull-ups</span><span class="meta"><span class="chip label">3 × 5</span></span></th>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Monday 19 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Monday 19 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Tuesday 20 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Wednesday 21 October"></button></div></td>
-        <td role="gridcell" class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="missed" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Pull-ups, Thursday 22 October, today, couldn't do it"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Friday 23 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Saturday 24 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Sunday 25 October"></button></div></td>
@@ -134,9 +137,9 @@
       <tr role="row" data-goal="3">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Squats</span><span class="meta"><span class="chip label">3 × 15</span><span class="chip label">16 kg</span></span></th>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Monday 19 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Tuesday 20 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Wednesday 21 October"></button></div></td>
-        <td role="gridcell" class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Tuesday 20 October"></button></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Wednesday 21 October"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="partial" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Squats, Thursday 22 October, today, has a note, partly done"></button><span class="note-mark" aria-hidden="true"></span></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Friday 23 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Saturday 24 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Sunday 25 October"></button></div></td>
@@ -145,9 +148,9 @@
       <tr role="row" data-goal="2">
         <th scope="row" role="rowheader" tabindex="-1"><span class="name">Kettlebell halos</span><span class="meta"><span class="chip label">8 each side</span></span></th>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Monday 19 October"></button></div></td>
-        <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
+        <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Wednesday 21 October"></button></div></td>
-        <td role="gridcell" class="d today"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div></td>
+        <td role="gridcell" class="d today"><div class="day"><button type="button" data-mark="great" class="mark" tabindex="-1" aria-pressed="true" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Friday 23 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Saturday 24 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Sunday 25 October"></button></div></td>
@@ -167,7 +170,7 @@
 <div class="gap"></div>
 <p class="variant label">Printed, from either theme</p>
 <div class="print" id="print" inert></div>
-<p class="sheet-note caption">Squiggles black, boxes grey, no band. “One extra” keeps its words; the hint line and buttons don't print.</p>
+<p class="sheet-note caption">Marks black, told apart by shape; boxes grey, no band. “One extra” keeps its words; the hint line and buttons don't print.</p>
 
 <script>
 (() => {
@@ -175,7 +178,7 @@
   // Every cell takes part except an aria-hidden one (the empty Picked cell under "Week"): names,
   // days, week totals and the Picked row's name and counts. Arrows move cell by
   // cell, Home and End to the ends of the row, Ctrl+Home and Ctrl+End to the ends of the grid.
-  // Only the day cells act on Space and Enter (they are buttons).
+  // Only the day cells act on Space and Enter (they are buttons, and step the day's mark).
   const table = document.querySelector('#screen .grid');
   const rows = [...table.tBodies[0].rows];
   const navRows = [...rows, ...table.tFoot.rows];
@@ -183,6 +186,21 @@
   const TODAY = 3;
   const CHECK = '<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
   const WORDS = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+  // A press steps the day's mark: an exercise goes empty, great, partial, missed and back to
+  // empty; a food (in a [data-cycle="food"] row) is eaten or not. aria-pressed is true for any
+  // mark; the name adds only a partial or missed day's kind.
+  const CYCLES = { exercise: ['great', 'partial', 'missed'], food: ['great'] };
+  const MARK_WORDS = { great: '', partial: ', partly done', missed: ", couldn't do it" };
+  const baseName = (mark) => mark.dataset.name || (mark.dataset.name = mark.getAttribute('aria-label').replace(/, (partly done|couldn't do it)$/, ''));
+  function step(mark) {
+    const cycle = CYCLES[mark.closest('[data-cycle]')?.dataset.cycle || 'exercise'];
+    const i = cycle.indexOf(mark.dataset.mark);
+    const next = !mark.dataset.mark ? cycle[0] : i >= 0 ? cycle[i + 1] : undefined;
+    const name = baseName(mark);
+    if (next) mark.dataset.mark = next; else delete mark.dataset.mark;
+    mark.setAttribute('aria-pressed', String(Boolean(next)));
+    mark.setAttribute('aria-label', name + (next ? MARK_WORDS[next] : ''));
+  }
   const marksIn = (tr) => [...tr.querySelectorAll('.mark')];
   const target = (cell) => cell.querySelector('.mark') || cell;
   const stops = () => navRows.map((tr) => [...tr.cells].filter((c) => c.getAttribute('aria-hidden') !== 'true').map(target));
@@ -218,12 +236,12 @@
   table.addEventListener('click', (e) => {
     const mark = e.target.closest('.mark');
     if (!mark) return;
-    mark.setAttribute('aria-pressed', String(mark.getAttribute('aria-pressed') !== 'true'));
+    step(mark);
     focusCell(mark);
     recount();
   });
 
-  // Week totals per row, and the picked count per day.
+  // Week totals per row, and the picked count per day. Every kind of mark counts.
   function recount() {
     rows.forEach((tr) => {
       const n = marksIn(tr).filter((m) => m.getAttribute('aria-pressed') === 'true').length;

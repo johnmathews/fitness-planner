@@ -32,14 +32,19 @@ scoped by `user_id`, and no endpoint reads another user's data.
 | `invites`  | `token_hash`                        | `kind` (`invite` or `reset`), `username`, `user_id` (resets), `expires_at`, `used_at`                                                             |
 | `settings` | `user_id`                           | `accent`, `daily_pick`                                                                                                                            |
 | `plans`    | `(user_id, section, week)`          | `items_json`, `rev`                                                                                                                               |
-| `ticks`    | `(user_id, section, week, item_id)` | `days`, a 7-bit mask (bit 0 is Monday)                                                                                                            |
+| `ticks`    | `(user_id, section, week, item_id)` | `days`, `partial`, `missed`: 7-bit masks (bit 0 is Monday); see below                                                                             |
 
 `section` is `exercise` or `diet`. Every row cascades from its user. Tokens and session ids are
 stored only as SHA-256 hashes. A database lookup with a stolen copy of the file cannot recover a
 working cookie or link. Times are Unix seconds. The theme is not stored: it belongs to the device.
 
+**Marks.** Each day of a tick row is empty or holds one mark: `great`, `partial` or `missed`.
+`days` has a bit for every marked day, so it alone says which days count; `partial` and `missed`
+are disjoint subsets of it. A day in `days` and in neither subset is `great`.
+
 The schema version lives in `PRAGMA user_version`, and `db.migrate` applies each step in order at
-startup inside a transaction.
+startup inside a transaction. Version 1 is the tables above; version 2 adds `partial` and `missed`
+(default 0), so every tick stored before marks had kinds reads as `great`.
 
 ## 3. Endpoints
 
@@ -67,14 +72,14 @@ cut off at the limit rather than read whole. A body with nothing to send, such a
 | `POST /invites/redeem`                     | no      | `{token, password}` sets the password, consumes the link, signs in   |
 | `GET /state`                               | session | everything the client renders (below)                                |
 | `PUT /plans/{section}/{week}`              | session | `{items, rev}` → `{rev}`; 409 `conflict` with the server copy        |
-| `PUT /ticks/{section}/{week}/{item}/{day}` | session | `{done}` → `{days}`, the week's seven flags for that item            |
+| `PUT /ticks/{section}/{week}/{item}/{day}` | session | `{mark}` → `{days}`, the week's seven marks for that item            |
 | `PUT /settings`                            | session | `{accent, dailyPick}` → the stored settings                          |
 | `GET /export`                              | session | the export file (`architecture.md` §4)                               |
 | `POST /import`                             | session | an export file, merged in; → `{weeks, ticks, settings}` added        |
 
 `GET /state` returns `{exercise, diet, settings}`. Each section is `{plans, log, revs}`: `plans`
-and `log` have the same shape as in `localStorage`, and `revs` maps each planned week to its
-revision. `settings` is `{accent, dailyPick}`, or null before any are saved.
+and `log` have the same shape as in `localStorage` (a log row is seven marks or nulls), and `revs`
+maps each planned week to its revision. `settings` is `{accent, dailyPick}`, or null before any are saved.
 
 **Plans.** `rev` is the revision the client last saw, 0 for a week it has never seen planned.
 A matching `rev` stores the items and returns `rev + 1`. A stale `rev` gets 409 with `{items, rev}`
@@ -83,8 +88,13 @@ happens when two devices tick the same carried-forward week and both create its 
 source. That write succeeds and returns the current `rev`. Items are validated with the same
 rules as stored data, so a bad item drops out rather than failing the write.
 
-**Ticks** set or clear one day for one item (an item id of 1 to 128 characters), so two devices ticking different days never collide.
-`day` is 0 (Monday) to 6.
+**Ticks** set or clear one day for one item (an item id of 1 to 128 characters), so two devices
+marking different days never collide. `day` is 0 (Monday) to 6. The body is `{"mark": m}`, where
+`m` is `great`, `partial`, `missed` or null (clear the day). The old `{"done": bool}` body, from a
+tab or a queued write from before marks had kinds, still works: true is `great`, false clears.
+A `mark` key is read first; any other value of it, or a `done` that is not a boolean, gets 400
+`invalid`. The app sends both keys (`{"mark": m, "done": m !== null}`), so an API from
+before marks had kinds, still running during a deploy, saves the day as done rather than refusing it. The server stores any mark in either section; only the client keeps foods to `great`.
 
 **Quota.** Each user may store 5 MiB: the bytes of their plans' JSON plus 64 for each tick row.
 A plan write, a tick that would add a row, or an import that would take the account over it gets
@@ -94,10 +104,15 @@ refused. The quota measures what the account holds, not the bytes on disk, which
 indexes. The client drops a refused write with a notice that the account is full (`architecture.md`
 §7), and an import says the same.
 
-**Import** applies the merge rule from `architecture.md` §4: existing weeks keep their plan, ticks
-are OR-ed, and settings apply only when the account has none. It returns what it added, in one
-transaction. A file that fails to parse gets 400 with `json`, `format` or `version`, the same codes
-the client shows.
+**Export** writes version 2 of the file: each log row is seven marks or nulls. Import reads
+version 2 and version 1, whose `true` days read as `great` and `false` days as empty; any other
+version gets `version`.
+
+**Import** applies the merge rule from `architecture.md` §4: existing weeks keep their plan; per
+week, item and day a marked day keeps its mark and an empty one takes the file's; and settings
+apply only when the account has none. It returns what it added (`ticks` counts the empty days
+that gained a mark), in one transaction. A file that fails to parse gets 400 with `json`,
+`format` or `version`, the same codes the client shows.
 
 ## 4. Accounts and sessions
 
@@ -210,6 +225,8 @@ differs by default:
 - `NaN` and `Infinity` are not JSON.
 - Week keys need ASCII digits, and a trailing newline is not allowed.
 - A log entry keyed `__proto__` is dropped.
+- A day's mark is `great`, `partial` or `missed` exactly; a literal `true` reads as `great`, and
+  anything else (`1`, `"true"`, `"GREAT"`) is empty.
 
 `tests/test_parity.py` runs every case in `fixtures/transfer/`, the same files the Vitest suite
 runs. A rule changed on one side without the other fails one of the two suites.
@@ -238,13 +255,14 @@ Tests sit in `api/tests/`:
   deliberate divergences from JavaScript (§9).
 - `test_api.py`: the HTTP layer: the write guard, error shapes, body limits (chunked too), every
   data endpoint, user isolation, `X-Expected-User`, sign-up and its refusals (closed included),
-  the quota on plans, ticks and imports, import and export (the sample round trip).
+  the quota on plans, ticks and imports, every mark and the old `done` body, import and export
+  (the sample round trip, version 1 files, existing marks winning).
 - `test_auth.py`: hashing one at a time and the busy queue, login, lockout and its window and
   races, sessions sliding and expiring, invite and reset links, races between redemptions;
   sign-up's email rule (254 characters, ASCII), password length, taken emails, `MAX_USERS`, the
   hourly limit (invites not counted), parallel sign-ups against the cap and for one email, and a
   reset for an email account.
 - `test_db.py`, `test_config.py`, `test_backup.py`, `test_cli.py`: migrations (including racing
-  ones and the WAL switch), configuration from the environment, daily copies, `fp-admin`.
+  ones, the WAL switch, and old ticks reading as `great` after step 2), configuration from the environment, daily copies, `fp-admin`.
 - `conftest.py` gives each test a temporary database, a controllable clock and a cheap hasher;
   `fixtures.py` reads `fixtures/transfer/`.

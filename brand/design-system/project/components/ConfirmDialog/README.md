@@ -7,7 +7,7 @@ A small modal question before something that can't be undone: what will happen, 
 - **Body** in `body`: the facts, briefly, then what stays. No "Are you sure", no warning icon, no capitals.
 - **Buttons:** secondary "Cancel", then primary with the verb from the title ("Remove", "Replace", "Sign out"). Never "OK" or "Yes".
 - **No red button.** A destructive action still uses the `ink` primary (K8); the verb does the work. `error-ink` is only for errors.
-- Ask only when something is lost. Importing a file only adds plans and ticks ("Existing plans and ticks stay as they are"), so it confirms inline in Settings, not here.
+- Ask only when something is lost. Importing a file only adds plans and marks ("Existing plans and marks stay as they are"), so it confirms inline in Settings, not here.
 
 The app's three cases, rewritten in voice:
 

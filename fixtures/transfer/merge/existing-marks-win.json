@@ -1,0 +1,31 @@
+{
+  "description": "Per week, item and day, a marked day keeps its own mark whatever the file says, and an empty day takes the file's mark. The summary counts only the empty days that gain one: three here.",
+  "existing": {
+    "plans": {},
+    "log": {
+      "2026-10-19": {
+        "pu": ["great", "partial", "missed", null, null, null, "great"],
+        "sq": [null, null, null, null, null, null, "missed"]
+      }
+    }
+  },
+  "incoming": {
+    "plans": {},
+    "log": {
+      "2026-10-19": {
+        "pu": ["missed", "great", "partial", "partial", "missed", null, null],
+        "sq": [null, null, null, null, null, "great", "great"]
+      }
+    }
+  },
+  "expected": {
+    "plans": {},
+    "log": {
+      "2026-10-19": {
+        "pu": ["great", "partial", "missed", "partial", "missed", null, "great"],
+        "sq": [null, null, null, null, null, "great", "missed"]
+      }
+    }
+  },
+  "summary": { "weeks": 0, "ticks": 3 }
+}

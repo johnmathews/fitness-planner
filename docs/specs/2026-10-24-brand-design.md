@@ -6,6 +6,10 @@
 > tokens and components. Direction B ("Notebook") was chosen on 2026-10-24 from three mocked-up
 > directions (https://claude.ai/artifact/QVRjZWL2C6ymQrTcVvgTeJ). Nothing gets built before this
 > document is approved; the calls in §10 are open to veto by ID.
+>
+> **Status:** the pen and the inks here (one pen, four inks to choose from, K3) are superseded by
+> three fixed pens, one per kind of mark ([decisions.md](../decisions.md) §4.1, K9–K13;
+> [brand.md](../brand.md) §4) (2026-10-25). The rest stands.
 
 **Status:** approved 2026-10-24 (calls K1–K8 accepted; see [decisions](../decisions.md)).
 

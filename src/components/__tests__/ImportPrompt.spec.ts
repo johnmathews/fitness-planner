@@ -3,6 +3,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
 import { CACHE_PREFIX } from '@/stores/sync'
+import { usePlannerStore } from '@/stores/planner'
 import { DATA_KEY, DIET_KEY, SETTINGS_KEY } from '@/lib/storage'
 import { IMPORT_MARKER_PREFIX } from '@/lib/legacy'
 import type { FakeApi } from '@/lib/__tests__/fakeApi'
@@ -21,14 +22,14 @@ function recordBeforeAccounts(): void {
     DATA_KEY,
     JSON.stringify({
       plans: { '2026-10-12': [SQUATS] },
-      log: { '2026-10-12': { sq: [true, false, true, false, false, false, false] } },
+      log: { '2026-10-12': { sq: ['great', null, 'great', null, null, null, null] } },
     }),
   )
   localStorage.setItem(
     DIET_KEY,
     JSON.stringify({
       plans: {},
-      log: { [WEEK]: { veg: [true, false, false, false, false, false, false] } },
+      log: { [WEEK]: { veg: ['great', null, null, null, null, null, null] } },
     }),
   )
   localStorage.setItem(
@@ -77,7 +78,7 @@ describe('the first-login import prompt', () => {
     await mountApp()
     expect(prompt().get('h2').text()).toBe('Data from before accounts')
     expect(prompt().text()).toContain(
-      'Adds one weekly plan and three ticks, plus the ink and the number of exercises a day. Existing plans and ticks stay as they are.',
+      'Adds one weekly plan and three marked days, plus the number of exercises a day. Existing plans and marks stay as they are.',
     )
   })
 
@@ -94,15 +95,12 @@ describe('the first-login import prompt', () => {
     expect(account.settings).toEqual({ accent: '#bf5af2', dailyPick: 2 })
     expect(prompt().get('h2').text()).toBe('Added to your account')
     expect(prompt().get('[role="status"]').text()).toContain('now part of your account')
-    // The earlier week and the accent show at once, from the server's merged state.
+    // The earlier week and the settings show at once, from the server's merged state.
     await wrapper.get('button[aria-label="Previous week"]').trigger('click')
     expect(wrapper.findAll('button[aria-label^="Squats,"]')[0]!.attributes('aria-pressed')).toBe(
       'true',
     )
-    // The saved purple accent shows as the Violet ink, light and dark.
-    const style = document.documentElement.style
-    expect(style.getPropertyValue('--user-pen-light')).toBe('#4b3b7a')
-    expect(style.getPropertyValue('--user-pen-dark')).toBe('#b9a9e8')
+    expect(usePlannerStore().accent).toBe('#bf5af2')
     await button('Close').trigger('click')
     expect(prompt().exists()).toBe(false)
     expect(marker()).toBe('"imported"')

@@ -597,10 +597,7 @@ describe('signing out', () => {
     await flushPromises()
     api.offline = true
     await openSettings()
-    await wrapper
-      .findAll('[role="radio"]')
-      .find((r) => r.text() === 'Ink blue')!
-      .trigger('click')
+    await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
     await flushPromises()
     api.offline = false
     await button('Sign out').trigger('click')
@@ -740,7 +737,7 @@ describe('sync status', () => {
     mountApp()
     await flushPromises()
     api.offline = true
-    usePlannerStore().setAccent('#ff9f0a')
+    usePlannerStore().changeDailyPick(1)
     await flushPromises()
     expect(status().get('p').text()).toBe(
       'Not synced. One change is saved on this device and will sync when you’re back online.',

@@ -9,7 +9,9 @@ import {
   normalisePortableSettings,
   parseJson,
   type DietData,
+  type Days,
   type Log,
+  type Mark,
   type PlannerData,
   type PortableSettings,
   type TrackedData,
@@ -22,7 +24,10 @@ import {
 export const EXPORT_FORMAT = 'fitness-planner-export'
 /** Files exported before the app was renamed carry this format; they import as if current. */
 export const OLD_EXPORT_FORMAT = 'exercise-planner-export'
-export const EXPORT_VERSION = 1
+/** Version 2 files carry a mark per day (`great`, `partial`, `missed` or null). */
+export const EXPORT_VERSION = 2
+/** Version 1 files carry a `true` per done day; they read as `great`. */
+export const OLD_EXPORT_VERSION = 1
 
 export type ExportData = {
   exercise: PlannerData
@@ -80,7 +85,9 @@ export function parseExport(text: string): ParseResult {
   ) {
     return { ok: false, error: 'format' }
   }
-  if (parsed.version !== EXPORT_VERSION) return { ok: false, error: 'version' }
+  if (parsed.version !== OLD_EXPORT_VERSION && parsed.version !== EXPORT_VERSION) {
+    return { ok: false, error: 'version' }
+  }
   return {
     ok: true,
     data: {
@@ -91,12 +98,12 @@ export function parseExport(text: string): ParseResult {
   }
 }
 
-const NO_DAYS: readonly boolean[] = Array<boolean>(7).fill(false)
+const NO_DAYS: readonly (Mark | null)[] = Array<Mark | null>(7).fill(null)
 
 /**
  * Merge without deleting: a week that has a plan keeps it (an empty plan included), a week without
- * one takes the incoming plan, and ticks are OR-ed per week, item and day. Returns new objects;
- * neither argument changes.
+ * one takes the incoming plan, and per week, item and day a marked day keeps its mark while an
+ * empty one takes the file's. Returns new objects; neither argument changes.
  */
 export function mergeTracked<T extends object>(
   existing: TrackedData<T>,
@@ -110,18 +117,18 @@ export function mergeTracked<T extends object>(
   for (const week of new Set([...Object.keys(existing.log), ...Object.keys(incoming.log)])) {
     const mine = existing.log[week] ?? {}
     const theirs = incoming.log[week] ?? {}
-    const out: Record<string, boolean[]> = {}
+    const out: Record<string, Days> = {}
     for (const id of new Set([...Object.keys(mine), ...Object.keys(theirs)])) {
       const a = mine[id] ?? NO_DAYS
       const b = theirs[id] ?? NO_DAYS
-      out[id] = Array.from({ length: 7 }, (_, i) => a[i] === true || b[i] === true)
+      out[id] = Array.from({ length: 7 }, (_, i) => a[i] ?? b[i] ?? null)
     }
     log[week] = out
   }
   return { plans, log }
 }
 
-/** What a merge would add: weeks that gain a plan, and day cells that gain a tick. */
+/** What a merge would add: weeks that gain a plan, and empty days that gain a mark. */
 export function mergeSummary<T>(
   existing: TrackedData<T>,
   incoming: TrackedData<T>,
@@ -131,7 +138,7 @@ export function mergeSummary<T>(
   for (const [week, entries] of Object.entries(incoming.log)) {
     for (const [id, days] of Object.entries(entries)) {
       const mine = existing.log[week]?.[id] ?? NO_DAYS
-      ticks += days.filter((on, i) => on && !mine[i]).length
+      ticks += days.filter((m, i) => m !== null && mine[i] === null).length
     }
   }
   return { weeks, ticks }

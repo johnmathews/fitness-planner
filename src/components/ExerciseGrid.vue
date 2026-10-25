@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { exerciseDetails, usePlannerStore } from '@/stores/planner'
-import type { Exercise } from '@/lib/storage'
+import type { Exercise, Mark } from '@/lib/storage'
 import { goalMet, pickedCount, type Tracked } from '@/lib/tracker'
 import { dayMonth } from '@/lib/dates'
 import { SectionHeader } from '@/components/ui/section-header'
@@ -21,8 +21,8 @@ const picked = computed(() => ({
 /** The section's one figure: sessions done this week of the sum of the weekly goals. */
 const goal = computed(() => store.exercises.reduce((sum, e) => sum + e.target, 0))
 
-function flagsFor(id: string): boolean[] {
-  return store.days.map((_, i) => store.isDone(id, i))
+function marksFor(id: string): (Mark | null)[] {
+  return store.days.map((_, i) => store.markOf(id, i))
 }
 
 // The grid hands back the item it was given, which is always an Exercise here.
@@ -71,7 +71,7 @@ watch(
       :table-label="`Exercises, week of ${dayMonth(store.monday)}`"
       :items="store.exercises"
       :days="store.days"
-      :flags-for="flagsFor"
+      :marks-for="marksFor"
       :total-for="store.totalFor"
       :details-for="detailsFor"
       editable

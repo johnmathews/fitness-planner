@@ -10,6 +10,7 @@ import {
   type DietData,
   type Food,
   type Log,
+  type Mark,
 } from '@/lib/storage'
 import { copyPlan, planSource, type Plans } from '@/lib/plans'
 import * as tracker from '@/lib/tracker'
@@ -42,6 +43,10 @@ export const useDietStore = defineStore('diet', () => {
     return tracker.isDone(week.value, id, day)
   }
 
+  function markOf(id: string, day: number): Mark | null {
+    return tracker.markOf(week.value, id, day)
+  }
+
   function totalFor(id: string): number {
     return tracker.totalFor(week.value, id)
   }
@@ -50,9 +55,10 @@ export const useDietStore = defineStore('diet', () => {
   const grandTotal = computed(() => tracker.grandTotal(foods.value, week.value))
   const goalsMet = computed(() => tracker.goalsMet(foods.value, week.value))
 
+  /** Marks the day eaten, or clears it: foods have one kind of mark. */
   function toggle(id: string, day: number): void {
     own()
-    tracker.toggleDay(log.value, planner.weekKey, id, day)
+    tracker.cycleDay(log.value, planner.weekKey, id, day, tracker.FOOD_CYCLE)
   }
 
   function changeTarget(id: string, delta: number): void {
@@ -117,6 +123,7 @@ export const useDietStore = defineStore('diet', () => {
     grandTotal,
     goalsMet,
     isEaten,
+    markOf,
     totalFor,
     toggle,
     changeTarget,
