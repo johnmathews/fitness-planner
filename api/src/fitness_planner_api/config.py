@@ -23,6 +23,13 @@ def _flag(env: Mapping[str, str], name: str, default: bool) -> bool:
     return raw.lower() == "true"
 
 
+def _count(env: Mapping[str, str], name: str, default: int) -> int:
+    raw = env.get(name, str(default))
+    if not raw.isdigit():
+        raise ValueError(f"{name} must be a whole number of 0 or more, not {raw!r}")
+    return int(raw)
+
+
 @dataclass(frozen=True)
 class Config:
     data_dir: Path
@@ -35,6 +42,9 @@ class Config:
     reset_hours: int = 24
     lockout_attempts: int = 5
     lockout_minutes: int = 15
+    #: Sign-up closes once this many accounts exist (invited ones count too); 0 turns it off.
+    max_users: int = 50
+    signups_per_hour: int = 10
     #: Unix seconds; injectable so tests can move time.
     clock: Callable[[], int] = field(default=_now)
 
@@ -61,4 +71,5 @@ class Config:
             public_origin=origin,
             cookie_secure=_flag(env, "COOKIE_SECURE", True),
             backup_keep=int(env.get("BACKUP_KEEP", "7")),
+            max_users=_count(env, "MAX_USERS", 50),
         )

@@ -60,6 +60,7 @@ cut off at the limit rather than read whole. A body with nothing to send, such a
 | ------------------------------------------ | ------- | -------------------------------------------------------------------- |
 | `GET /healthz`                             | no      | `SELECT 1`; `{"ok": true}`                                           |
 | `POST /auth/login`                         | no      | `{username, password}` → `{username}` and the session cookie         |
+| `POST /auth/signup`                        | no      | `{email, password}` creates an account → `{username}` and the cookie |
 | `POST /auth/logout`                        | session | ends this session and clears the cookie; 204                         |
 | `GET /auth/me`                             | session | `{username}`                                                         |
 | `POST /invites/lookup`                     | no      | `{token}` → `{kind, username}` for a live link; 410 `gone` otherwise |
@@ -92,7 +93,19 @@ the client shows.
 
 ## 4. Accounts and sessions
 
-- **No sign-up.** `fp-admin invite <username>` mints a single-use link,
+- **Sign-up.** `POST /auth/signup` with `{email, password}` creates an account and signs it in.
+  The email is trimmed and lower-cased, then stored as the account's username, so it is what the
+  person signs in with and what `X-Expected-User`, the cache keys and `fp-admin` name. It must be
+  printable ASCII in the shape `local@domain.tld`, at most 254 characters (ASCII because the name
+  travels in a header); otherwise 400 `email`. Invite usernames never contain `@`, so the two kinds
+  cannot collide. No mail is sent: the address is not verified, and a forgotten password still
+  needs `fp-admin reset <email>`. A taken email gets 409 `exists`, a password outside 10 to 256
+  characters 400 `password`. When `MAX_USERS` accounts exist (every account counts, invited or not)
+  or `MAX_USERS` is 0, sign-up gets 403 `closed`. At most 10 accounts are created in any rolling
+  hour; beyond that, 429 `too-many` with `Retry-After`. The caps are checked before the password is
+  hashed and again under the write lock with the insert, so parallel sign-ups cannot pass them.
+  Sign-ups wait for the same bounded hasher as logins and get 503 `busy` the same way.
+- **Invites.** `fp-admin invite <username>` mints a single-use link,
   `$PUBLIC_ORIGIN/#/invite/<token>`, valid for 7 days. The person opens it and chooses a password
   (10 to 256 characters). The username is fixed by the invite: 1 to 32 letters, digits, `.`, `_`
   or `-`, unique regardless of case. Inviting a name that already exists fails; use `reset`. `fp-admin reset <username>` mints a
@@ -140,6 +153,7 @@ docker compose exec fitness-api fp-admin revoke-sessions alice
 | `PUBLIC_ORIGIN` | (required) | e.g. `https://fitness.itsa-pizza.com`; checked on writes, used in links |
 | `COOKIE_SECURE` | `true`     | `false` for plain-http local runs; the cookie is then `session`         |
 | `BACKUP_KEEP`   | `7`        | daily copies kept in `$DATA_DIR/backup/`                                |
+| `MAX_USERS`     | `50`       | sign-up closes once this many accounts exist; `0` turns sign-up off     |
 
 ## 7. Backups
 

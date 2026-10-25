@@ -26,6 +26,9 @@ AUTH_STATUS = {
     "password": 400,
     "gone": 410,
     "exists": 409,
+    "email": 400,
+    "closed": 403,
+    "too-many": 429,
 }
 
 
@@ -184,6 +187,17 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         username, password = strings(body, "username", "password")
         try:
             uid = auth.login(conn, config, username, password)
+        except auth.AuthError as e:
+            raise refused(e) from None
+        set_session_cookie(response, auth.create_session(conn, config, uid))
+        name = conn.execute("SELECT username FROM users WHERE id = ?", (uid,)).fetchone()[0]
+        return {"username": name}
+
+    @app.post("/api/auth/signup")
+    def signup(body: Body, response: Response, conn: Conn) -> dict[str, str]:
+        email, password = strings(body, "email", "password")
+        try:
+            uid = auth.signup(conn, config, email, password)
         except auth.AuthError as e:
             raise refused(e) from None
         set_session_cookie(response, auth.create_session(conn, config, uid))

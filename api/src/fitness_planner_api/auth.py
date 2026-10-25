@@ -30,6 +30,10 @@ _WAITING = threading.BoundedSemaphore(MAX_WAITING)
 DAY = 86_400
 MIN_PASSWORD, MAX_PASSWORD = 10, 256
 USERNAME_RE = re.compile(r"[A-Za-z0-9_.-]{1,32}")
+# Printable ASCII, since the name travels in the X-Expected-User header; length checked apart.
+EMAIL_RE = re.compile(r"[!-?A-~]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
+MAX_EMAIL = 254
+HOUR = 3600
 
 LinkKind = Literal["invite", "reset"]
 
@@ -143,6 +147,47 @@ def login(conn: sqlite3.Connection, config: Config, username: str, password: str
     raise AuthError("invalid")
 
 
+def _signup_refusal(conn: sqlite3.Connection, config: Config, now: int) -> AuthError | None:
+    """Why sign-up is shut right now: the account cap, or the hourly limit with its wait."""
+    if conn.execute("SELECT count(*) FROM users").fetchone()[0] >= config.max_users:
+        return AuthError("closed")
+    # Only sign-ups count towards the hour: an invited username never contains `@`.
+    recent = conn.execute(
+        "SELECT created_at FROM users WHERE username LIKE '%@%' AND created_at > ?"
+        " ORDER BY created_at",
+        (now - HOUR,),
+    ).fetchall()
+    if len(recent) >= config.signups_per_hour:
+        first = recent[len(recent) - config.signups_per_hour]["created_at"]
+        return AuthError("too-many", retry_after=first + HOUR - now)
+    return None
+
+
+def signup(conn: sqlite3.Connection, config: Config, email: str, password: str) -> int:
+    """Create an account named by its email, lower-cased; returns the new user's id."""
+    email = email.strip().lower()
+    if len(email) > MAX_EMAIL or not EMAIL_RE.fullmatch(email):
+        raise AuthError("email")
+    if not MIN_PASSWORD <= len(password) <= MAX_PASSWORD:
+        raise AuthError("password")
+    # Checked before the hash so a closed sign-up costs nothing, and again under the write lock.
+    if refusal := _signup_refusal(conn, config, config.clock()):
+        raise refusal
+    password_hash = hash_password(password)
+    now = config.clock()
+    with transaction(conn):
+        if refusal := _signup_refusal(conn, config, now):
+            raise refusal
+        try:
+            cur = conn.execute(
+                "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
+                (email, password_hash, now),
+            )
+        except sqlite3.IntegrityError:
+            raise AuthError("exists") from None
+        return int(cur.lastrowid or 0)
+
+
 def create_session(conn: sqlite3.Connection, config: Config, user_id: int) -> str:
     token = secrets.token_urlsafe(32)
     now = config.clock()
@@ -204,7 +249,8 @@ def set_disabled(conn: sqlite3.Connection, username: str, disabled: bool) -> Non
 
 def mint_link(conn: sqlite3.Connection, config: Config, kind: LinkKind, username: str) -> str:
     """A new invite or reset token; earlier unused links of that kind for the name stop working."""
-    if not USERNAME_RE.fullmatch(username):
+    # Invites name a new user, so the username rule applies; a reset may name a signed-up email.
+    if kind == "invite" and not USERNAME_RE.fullmatch(username):
         raise AuthError("username")
     now = config.clock()
     with transaction(conn):

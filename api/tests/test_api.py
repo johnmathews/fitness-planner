@@ -3,6 +3,7 @@
 import asyncio
 import json
 from collections.abc import MutableMapping
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -221,6 +222,43 @@ def test_login_logout(client: TestClient, config: Config) -> None:
     assert r.status_code == 204
     assert "Max-Age=0" in r.headers["set-cookie"] or "expires=" in r.headers["set-cookie"].lower()
     assert client.get("/api/auth/me").status_code == 401
+
+
+def test_signup_signs_in_by_email(client: TestClient) -> None:
+    r = client.post("/api/auth/signup", json={"email": "Bob@Example.com", "password": PASSWORD})
+    assert (r.status_code, r.json()) == (200, {"username": "bob@example.com"})
+    assert client.get("/api/auth/me").json() == {"username": "bob@example.com"}
+    headers = {"X-Expected-User": "bob@example.com"}
+    assert client.get("/api/state", headers=headers).status_code == 200
+    client.post("/api/auth/logout", json={})
+    r = client.post("/api/auth/login", json={"username": "BOB@example.com", "password": PASSWORD})
+    assert r.json() == {"username": "bob@example.com"}
+
+
+def test_signup_refusals(client: TestClient, config: Config, clock: Clock) -> None:
+    def signup(email: str, password: str = PASSWORD) -> Any:
+        return client.post("/api/auth/signup", json={"email": email, "password": password})
+
+    r = signup("bob")
+    assert (r.status_code, r.json()) == (400, {"error": "email"})
+    r = signup("bob@example.com", "short")
+    assert (r.status_code, r.json()) == (400, {"error": "password"})
+    assert client.post("/api/auth/signup", json={"email": "b@example.com"}).status_code == 400
+    assert signup("bob@example.com").status_code == 200
+    r = signup("BOB@example.com")
+    assert (r.status_code, r.json()) == (409, {"error": "exists"})
+    for i in range(9):
+        assert signup(f"u{i}@example.com").status_code == 200
+    r = signup("late@example.com")
+    assert (r.status_code, r.json()) == (429, {"error": "too-many", "retryAfter": 3600})
+    assert r.headers["retry-after"] == "3600"
+
+
+def test_signup_closed(config: Config) -> None:
+    app = create_app(replace(config, max_users=0), run_backups=False)
+    with TestClient(app, base_url=ORIGIN, headers={"Origin": ORIGIN}) as c:
+        r = c.post("/api/auth/signup", json={"email": "bob@example.com", "password": PASSWORD})
+    assert (r.status_code, r.json()) == (403, {"error": "closed"})
 
 
 def test_logout_without_a_session_is_harmless(client: TestClient) -> None:

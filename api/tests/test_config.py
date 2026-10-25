@@ -12,6 +12,7 @@ def test_reads_the_environment() -> None:
             "PUBLIC_ORIGIN": "https://fitness.example",
             "COOKIE_SECURE": "false",
             "BACKUP_KEEP": "3",
+            "MAX_USERS": "0",
         }
     )
     assert cfg.data_dir == Path("/srv/x")
@@ -20,6 +21,7 @@ def test_reads_the_environment() -> None:
     assert cfg.cookie_secure is False
     assert cfg.cookie_name == "session"
     assert cfg.backup_keep == 3
+    assert cfg.max_users == 0
 
 
 def test_defaults() -> None:
@@ -28,6 +30,7 @@ def test_defaults() -> None:
     assert cfg.cookie_secure is True
     assert cfg.cookie_name == "__Host-session"
     assert cfg.backup_keep == 7
+    assert (cfg.max_users, cfg.signups_per_hour) == (50, 10)
     assert (cfg.session_days, cfg.invite_days, cfg.reset_hours) == (90, 7, 24)
     assert (cfg.lockout_attempts, cfg.lockout_minutes) == (5, 15)
     assert cfg.clock() > 1_700_000_000
@@ -54,3 +57,9 @@ def test_rejects_a_missing_or_malformed_origin(origin: str | None) -> None:
 def test_rejects_an_unclear_boolean(value: str) -> None:
     with pytest.raises(ValueError, match="COOKIE_SECURE"):
         Config.from_env({"PUBLIC_ORIGIN": "https://f.example", "COOKIE_SECURE": value})
+
+
+@pytest.mark.parametrize("value", ["-1", "many"])
+def test_rejects_a_bad_max_users(value: str) -> None:
+    with pytest.raises(ValueError, match="MAX_USERS"):
+        Config.from_env({"PUBLIC_ORIGIN": "https://f.example", "MAX_USERS": value})
