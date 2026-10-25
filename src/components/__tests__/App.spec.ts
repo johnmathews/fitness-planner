@@ -985,12 +985,11 @@ describe('exercise weight', () => {
       .findAll('input')
       .map((i) => edit.get(`label[for="${i.attributes('id')}"]`).text())
     expect(labels).toEqual(['Name', 'Sets', 'Reps', 'Weight in kg', 'Times a week'])
-    // No field is marked optional; only Weight has a hint, saying what leaving it empty means.
-    expect(edit.get('#edit-exercise-sets').attributes('aria-describedby')).toBeUndefined()
-    const weight = edit.get('#edit-exercise-weight')
-    expect(edit.get(`#${weight.attributes('aria-describedby')}`).text()).toBe(
-      'Leave empty for bodyweight.',
-    )
+    // No field is marked optional or has a hint; an empty Weight says "Bodyweight" in grey.
+    for (const id of ['sets', 'weight'])
+      expect(edit.get(`#edit-exercise-${id}`).attributes('aria-describedby')).toBeUndefined()
+    expect(edit.get('#edit-exercise-weight').attributes('placeholder')).toBe('Bodyweight')
+    expect(wrapper.get('#add-exercise-weight').attributes('placeholder')).toBe('Bodyweight')
     const save = edit.findAll('button').find((b) => b.text() === 'Save')!
     expect(save.attributes('type')).toBe('submit')
     expect(save.attributes('form')).toBe(edit.get('form').attributes('id'))

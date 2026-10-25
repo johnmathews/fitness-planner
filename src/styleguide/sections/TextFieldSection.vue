@@ -7,7 +7,7 @@ import StateExample from '../parts/StateExample.vue'
 // Live values, so typing in the examples works as it does in the app.
 const username = ref('')
 const password = ref('')
-const weight = ref('12.5')
+const weight = ref('')
 const repeat = ref('correct-horse')
 </script>
 
@@ -37,13 +37,16 @@ const repeat = ref('correct-horse')
         class="w-full"
       />
     </StateExample>
-    <StateExample state="With a hint; focus (Tab to it)" class="w-full">
+    <StateExample
+      state="Empty, the placeholder says what that means; focus (Tab to it)"
+      class="w-full"
+    >
       <TextField
-        id="sg-text-field-optional"
+        id="sg-text-field-empty"
         v-model="weight"
         label="Weight in kg"
         inputmode="decimal"
-        hint="Leave empty for bodyweight."
+        placeholder="Bodyweight"
         class="w-full"
       />
     </StateExample>

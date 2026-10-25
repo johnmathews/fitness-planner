@@ -40,10 +40,13 @@
   <div class="cell"><p class="caption state">Hover</p>
     <div class="field"><label class="label" for="f3">Name</label>
       <input class="input is-hover" id="f3" value="Push-ups"></div></div>
-  <div class="cell"><p class="caption state">Focus, with a hint</p>
+  <div class="cell"><p class="caption state">Focus, empty: the placeholder says what empty means</p>
     <div class="field"><label class="label" for="f4">Weight in kg</label>
-      <input class="input num is-focus" id="f4" inputmode="decimal" value="12.5" aria-describedby="f4-hint">
-      <p class="caption hint" id="f4-hint">Leave empty for bodyweight.</p></div></div>
+      <input class="input num is-focus" id="f4" inputmode="decimal" placeholder="Bodyweight"></div></div>
+  <div class="cell"><p class="caption state">With a hint</p>
+    <div class="field"><label class="label" for="f6">New password</label>
+      <input class="input" id="f6" type="password" value="correct-horse" aria-describedby="f6-hint">
+      <p class="caption hint" id="f6-hint">At least 10 characters.</p></div></div>
   <div class="cell"><p class="caption state">Error on one field</p>
     <div class="field"><label class="label" for="f5">Repeat password</label>
       <input class="input" id="f5" type="password" value="correct-horse" aria-invalid="true" aria-describedby="f5-err">

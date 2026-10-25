@@ -64,9 +64,8 @@ function save(): void {
         id="edit-exercise-weight"
         :model-value="weight"
         label="Weight in kg"
-        hint="Leave empty for bodyweight."
         inputmode="decimal"
-        placeholder="e.g. 12"
+        placeholder="Bodyweight"
         class="w-44"
         @input="form.onWeightInput"
       />

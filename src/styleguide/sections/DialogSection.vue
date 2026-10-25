@@ -67,7 +67,7 @@ const weight = ref('8')
       v-model="weight"
       label="Weight in kg"
       inputmode="decimal"
-      hint="Leave empty for bodyweight."
+      placeholder="Bodyweight"
     />
     <Stepper
       id="sg-dialog-edit-target"

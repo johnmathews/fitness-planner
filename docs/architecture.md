@@ -264,8 +264,8 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **Exercises are editable.** The handoff had no way to change an exercise after adding it. An
   Edit IconButton (`pencil`) on each exercise row (not foods) opens `EditExerciseDialog`, on the Dialog primitive (Reka UI),
   which traps focus, closes on Escape and returns focus to the button. Sets and
-  weight can be left empty (the weight hint says empty means bodyweight; no field is marked
-  optional), weight in kg; the sets/reps chip and the weight chip are separate so they
+  weight can be left empty (an empty weight shows a grey "Bodyweight" placeholder; no field is
+  marked optional), weight in kg; the sets/reps chip and the weight chip are separate so they
   wrap in the narrow name column.
 - **Steppers mark their bounds** (goal 0/7, daily pick 1/8) with `aria-disabled` and ignore the
   click there. `disabled` would drop keyboard focus mid-press. The store still clamps as a backstop.
