@@ -74,7 +74,7 @@ with `PUBLIC_ORIGIN` set to the dev server's origin. Then create an account at
 ```bash
 cd api && uv sync
 export PUBLIC_ORIGIN=http://localhost:5173 COOKIE_SECURE=false DATA_DIR=./.data
-uv run fp-admin invite you                      # prints http://localhost:5173/#/invite/…
+uv run fp-admin invite you@example.com          # prints http://localhost:5173/#/invite/…
 uv run uvicorn --factory fitness_planner_api.app:create_app_from_env --port 8000
 ```
 
