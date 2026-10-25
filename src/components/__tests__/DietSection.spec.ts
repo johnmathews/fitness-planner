@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
+import { useDietStore } from '@/stores/diet'
+import { usePlannerStore } from '@/stores/planner'
 import { CACHE_PREFIX } from '@/stores/sync'
 import type { FakeApi } from '@/lib/__tests__/fakeApi'
 import { USER, emptyState, signedIn } from '@/lib/__tests__/signedIn'
@@ -58,25 +60,21 @@ describe('DietSection', () => {
         .map((n) => n.text()),
     ).toEqual(['Vegetables', 'Fruit', 'Fish', 'Nuts'])
     expect(diet().findAll('[data-testid="item-detail"]')).toHaveLength(0)
-    expect(diet().get('[role="columnheader"]').text()).toBe('Food')
+    expect(diet().get('[data-slot="grid-label"]').text()).toBe('Food')
     expect(diet().findAll('[data-testid="day-head"]')[4]!.attributes('data-today')).toBe('true')
   })
 
-  it('ticks a food, updating its total and goals met', async () => {
+  it('ticks a food, updating its total', async () => {
     mountApp()
-    const goals = () => wrapper.get('[data-testid="diet-goals-met"]').text()
-    expect(goals()).toBe('0 of 4 goals met')
     await cells('Fish')[0]!.trigger('click')
     await cells('Fish')[2]!.trigger('click')
     expect(cells('Fish')[2]!.attributes('aria-pressed')).toBe('true')
-    const total = diet().findAll('[data-testid="row-total"]')[2]!
-    expect(total.text()).toBe('2 of 2')
-    expect(total.attributes('data-met')).toBe('true')
-    // Foods have no daily pick, so the diet grid has no Picked row (WeekGrid card).
-    expect(diet().findAll('[data-testid="day-count"]')).toHaveLength(0)
-    expect(goals()).toBe('1 of 4 goals met')
+    // The grid shows no total since K33; the store keeps it.
+    const diet = useDietStore()
+    expect(diet.totalFor(diet.foods[2]!.id)).toBe(2)
     // The exercise totals are untouched.
-    expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('0 of 18 this week')
+    const planner = usePlannerStore()
+    expect(planner.totalFor(planner.exercises[0]!.id)).toBe(0)
   })
 
   it('moves with the shared week navigation', async () => {
@@ -126,7 +124,7 @@ describe('DietSection', () => {
     await flushPromises()
     dialog.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }))
     await flushPromises()
-    expect(diet().findAll('[data-testid="row-total"]')[2]!.text()).toBe('0 of 1')
+    expect(useDietStore().foods[2]!.target).toBe(1)
   })
 
   it('adopts another tab’s diet changes', async () => {

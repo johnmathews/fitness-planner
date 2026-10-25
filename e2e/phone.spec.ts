@@ -1,7 +1,8 @@
-// Phone width (375px): nothing scrolls the page sideways, and in the week grid the keyboard never
-// leaves a focused cell under the sticky name column.
+// Phone width (375px): nothing scrolls the page sideways, and the folded week (K26) fits the
+// screen, every cell in view as the keyboard walks it.
 import { expect, test } from '@playwright/test'
 import {
+  callUpBar,
   THEMES,
   expectNoSidewaysScroll,
   openApp,
@@ -44,69 +45,55 @@ test.describe('no sideways scroll at 375px', () => {
   })
 
   test('the app with the confirm-your-email banner', async ({ page }) => {
-    await openApp(page, { view: 'week', unconfirmed: true })
+    await openApp(page, { unconfirmed: true })
     await expect(page.getByTestId('email-status')).toBeVisible()
     await expectNoSidewaysScroll(page)
   })
 
-  test('the app, Today view', async ({ page }) => {
-    await openApp(page, { view: 'today' })
-    await expect(page.locator('[data-slot="today-list"]')).toBeVisible()
-    await expectNoSidewaysScroll(page)
-  })
-
-  test('the app, Week view', async ({ page }) => {
-    await openApp(page, { view: 'week' })
+  test('the app, the folded week', async ({ page }) => {
+    await openApp(page)
     await expect(page.getByTestId('exercise-grid')).toBeVisible()
     await expectNoSidewaysScroll(page)
   })
 
-  test('the app, Week view in Edit plan', async ({ page }) => {
-    await openApp(page, { view: 'week' })
+  test('the app, the folded week in Edit plan', async ({ page }) => {
+    await openApp(page)
+    await callUpBar(page)
     await page.getByRole('switch', { name: /Edit/ }).click()
     await settle(page)
     await expectNoSidewaysScroll(page)
   })
   test('the Settings page', async ({ page }) => {
-    await openApp(page, { view: 'today' })
+    await openApp(page)
+    await callUpBar(page)
     await page.getByRole('button', { name: 'Settings' }).click()
     await page.getByRole('heading', { level: 1, name: 'Settings' }).waitFor()
     await expectNoSidewaysScroll(page)
   })
 })
 
-test('a focused grid cell is never under the sticky name column', async ({ page }) => {
-  await openApp(page, { view: 'week' })
+test('every cell of the folded week is in view as the keyboard walks it', async ({ page }) => {
+  await openApp(page)
   // The skip link lands on today's first mark; then the grid keys (gridNav) walk the week.
   await page.keyboard.press('Tab')
   await page.keyboard.press('Enter')
-  const keys = ['End', 'Home', ...Array<string>(8).fill('ArrowRight'), 'End']
-  keys.push(...Array<string>(8).fill('ArrowLeft'), 'ArrowDown', 'End', 'ArrowUp', 'Home')
+  const keys = ['Home', ...Array<string>(8).fill('ArrowRight'), 'ArrowDown', 'End', 'ArrowUp']
+  keys.push('ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'Home')
 
   const steps: string[] = []
   for (const key of ['(skip link)', ...keys]) {
     if (key !== '(skip link)') await page.keyboard.press(key)
-    // The grid scrolls the focused cell into view on focusin; measure after the next frame.
     await page.evaluate(() => new Promise(requestAnimationFrame))
     const at = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement
-      const grid = el.closest<HTMLElement>('[data-testid$="-grid"]')
-      if (!grid) return { label: `not in a grid: ${el.tagName}`, ok: false }
-      const names = grid.querySelector('thead th')!.getBoundingClientRect()
-      const box = grid.getBoundingClientRect()
+      if (!el.closest('[data-testid$="-grid"]'))
+        return { label: `not in a grid: ${el.tagName}`, ok: false }
       const r = el.getBoundingClientRect()
       const label = el.getAttribute('aria-label') ?? el.textContent!.trim().replace(/\s+/g, ' ')
-      // A name cell is the sticky column itself, so it sits at the grid's left edge.
-      const ok =
-        el.closest('th[scope="row"]') !== null
-          ? Math.round(r.left) === Math.round(box.left)
-          : r.left >= names.right - 0.5 && r.right <= box.right + 0.5
-      return {
-        label: `${label} left=${Math.round(r.left)} names.right=${Math.round(names.right)}`,
-        ok,
-      }
+      const ok = r.left >= -0.5 && r.right <= innerWidth + 0.5 && r.width > 0
+      return { label: `${label} left=${Math.round(r.left)} right=${Math.round(r.right)}`, ok }
     })
-    steps.push(`${key}: ${at.label}${at.ok ? '' : '  <-- under the names or cut off'}`)
+    steps.push(`${key}: ${at.label}${at.ok ? '' : '  <-- off the screen'}`)
   }
   expect(
     steps.filter((s) => s.includes('<--')),

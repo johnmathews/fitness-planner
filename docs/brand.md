@@ -10,7 +10,7 @@
 The brand is **Notebook**: a paper fitness tracker made durable. It borrows the whiteboard's focus
 on now (today and this week get one bold, obvious place), the restraint of Apple Notes, the quality
 of a Moleskine without its nostalgia, and the star chart's mark per session made by hand. Two
-layers keep the tension apart: **Now** (the week, today's band, the phone's Today list) and
+layers keep the tension apart: **Now** (the week filling the screen) and
 **Record** (months and years, quiet and dense). The reasons, goals, anti-goals and the calls K1–K8
 are in the [brand design](specs/2026-10-24-brand-design.md), and the rulings in
 [decisions.md](decisions.md) §4.
@@ -50,14 +50,13 @@ never a control border), `control-border` (inputs, outlined buttons, the day's b
 goals, hints), `error-ink` (form errors) and `focus` (the focus ring). `scrim` dims the page behind a
 dialog.
 
-Five project roles each mean one thing, and nothing else may use them:
+Four project roles each mean one thing, and nothing else may use them:
 
 | Role          | Means                                                                      | Never                      |
 | ------------- | -------------------------------------------------------------------------- | -------------------------- |
 | `pen`         | Great: a day's mark, and a total or figure whose goal is met               | Links, buttons, decoration |
 | `pen-partial` | Partly done: a day's mark                                                  | Over the pick, warnings    |
 | `pen-missed`  | Tried and couldn't: a day's mark                                           | Errors                     |
-| `highlight`   | Today: the neutral band down today's column, and the Today list's heading  | Anything but today         |
 | `caution-ink` | Over the daily pick, always with words and an underline ("4", "one extra") | Errors                     |
 
 The primary action is `ink`, not a brand colour (K8): one colour for "act", the pens for "done".
@@ -78,13 +77,12 @@ K15, K18). The pens are fixed: there is no Ink setting any more.
 | `pen-missed`  | Missed: the box filled  | `#c0392b` | `#ff5c4d` |
 
 `pen` reaches 4.5:1 as text on `canvas` and `panel` (a met total), and `pen` and `pen-missed` reach
-3:1 as a mark on `canvas`, `panel`, `tile` and `highlight` in both themes; the gate measures every
+3:1 as a mark on `canvas`, `panel` and `tile` in both themes; the gate measures every
 pair. `pen-partial` is a sunny marker yellow by the owner's choice (K18): 1.5–1.9:1 on the light
 grounds, below the 3:1 a mark should reach, and above 7:1 in dark. The dark pens are vivid, a grass
 green, a sunflower yellow and a tomato red (K22). The gate holds it to 1.5:1 so it
-can't fade further, and the box drawn over every mark keeps a yellow day findable. Today's band is a
-neutral warm grey (`#ece7dd`, `#34312c` in dark), like masking tape, so the yellow stands out on it
-too; `control-border` went one step darker (`#888175`) to keep the box at 3:1 on it.
+can't fade further, and the box drawn over every mark keeps a yellow day findable. Today has no band
+(K36); `control-border` (`#888175`) keeps the box at 3:1 on every ground.
 `pen-missed` is not `error-ink`: a missed day is a record, not a fault, and `pen-partial` is not
 `caution-ink`.
 
@@ -99,30 +97,29 @@ delicate. Source Serif 4 sets the display date, section titles, the wordmark and
 Source Sans 3 sets everything else, numbers included, with tabular figures (K4: no monospace). Both are
 self-hosted from the Fontsource variable packages, because the CSP allows fonts only from `'self'`.
 
-| Class        | Size and weight                     | Use                                                      |
-| ------------ | ----------------------------------- | -------------------------------------------------------- |
-| `display`    | 44/48 serif 600 (36/40 below 640px) | The week heading, once per screen                        |
-| `title-1`    | 30/36 serif 600                     | Section titles                                           |
-| `title-2`    | 22/28 sans 600                      | Dialog, popover and prompt titles, the Today list's date |
-| `body-large` | 20/28                               | Summary lines, week totals                               |
-| `body`       | 18/26                               | Running text, inputs, buttons, row names                 |
-| `caption`    | 16/22                               | Goals, hints, dates                                      |
-| `label`      | 16/22 600                           | Field labels, day names, chips                           |
-| `note`       | 18/26 serif italic                  | A person's note                                          |
+| Class        | Size and weight                     | Use                                      |
+| ------------ | ----------------------------------- | ---------------------------------------- |
+| `display`    | 44/48 serif 600 (36/40 below 640px) | The week heading, once per screen        |
+| `title-1`    | 30/36 serif 600                     | Section titles                           |
+| `title-2`    | 22/28 sans 600                      | Dialog, popover and prompt titles        |
+| `body-large` | 20/28                               | Summary lines                            |
+| `body`       | 18/26                               | Running text, inputs, buttons, row names |
+| `caption`    | 16/22                               | Goals, hints, dates                      |
+| `label`      | 16/22 600                           | Field labels, day names, chips           |
+| `note`       | 18/26 serif italic                  | A person's note                          |
 
 Labels are sentence case, never uppercase with letter-spacing.
 
 ## 6. The marks
 
-| Mark          | Look                                                              | Also carried by                            |
-| ------------- | ----------------------------------------------------------------- | ------------------------------------------ |
-| Great         | The hand-drawn box filled in `pen`, in a 64px button              | `aria-pressed="true"`                      |
-| Partial       | The box filled in `pen-partial`                                   | `aria-pressed="true"`, "partly done"       |
-| Missed        | The box filled in `pen-missed`                                    | `aria-pressed="true"`, "couldn't do it"    |
-| Empty         | The empty hand-drawn box, about 45px, in `control-border`         | `aria-pressed="false"`                     |
-| Today         | The `highlight` band down the column                              | "today" in the name, `aria-current="date"` |
-| Over the pick | The day's count in `caution-ink`, underlined, "one extra" beneath | The words                                  |
-| Note          | A 10px folded corner in `ink-secondary` (NoteMark)                | "has a note" in the name                   |
+| Mark    | Look                                                      | Also carried by                            |
+| ------- | --------------------------------------------------------- | ------------------------------------------ |
+| Great   | The hand-drawn box filled in `pen`, in a 64px button      | `aria-pressed="true"`                      |
+| Partial | The box filled in `pen-partial`                           | `aria-pressed="true"`, "partly done"       |
+| Missed  | The box filled in `pen-missed`                            | `aria-pressed="true"`, "couldn't do it"    |
+| Empty   | The empty hand-drawn box, about 45px, in `control-border` | `aria-pressed="false"`                     |
+| Today   | Nothing on screen (K36)                                   | "today" in the name, `aria-current="date"` |
+| Note    | A 10px folded corner in `ink-secondary` (NoteMark)        | "has a note" in the name                   |
 
 A marked box is filled with one of three marker drawings, each the outline of the owner's own
 marker ink traced from a photo (K17): an open zigzag, a solid fill and a dense hatch. The drawing
@@ -142,7 +139,7 @@ an exercise great, partial, missed, then empty, and a food great, then empty. Th
 each kind its own shape, so in those sets the kinds no longer rest on colour alone.
 
 Print is the light theme on white paper, from either theme (K16): words, boxes and marks keep their
-light colours, the surfaces and the band go transparent, chips are outlined, "one extra" is kept. Icons are Lucide outline at 1.5px stroke, never Unicode glyphs or emoji. Colour transitions
+light colours, the surfaces go transparent and chips are outlined. Icons are Lucide outline at 1.5px stroke, never Unicode glyphs or emoji. Colour transitions
 last 120ms at most and stop under `prefers-reduced-motion`. Nothing celebrates.
 
 ## 7. Voice
@@ -166,7 +163,9 @@ gate rejects the banned words in
 The tokens reach the app as `src/styles/tokens.css`, generated by `npm run tokens`, and
 `src/styles/main.css` maps each role to a Tailwind utility (`bg-canvas`, `text-ink-secondary`).
 Components are built from the primitives in `src/components/ui/`, which follow the cards, and the
-dev-only `/styleguide` route renders them in both themes.
+dev-only `/styleguide` route renders them in both themes. The planner is a screen per section, the
+week filling each (K24–K27; the PlannerScreen card); main.css's `screen:`, `full:`, `folded:` and
+`short:` variants and its `--u` sizes carry that layout.
 [architecture.md](architecture.md) §6 describes the pipeline, and [development.md](development.md)
 §3 the rules for writing components.
 
@@ -210,7 +209,11 @@ before editing here.
    `src/styleguide/sections.ts`, showing every state from the card.
 4. Publish the card to the artifact as in §9.
 
-The EmailLayout card is the one exception to steps 1 to 3: its preview reverses step 1's rule, with
+PlannerScreen is a layout, not a primitive, so it has no Vue primitive or style guide section.
+Its class lists are `src/lib/screens.ts`, its preview draws the layout live, and the app is where
+it is checked.
+
+The EmailLayout card is the other exception to steps 1 to 3: its preview reverses step 1's rule, with
 the light theme's values written inline and no `var(--token)` (email clients read neither; the gate
 checks it), and an email is not app UI, so it has no Vue primitive or style guide section. Its code is `api/src/fitness_planner_api/emails.py`, which
 writes the card's preview; a test fails when the two differ.
@@ -229,4 +232,5 @@ question gets a folder in `brand/design-system/mockups/<yymmdd>-<slug>/`:
 The design-system skill's `references/mockups.md` has the loop and its commands: `mockup.py new`
 starts one, `mockup.py build` and `render_mockup.mjs` render it at desktop and phone width in both
 themes, and the build is published as a private artifact that John picks from and comments on.
-The first one, `261025-pen-partial-yellow`, records the choice of yellow (K18).
+The first one, `261025-pen-partial-yellow`, records the choice of yellow (K18), and
+`261025-full-screen-week` the full-screen planner (K24–K26).

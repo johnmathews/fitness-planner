@@ -61,7 +61,7 @@ build and coverage output. ESLint also ignores Playwright's `playwright-report/`
 - **Role utilities only.** Colours come from the roles (`bg-canvas`, `text-ink-secondary`,
   `border-control-border`, `text-pen`), never a palette class, a hex value or an arbitrary colour.
   The palette is switched off, so a class such as `bg-red-500` silently draws nothing.
-  [brand.md](brand.md) §3 says what each role means. `pen` is for done, `highlight` for today and
+  [brand.md](brand.md) §3 says what each role means. `pen` is for done and a met day, and
   `caution-ink` for over the pick, nothing else.
 - **Type-style classes for text.** Set text with `display`, `title-1`, `title-2`, `body-large`,
   `body`, `caption`, `label` or `note`, rather than font-size and line-height utilities. The type
@@ -128,13 +128,15 @@ hand.
 clock is fixed to Wednesday 21 October 2026, so every run sees the same week.
 
 - `a11y.spec.ts`: axe (WCAG 2.0–2.2 A and AA plus best practice) on the style guide in both themes,
-  and on the app's (its mocked week holds every kind of mark) week view, Edit plan, open Settings, the phone Today view,
+  and on the app's (its mocked week holds every kind of mark) week view, the bar called up, Edit plan, open Settings, the folded week at 375px,
   sign-in, and create an account (empty and with errors showing), in light and dark; and the focus ring's shape, a solid 2px outline at 2px offset. Two
   "dark really is dark" tests guard the audit: on the style guide and on the app, the `.dark` class
   must be set and `--canvas` must differ from light, so a dark audit can never quietly re-run
   light.
 - `phone.spec.ts`: no sideways scroll at 375px on the style guide, sign-in, create an account, and
-  the Today, Week and Edit plan views, and a focused grid cell never sits under the sticky name column.
+  the folded week and Edit plan, and every cell of the folded week stays on screen as the keyboard
+  walks it. `callUpBar` in `support.ts` brings the navbar into view before a test presses its
+  controls, since on the planner's screens it is out of sight.
 
 CI (`.github/workflows/ci.yml`) runs three jobs on every pull request and every push to `main`.
 `check` runs lint, format, types, unit tests with coverage, the build, the design gate and
@@ -196,14 +198,14 @@ listed in [api.md](api.md) §10):
   listener removed with the scope, and a browser without `matchMedia`.
 - `src/composables/__tests__/gridNav.spec.ts`: the grid keyboard model on a small table: the one
   tab stop (today, the first day, the last cell focused), arrows, Home and End with and without
-  Ctrl, the hidden Picked cell never landed on, Space and Enter left to the DayMark, Edit plan's
+  Ctrl, Space and Enter left to the DayMark, Edit plan's
   controls (Enter or F2 in, Escape out, parked when focus leaves), and rows coming and going.
 - `src/components/ui/__tests__/`: one spec per primitive (Banner, BrandMark, Button, Chip,
   ConfirmDialog, DayMark, Dialog, IconButton, InlineMessage, Popover, SectionHeader,
-  SegmentedControl, StatFigure, Stepper, Switch, TextArea, TextField, TextLink), each checking its
+  SegmentedControl, Stepper, Switch, TextArea, TextField, TextLink), each checking its
   roles, accessible names, sizes, states and the role colours its card names. Examples: an
   IconButton renders nothing without a label, the Popover closes when focus leaves it (F14), the
-  Stepper's limits stay focusable with `aria-disabled`, and a met StatFigure adds a check (F6).
+  Stepper's limits stay focusable with `aria-disabled`.
   `transitions.spec.ts` checks no primitive animates `outline-color`, so the focus ring never fades
   in. `setup.ts` fills the jsdom gaps Reka UI's overlays reach for.
 - `src/styleguide/__tests__/look.spec.ts`: the style guide's theme from the query string, the
@@ -268,14 +270,15 @@ listed in [api.md](api.md) §10):
   empty focusable cell), today (full-date names with "today", `aria-current`, the band), totals
   and section figures ("N of M", a check when met, zero quiet), Edit plan's rows (Edit in the name
   cell, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,
-  arrows, the skip link, Edit plan's controls), headings and print attributes, and the phone width
-  (the sticky names, Edit plan's name column scrolling away, opening scrolled to today).
-- `src/components/__tests__/TodayList.spec.ts`: the phone's Today view (K5): the list on its own
-  (the date on the band, the summary in words, groups and rows, the empty state, toggles by kind
-  and id) and in the app below `sm` (the Today | Week switch, the same store actions as the grid,
-  the remembered view, the breakpoint, another week and Edit plan showing the week, the skip link).
+  arrows, the skip link, the way on to Food, Edit plan's controls), and headings and print
+  attributes. The layouts themselves (filling, folding, the out-of-sight navbar) depend on media
+  queries jsdom doesn't apply, so the e2e suite covers them.
+- `src/components/__tests__/PlannerScreen.spec.ts`: the planner's screens in the mounted app (K24–K27):
+  the `planner-screens` class and Edit plan's sticky bar, the bar from the top edge (a pointer,
+  not a finger), the handle's press and pull, a press elsewhere and Escape hiding it, and the way
+  on to Food.
 - `src/components/__tests__/DietSection.spec.ts`: the diet section in the mounted app: default
-  foods, ticking, row totals and the goals-met figure, shared week navigation, add and remove (after
+  foods, ticking (totals checked in the store), shared week navigation, add and remove (after
   a confirmation) and the goal set in the Edit food dialog (in config mode), cross-tab sync.
 
 `vitest.config.ts` sets coverage thresholds (100% lines and functions, 99% statements, 98%

@@ -6,7 +6,7 @@ The product's name as a mark: the "Fitness Planner" wordmark in Source Serif 4 6
 - Where an inline SVG is impossible (an `<img>`, a document), use the asset files: `fitness-planner-wordmark-ink.svg` (`ink` light value) on light grounds, `fitness-planner-wordmark-light.svg` (`ink` dark value) on dark ones.
 - **Monogram:** "FP" set live in `var(--font-serif)` at 600, in `ink`. 20px in the phone Header, where the wordmark does not fit. On an `ink` square with `on-ink` letters and `radius-md`, it is the app icon and favicon.
 - Clear space: at least the height of the capital "F" on every side. Nothing touches it.
-- Only `ink` (or `on-ink` on an `ink` fill). Never `pen`, `highlight`, a gradient, a shadow, an outline or a tagline beside the wordmark (the cover's tagline sits under the live-text name, not the mark). Never stretch, re-letter or redraw it.
+- Only `ink` (or `on-ink` on an `ink` fill). Never `pen`, a gradient, a shadow, an outline or a tagline beside the wordmark (the cover's tagline sits under the live-text name, not the mark). Never stretch, re-letter or redraw it.
 - "Fitness Planner" is the working name. The name lives in one place in the code, and the wordmark asset is regenerated from type by `scripts/wordmark.py` when it changes.
 
 ## States

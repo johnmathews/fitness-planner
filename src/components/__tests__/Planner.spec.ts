@@ -1,6 +1,6 @@
 /**
- * The planner screen on the design system's marks (W10): the WeekGrid, DayMark, SectionHeader,
- * StatFigure and Chip cards in brand/design-system/project/components/, mounted in the real app.
+ * The planner screen on the design system's marks (W10): the WeekGrid, DayMark, SectionHeader
+ * and Chip cards in brand/design-system/project/components/, mounted in the real app.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DOMWrapper, flushPromises, mount, type VueWrapper } from '@vue/test-utils'
@@ -8,7 +8,6 @@ import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
 import { emptyState, signedIn } from '@/lib/__tests__/signedIn'
 import type { SyncState } from '@/stores/sync'
-import type { Days } from '@/lib/storage'
 
 // Friday 23 October 2026: today is the fifth column; Saturday and Sunday are still to come.
 const NOW = new Date(2026, 9, 23, 18, 0)
@@ -33,16 +32,6 @@ async function mountConfig(cache?: SyncState): Promise<VueWrapper> {
 const ex = () => wrapper.get('[data-testid="exercise-grid"]')
 const diet = () => wrapper.get('[data-testid="diet-grid"]')
 const marks = (name: string) => wrapper.findAll(`button[aria-label^="${name},"]`)
-const counts = () => ex().findAll('[data-testid="day-count"]')
-
-/** A week where Monday has four exercises marked, one over the default pick of three. */
-function overPicked(n = 4): SyncState {
-  const state = emptyState()
-  const on: Days = ['great', null, null, null, null, null, null]
-  const ids = ['pu', 'pl', 'sq', 'be', 'kh'].slice(0, n)
-  state.exercise.log = { [WEEK]: Object.fromEntries(ids.map((id) => [id, [...on]])) }
-  return state
-}
 
 async function settle(): Promise<void> {
   for (let i = 0; i < 4; i++) await new Promise((resolve) => setTimeout(resolve, 0))
@@ -62,48 +51,36 @@ describe('the planner grids (W10)', () => {
     vi.restoreAllMocks()
   })
 
-  describe('the picked row (F3)', () => {
-    it('says "one extra" under a day over the pick, underlined, never by colour alone', () => {
-      mountApp(overPicked(4))
-      const monday = counts()[0]!
-      expect(monday.attributes('data-tone')).toBe('over')
-      expect(monday.get('[data-testid="day-count-figure"]').text()).toBe('4')
-      expect(monday.get('[data-testid="day-count-figure"]').classes()).toEqual(
-        expect.arrayContaining(['text-caution-ink', 'underline']),
-      )
-      expect(monday.get('[data-testid="day-count-extra"]').text()).toBe('one extra')
+  describe('a day that meets the daily pick (K30)', () => {
+    /** Monday with `n` exercises marked, against the default pick of three. */
+    function mondayWith(n: number): SyncState {
+      const state = emptyState()
+      const ids = ['pu', 'pl', 'sq', 'be', 'kh'].slice(0, n)
+      state.exercise.log = {
+        [WEEK]: Object.fromEntries(
+          ids.map((id) => [id, ['great', null, null, null, null, null, null]]),
+        ),
+      }
+      return state
+    }
+
+    it('turns the day green with a check once its marks reach the pick, and says so', () => {
+      mountApp(mondayWith(3))
+      const monday = ex().findAll('[data-testid="day-head"]')[0]!
+      expect(monday.attributes('data-met')).toBe('true')
+      expect(monday.find('[data-slot="met-mark"]').exists()).toBe(true)
+      expect(monday.text()).toContain('daily goal met')
+      // The rest of the week, and the Food grid, stay as they are.
+      expect(ex().findAll('[data-testid="day-head"]')[1]!.attributes('data-met')).toBeUndefined()
+      expect(diet().find('[data-testid="day-head"][data-met]').exists()).toBe(false)
     })
 
-    it('writes the amount over in words', () => {
-      mountApp(overPicked(5))
-      expect(counts()[0]!.get('[data-testid="day-count-extra"]').text()).toBe('two extra')
-    })
-
-    it('shows the pick at weight 600 in ink, under it quiet, and an en dash for days to come', () => {
-      mountApp(overPicked(3))
-      const [monday, tuesday] = counts()
-      expect(monday!.attributes('data-tone')).toBe('met')
-      expect(monday!.text()).toBe('3')
-      expect(monday!.find('[data-testid="day-count-extra"]').exists()).toBe(false)
-      expect(tuesday!.attributes('data-tone')).toBe('under')
-      expect(tuesday!.text()).toBe('0')
-      // Saturday: nothing marked yet, and it hasn't happened.
-      const saturday = counts()[5]!
-      expect(saturday.attributes('data-tone')).toBe('future')
-      expect(saturday.get('[aria-hidden="true"]').text()).toBe('–')
-      expect(saturday.get('.sr-only').text()).toBe('Not yet')
-    })
-
-    it('names the row "Picked" with the pick as its caption, and leaves no empty focusable cell', () => {
-      mountApp()
-      const row = ex().get('tfoot tr')
-      expect(row.get('[role="rowheader"]').text()).toBe('Picked3 a day')
-      const cells = row.findAll('td')
-      expect(cells).toHaveLength(8)
-      const week = cells.at(-1)!
-      expect(week.text()).toBe('')
-      expect(week.attributes('aria-hidden')).toBe('true')
-      expect(week.attributes('tabindex')).toBeUndefined()
+    it('stays plain below the pick, and turns when a press reaches it', async () => {
+      mountApp(mondayWith(2))
+      const monday = () => ex().findAll('[data-testid="day-head"]')[0]!
+      expect(monday().attributes('data-met')).toBeUndefined()
+      await marks('Squats')[0]!.trigger('click')
+      expect(monday().attributes('data-met')).toBe('true')
     })
   })
 
@@ -117,24 +94,14 @@ describe('the planner grids (W10)', () => {
       expect(squats[0]!.attributes('aria-current')).toBeUndefined()
     })
 
-    it('marks today’s column header, and puts the band on today’s cells only', () => {
+    it('marks today’s column header for a screen reader, with no band on screen (K36)', () => {
       mountApp()
       const heads = ex().findAll('[data-testid="day-head"]')
       expect(heads[4]!.attributes('aria-current')).toBe('date')
-      expect(heads[4]!.text()).toBe('Fri23, today')
+      expect(heads[4]!.text()).toBe('Fri 23, today')
       expect(heads[3]!.attributes('aria-current')).toBeUndefined()
-      expect(heads[0]!.text()).toBe('Mon19')
-      const cells = ex().findAll('tbody tr')[0]!.findAll('td')
-      expect(cells.map((c) => c.classes().includes('bg-highlight'))).toEqual([
-        false,
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-      ])
+      expect(heads[0]!.text()).toBe('Mon 19')
+      expect(ex().html()).not.toContain('bg-highlight')
     })
 
     it('draws each mark in its own pen in the box, and an empty box when not marked', async () => {
@@ -152,44 +119,8 @@ describe('the planner grids (W10)', () => {
     })
   })
 
-  describe('totals (F6, F13)', () => {
-    it('writes a row total as "N of M", and marks a met one with more than colour', async () => {
-      mountApp()
-      const total = () => ex().findAll('[data-testid="row-total"]')[3]!
-      expect(total().text()).toBe('0 of 3')
-      expect(total().find('[data-slot="met-mark"]').exists()).toBe(false)
-      for (const i of [0, 1, 2]) await marks('Back extensions')[i]!.trigger('click')
-      expect(total().text()).toBe('3 of 3')
-      expect(total().attributes('data-met')).toBe('true')
-      expect(total().find('[data-slot="met-mark"]').exists()).toBe(true)
-    })
-
-    it('starts a fresh week’s figures quiet, never in pen (F13)', () => {
-      mountApp()
-      const exercises = wrapper.get('[data-testid="grand-total"]')
-      expect(exercises.text()).toBe('0 of 18 this week')
-      expect(exercises.attributes('data-state')).toBe('zero')
-      expect(exercises.html()).not.toContain('text-pen')
-      const foods = wrapper.get('[data-testid="diet-goals-met"]')
-      expect(foods.text()).toBe('0 of 4 goals met')
-      expect(foods.attributes('data-state')).toBe('zero')
-      expect(foods.html()).not.toContain('text-pen')
-    })
-
-    it('marks a met section figure with a check as well as the pen (F6)', async () => {
-      const state = emptyState()
-      state.diet.plans = { [WEEK]: [{ id: 'fish', name: 'Fish', target: 1 }] }
-      state.diet.log = { [WEEK]: { fish: ['great', null, null, null, null, null, null] } }
-      mountApp(state)
-      const foods = wrapper.get('[data-testid="diet-goals-met"]')
-      expect(foods.text()).toBe('1 of 1 goals met')
-      expect(foods.attributes('data-state')).toBe('met')
-      expect(foods.find('[data-slot="met-mark"]').exists()).toBe(true)
-    })
-  })
-
   describe('rows', () => {
-    it('shows the chips in the card’s words, and the goal only in the week total', () => {
+    it('shows the chips in the card’s words, and no goal or total on the row (K33)', () => {
       mountApp()
       const row = ex()
         .findAll('[role="rowheader"]')
@@ -198,9 +129,7 @@ describe('the planner grids (W10)', () => {
         '8 each side',
       ])
       expect(row.text()).not.toContain('a week')
-      expect(
-        row.element.closest('tr')!.querySelector('[data-testid="row-total"]')!.textContent,
-      ).toBe('0 of 3')
+      expect(ex().find('[data-testid="row-total"]').exists()).toBe(false)
     })
 
     it('puts edit in the row header and remove at the end of the row, as IconButtons (F28)', async () => {
@@ -216,16 +145,9 @@ describe('the planner grids (W10)', () => {
       expect(last.getAttribute('role')).toBe('gridcell')
       expect(last.contains(remove.element)).toBe(true)
       expect(last.hasAttribute('data-noprint')).toBe(true)
-      // Its column has a header for screen readers, and the Picked row an empty, hidden cell.
+      // Its column has a header for screen readers.
       const heads = ex().findAll('thead th')
       expect(heads.at(-1)!.text()).toBe('Remove')
-      expect(ex().get('tfoot tr').element.lastElementChild!.getAttribute('aria-hidden')).toBe(
-        'true',
-      )
-      // The total column holds only the total.
-      expect(ex().findAll('[data-testid="row-total"]')[2]!.element.closest('td')!.textContent).toBe(
-        '0 of 4',
-      )
       // Foods are the same: edit after the name, remove at the end.
       const food = diet().get('button[aria-label="Remove Fish"]').element.closest('tr')!
       expect(food.lastElementChild!.contains(food.querySelector('[data-action="remove"]'))).toBe(
@@ -237,7 +159,7 @@ describe('the planner grids (W10)', () => {
     it('drops the Remove column outside Edit plan', async () => {
       await mountConfig()
       await wrapper.get('button[role="switch"]').trigger('click')
-      expect(ex().findAll('thead th').at(-1)!.text()).toBe('Week')
+      expect(ex().findAll('thead th').at(-1)!.text()).toBe('Sun 25')
       expect(ex().find('button[aria-label^="Remove"]').exists()).toBe(false)
     })
 
@@ -312,7 +234,7 @@ describe('the planner grids (W10)', () => {
         [diet(), 'Vegetables, Friday 23 October, today'],
       ]
       for (const [grid, today] of grids) {
-        expect(grid.get('table').attributes('role')).toBe('grid')
+        expect(grid.element.matches('table[role="grid"]')).toBe(true)
         expect(grid.findAll('[role="gridcell"]').length).toBeGreaterThan(0)
         expect(grid.find('[role="cell"]').exists()).toBe(false)
         const stops = tabStops().filter((el) => grid.element.contains(el))
@@ -320,7 +242,7 @@ describe('the planner grids (W10)', () => {
       }
     })
 
-    it('stops on the skip link, the Header, then each grid once', () => {
+    it('stops on the skip link, the Header, then each grid once, with the way on between', () => {
       mountApp()
       expect(tabStops().map(name)).toEqual([
         'Skip to today',
@@ -330,6 +252,8 @@ describe('the planner grids (W10)', () => {
         'Settings',
         'Print…',
         'Push-ups, Friday 23 October, today',
+        // The PlannerScreen's way on to the Food screen (K25); the handle is for a finger only.
+        'Food',
         'Vegetables, Friday 23 October, today',
       ])
     })
@@ -342,16 +266,15 @@ describe('the planner grids (W10)', () => {
       await press('ArrowDown')
       expect(name(focused())).toBe('Pull-ups, Saturday 24 October')
       await press('End')
-      expect(focused().textContent).toBe('0 of 4')
-      expect(focused().getAttribute('role')).toBe('gridcell')
+      expect(name(focused())).toBe('Pull-ups, Sunday 25 October')
       await press('Home')
       expect(focused().getAttribute('role')).toBe('rowheader')
       expect(focused().textContent).toContain('Pull-ups')
       // The tab stop follows, so Tab comes back to the last cell used.
       expect(tabStops().filter((el) => ex().element.contains(el))).toEqual([focused()])
       await press('End', { ctrlKey: true })
-      expect(focused().closest('tfoot')).not.toBeNull()
-      expect(focused().textContent).toContain('Not yet')
+      // The last cell of the grid: the last row's Sunday.
+      expect(name(focused())).toMatch(/, Sunday 25 October$/)
     })
 
     it('toggles a day on Space or Enter only through its DayMark, as a button', async () => {
@@ -390,9 +313,8 @@ describe('the planner grids (W10)', () => {
       mountApp(state)
       const skip = wrapper.get('a[data-testid="skip-to-today"]')
       await skip.trigger('click')
-      expect(focused().getAttribute('role')).toBe('rowheader')
-      expect(focused().textContent).toContain('Picked')
-      ;(document.activeElement as HTMLElement).blur()
+      // A week with no rows has no cell to land on, so focus stays where it was.
+      expect(document.activeElement).toBe(document.body)
       await wrapper.get('button[aria-label="Previous week"]').trigger('click')
       await flushPromises()
       await skip.trigger('click')
@@ -446,128 +368,6 @@ describe('the planner grids (W10)', () => {
       const block = diet().element.closest('[data-print-keep]')!
       expect(block.contains(header)).toBe(true)
       expect(block.classList).toContain('print:break-inside-avoid')
-    })
-  })
-
-  describe('the phone width (F1, W12)', () => {
-    /** The name cells: the hidden header, each row's name and the Picked row's. */
-    const nameCells = (grid: ReturnType<typeof ex>) => [
-      grid.get('thead th'),
-      ...grid.findAll('[role="rowheader"]'),
-    ]
-    const scroller = (grid: ReturnType<typeof ex>) => grid.element as HTMLElement
-
-    it('keeps the names stuck at the left on the canvas, and focus clear of them', () => {
-      mountApp()
-      for (const grid of [ex(), diet()]) {
-        for (const cell of nameCells(grid)) {
-          expect(cell.classes()).toEqual(
-            expect.arrayContaining(['sticky', 'left-0', 'z-10', 'bg-canvas']),
-          )
-        }
-        expect(grid.classes()).toEqual(expect.arrayContaining(['scroll-pl-34', 'sm:scroll-pl-50']))
-      }
-    })
-
-    it('lets Edit plan’s wide name column scroll away instead of filling a phone', async () => {
-      await mountConfig()
-      for (const cell of nameCells(ex())) expect(cell.classes()).not.toContain('sticky')
-      expect(ex().classes()).not.toContain('scroll-pl-34')
-    })
-
-    it('scrolls a focused cell wholly into view, clear of the names, but not a name itself', () => {
-      // Chrome's own focus scroll leaves a half-visible cell where it is, even under the names;
-      // scrollIntoView honours the scroller's scroll-padding-left.
-      const reveal = vi.fn<(arg?: boolean | ScrollIntoViewOptions) => void>()
-      const own = Element.prototype.scrollIntoView
-      Element.prototype.scrollIntoView = reveal
-      try {
-        mountApp()
-        ;(marks('Squats')[2]!.element as HTMLElement).focus()
-        expect(reveal).toHaveBeenCalledTimes(1)
-        expect(reveal.mock.instances[0]).toBe(marks('Squats')[2]!.element)
-        expect(reveal).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' })
-        ;(
-          ex().findAll('[data-testid="row-total"]')[0]!.element.closest('td') as HTMLElement
-        ).focus()
-        expect(reveal).toHaveBeenCalledTimes(2)
-        ;(ex().get('tbody [role="rowheader"]').element as HTMLElement).focus()
-        expect(reveal).toHaveBeenCalledTimes(2)
-      } finally {
-        if (own) Element.prototype.scrollIntoView = own
-        else Reflect.deleteProperty(Element.prototype, 'scrollIntoView')
-      }
-    })
-
-    describe('opening scrolled to today', () => {
-      // jsdom has no layout: a 136px name column, 56px days, and a scroller that keeps its offset.
-      const NAME = 136
-      const DAY = 56
-      beforeEach(() => {
-        Object.defineProperty(HTMLTableCellElement.prototype, 'offsetWidth', {
-          configurable: true,
-          get(this: HTMLTableCellElement) {
-            return this.cellIndex === 0 ? NAME : DAY
-          },
-        })
-        Object.defineProperty(HTMLTableCellElement.prototype, 'offsetLeft', {
-          configurable: true,
-          get(this: HTMLTableCellElement) {
-            return this.cellIndex === 0 ? 0 : NAME + (this.cellIndex - 1) * DAY
-          },
-        })
-        Object.defineProperty(HTMLDivElement.prototype, 'scrollLeft', {
-          configurable: true,
-          get(this: HTMLDivElement & { left?: number }) {
-            return this.left ?? 0
-          },
-          set(this: HTMLDivElement & { left?: number }, value: number) {
-            this.left = value
-          },
-        })
-      })
-      afterEach(() => {
-        Reflect.deleteProperty(HTMLTableCellElement.prototype, 'offsetWidth')
-        Reflect.deleteProperty(HTMLTableCellElement.prototype, 'offsetLeft')
-        Reflect.deleteProperty(HTMLDivElement.prototype, 'scrollLeft')
-      })
-
-      it('puts the day before today beside the names, so today is in view', async () => {
-        mountApp()
-        await flushPromises()
-        // Friday is today: Thursday sits next to the names, three days in.
-        expect(scroller(ex()).scrollLeft).toBe(3 * DAY)
-        expect(scroller(diet()).scrollLeft).toBe(3 * DAY)
-      })
-
-      it('starts another week at Monday, and comes back to today', async () => {
-        mountApp()
-        await flushPromises()
-        await wrapper.get('button[aria-label="Previous week"]').trigger('click')
-        await flushPromises()
-        expect(scroller(ex()).scrollLeft).toBe(0)
-        await wrapper.get('button[aria-label="Next week"]').trigger('click')
-        await flushPromises()
-        expect(scroller(ex()).scrollLeft).toBe(3 * DAY)
-      })
-
-      it('opens Edit plan at the start, where the names and their controls are, and back', async () => {
-        mountApp()
-        await flushPromises()
-        await wrapper.get('button[role="switch"]').trigger('click')
-        await flushPromises()
-        expect(scroller(ex()).scrollLeft).toBe(0)
-        await wrapper.get('button[role="switch"]').trigger('click')
-        await flushPromises()
-        expect(scroller(ex()).scrollLeft).toBe(3 * DAY)
-      })
-
-      it('leaves a Monday at the start, the names beside it', async () => {
-        vi.setSystemTime(new Date(2026, 9, 19, 9, 0))
-        mountApp()
-        await flushPromises()
-        expect(scroller(ex()).scrollLeft).toBe(0)
-      })
     })
   })
 })

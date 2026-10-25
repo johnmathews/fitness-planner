@@ -21,9 +21,8 @@
     "DayMark",
     "WeekGrid",
     "SectionHeader",
-    "StatFigure",
     "Chip",
-    "TodayList",
+    "PlannerScreen",
     "NoteMark",
     "NoteEditor",
     "YearStrip",
@@ -34,31 +33,6 @@
   ],
   "extra_contrast_pairs": [
     [
-      "pen",
-      "highlight",
-      3.0
-    ],
-    [
-      "ink",
-      "highlight",
-      4.5
-    ],
-    [
-      "ink-secondary",
-      "highlight",
-      4.5
-    ],
-    [
-      "control-border",
-      "highlight",
-      3.0
-    ],
-    [
-      "focus",
-      "highlight",
-      3.0
-    ],
-    [
       "caution-ink",
       "canvas",
       4.5
@@ -66,11 +40,6 @@
     [
       "caution-ink",
       "panel",
-      4.5
-    ],
-    [
-      "caution-ink",
-      "highlight",
       4.5
     ],
     [
@@ -110,11 +79,6 @@
     ],
     [
       "pen-partial",
-      "highlight",
-      1.5
-    ],
-    [
-      "pen-partial",
       "tile",
       1.5
     ],
@@ -126,11 +90,6 @@
     [
       "pen-missed",
       "panel",
-      3.0
-    ],
-    [
-      "pen-missed",
-      "highlight",
       3.0
     ],
     [

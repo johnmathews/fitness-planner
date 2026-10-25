@@ -18,7 +18,7 @@ A small quiet tag under an exercise name that says how much: sets × reps or tim
   | nothing | no chip (not a dash) |
 
 - Use the multiplication sign "×" with spaces, never "x" or "*". Figures, not words: chips are data.
-- In WeekGrid and TodayList the chips sit on the line under the name.
+- In WeekGrid the chips sit on the line under the name. Folded, they share the name's line.
 - Never the `pen` colour, never a colour per exercise type, never clickable. A chip is information, not a filter or a button.
 - **Print:** the fill drops and a 1px rule outlines the chip, so it survives black-and-white printing.
 

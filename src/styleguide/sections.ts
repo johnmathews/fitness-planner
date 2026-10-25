@@ -18,10 +18,8 @@ import InlineMessageSection from './sections/InlineMessageSection.vue'
 import BannerSection from './sections/BannerSection.vue'
 import DayMarkSection from './sections/DayMarkSection.vue'
 import ChipSection from './sections/ChipSection.vue'
-import StatFigureSection from './sections/StatFigureSection.vue'
 import SectionHeaderSection from './sections/SectionHeaderSection.vue'
 import WeekGridSection from './sections/WeekGridSection.vue'
-import TodayListSection from './sections/TodayListSection.vue'
 
 /**
  * One section of the style guide. StyleGuide.vue renders each as
@@ -178,31 +176,17 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     component: ChipSection,
   },
   {
-    id: 'sg-stat-figure',
-    title: 'StatFigure',
-    summary:
-      'The one strong number in a section: a figure and the words that say what it counts, in pen once the goal is met.',
-    component: StatFigureSection,
-  },
-  {
     id: 'sg-section-header',
     title: 'SectionHeader',
     summary:
-      'The heading over a WeekGrid: the section’s name in serif, one line of hint, and the section’s one StatFigure.',
+      'The heading over a WeekGrid: the section’s name in serif, the week beside it, and an optional line of hint.',
     component: SectionHeaderSection,
   },
   {
     id: 'sg-week-grid',
     title: 'WeekGrid',
     summary:
-      'One week, Monday to Sunday, as a grid: a row per exercise or food, a DayMark per day, the week’s total at the end of each row, and for exercises a picked row that counts each day against the daily pick.',
+      'One week, Monday to Sunday, as a grid: a row per exercise or food, a DayMark per day, and the week’s total at the end of each row.',
     component: WeekGridSection,
-  },
-  {
-    id: 'sg-today-list',
-    title: 'TodayList',
-    summary:
-      'The phone’s first view: today’s exercises and foods as one list, each with a single DayMark, under the day’s heading and a one-line summary.',
-    component: TodayListSection,
   },
 ]

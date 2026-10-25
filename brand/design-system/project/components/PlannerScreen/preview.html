@@ -1,0 +1,509 @@
+<!-- @dsCard group="Planner" height=1180 subtitle="Exercises and Food a screen each, the scroll snapping, the bar out of sight: a desktop and a phone held upright" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PlannerScreen — preview</title>
+<style>
+  body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .variant { margin: 0 0 var(--space-3); color: var(--ink-secondary); }
+  .gap { height: var(--space-8); }
+  /* A device: the screen at its real size in pixels, scaled to the card (the script sets the scale). */
+  .device { position: relative; width: 100%; }
+  .device > .fs { position: absolute; top: 0; left: 0; transform-origin: 0 0; border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .device.phone { max-width: 300px; }
+  .device.phone > .fs { border-radius: 28px; border-width: 2px; }
+  @media (max-width: 639px) { body { padding: var(--space-4); } }
+/*
+  The full-screen planner, as a prototype. One frame (.fs) is one screen: a desktop, an iPad, a
+  phone. Every size comes from the frame's own width and height (container units), so the same
+  markup fills a 1440×900 desktop, a 390×844 phone and a scaled-down picture of either.
+  Colours, fonts and type come from the system's tokens; the proposed sizes are --candidate-*.
+*/
+.fs {
+  position: relative; overflow: hidden; box-sizing: border-box;
+  container: fs / size;
+  background: var(--canvas); color: var(--ink);
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+  /* The scale: 1 on a 1280×800 screen, up to 1.6 on a large one, never below 0.75. Read where
+     it is used, so the container units measure the frame. */
+  --candidate-u: clamp(0.75px, min(calc(100cqw / 1280), calc(100cqh / 800)), 1.6px);
+  --u: var(--candidate-u);
+  /* Proposed sizes at u = 1. The type grows with the screen, never below the system's 16px. */
+  --candidate-pad: calc(var(--u) * 48);
+  --candidate-title: calc(var(--u) * 40);
+  --candidate-name: max(18px, calc(var(--u) * 24));
+  --candidate-chip: max(16px, calc(var(--u) * 17));
+  --candidate-day: max(16px, calc(var(--u) * 20));
+  --candidate-figure: max(18px, calc(var(--u) * 26));
+  --candidate-name-col: calc(var(--u) * 280);
+  --candidate-week-col: calc(var(--u) * 150);
+}
+.fs *, .fs *::before, .fs *::after { box-sizing: border-box; }
+.fs button { font: inherit; color: inherit; }
+.fs .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fs :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ---- The screens: one section per screen, the scroll snapping to each. ---- */
+.fs .scroller { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain;
+  scroll-snap-type: y mandatory; scrollbar-width: none; }
+.fs .scroller::-webkit-scrollbar { display: none; }
+.fs .screen { position: relative; min-height: 100cqh; scroll-snap-align: start;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: calc(var(--u) * 28) var(--candidate-pad) calc(var(--u) * 20); }
+
+/* The heading line: the section's name and week, its one figure at the right. */
+.fs .head { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 24px;
+  flex-wrap: wrap; padding-bottom: calc(var(--u) * 20); }
+.fs .head h2 { margin: 0; font: 600 var(--candidate-title) / 1.15 var(--font-serif); }
+.fs .head .wk { margin-left: calc(var(--u) * 16); font: 400 var(--candidate-day) / 1.3 var(--font-sans); color: var(--ink-secondary); }
+.fs .stat { margin: 0; display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.fs .stat .fig { font-size: var(--candidate-figure); line-height: 1.2; font-weight: 600; }
+.fs .stat .rest { font-size: max(18px, calc(var(--u) * 22)); color: var(--ink-secondary); }
+.fs .stat.met .fig { color: var(--pen); }
+.fs .stat.zero .fig { color: var(--ink-secondary); font-weight: 400; }
+.fs .check { display: inline-block; width: 0.8em; height: 0.8em; margin-left: 4px; color: var(--pen); vertical-align: -0.05em; }
+
+/* ---- The week grid, filling what the heading leaves. ---- */
+.fs .grid { flex: 1 1 auto; min-height: 0; display: grid;
+  grid-template-columns: var(--candidate-name-col) repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto repeat(var(--rows), minmax(56px, 1fr));
+  /* Rows stop at 1.25 × a day's width, so a tall screen centres the week instead of stretching it. */
+  max-height: calc(var(--rows) * (100cqw - 2 * var(--candidate-pad) - var(--candidate-name-col)) / 7 * 1.25 + var(--u) * 240); }
+.fs .grid > * { min-width: 0; }
+.fs .hd { display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding: calc(var(--u) * 12) 0; border-bottom: 1px solid var(--ink); }
+.fs .hd .dn { font-size: var(--candidate-day); line-height: 1.25; font-weight: 600; }
+.fs .hd .dt { font-size: max(16px, calc(var(--u) * 18)); line-height: 1.3; color: var(--ink-secondary); }
+.fs .hd.today .dt { color: var(--ink); font-weight: 600; }
+.fs .hd.corner { align-items: flex-start; justify-content: flex-end; }
+.fs .hd.wkh { color: var(--ink-secondary); font-size: var(--candidate-day); font-weight: 600; justify-content: center; }
+/* No band for today (K36). */
+.fs .nm, .fs .d, .fs .tot { border-bottom: 1px solid var(--line); }
+.fs .nm { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding-right: 12px; }
+.fs .nm .n { font-size: var(--candidate-name); line-height: 1.25; font-weight: 600; overflow-wrap: anywhere; }
+.fs .chips { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.fs .chip { font-size: var(--candidate-chip); line-height: 1.35; font-weight: 600; background: var(--tile); color: var(--ink-secondary);
+  border-radius: var(--radius-sm); padding: 0 8px; white-space: nowrap; }
+.fs .tot { display: flex; align-items: center; justify-content: center; white-space: nowrap; font-size: max(18px, calc(var(--u) * 24)); }
+.fs .tot .fig { font-weight: 600; font-size: var(--candidate-figure); }
+.fs .tot .fig.met { color: var(--pen); }
+.fs .tot .of { color: var(--ink-secondary); margin-left: 0.25em; }
+
+/* A day: its own size container, so the box (--candidate) takes 86% of the cell's shorter side, up to 128px. */
+.fs .d { container-type: size; display: grid; place-items: center; }
+.fs .mark { display: grid; place-items: center; width: min(86cqw, 86cqh, 128px);
+  aspect-ratio: 1; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; cursor: pointer; touch-action: manipulation; }
+.fs .mark svg { width: 94%; height: 94%; overflow: visible; }
+.fs .mark .bx { stroke: var(--control-border); }
+.fs .mark:not([data-mark]):hover .bx { stroke: var(--ink); }
+.fs .mark[data-mark="great"] .ink { fill: var(--pen); }
+.fs .mark[data-mark="partial"] .ink { fill: var(--pen-partial); }
+.fs .mark[data-mark="missed"] .ink { fill: var(--pen-missed); }
+.fs .mark .sym { stroke: var(--canvas); }
+@media (prefers-reduced-motion: no-preference) { .fs .mark .bx, .fs .mark .ink { transition: stroke 120ms, fill 120ms; } }
+
+/* The Picked row. */
+.fs .pk { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: calc(var(--u) * 14) 2px; }
+.fs .pk .fig { font-size: max(18px, calc(var(--u) * 24)); line-height: 1.3; font-weight: 600; }
+.fs .pk .fig.under { color: var(--ink-secondary); font-weight: 400; }
+.fs .pk .fig.over { color: var(--caution-ink); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.fs .pk .extra { font-size: 16px; line-height: 22px; color: var(--caution-ink); }
+.fs .pk.lbl { align-items: flex-start; padding-left: 0; }
+.fs .pk.lbl .n { font-size: var(--candidate-name); line-height: 1.25; }
+.fs .pk.lbl .g { font-size: var(--candidate-chip); color: var(--ink-secondary); }
+
+/* A short screen (a phone on its side): the title sits in the grid's corner. */
+.fs .corner h2 { margin: 0; font: 600 var(--candidate-title) / 1.1 var(--font-serif); }
+.fs .corner .wk { font-size: max(16px, calc(var(--u) * 18)); color: var(--ink-secondary); line-height: 1.3; }
+.fs .corner .stat { margin-top: 4px; }
+.fs .corner .stat .fig { font-size: max(18px, calc(var(--u) * 22)); }
+.fs .corner .stat .rest { font-size: max(16px, calc(var(--u) * 18)); }
+
+/* The way on: "Food" and an arrow at the foot of the first screen. */
+.fs .cue { align-self: center; display: inline-flex; align-items: center; gap: 6px; margin-top: calc(var(--u) * 10);
+  min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--radius-md); background: transparent;
+  color: var(--ink-secondary); font-size: max(16px, calc(var(--u) * 18)); font-weight: 600; cursor: pointer; }
+.fs .cue:hover { background: var(--tile); color: var(--ink); }
+.fs .cue svg { width: 20px; height: 20px; }
+
+/* ---- The bar: the Header card, out of sight until it is wanted. ---- */
+.fs .bar { position: absolute; z-index: 20; top: 0; left: 0; right: 0;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px 16px;
+  min-height: 56px; padding: 4px var(--candidate-pad); background: var(--canvas); border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow-overlay); transform: translateY(-105%); visibility: hidden; }
+@media (prefers-reduced-motion: no-preference) { .fs .bar { transition: transform 160ms ease-out, visibility 160ms; } }
+.fs[data-bar="shown"] .bar, .fs .bar:focus-within { transform: none; visibility: visible; }
+.fs .bar .wordmark { display: block; height: 20px; width: auto; fill: var(--ink); justify-self: start; }
+.fs .bar .wordmark { height: 20px; }
+.fs .bar .start { justify-self: start; }
+.fs .bar .end { justify-self: end; display: flex; align-items: center; gap: 8px; }
+.fs .bar .week { display: flex; align-items: center; }
+.fs .bar .week-label { min-width: 116px; padding-inline: 8px; text-align: center; font: 600 16px/24px var(--font-sans); white-space: nowrap; }
+.fs .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0;
+  border-radius: var(--radius-md); background: transparent; color: var(--ink); cursor: pointer; }
+.fs .icon-btn svg { width: 20px; height: 20px; }
+.fs .icon-btn:hover, .fs .btn:hover, .fs .switch:hover { background: var(--tile); }
+.fs .btn { display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border: 0; border-radius: var(--radius-md);
+  background: transparent; color: var(--ink); font: 600 14px/20px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.fs .switch { display: inline-flex; align-items: center; gap: 12px; height: 44px; padding: 0 8px; border: 0; border-radius: var(--radius-md);
+  background: transparent; color: var(--ink); font: 400 16px/24px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.fs .track { position: relative; flex: none; width: 40px; height: 24px; border: 1px solid var(--control-border); border-radius: var(--radius-full); }
+.fs .thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: var(--radius-full); background: var(--ink-secondary); }
+.fs .seg { display: inline-flex; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+.fs .seg button { height: 42px; padding: 0 16px; border: 0; border-radius: var(--radius-sm); background: transparent; font: 600 14px/20px var(--font-sans); cursor: pointer; }
+.fs .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
+
+/* The pointer's way in: a strip along the top edge (a desktop, a trackpad on an iPad). */
+.fs .hot { position: absolute; z-index: 19; top: 0; left: 0; right: 0; height: 14px; }
+.fs[data-input="touch"] .hot { display: none; }
+/* The finger's way in: a handle at the top centre. Press it, or pull it down. */
+.fs .grab { position: absolute; z-index: 19; top: 0; left: 50%; transform: translateX(-50%); display: none;
+  width: 88px; height: 28px; padding: 0; border: 0; background: transparent; cursor: pointer; touch-action: none; }
+.fs .grab span { display: block; width: 40px; height: 5px; margin: 8px auto 0; border-radius: 3px; background: var(--control-border); }
+.fs[data-input="touch"] .grab { display: block; }
+
+/* ---- Phone, held upright ---- */
+.fs[data-layout="narrow"] { --candidate-pad: 16px;
+  /* The narrow scale: 1 on a phone, up to 1.4 on an iPad held upright. */
+  --candidate-n: clamp(1px, calc(100cqw / 600), 1.4px); --n: var(--candidate-n); }
+.fs[data-layout="narrow"] .screen { padding: calc(var(--n) * 34) calc(var(--n) * 16) 12px; justify-content: flex-start; }
+.fs[data-layout="narrow"][data-device="tablet"] .screen { justify-content: center; }
+.fs[data-layout="narrow"] .bar { grid-template-columns: 1fr auto 1fr; padding: 4px 8px 4px 16px; }
+.fs[data-layout="narrow"] .bar .row-2 { grid-column: 1 / -1; justify-self: end; display: flex; align-items: center; gap: 8px; }
+.fs[data-layout="narrow"] .bar .start { visibility: hidden; }
+.fs[data-layout="narrow"] .head { padding-bottom: 12px; }
+.fs[data-layout="narrow"] .head h2 { font-size: calc(var(--n) * 30); }
+.fs[data-layout="narrow"] .head .wk { display: none; }
+.fs[data-layout="narrow"] .stat .fig { font-size: calc(var(--n) * 20); }
+.fs[data-layout="narrow"] .stat .rest { font-size: calc(var(--n) * 18); }
+
+/* P2: the week, narrow. A row's name line spans the seven days; its seven boxes sit beneath. */
+.fs .ngrid { flex: 1 1 auto; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto; grid-auto-rows: auto; align-content: start; }
+.fs .ngrid .hd { padding: 6px 0; }
+.fs .ngrid .hd .dn, .fs .ngrid .hd .dt { font-size: calc(var(--n) * 16); }
+.fs .ngrid .line { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; padding: calc(var(--n) * 10) 0 2px; }
+.fs .ngrid .line .n { font-size: calc(var(--n) * 18); line-height: 1.45; font-weight: 600; }
+.fs .ngrid .line .chip { font-size: calc(var(--n) * 16); }
+.fs .ngrid .line .tot { margin-left: auto; border: 0; font-size: calc(var(--n) * 18); }
+.fs .ngrid .line .tot .fig { font-size: calc(var(--n) * 18); }
+/* A row of boxes takes a share of the screen's height, so a tall phone spreads the week instead of leaving the foot empty. */
+.fs .ngrid .d { height: clamp(48px, min(19cqw, 7.5cqh), 110px); border-bottom: 1px solid var(--line); }
+.fs .ngrid .pk { padding: 6px 0 4px; }
+.fs .ngrid .pk .fig { font-size: calc(var(--n) * 18); }
+.fs .ngrid .pk .extra { font-size: 14px; line-height: 18px; }
+.fs .ngrid .pkl { grid-column: 1 / -1; display: flex; gap: 8px; align-items: baseline; padding-top: calc(var(--n) * 12); }
+.fs .ngrid .pkl .n { font-size: calc(var(--n) * 18); } .fs .ngrid .pkl .g { color: var(--ink-secondary); font-size: calc(var(--n) * 16); }
+
+/* P1: today, full screen. One row per exercise, its mark at the right, sized to fill the screen. */
+.fs .band { margin: 0 -16px 8px; padding: 14px 16px; background: var(--tile); }
+.fs .band h2 { margin: 0; font: 600 22px/28px var(--font-sans); }
+.fs .band p { margin: 2px 0 0; font-size: 18px; line-height: 26px; }
+.fs .tl { flex: 1 1 auto; display: grid; grid-auto-rows: minmax(72px, 1fr); max-height: calc(var(--rows) * 120px); }
+.fs .tl .row { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
+.fs .tl .row:first-child { border-top: 1px solid var(--line); }
+.fs .tl .text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fs .tl .n { font-size: 20px; line-height: 26px; font-weight: 600; }
+.fs .tl .sub { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 16px; color: var(--ink-secondary); }
+.fs .tl .sub .met { color: var(--pen); font-weight: 600; }
+.fs .tl .d { flex: none; width: 96px; height: 100%; max-height: 96px; border: 0; }
+.fs .tl h3 { margin: 0; padding: 4px 0 8px; font-size: 16px; font-weight: 600; color: var(--ink-secondary); }
+
+/* A short screen (a phone on its side): the chips, the hint lines and the way on drop out, so five rows fit. Last, so it wins. */
+@container fs (max-height: 540px) {
+  .fs .screen { padding-top: 8px; padding-bottom: 6px; }
+  .fs .chips { display: none; }
+  .fs .corner h2 { font-size: 26px; }
+  .fs .corner .wk { display: none; }
+  .fs .hd { padding: 4px 0; }
+  .fs .pk { padding: 4px 2px; }
+  .fs .pk .extra { display: none; }
+  .fs .pk.lbl .g { display: none; }
+  .fs .cue { display: none; }
+}
+
+/* A day that meets the daily pick (K30, K35): its name in pen with a check, a bold pen line at its foot. */
+.fs .hd.met .dn { color: var(--pen); }
+.fs .hd .dn .check { width: 0.75em; height: 0.75em; margin-left: 3px; vertical-align: -0.02em; }
+.fs .d.last { position: relative; }
+.fs .d.met.last::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: 0; height: 6px; border-radius: 3px 3px 0 0; background: var(--pen); }
+</style>
+</head>
+<body>
+<p class="variant label">A 1280×800 desktop, at rest. Move to the top edge for the bar; scroll for Food; press a box to mark it.</p>
+<div class="device" data-w="1280" data-h="800" data-input="mouse"></div>
+<div class="gap"></div>
+<p class="variant label">A 390×844 phone held upright, folded, the bar called up with the handle</p>
+<div class="device phone" data-w="390" data-h="844" data-input="touch" data-bar="shown"></div>
+<script>
+// The app's own drawings (src/components/ui/day-mark, the Header card), for the mockup.
+// Generated from the source; not hand-edited.
+window.FP_ART = {"box": "M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z", "stamp": "M5.8 33.2C5.2 33 4.9 32.7 4.9 32.4C4.9 31.9 4.6 31.8 3.3 31.7C2 31.6 1.9 31.6 1.6 31.1C1.4 30.8 1.3 30.2 1.3 29.7C1.2 29.4 1.6 29.1 2.2 29C2.5 29 2.7 29 2.8 28.9C2.9 28.8 3.1 28.7 3.2 28.7C3.6 28.7 3.7 28.5 3.5 27.6C3.4 26.8 3.5 23.7 3.6 23.3C3.6 23.3 3.7 23 3.7 22.7C3.8 22.2 3.8 22 3.9 21.3C4 20.8 4.1 20.7 4.3 20.6C4.4 20.5 4.5 20.4 4.5 20.1C4.5 19.8 4.5 19.7 4.8 19.6C5.2 19.4 5.2 17.9 4.8 17.3C4.7 17.1 4.6 16.2 4.6 16C4.7 15.9 4.7 15.8 4.6 15.7C4.6 15.5 4.6 15.2 4.6 14C4.6 12.5 4.5 12.3 4.3 12.3C4 12.3 3.4 9.5 3.5 8.4C3.5 8.2 3.5 7.9 3.4 7.2C3.3 6.3 3.3 6 3.5 5.6C3.7 5 4.1 4.8 4.5 5C4.8 5.3 6 5.3 6.2 5C6.4 4.9 6.4 4.9 6.7 4.8C6.9 4.8 7 4.8 7.2 4.7C7.4 4.6 7.4 4.6 7.9 4.6C8.2 4.6 9 4.7 9.7 4.7C10.3 4.7 11 4.7 11.2 4.7C11.4 4.7 11.9 4.8 12.3 4.8C12.7 4.8 13.3 4.8 13.6 4.8C14 4.9 14.4 4.9 14.9 4.9C15.6 4.8 16.1 4.9 16.3 5.1C16.4 5.1 16.6 5.2 16.7 5.2C16.9 5.2 17 5.3 17.1 5.3C17.4 5.5 18.1 5.5 18.3 5.3C18.6 5.1 18.8 5.1 19.1 5.3C19.4 5.5 21.7 5.5 23.8 5.2C25.2 5.1 25.5 5.1 26.9 5.1C27.8 5.1 28.9 5.1 29.5 5.1C30.5 5.1 30.5 5.1 30.8 5.2C30.9 5.3 31.1 5.4 31.2 5.4C31.2 5.3 31.4 5.4 31.5 5.5C31.6 5.6 31.7 5.8 31.8 5.8C32.1 6 32.2 6.9 32.1 7.6C31.9 8.1 31.9 8.3 32 8.6C32.1 8.6 32.2 8.9 32.3 9.1C32.7 9.9 33.2 12.2 33.1 13.3C33.1 13.8 33 14.8 33 15.4C32.9 16.1 32.9 16.7 32.9 16.9C32.8 17 32.8 17.6 32.7 18.1C32.6 18.7 32.6 19.2 32.5 19.3C32.5 19.4 32.4 20.2 32.3 21C32.2 21.9 32.1 22.6 32.1 22.7C32.1 22.8 32 23.3 32 23.8C32 24.2 31.9 24.7 31.9 24.8C31.8 25 31.7 25.5 31.7 26.1C31.6 26.5 31.6 26.8 31.5 27C31.2 27.7 31.2 27.7 31 27.8C30.6 27.9 30.5 28.6 30.7 29.1C31.1 29.8 31 31.1 30.5 31.1C30.4 31.1 30.3 31.3 30.2 31.5C30.2 31.6 30 32.1 29.9 32.2C29.4 32.5 27.6 32.4 26.2 32.1C25.9 32 25.6 32 25.4 31.9C24.5 31.8 24.3 31.8 23.8 31.8C23.4 31.7 23 31.7 22.9 31.7C22.7 31.6 22.3 31.6 22 31.6C21.6 31.6 21.2 31.5 21.1 31.5C20.9 31.4 20.8 31.4 20.3 31.5C19.9 31.5 19.7 31.5 19.4 31.5C18.9 31.3 18.7 31.3 18.1 31.4C17.3 31.5 17.2 31.5 16.8 31.3C16.5 31.2 16.5 31.2 15.6 31.2C14.4 31.3 14.4 31.3 14.2 31.1C14 31 12.6 30.9 11.6 31.1C11.3 31.1 10.7 31.1 10.3 31.2C9.3 31.2 8.9 31.2 8.6 31.4C8.5 31.4 8.3 31.5 8.2 31.5C8 31.5 8 31.5 7.7 31.8C7.7 31.9 7.6 31.9 7.6 32C7.6 32 7.5 32.1 7.5 32.2C7.4 32.6 7.1 33 6.7 33.2C6.3 33.4 6.3 33.4 5.8 33.2Z", "ticks": {"great": "M8.6 18.2C10.6 19.9 12.6 22.4 14.6 25.9C15 26.6 15.6 26.6 16 25.9C19.4 19.2 24.6 11.6 31.6 5.2", "partial": "M18.6 9.8C23.4 9.6 26.6 13.4 26.4 18.2C26.2 23.2 22.4 26.6 17.8 26.4C13 26.2 9.6 22.6 9.8 17.8C10 13.4 13.2 10.2 17.4 9.6", "missed": "M9.2 9.4C15 14.8 21.4 21.6 27.4 27.6M27 9C21.6 14 15.4 20.6 9.2 27.4"}, "wordmark": "<svg class=\"wordmark\" viewBox=\"36 -737 7347 751\" role=\"img\" aria-label=\"Fitness Planner\"><path d=\"M36.0 0V-59L169.0 -66H225.0L365.0 -59V0ZM125.0 0Q126.0 -51 126.0 -102.0Q126.0 -153 126.0 -204.0Q126.0 -255 126.0 -306V-359Q126.0 -409 126.0 -460.0Q126.0 -511 126.0 -562.5Q126.0 -614 125.0 -664H264.0Q264.0 -614 263.5 -563.0Q263.0 -512 263.0 -461.0Q263.0 -410 263.0 -359V-311Q263.0 -258 263.0 -206.0Q263.0 -154 263.5 -102.5Q264.0 -51 264.0 0ZM195.0 -308V-368H434.0V-308ZM411.0 -220 394.0 -322V-352L411.0 -451H470.0V-220ZM36.0 -606V-664H183.0V-598H169.0ZM507.0 -488 475.0 -640 516.0 -604H198.0V-664H570.0L578.0 -488ZM638.0 0V-53L744.0 -63H797.0L903.0 -53V0ZM707.0 0Q708.0 -30 708.0 -67.0Q708.0 -104 708.5 -143.0Q709.0 -182 709.0 -215V-267Q709.0 -304 708.5 -333.5Q708.0 -363 707.0 -395L632.0 -399V-447L803.0 -502L836.0 -497L834.0 -366V-215Q834.0 -182 834.5 -143.0Q835.0 -104 835.0 -67.0Q835.0 -30 836.0 0ZM768.0 -589Q736.0 -589 714.0 -610.0Q692.0 -631 692.0 -663Q692.0 -694 714.0 -715.5Q736.0 -737 768.0 -737Q802.0 -737 824.0 -715.5Q846.0 -694 846.0 -663Q846.0 -631 824.0 -610.0Q802.0 -589 768.0 -589ZM1084.0 -427V-493H1271.0V-427ZM1157.0 12Q1094.0 12 1057.0 -21.0Q1020.0 -54 1020.0 -126Q1020.0 -147 1020.0 -167.0Q1020.0 -187 1020.0 -211V-427H942.0V-482L1066.0 -498L1021.0 -464L1071.0 -634H1152.0L1142.0 -464L1146.0 -454V-135Q1146.0 -97 1161.5 -81.0Q1177.0 -65 1205.0 -65Q1222.0 -65 1236.5 -70.0Q1251.0 -75 1264.0 -82L1287.0 -41Q1276.0 -28 1258.0 -15.5Q1240.0 -3 1214.5 4.5Q1189.0 12 1157.0 12ZM1322.0 0V-53L1430.0 -63H1482.0L1584.0 -53V0ZM1392.0 0Q1392.0 -30 1392.5 -67.0Q1393.0 -104 1393.0 -143.0Q1393.0 -182 1393.0 -215V-269Q1393.0 -294 1393.0 -315.0Q1393.0 -336 1392.5 -355.0Q1392.0 -374 1392.0 -395L1317.0 -399V-447L1470.0 -502L1501.0 -497L1514.0 -389H1520.0V-215Q1520.0 -182 1520.0 -143.0Q1520.0 -104 1520.5 -67.0Q1521.0 -30 1521.0 0ZM1650.0 0V-53L1753.0 -63H1805.0L1912.0 -53V0ZM1716.0 0Q1716.0 -30 1716.5 -67.0Q1717.0 -104 1717.0 -142.5Q1717.0 -181 1717.0 -215V-315Q1717.0 -370 1699.0 -392.5Q1681.0 -415 1641.0 -415Q1618.0 -415 1594.5 -408.0Q1571.0 -401 1546.5 -386.0Q1522.0 -371 1498.0 -350L1493.0 -404H1521.0Q1544.0 -435 1570.0 -458.5Q1596.0 -482 1628.0 -495.5Q1660.0 -509 1696.0 -509Q1768.0 -509 1805.0 -465.5Q1842.0 -422 1842.0 -334V-215Q1842.0 -181 1842.5 -142.5Q1843.0 -104 1843.0 -67.0Q1843.0 -30 1844.0 0ZM2220.0 13Q2143.0 13 2086.5 -17.5Q2030.0 -48 1999.0 -105.0Q1968.0 -162 1968.0 -242Q1968.0 -322 2000.0 -382.0Q2032.0 -442 2087.5 -475.5Q2143.0 -509 2214.0 -509Q2278.0 -509 2325.5 -484.0Q2373.0 -459 2399.5 -413.0Q2426.0 -367 2426.0 -305Q2426.0 -285 2423.5 -268.5Q2421.0 -252 2418.0 -239H2045.0V-289H2276.0Q2296.0 -297 2302.0 -310.5Q2308.0 -324 2308.0 -346Q2308.0 -382 2296.5 -406.0Q2285.0 -430 2264.0 -442.0Q2243.0 -454 2214.0 -454Q2181.0 -454 2154.5 -434.5Q2128.0 -415 2113.0 -372.0Q2098.0 -329 2098.0 -257Q2098.0 -196 2118.0 -153.5Q2138.0 -111 2174.0 -89.5Q2210.0 -68 2255.0 -68Q2304.0 -68 2336.5 -85.0Q2369.0 -102 2395.0 -132L2431.0 -103Q2409.0 -69 2380.5 -42.0Q2352.0 -15 2313.5 -1.0Q2275.0 13 2220.0 13ZM2675.0 13Q2623.0 13 2579.5 3.0Q2536.0 -7 2502.0 -24L2501.0 -146H2571.0L2595.0 -23L2547.0 -22V-73Q2572.0 -58 2604.0 -49.5Q2636.0 -41 2675.0 -41Q2711.0 -41 2733.0 -50.5Q2755.0 -60 2766.0 -76.0Q2777.0 -92 2777.0 -113Q2777.0 -142 2755.5 -159.5Q2734.0 -177 2684.0 -193L2649.0 -205Q2604.0 -219 2571.0 -239.0Q2538.0 -259 2520.5 -287.5Q2503.0 -316 2503.0 -355Q2503.0 -399 2527.0 -434.0Q2551.0 -469 2597.0 -489.0Q2643.0 -509 2706.0 -509Q2751.0 -509 2791.5 -499.0Q2832.0 -489 2864.0 -472L2860.0 -360H2790.0L2769.0 -473H2813.0V-427Q2789.0 -441 2763.0 -447.5Q2737.0 -454 2707.0 -454Q2661.0 -454 2638.5 -436.5Q2616.0 -419 2616.0 -390Q2616.0 -363 2636.0 -346.5Q2656.0 -330 2708.0 -313L2739.0 -303Q2789.0 -288 2824.0 -266.0Q2859.0 -244 2876.0 -215.0Q2893.0 -186 2893.0 -146Q2893.0 -99 2867.0 -63.0Q2841.0 -27 2792.5 -7.0Q2744.0 13 2675.0 13ZM3140.0 13Q3088.0 13 3044.5 3.0Q3001.0 -7 2967.0 -24L2966.0 -146H3036.0L3060.0 -23L3012.0 -22V-73Q3037.0 -58 3069.0 -49.5Q3101.0 -41 3140.0 -41Q3176.0 -41 3198.0 -50.5Q3220.0 -60 3231.0 -76.0Q3242.0 -92 3242.0 -113Q3242.0 -142 3220.5 -159.5Q3199.0 -177 3149.0 -193L3114.0 -205Q3069.0 -219 3036.0 -239.0Q3003.0 -259 2985.5 -287.5Q2968.0 -316 2968.0 -355Q2968.0 -399 2992.0 -434.0Q3016.0 -469 3062.0 -489.0Q3108.0 -509 3171.0 -509Q3216.0 -509 3256.5 -499.0Q3297.0 -489 3329.0 -472L3325.0 -360H3255.0L3234.0 -473H3278.0V-427Q3254.0 -441 3228.0 -447.5Q3202.0 -454 3172.0 -454Q3126.0 -454 3103.5 -436.5Q3081.0 -419 3081.0 -390Q3081.0 -363 3101.0 -346.5Q3121.0 -330 3173.0 -313L3204.0 -303Q3254.0 -288 3289.0 -266.0Q3324.0 -244 3341.0 -215.0Q3358.0 -186 3358.0 -146Q3358.0 -99 3332.0 -63.0Q3306.0 -27 3257.5 -7.0Q3209.0 13 3140.0 13ZM3641.0 0V-59L3776.0 -66H3827.0L3969.0 -59V0ZM3730.0 0Q3731.0 -51 3731.0 -102.0Q3731.0 -153 3731.0 -204.0Q3731.0 -255 3731.0 -306V-359Q3731.0 -410 3731.0 -460.5Q3731.0 -511 3731.0 -562.5Q3731.0 -614 3730.0 -664H3869.0Q3869.0 -614 3868.5 -563.0Q3868.0 -512 3868.0 -461.0Q3868.0 -410 3868.0 -359V-292Q3868.0 -246 3868.0 -198.5Q3868.0 -151 3868.5 -101.0Q3869.0 -51 3869.0 0ZM3809.0 -256V-314H3913.0Q3972.0 -314 4008.0 -332.0Q4044.0 -350 4060.5 -383.5Q4077.0 -417 4077.0 -463Q4077.0 -535 4039.0 -570.0Q4001.0 -605 3917.0 -605H3817.0V-664H3926.0Q4024.0 -664 4087.5 -640.0Q4151.0 -616 4182.5 -571.5Q4214.0 -527 4214.0 -465Q4214.0 -405 4183.0 -357.5Q4152.0 -310 4086.0 -283.0Q4020.0 -256 3914.0 -256ZM3641.0 -606V-664H3782.0V-598H3768.0ZM4266.0 0V-53L4375.0 -63H4427.0L4538.0 -53V0ZM4338.0 0Q4339.0 -36 4339.0 -72.0Q4339.0 -108 4339.5 -144.0Q4340.0 -180 4340.0 -215V-632L4262.0 -647V-693L4435.0 -729L4467.0 -724L4465.0 -592V-215Q4465.0 -180 4465.0 -144.0Q4465.0 -108 4465.5 -72.0Q4466.0 -36 4466.0 0ZM4738.0 14Q4680.0 14 4641.0 -19.5Q4602.0 -53 4602.0 -116Q4602.0 -154 4618.5 -183.0Q4635.0 -212 4673.5 -235.0Q4712.0 -258 4779.0 -275Q4806.0 -283 4833.5 -290.0Q4861.0 -297 4888.0 -304.5Q4915.0 -312 4941.0 -319V-277Q4909.0 -267 4875.5 -256.5Q4842.0 -246 4809.0 -235Q4774.0 -225 4755.0 -210.5Q4736.0 -196 4728.5 -178.5Q4721.0 -161 4721.0 -140Q4721.0 -105 4742.5 -86.0Q4764.0 -67 4800.0 -67Q4821.0 -67 4838.5 -74.0Q4856.0 -81 4876.5 -95.5Q4897.0 -110 4923.0 -131L4929.0 -76H4889.0Q4870.0 -52 4850.0 -31.0Q4830.0 -10 4803.5 2.0Q4777.0 14 4738.0 14ZM5007.0 13Q4959.0 13 4931.0 -14.5Q4903.0 -42 4898.0 -94L4895.0 -96V-340Q4895.0 -383 4885.0 -408.0Q4875.0 -433 4853.5 -443.5Q4832.0 -454 4798.0 -454Q4774.0 -454 4751.5 -450.5Q4729.0 -447 4705.0 -437L4752.0 -480L4742.0 -397Q4738.0 -356 4720.5 -338.5Q4703.0 -321 4677.0 -321Q4650.0 -321 4635.0 -334.0Q4620.0 -347 4615.0 -369Q4626.0 -433 4684.0 -471.0Q4742.0 -509 4835.0 -509Q4894.0 -509 4935.5 -490.5Q4977.0 -472 4998.0 -433.0Q5019.0 -394 5019.0 -330V-109Q5019.0 -85 5028.0 -74.0Q5037.0 -63 5054.0 -63Q5066.0 -63 5075.0 -66.5Q5084.0 -70 5093.0 -77L5110.0 -40Q5094.0 -16 5068.5 -1.5Q5043.0 13 5007.0 13ZM5142.0 0V-53L5250.0 -63H5302.0L5404.0 -53V0ZM5212.0 0Q5212.0 -30 5212.5 -67.0Q5213.0 -104 5213.0 -143.0Q5213.0 -182 5213.0 -215V-269Q5213.0 -294 5213.0 -315.0Q5213.0 -336 5212.5 -355.0Q5212.0 -374 5212.0 -395L5137.0 -399V-447L5290.0 -502L5321.0 -497L5334.0 -389H5340.0V-215Q5340.0 -182 5340.0 -143.0Q5340.0 -104 5340.5 -67.0Q5341.0 -30 5341.0 0ZM5470.0 0V-53L5573.0 -63H5625.0L5732.0 -53V0ZM5536.0 0Q5536.0 -30 5536.5 -67.0Q5537.0 -104 5537.0 -142.5Q5537.0 -181 5537.0 -215V-315Q5537.0 -370 5519.0 -392.5Q5501.0 -415 5461.0 -415Q5438.0 -415 5414.5 -408.0Q5391.0 -401 5366.5 -386.0Q5342.0 -371 5318.0 -350L5313.0 -404H5341.0Q5364.0 -435 5390.0 -458.5Q5416.0 -482 5448.0 -495.5Q5480.0 -509 5516.0 -509Q5588.0 -509 5625.0 -465.5Q5662.0 -422 5662.0 -334V-215Q5662.0 -181 5662.5 -142.5Q5663.0 -104 5663.0 -67.0Q5663.0 -30 5664.0 0ZM5784.0 0V-53L5892.0 -63H5944.0L6046.0 -53V0ZM5854.0 0Q5854.0 -30 5854.5 -67.0Q5855.0 -104 5855.0 -143.0Q5855.0 -182 5855.0 -215V-269Q5855.0 -294 5855.0 -315.0Q5855.0 -336 5854.5 -355.0Q5854.0 -374 5854.0 -395L5779.0 -399V-447L5932.0 -502L5963.0 -497L5976.0 -389H5982.0V-215Q5982.0 -182 5982.0 -143.0Q5982.0 -104 5982.5 -67.0Q5983.0 -30 5983.0 0ZM6112.0 0V-53L6215.0 -63H6267.0L6374.0 -53V0ZM6178.0 0Q6178.0 -30 6178.5 -67.0Q6179.0 -104 6179.0 -142.5Q6179.0 -181 6179.0 -215V-315Q6179.0 -370 6161.0 -392.5Q6143.0 -415 6103.0 -415Q6080.0 -415 6056.5 -408.0Q6033.0 -401 6008.5 -386.0Q5984.0 -371 5960.0 -350L5955.0 -404H5983.0Q6006.0 -435 6032.0 -458.5Q6058.0 -482 6090.0 -495.5Q6122.0 -509 6158.0 -509Q6230.0 -509 6267.0 -465.5Q6304.0 -422 6304.0 -334V-215Q6304.0 -181 6304.5 -142.5Q6305.0 -104 6305.0 -67.0Q6305.0 -30 6306.0 0ZM6682.0 13Q6605.0 13 6548.5 -17.5Q6492.0 -48 6461.0 -105.0Q6430.0 -162 6430.0 -242Q6430.0 -322 6462.0 -382.0Q6494.0 -442 6549.5 -475.5Q6605.0 -509 6676.0 -509Q6740.0 -509 6787.5 -484.0Q6835.0 -459 6861.5 -413.0Q6888.0 -367 6888.0 -305Q6888.0 -285 6885.5 -268.5Q6883.0 -252 6880.0 -239H6507.0V-289H6738.0Q6758.0 -297 6764.0 -310.5Q6770.0 -324 6770.0 -346Q6770.0 -382 6758.5 -406.0Q6747.0 -430 6726.0 -442.0Q6705.0 -454 6676.0 -454Q6643.0 -454 6616.5 -434.5Q6590.0 -415 6575.0 -372.0Q6560.0 -329 6560.0 -257Q6560.0 -196 6580.0 -153.5Q6600.0 -111 6636.0 -89.5Q6672.0 -68 6717.0 -68Q6766.0 -68 6798.5 -85.0Q6831.0 -102 6857.0 -132L6893.0 -103Q6871.0 -69 6842.5 -42.0Q6814.0 -15 6775.5 -1.0Q6737.0 13 6682.0 13ZM6957.0 0V-53L7066.0 -63H7125.0L7246.0 -53V0ZM7027.0 0Q7027.0 -30 7027.5 -67.0Q7028.0 -104 7028.0 -143.0Q7028.0 -182 7028.0 -215V-270Q7028.0 -295 7028.0 -315.5Q7028.0 -336 7027.5 -355.0Q7027.0 -374 7027.0 -395L6951.0 -399V-447L7106.0 -502L7137.0 -497L7147.0 -365L7154.0 -364V-215Q7154.0 -182 7154.0 -143.0Q7154.0 -104 7154.5 -67.0Q7155.0 -30 7155.0 0ZM7143.0 -279 7130.0 -360H7159.0Q7175.0 -407 7196.0 -439.5Q7217.0 -472 7243.5 -489.0Q7270.0 -506 7301.0 -506Q7333.0 -506 7354.5 -489.0Q7376.0 -472 7383.0 -447Q7381.0 -412 7363.0 -389.0Q7345.0 -366 7311.0 -366Q7288.0 -366 7271.0 -376.0Q7254.0 -386 7239.0 -403L7218.0 -426L7268.0 -425Q7223.0 -404 7191.5 -365.5Q7160.0 -327 7143.0 -279Z\"/></svg>", "gear": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg>"};
+
+// The PlannerScreen, drawn live from the mockup's prototype (mockups/261025-full-screen-week). FP.mount(el, options) draws one screen
+// into el: the bar, then Exercises and Food, a screen each. Options:
+//   option  'a' | 'b' | 'c'   how the bar and the titles behave (the mockup's question 1)
+//   phone   'p1' | 'p2'       a phone held upright: today, or the week narrow (question 2)
+//   input   'mouse' | 'touch' how the bar is reached: the top edge, or the handle
+//   start   'exercises' | 'food'   bar  'shown'   for the stills on the mockup page
+// The week is John's own from his screenshots: 19–25 October, today Sunday, three a day.
+(() => {
+  const ART = window.FP_ART
+  const DAYS = [['Mon', 'Monday', 19], ['Tue', 'Tuesday', 20], ['Wed', 'Wednesday', 21], ['Thu', 'Thursday', 22],
+    ['Fri', 'Friday', 23], ['Sat', 'Saturday', 24], ['Sun', 'Sunday', 25]]
+  const TODAY = 6
+  const PICK = 3
+  const WEEK = '19–25 October'
+  const g = 'great', p = 'partial', x = 'missed', _ = null
+  const EXERCISES = [
+    { name: 'Push-ups', chips: ['3 × 12'], goal: 4, marks: [g, _, g, p, g, _, _] },
+    { name: 'Squats', chips: ['3 × 15', '16 kg'], goal: 3, marks: [_, g, x, _, g, _, _] },
+    { name: 'Plank', chips: ['3 × 45 s'], goal: 3, marks: [g, p, _, g, _, g, _] },
+    { name: 'Kettlebell halos', chips: ['8 each side', '12 kg'], goal: 2, marks: [_, _, g, _, _, _, _] },
+    { name: 'Pull-ups', chips: ['3 × 5'], goal: 3, marks: [x, g, _, _, p, _, _] },
+  ]
+  const FOODS = [
+    { name: 'Vegetables', goal: 7, marks: [g, g, g, _, g, g, _] },
+    { name: 'Fruit', goal: 5, marks: [_, g, _, g, _, _, _] },
+    { name: 'Fish', goal: 2, marks: [_, _, _, g, _, _, _] },
+    { name: 'Nuts', goal: 3, marks: [g, _, _, _, _, _, _] },
+  ]
+  const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']
+  const KIND_WORDS = { great: '', partial: ', partly done', missed: ", couldn't do it" }
+  const CHECK = '<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>'
+  const icon = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+
+  // The Stamped ticks set, as John's screenshots draw it: the box filled solid in the pen, the
+  // symbol in paper, the hand-drawn box over both.
+  function markSvg(kind) {
+    const ink = kind
+      ? `<path class="ink" d="${ART.stamp}" fill-rule="evenodd"/><path class="sym" d="${ART.ticks[kind]}" fill="none" stroke-width="3.25"/>`
+      : ''
+    return `<svg viewBox="0 0 36 36" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ink}<path class="bx" d="${ART.box}" stroke-width="1.75"/></svg>`
+  }
+  function markButton(row, i, section) {
+    const kind = row.marks[i]
+    const [, full, date] = DAYS[i]
+    const label = `${row.name}, ${full} ${date} October${i === TODAY ? ', today' : ''}${kind ? KIND_WORDS[kind] : ''}`
+    return `<button type="button" class="mark" data-s="${section}" data-r="${row.i}" data-c="${i}"${kind ? ` data-mark="${kind}"` : ''} aria-pressed="${Boolean(kind)}" aria-label="${esc(label)}">${markSvg(kind)}</button>`
+  }
+
+  const count = (row) => row.marks.filter(Boolean).length
+  const TITLES = { exercises: 'Exercises', food: 'Food' }
+  /** Round 3: a day whose marked exercises reach the daily pick. Only the Exercises screen shows it. */
+  const dayMet = (rows, i, section) => section === 'exercises' && rows.filter((r) => r.marks[i]).length >= PICK
+  const metHead = (met) => (met ? ' met' : '')
+  const METWORDS = '<span class="vh">, three picked</span>'
+
+  // ---- The week grid, wide: a desktop, an iPad, a phone on its side. ----
+  function wideScreen(state, section, rows) {
+    const corner = state.option === 'b' || state.short
+    const head = corner ? '' : `<header class="head"><h2>${TITLES[section]}<span class="wk">${WEEK}</span></h2></header>`
+    const cornerCell = corner
+      ? `<div class="hd corner"><h2>${TITLES[section]}</h2><span class="wk">${WEEK}</span></div>`
+      : `<div class="hd corner"><span class="vh">${section === 'food' ? 'Food' : 'Exercise'}</span></div>`
+    let cells = cornerCell
+    DAYS.forEach(([short, , date], i) => {
+      const met = dayMet(rows, i, section)
+      cells += `<div class="hd${i === TODAY ? ' today' : ''}${metHead(met)}"><span class="dn">${short}${met ? CHECK : ''}</span><span class="vh"> ${date}</span>${met ? METWORDS : ''}</div>`
+    })
+    for (const row of rows) {
+      const chips = row.chips?.length ? `<span class="chips">${row.chips.map((c) => `<span class="chip">${esc(c)}</span>`).join('')}</span>` : ''
+      cells += `<div class="nm"><span class="n">${esc(row.name)}</span>${chips}</div>`
+      const last = row.i === rows.length - 1 ? ' last' : ''
+      row.marks.forEach((_, i) => { cells += `<div class="d${i === TODAY ? ' today' : ''}${metHead(dayMet(rows, i, section))}${last}">${markButton(row, i, section)}</div>` })
+    }
+    const cue = section === 'exercises' && state.option !== 'b' && !state.short
+      ? `<button type="button" class="cue" data-go="food">Food${icon('m6 9 6 6 6-6')}</button>` : ''
+    return `<section class="screen" data-section="${section}" aria-label="${TITLES[section]}">${head}<div class="grid" style="--rows:${rows.length}">${cells}</div>${cue}</section>`
+  }
+
+  // ---- P2: the week, narrow. ----
+  function narrowWeek(state, section, rows) {
+    let cells = ''
+    DAYS.forEach(([short, , date], i) => {
+      const met = dayMet(rows, i, section)
+      cells += `<div class="hd${i === TODAY ? ' today' : ''}${metHead(met)}"><span class="dn">${short}${met ? CHECK : ''}</span><span class="vh"> ${date}</span>${met ? METWORDS : ''}</div>`
+    })
+    for (const row of rows) {
+      const chips = (row.chips || []).slice(0, 1).map((c) => `<span class="chip">${esc(c)}</span>`).join('')
+      cells += `<div class="line"><span class="n">${esc(row.name)}</span>${chips}</div>`
+      const last = row.i === rows.length - 1 ? ' last' : ''
+      row.marks.forEach((_, i) => { cells += `<div class="d${i === TODAY ? ' today' : ''}${metHead(dayMet(rows, i, section))}${last}">${markButton(row, i, section)}</div>` })
+    }
+    return `<section class="screen" data-section="${section}" aria-label="${TITLES[section]}"><header class="head"><h2>${TITLES[section]}</h2></header><div class="ngrid" style="--t:${TODAY}">${cells}</div></section>`
+  }
+
+  // ---- P1: today, full screen. ----
+  function todayScreen(state, section, rows) {
+    const done = rows.filter((r) => r.marks[TODAY]).length
+    const band = section === 'exercises'
+      ? `<div class="band"><h2>Today, Sunday 25 October</h2><p>${done === 0 ? 'None' : WORDS[done][0].toUpperCase() + WORDS[done].slice(1)} of ${WORDS[PICK]} picked.</p></div>`
+      : ''
+    const list = rows.map((r) => {
+      const chips = (r.chips || []).map((c) => `<span class="chip">${esc(c)}</span>`).join('')
+      const n = count(r)
+      return `<div class="row"><div class="text"><span class="n">${esc(r.name)}</span><span class="sub">${chips}<span class="${n >= r.goal ? 'met' : ''}" data-tot="${section}-${r.i}">${n} of ${r.goal} this week</span></span></div><div class="d">${markButton(r, TODAY, section)}</div></div>`
+    }).join('')
+    return `<section class="screen" data-section="${section}" aria-label="${TITLES[section]}">${band}<h3>${TITLES[section]}</h3><div class="tl" style="--rows:${rows.length}">${list}</div></section>`
+  }
+
+  // ---- The bar (the Header card). ----
+  const ICONS = {
+    fullscreen: 'M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3',
+    print: 'M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z',
+    logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+  }
+  /** The browser's full screen, where it exists (not on an iPhone). */
+  const canFullscreen = () => document.fullscreenEnabled !== false
+  const fsButton = () => canFullscreen()
+    ? `<button class="icon-btn" type="button" data-action="fullscreen" aria-label="Full screen">${icon(ICONS.fullscreen)}</button>` : ''
+
+  // ---- The sidebar (round 4, N2): hidden, or expanded with an icon and a name per item. ----
+  function sidebar() {
+    const item = (label, d, action) => `<button class="item" type="button"${action ? ` data-action="${action}"` : ''}>${d.startsWith('<svg') ? d : icon(d)}<span>${label}</span></button>`
+    const week = `<nav class="week" aria-label="Week"><button class="icon-btn" type="button" aria-label="Previous week">${icon('m15 18-6-6 6-6')}</button><span class="week-label">${WEEK}</span><button class="icon-btn" type="button" aria-label="Next week">${icon('m9 18 6-6-6-6')}</button></nav>`
+    const sw = `<button class="switch" type="button" role="switch" aria-checked="false"><span>Edit plan</span><span class="track" aria-hidden="true"><span class="thumb"></span></span></button>`
+    return `<aside class="side" aria-label="Menu"><span class="brand">${ART.wordmark}</span>${week}${sw}<div class="items">${item('Settings', ART.gear)}${item('Print…', ICONS.print)}${canFullscreen() ? item('Full screen', ICONS.fullscreen, 'fullscreen') : ''}</div><div class="room" aria-hidden="true"></div><div class="items foot">${item('Log out', ICONS.logout)}</div></aside><div class="scrim" aria-hidden="true"></div>`
+  }
+
+  function bar(state) {
+    if (state.nav === 'side') return sidebar()
+    const week = `<nav class="week" aria-label="Week"><button class="icon-btn" type="button" aria-label="Previous week">${icon('m15 18-6-6 6-6')}</button><span class="week-label">${WEEK}</span><button class="icon-btn" type="button" aria-label="Next week">${icon('m9 18 6-6-6-6')}</button></nav>`
+    const sw = (long) => `<button class="switch" type="button" role="switch" aria-checked="false" aria-label="Edit plan"><span aria-hidden="true">${long ? 'Edit plan' : 'Edit'}</span><span class="track" aria-hidden="true"><span class="thumb"></span></span></button>`
+    const gear = `<button class="icon-btn" type="button" aria-label="Settings">${ART.gear}</button>`
+    if (state.layout === 'narrow') {
+      const seg = state.phone === 'p1' && state.device === 'phone'
+        ? '<span class="seg" role="group" aria-label="View"><button type="button" aria-pressed="true">Today</button><button type="button" aria-pressed="false">Week</button></span>' : ''
+      return `<header class="bar"><span class="start"></span>${week}<span class="end">${fsButton()}${gear}</span><span class="row-2">${seg}${sw(false)}</span></header>`
+    }
+    return `<header class="bar"><span class="start">${ART.wordmark}</span>${week}<span class="end">${sw(true)}${fsButton()}${gear}<button class="btn" type="button">Print…</button></span></header>`
+  }
+
+  function render(state) {
+    const ex = state.ex, food = state.food
+    const screen = state.layout === 'narrow' ? (state.phone === 'p1' && state.device === 'phone' ? todayScreen : narrowWeek) : wideScreen
+    const dots = `<nav class="dots" aria-label="Screens"><button type="button" data-go="exercises" aria-label="Exercises"><span></span></button><button type="button" data-go="food" aria-label="Food"><span></span></button></nav>`
+    state.el.innerHTML = `<div class="hot" aria-hidden="true"></div><button type="button" class="grab" aria-label="Show the menu"><span></span></button>${bar(state)}<div class="scroller">${screen(state, 'exercises', ex)}${screen(state, 'food', food)}</div>${dots}`
+    syncDots(state)
+  }
+
+  function syncDots(state) {
+    const sc = state.el.querySelector('.scroller')
+    if (!sc) return
+    const at = sc.scrollTop > sc.clientHeight / 2 ? 'food' : 'exercises'
+    state.el.querySelectorAll('.dots button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.go === at)))
+  }
+
+  function mount(el, opts = {}) {
+    const clone = (rows) => rows.map((r, i) => ({ ...r, i, marks: [...r.marks] }))
+    const state = { el, option: opts.option || 'a', phone: opts.phone || 'p2', affirm: opts.affirm || 'g2', nav: opts.nav || 'bar', ex: clone(EXERCISES), food: clone(FOODS), layout: '', short: false }
+    el.classList.add('fs')
+    el.dataset.option = state.option
+    el.dataset.affirm = state.affirm
+    el.dataset.nav = state.nav
+    el.dataset.input = opts.input || (matchMedia('(hover: none)').matches ? 'touch' : 'mouse')
+    let pinned = opts.bar === 'shown'
+    if (pinned) el.dataset.bar = 'shown'
+
+    const measure = () => {
+      const w = el.offsetWidth, h = el.offsetHeight
+      // Held upright, a phone or an iPad folds the week; a phone may show today instead (P1).
+      const layout = h > w && w < 1000 ? 'narrow' : 'wide'
+      el.dataset.device = w < 640 || h < 640 ? 'phone' : 'tablet'
+      state.device = el.dataset.device
+      const short = layout === 'wide' && h <= 540
+      if (layout === state.layout && short === state.short) return
+      const sc = el.querySelector('.scroller')
+      const onFood = sc && sc.scrollTop > sc.clientHeight / 2
+      state.layout = layout; state.short = short
+      el.dataset.layout = layout
+      render(state)
+      if (onFood) go('food', false)
+    }
+    const go = (section, smooth = true) => {
+      const target = el.querySelector(`.screen[data-section="${section}"]`)
+      el.querySelector('.scroller').scrollTo({ top: target.offsetTop, behavior: smooth && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'auto' })
+    }
+
+    // The bar: shown while the pointer is at the top edge or on the bar, or while focus is in it;
+    // on touch, by the handle, and hidden again by a press anywhere else.
+    let hideTimer
+    const show = () => { clearTimeout(hideTimer); el.dataset.bar = 'shown' }
+    const hideSoon = (ms = 500) => {
+      if (state.option === 'c' || pinned) return
+      clearTimeout(hideTimer)
+      hideTimer = setTimeout(() => { if (!el.querySelector('.bar, .side')?.matches(':focus-within')) delete el.dataset.bar }, ms)
+    }
+    el.addEventListener('pointerover', (e) => {
+      if (e.pointerType === 'touch') return
+      if (e.target.closest('.hot, .bar, .side')) show()
+    })
+    el.addEventListener('pointerout', (e) => {
+      if (e.pointerType === 'touch') return
+      if (e.target.closest('.hot, .bar, .side') && !e.relatedTarget?.closest?.('.hot, .bar, .side')) { pinned = false; hideSoon() }
+    })
+    el.addEventListener('pointerleave', () => { if (pinned) { pinned = false; hideSoon(900) } })
+    el.addEventListener('focusout', () => hideSoon(200))
+    el.addEventListener('keydown', (e) => { if (e.key === 'Escape') { pinned = false; delete el.dataset.bar } })
+    let pull
+    el.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.grab')) { pull = e.clientY; return }
+      if ((el.dataset.input === 'touch' || e.target.closest('.scrim')) && !e.target.closest('.bar, .side')) { pinned = false; hideSoon(0) }
+    })
+    el.addEventListener('pointermove', (e) => { if (pull != null && e.clientY - pull > 12) { show(); pull = null } })
+    el.addEventListener('pointerup', () => { pull = null })
+
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.grab')) { if (el.dataset.bar === 'shown') delete el.dataset.bar; else show(); return }
+      if (e.target.closest('[data-action="fullscreen"]')) {
+        if (document.fullscreenElement) document.exitFullscreen?.()
+        else el.requestFullscreen?.().catch(() => {})
+        return
+      }
+      const goto = e.target.closest('[data-go]')
+      if (goto) { go(goto.dataset.go); return }
+      const btn = e.target.closest('.mark')
+      if (!btn) return
+      const rows = btn.dataset.s === 'food' ? state.food : state.ex
+      const row = rows[Number(btn.dataset.r)]
+      const c = Number(btn.dataset.c)
+      // A press steps an exercise great, partial, missed, then empty; a food great, then empty.
+      const cycle = btn.dataset.s === 'food' ? [null, g] : [null, g, p, x]
+      row.marks[c] = cycle[(cycle.indexOf(row.marks[c]) + 1) % cycle.length]
+      const sc = el.querySelector('.scroller'), top = sc.scrollTop
+      render(state)
+      el.querySelector('.scroller').scrollTop = top
+      el.querySelector(`.mark[data-s="${btn.dataset.s}"][data-r="${btn.dataset.r}"][data-c="${c}"]`)?.focus({ preventScroll: true })
+    })
+    el.addEventListener('scroll', () => syncDots(state), true)
+
+    new ResizeObserver(measure).observe(el)
+    measure()
+    if (opts.start === 'food') requestAnimationFrame(() => go('food', false))
+    return state
+  }
+
+  window.FP = { mount }
+})()
+  for (const device of document.querySelectorAll('.device')) {
+    const w = Number(device.dataset.w), h = Number(device.dataset.h)
+    const screen = document.createElement('div')
+    screen.style.width = w + 'px'
+    screen.style.height = h + 'px'
+    device.append(screen)
+    const fit = () => {
+      const s = Math.min(1, device.clientWidth / w)
+      screen.style.transform = `scale(${s})`
+      device.style.height = Math.ceil(h * s) + 'px'
+    }
+    new ResizeObserver(fit).observe(device)
+    fit()
+    FP.mount(screen, { option: 'a', phone: 'p2', affirm: 'g2', input: device.dataset.input, bar: device.dataset.bar })
+  }
+</script>
+</body>
+</html>

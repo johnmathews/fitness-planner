@@ -14,7 +14,6 @@
   .caption { color: var(--ink-secondary); }
 
   .cell { position: relative; width: 76px; height: 76px; display: grid; place-items: center; border-top: 1px solid var(--line); }
-  .cell.today { background: var(--highlight); }
   .mark { width: 64px; height: 64px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; }
   /* The mark (DayMark card): a hand-drawn box about 45px across, its stroke a mask filled with control-border, drawn over the fill. A marked day fills the box in its pen (green great, yellow partial, red missed) with one of three marker drawings traced from the owner's own ink, a mask each: an open zigzag (the default), a solid fill (data-drawing="solid") or a dense hatch (data-drawing="hatch"). A press steps through the three kinds in each drawing. The ink runs past the box, so the masks spill 6px round the 64px button (the 36-unit paths at 60px). Same paths as the app's DayMark. */
   .mark { position: relative; isolation: isolate; }

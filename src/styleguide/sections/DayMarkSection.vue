@@ -34,7 +34,7 @@ function step(key: string): void {
 </script>
 
 <!-- The card's states (components/DayMark/preview.html), in its copy. The band is the grid cell's,
-     so the today specimens sit on a highlight cell here. The note specimen is the design only: the
+     so the today specimens sit on a plain cell here (no band since K36). The note specimen is the design only: the
      app has no notes yet (K6) and never draws an empty corner. -->
 <template>
   <div class="flex flex-col gap-8">
@@ -98,7 +98,7 @@ function step(key: string): void {
         :key="key"
         :state="state!"
       >
-        <div class="bg-highlight">
+        <div>
           <DayMark
             :id="`sg-day-mark-${key}`"
             name="Squats"
@@ -110,7 +110,7 @@ function step(key: string): void {
         </div>
       </StateExample>
       <StateExample state="Has a note">
-        <div class="bg-highlight">
+        <div>
           <DayMark
             id="sg-day-mark-note"
             name="Squats"
@@ -123,7 +123,7 @@ function step(key: string): void {
         </div>
       </StateExample>
       <StateExample state="Keyboard focus (Tab to it)">
-        <div class="bg-highlight">
+        <div>
           <DayMark
             id="sg-day-mark-focus"
             name="Pull-ups"

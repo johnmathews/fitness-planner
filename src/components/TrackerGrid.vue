@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { Day } from '@/stores/planner'
 import type { Mark, MarkSet } from '@/lib/storage'
-import type { CountTone, PickedCount, Tracked } from '@/lib/tracker'
+import type { Tracked } from '@/lib/tracker'
 import { useGridNav } from '@/composables/gridNav'
-import { computed, onMounted, ref, watch } from 'vue'
-import TrackerRow, { stickyName } from '@/components/TrackerRow.vue'
+import { computed, ref } from 'vue'
+import { Check } from '@lucide/vue'
+import TrackerRow from '@/components/TrackerRow.vue'
 
 const props = defineProps<{
   /** The rows' kind, for the name column's hidden header: "Exercise" or "Food". */
@@ -16,13 +17,15 @@ const props = defineProps<{
   marksFor: (id: string) => (Mark | null)[]
   /** How the marks are drawn: the device's mark set. The squiggles when not given. */
   markSet?: MarkSet
-  totalFor: (id: string) => number
   detailsFor?: (item: Tracked) => string[]
   /** Adds an edit button to each row in config mode, which emits `edit`. */
   editable?: boolean
   configMode: boolean
-  /** The Picked row (exercises only): its caption ("3 a day") and each day's count. */
-  picked?: { caption: string; counts: PickedCount[] }
+  /**
+   * Exercises only: which days reach the daily pick (K30). A met day's name turns pen with a
+   * check, and a bold pen line runs along the foot of its column (K35).
+   */
+  metDays?: boolean[]
 }>()
 
 defineEmits<{
@@ -31,24 +34,21 @@ defineEmits<{
   edit: [id: string]
 }>()
 
-/** The Picked row's counts (WeekGrid card): quiet under the pick, ink at it, caution over it. */
-const TONE: Record<Exclude<CountTone, 'future'>, string> = {
-  under: 'text-ink-secondary',
-  met: 'font-semibold text-ink',
-  over: 'font-semibold text-caution-ink underline decoration-[1.5px] underline-offset-[3px]',
-}
+defineSlots<{
+  /** A short screen's title in the empty top-left cell (the SectionHeader is hidden there). */
+  corner?: () => unknown
+}>()
 
 /**
- * Edit plan's widths: the name column grows by the edit button and its gap, and the table by that
- * and the 56px Remove column, so the days keep their 76px minimum (WeekGrid card). Both grids
- * get the same widths, so their days line up.
+ * The column template on screen (WeekGrid card): the names and the seven days, and in Edit plan
+ * the names widened by the edit button and its gap, and a 56px Remove column (no Week column, K33).
+ * Folded there are only the seven days. On paper the colgroup's widths apply instead.
  */
-const widths = computed(() =>
+const columns = computed(() =>
   props.configMode
-    ? { name: 'w-47 sm:w-63', table: 'min-w-214 sm:min-w-234' }
-    : { name: 'w-34 sm:w-50', table: 'min-w-187 sm:min-w-207' },
+    ? 'screen:grid-cols-[calc(var(--grid-name-w)+52px)_repeat(7,minmax(0,1fr))_56px]'
+    : 'screen:grid-cols-[var(--grid-name-w)_repeat(7,minmax(0,1fr))]',
 )
-
 // One tab stop for the whole grid, on today's DayMark in the first row (see gridNav for the keys
 // and for Edit plan's controls in the row headers).
 const table = ref<HTMLTableElement | null>(null)
@@ -56,176 +56,115 @@ useGridNav(table, {
   widget: '[data-slot="day-mark-button"]',
   start: '[data-slot="day-mark-button"][aria-current="date"]',
 })
-
-/**
- * Opens with today in view (WeekGrid card, phone): the day before today sits beside the names, then
- * today, so no one has to scroll sideways to mark it. Another week opens at Monday, and Edit plan at
- * the start, since there the names (with their controls) don't stick and would otherwise be off
- * screen. Where the table fits (sm and up) there is nothing to scroll, and this changes nothing.
- */
-const scroller = ref<HTMLDivElement | null>(null)
-function scrollToToday(): void {
-  const heads = table.value!.tHead!.rows[0]!.cells
-  // Header cells: the names at 0, then Monday at 1, so the day before today is at today's index.
-  const today = props.days.findIndex((d) => d.isToday)
-  scroller.value!.scrollLeft =
-    !props.configMode && today > 0 ? heads[today]!.offsetLeft - heads[0]!.offsetWidth : 0
-}
-onMounted(scrollToToday)
-watch([() => props.days, () => props.configMode], scrollToToday, { flush: 'post' })
-
-/**
- * Brings a focused day or total wholly into view. Chrome's own focus scroll leaves a cell that is
- * already partly visible where it is, even half under the sticky names; scrollIntoView honours the
- * scroller's scroll-padding-left. The names are always in view, so they are left alone.
- */
-function reveal(ev: FocusEvent): void {
-  const el = ev.target as HTMLElement
-  // Optional: jsdom has no scrollIntoView.
-  if (el.closest('td')) el.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
-}
 </script>
 
 <!--
-  One week as a table (brand/design-system/project/components/WeekGrid): the name column (200px,
-  136px below 640px), seven day columns sharing the rest, and the 96px "Week" total (80px).
-  Hairline rules between rows, an ink rule under the header, no boxes and no card around it.
-  Today's highlight band runs down its column from the header to the Picked row. Narrower than its
-  minimum (748px, 828px from 640px) the table scrolls sideways inside its own container, never the
-  page: the container is positioned so the visually hidden text inside it can't escape and widen
-  the page. The name column is sticky (stickyName) and the container's scroll-padding-left is its
-  width, so a focused cell scrolls clear of the names rather than under them; the container opens
-  scrolled to today (scrollToToday).
+  One week (brand/design-system/project/components/WeekGrid): the name column, seven day columns
+  hairline rules between rows, an ink rule under the header, no boxes and no
+  card around it. Today has no band (K36): only its name for a screen reader says it.
+
+  On screen the table is a CSS grid (its row groups and rows `display: contents`, so the explicit
+  roles carry the table's meaning). It fills the height its screen leaves (PlannerScreen): rows
+  share it, at least --grid-row-min each, and the grid stops at --grid-row-max a row (main.css),
+  so a tall screen centres it. Each day cell is a size
+  container that its DayMark fills. Folded (held upright) the names leave their column: each row's
+  name line spans the seven days above its boxes, placed by the row's --line-row and --box-row,
+  Nothing scrolls sideways. On paper it is a
+  table again, at the colgroup's widths and DayMark's fixed size.
 
   Edit plan widens the name column by exactly the edit button it gains and adds a 56px Remove
-  column after "Week", so each row keeps its height (F25).
+  column after the days, so each row keeps its height (F25).
 
   Keyboard (F15): the WAI-ARIA grid, one tab stop per grid (useGridNav). A day cell's focus is its
-  DayMark, the cell's one widget; the names, totals and Picked cells take focus themselves and
-  draw the focus ring inset, so the scroller never clips it.
+  DayMark, the cell's one widget; the names take focus themselves and
+  draw the focus ring inset.
 -->
 <template>
-  <div
-    ref="scroller"
-    class="relative overflow-x-auto print:overflow-visible"
-    :class="{ 'scroll-pl-34 sm:scroll-pl-50': !configMode }"
-    @focusin="reveal"
+  <table
+    ref="table"
+    role="grid"
+    :aria-label="tableLabel"
+    class="w-full table-fixed border-collapse tabular-nums screen:grid screen:grid-rows-[auto_repeat(var(--rows),minmax(var(--grid-row-min),1fr))] screen:content-center full:max-h-[calc(var(--rows)*var(--grid-row-max)_+_var(--u)*100)] folded:max-h-none folded:grid-cols-7 folded:grid-rows-none folded:content-start"
+    :class="columns"
+    :style="{ '--rows': items.length }"
   >
-    <table
-      ref="table"
-      role="grid"
-      :aria-label="tableLabel"
-      class="w-full table-fixed border-collapse tabular-nums"
-      :class="
-        // Wide enough that a day column never drops below the 76px DayMark cell: the other
-        // columns plus 7 × 76 (748px on a phone and 828px above).
-        widths.table
-      "
-    >
-      <colgroup>
-        <col :class="widths.name" />
-        <col v-for="d in days" :key="d.key" />
-        <col class="w-20 sm:w-24" />
-        <col v-if="configMode" class="w-14" />
-      </colgroup>
-      <thead>
-        <tr role="row" class="border-b border-ink">
-          <th scope="col" role="columnheader" class="p-0" :class="stickyName(configMode)">
-            <span class="sr-only">{{ label }}</span>
-          </th>
-          <th
-            v-for="d in days"
-            :key="d.key"
-            scope="col"
-            role="columnheader"
-            class="px-0 py-2 text-center font-normal"
-            :class="{ 'bg-highlight': d.isToday }"
-            :aria-current="d.isToday ? 'date' : undefined"
-            :data-today="d.isToday"
-            data-testid="day-head"
-          >
-            <span class="label block text-ink">{{ d.name }}</span>
-            <span
-              class="block text-sm"
-              :class="d.isToday ? 'font-semibold text-ink' : 'text-ink-secondary'"
-              >{{ d.date }}</span
-            >
-            <span v-if="d.isToday" class="sr-only">, today</span>
-          </th>
-          <th
-            scope="col"
-            role="columnheader"
-            class="label px-0 py-2 text-center text-ink-secondary"
-          >
-            Week
-          </th>
-          <th v-if="configMode" scope="col" role="columnheader" class="p-0" data-noprint>
-            <span class="sr-only">Remove</span>
-          </th>
-        </tr>
-      </thead>
+    <!-- Paper's column widths; on screen the grid's template sets them, and a colgroup would be
+         a grid item. -->
+    <colgroup class="screen:hidden">
+      <col :class="configMode ? 'w-63' : 'w-50'" />
+      <col v-for="d in days" :key="d.key" />
+      <col v-if="configMode" class="w-14" />
+    </colgroup>
+    <thead class="screen:contents">
+      <tr role="row" class="border-b border-ink screen:contents">
+        <th
+          scope="col"
+          role="columnheader"
+          class="p-0 screen:flex screen:flex-col screen:justify-end screen:border-b screen:border-ink folded:hidden"
+        >
+          <span class="sr-only" data-slot="grid-label">{{ label }}</span>
+          <span aria-hidden="true" class="hidden flex-col pb-1 text-left short:flex">
+            <slot name="corner" />
+          </span>
+        </th>
+        <th
+          v-for="(d, i) in days"
+          :key="d.key"
+          scope="col"
+          role="columnheader"
+          class="px-0 py-2 text-center font-normal screen:flex screen:flex-col screen:justify-end screen:border-b screen:border-ink screen:py-[calc(var(--u)*12)] folded:py-1.5 short:py-1"
+          :aria-current="d.isToday ? 'date' : undefined"
+          :data-today="d.isToday"
+          :data-met="metDays?.[i] ? 'true' : undefined"
+          data-testid="day-head"
+        >
+          <span
+            class="label inline-flex items-center justify-center gap-1 text-(length:--fs-day) leading-tight"
+            :class="metDays?.[i] ? 'text-pen' : 'text-ink'"
+            >{{ d.name
+            }}<Check
+              v-if="metDays?.[i]"
+              data-slot="met-mark"
+              :size="16"
+              :stroke-width="1.5"
+              class="shrink-0 text-pen"
+          /></span>
+          <!-- The day's name alone on screen (the owner's call, K29); the date stays for a screen
+               reader, and the DayMarks' names carry the full date. -->
+          <span class="sr-only">{{ ' ' + d.date }}</span>
+          <span v-if="d.isToday" class="sr-only">, today</span>
+          <span v-if="metDays?.[i]" class="sr-only">, daily goal met</span>
+        </th>
+        <th
+          v-if="configMode"
+          scope="col"
+          role="columnheader"
+          class="p-0 screen:border-b screen:border-ink folded:hidden"
+          data-noprint
+        >
+          <span class="sr-only">Remove</span>
+        </th>
+      </tr>
+    </thead>
 
-      <tbody>
-        <TrackerRow
-          v-for="it in items"
-          :key="it.id"
-          :item="it"
-          :details="detailsFor?.(it)"
-          :editable="editable"
-          :config-mode="configMode"
-          :days="days"
-          :marks="marksFor(it.id)"
-          :mark-set="markSet"
-          :total="totalFor(it.id)"
-          @toggle="$emit('toggle', it.id, $event)"
-          @remove="$emit('remove', it.id)"
-          @edit="$emit('edit', it.id)"
-        />
-      </tbody>
-
-      <!-- On paper a split table repeats its header, but the Picked row prints once, at the end. -->
-      <tfoot v-if="picked" class="print:table-row-group">
-        <tr role="row">
-          <th
-            scope="row"
-            role="rowheader"
-            class="py-3 pr-1.5 pl-1.5 text-left align-top font-normal focus-visible:-outline-offset-2"
-            :class="stickyName(configMode)"
-          >
-            <span class="body block text-ink">Picked</span>
-            <span class="caption block text-ink-secondary">{{ picked.caption }}</span>
-          </th>
-          <td
-            v-for="(c, i) in picked.counts"
-            :key="i"
-            role="gridcell"
-            class="px-0.5 py-3 text-center align-top focus-visible:-outline-offset-2"
-            :class="{ 'bg-highlight': days[i]!.isToday }"
-            :data-tone="c.tone"
-            data-testid="day-count"
-          >
-            <template v-if="c.tone === 'future'">
-              <span aria-hidden="true" class="body block text-ink-secondary">–</span>
-              <span class="sr-only">Not yet</span>
-            </template>
-            <template v-else>
-              <span data-testid="day-count-figure" class="block text-base" :class="TONE[c.tone]">{{
-                c.n
-              }}</span>
-              <template v-if="c.extra">
-                <span class="sr-only">,</span>
-                <span data-testid="day-count-extra" class="caption block text-caution-ink">{{
-                  c.extra
-                }}</span>
-              </template>
-            </template>
-          </td>
-          <!-- Nothing to total for the picks (the section's figure counts the week) and nothing to
-               remove, so these cells are out of the accessibility tree and the grid's navigation. -->
-          <td aria-hidden="true" class="p-0" />
-          <td v-if="configMode" aria-hidden="true" class="p-0" data-noprint />
-        </tr>
-      </tfoot>
-    </table>
-  </div>
+    <tbody class="screen:contents">
+      <TrackerRow
+        v-for="(it, i) in items"
+        :key="it.id"
+        :index="i"
+        :item="it"
+        :details="detailsFor?.(it)"
+        :editable="editable"
+        :config-mode="configMode"
+        :days="days"
+        :marks="marksFor(it.id)"
+        :met-days="metDays"
+        :last="i === items.length - 1"
+        :mark-set="markSet"
+        @toggle="$emit('toggle', it.id, $event)"
+        @remove="$emit('remove', it.id)"
+        @edit="$emit('edit', it.id)"
+      />
+    </tbody>
+  </table>
 </template>

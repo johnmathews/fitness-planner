@@ -14,9 +14,7 @@ the app syncs with it through the same origin (§7). Two Pinia stores hold what 
 their log), which takes its week from `planner`. Two more run the account: `session` (who is signed
 in) and `sync` (the per-user cache, the outbox of unsent writes, and reads). Both data stores track
 the same thing, a mark per day against a weekly goal, through the pure helpers in
-`src/lib/tracker.ts`. The same module words the counts: `pickedCount` gives each Picked cell its
-tone (at the pick, over it with "one extra", under it, or a day to come shown as an en dash), and
-`todaySummary` writes the Today list's line ("Two of three. One to go."). `src/lib/words.ts` writes
+`src/lib/tracker.ts`. `src/lib/words.ts` writes
 small counts as words: `numberWord` ("two", or "Two" to open a sentence, figures from 11 up) and
 `countOf` ("one change", "two changes"). `src/lib/plans.ts` decides which week's plan a week
 shows; `src/lib/dates.ts` holds the week maths (Monday of a week, `YYYY-MM-DD` keys and back,
@@ -36,7 +34,7 @@ for Settings → Import… and the first-login prompt.
 ```
 App.vue                 picks the screen (a link, planner, sign-up, reset or sign-in), the
 │                       .dark class, clock refresh, sync triggers (focus, visibility, online, minute
-│                       tick, storage), the phone's Today | Week switch, and the one ConfirmHost
+│                       tick, storage), the planner-screens class (§6.6), and the one ConfirmHost
 ├── ConfirmEmail.vue    a confirm-your-email link (#/confirm/<t>), signed in or out: confirms it
 ├── PasswordForm.vue    an invite or reset link (#/invite/<t>, #/reset/<t>): choose a password
 ├── SignupForm.vue      #/signup: email and password twice; field and form-level refusals
@@ -45,29 +43,27 @@ App.vue                 picks the screen (a link, planner, sign-up, reset or sig
 │                       session; links to #/signup, and to #/forgot where the API sends email
 │   (all five inside AuthCard.vue: a centred Panel with the BrandMark)
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
-│                       the Edit plan Switch, Settings (to the Settings page) and Print…
+│                       the Edit plan Switch, Settings (to the Settings page) and Print…; on the
+│                       planner's screens out of sight until wanted (useBarReveal, §6.6)
 ├── SettingsPage.vue    the SettingsPage card, at #/settings: Back to the week, then Appearance
-│                       (Theme, Marks), Planner (Exercises a day, Show weekly totals), Your data
+│                       (Theme, Marks), Planner (Exercises a day), Your data
 │                       (Export and Import…, see §4) and Account (who is signed in, Sign out)
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── EmailStatus.vue     "Confirm your email." Banner, with Send it again, until it is confirmed
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
-├── TodayList.vue       phones only (below 640px), the first view: today's exercises and foods,
-│                       one DayMark each, "Two of three. One to go."; a Today | Week switch above
-│                       it (usePhoneView, src/composables/phoneView.ts) leads to the week below
 ├── WeekHeader.vue      the page's h1, the week ("19–25 October"); in config mode "Copy plan to
 │                       next week" and a note when the plan is carried over
-├── ExerciseGrid.vue    the Exercises section: SectionHeader ("10 of 12 this week" StatFigure)
-│   ├── TrackerGrid.vue a <table> (WeekGrid card): day header, one TrackerRow per item, today's
-│   │   │               highlight band, and the Picked row ("4", "one extra" over the pick)
-│   │   └── TrackerRow.vue  name and chips; 7 × DayMark; "3 of 4" total; in config
+├── ExerciseGrid.vue    the Exercises section: SectionHeader (the title and the week)
+│   ├── TrackerGrid.vue a <table> (WeekGrid card): day names, one TrackerRow per item, and
+│   │   │               the days that met the daily pick
+│   │   └── TrackerRow.vue  name and chips; 7 × DayMark; in config
 │   │                       mode the edit IconButton after the name, and the remove
 │   │                       IconButton in a last cell of its own
 │   ├── AddExerciseForm.vue config mode only: name, sets, Measure (Reps or Time), reps or
 │   │                       seconds, PerSideToggle, weight (kg)
 │   └── EditExerciseDialog.vue  Dialog: the add form's fields, then Times a week (the goal)
 └── DietSection.vue     the Food section: SectionHeader ("2 of 4 goals met"), kept with its grid
-    ├── TrackerGrid.vue wired to diet: no chips and no Picked row (foods have no daily pick)
+    ├── TrackerGrid.vue wired to diet: no chips
     ├── AddFoodForm.vue config mode only: name, Add food
     └── EditFoodDialog.vue  Dialog: Name, then Times a week (the goal)
 ```
@@ -100,7 +96,6 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 | `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven marks (`Days`, below)       |
 | `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is kept but draws nothing (K13)     |
 | `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                                      |
-| `showTotals`          | `fitness-planner-settings-v1` (the device) | `true` (default): the sections' StatFigures show                           |
 | `markSet`             | `fitness-planner-settings-v1` (the device) | `squiggles` (default), `ticks`, `stamped-ticks`, `faces`, `stamped-faces`  |
 | `configMode`          | no                                         | `false` (normal mode) on every load                                        |
 | `weekOffset`          | no                                         | `0` is the current week                                                    |
@@ -138,24 +133,23 @@ empty name), `updateFood` (name and goal from the Edit food dialog, `false` for 
 food not in the week), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
 like exercise goals (met once the count reaches a non-zero goal); foods have no daily target.
 
-The planner writes only the theme, `showTotals` and `markSet`, each merged into whatever
+The planner writes only the theme and `markSet`, each merged into whatever
 `fitness-planner-settings-v1` already holds.
 `writeKey` skips the write when the stored string already matches, and swallows storage errors, so
 with storage blocked or full the app keeps working in memory.
 
 ## 4. Storage format and validation
 
-| Key                                                    | Holds                                                                                                | Written |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | ------- |
-| `fitness-planner-session-v1`                           | `{ user }`: the last signed-in user                                                                  | yes     |
-| `fitness-planner-cache-v2:<user>`                      | the user's state as `GET /api/state` returns it, with `revs`                                         | yes     |
-| `fitness-planner-outbox-v2:<user>`                     | writes not yet sent (§7)                                                                             | yes     |
-| `fitness-planner-import-v1:<user>`                     | the first-login prompt's answer, `imported` or `dismissed` (§7)                                      | yes     |
-| `fitness-planner-settings-v1`                          | `theme`, read before first paint by `public/theme-init.js`, `showTotals` and `markSet`               | both    |
-| `fitness-planner-view-v1`                              | the phone's Today or Week choice, `today` or `week` (§5); the device's own, never synced or exported | yes     |
-| `fitness-planner-cache-v1:<user>`, `-outbox-v1:<user>` | the cache and outbox from before marks had kinds; moved to `-v2` at sign-in (below)                  | never   |
-| `fitness-planner-v2`, `-diet-v2`                       | exercise and food `{ plans, log }` from before accounts                                              | never   |
-| `fitness-planner-v1`, `-diet-v1`                       | the single-list format from before weekly plans                                                      | never   |
+| Key                                                    | Holds                                                                               | Written |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------- | ------- |
+| `fitness-planner-session-v1`                           | `{ user }`: the last signed-in user                                                 | yes     |
+| `fitness-planner-cache-v2:<user>`                      | the user's state as `GET /api/state` returns it, with `revs`                        | yes     |
+| `fitness-planner-outbox-v2:<user>`                     | writes not yet sent (§7)                                                            | yes     |
+| `fitness-planner-import-v1:<user>`                     | the first-login prompt's answer, `imported` or `dismissed` (§7)                     | yes     |
+| `fitness-planner-settings-v1`                          | `theme`, read before first paint by `public/theme-init.js`, and `markSet`           | both    |
+| `fitness-planner-cache-v1:<user>`, `-outbox-v1:<user>` | the cache and outbox from before marks had kinds; moved to `-v2` at sign-in (below) | never   |
+| `fitness-planner-v2`, `-diet-v2`                       | exercise and food `{ plans, log }` from before accounts                             | never   |
+| `fitness-planner-v1`, `-diet-v1`                       | the single-list format from before weekly plans                                     | never   |
 
 Since accounts, nothing writes the keys from before them. They stay because they hold what a browser
 recorded locally, which the first-login import (§7) reads with the parsing, migration and
@@ -264,9 +258,11 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   carries `aria-current="date"`), so the grid works from the keyboard and with a screen reader. The
   grid is a `<table role="grid">` with `row`, `columnheader`, `rowheader` and `gridcell` roles, and
   one tab stop (§6.5).
-- **A normal web page, not a window.** The handoff drew the app as a macOS window (traffic lights, a
-  framed window on a backdrop). The app is an SPA, so it uses a full-width sticky navbar and a
-  centred content column instead; the navbar keeps the week controls, Settings and Print….
+- **One screen per section, not a window.** The handoff drew the app as a macOS window (traffic
+  lights, a framed window on a backdrop). The app fills the browser instead: Exercises and Food are
+  a screen each, the scroll snaps between them, and the navbar keeps out of sight until it is
+  wanted (K24, K25; §6.6). Edit plan and Settings are ordinary pages with a sticky navbar and a
+  centred content column (K27). The navbar keeps the week controls, Settings and Print….
 - **Light and dark themes.** The handoff is dark-only. Settings offers System (the default, which
   follows `prefers-color-scheme` live), Light and Dark. `App.vue` toggles a `dark` class on
   `<html>`; `public/theme-init.js` applies the saved choice before first paint so a dark preference
@@ -285,7 +281,7 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   "Edit plan" Switch in the navbar (a `role="switch"` button) turns on config mode, which shows the
   edit and remove IconButtons, the add forms and "Copy plan to next week". An item is changed only
   in its dialog (Edit exercise, Edit food), so rows have no Stepper; the remove button ends each
-  row, in a "Remove" column after "Week". The mode is not saved, so the
+  row, in a "Remove" column after the days. The mode is not saved, so the
   app always opens ready for ticking.
 - **Exercises and foods are editable.** The handoff had no way to change an item after adding it.
   An Edit IconButton (`pencil`) on each exercise row opens `EditExerciseDialog` (and on each food
@@ -297,8 +293,8 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **Steppers mark their bounds** (goal 0/7, daily pick 1/8) with `aria-disabled` and ignore the
   click there. `disabled` would drop keyboard focus mid-press. The store still clamps as a backstop.
 - **Today refreshes.** A one-minute tick and `visibilitychange` both call `refreshNow`, which
-  updates `now` only when the date has changed. A tab left open past midnight moves its highlighted
-  column within a minute.
+  updates `now` only when the date has changed. A tab left open past midnight moves today (its tab
+  stop and screen-reader name) within a minute.
 - **Export and import live in Settings.** Before accounts, data lived in one browser and the export
   file was the only way to move it or back it up. It is still each person's own copy of their data.
   Import is additive by design: restoring an old backup over newer data cannot lose the newer
@@ -307,28 +303,22 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   state instead of overwriting it, and their writes share one outbox (§7). The plan had proposed a
   `BroadcastChannel`; the cache already lives in `localStorage`, whose events carry the same news
   with no second channel to keep in step.
-- **Food sits below the exercises** on the same page, sharing the week navigation and the print
-  sheet. It has no daily target, so its grid has no Picked row.
+- **Food is the screen after the exercises**, sharing the week navigation and the print sheet.
+- **No Picked row, no dates in the header** (K28, K29): the grids show each day by its name alone,
+  and nothing counts a day against the daily pick. A day that reaches it turns green instead
+  (K30): `ExerciseGrid` passes `metDays` to the grid, which draws the name in `pen` with a check
+  and a bold `pen` line along the foot of the column (K35). The daily pick is stored, synced and exported (`dailyPick`) as
+  before. The sections have no weekly figure (K31), Settings no totals switch (K32), and the grids no Week
+  column (K33). The Header has a Full screen button where the browser supports one (K34).
 - **Print is the light theme on white paper, from either theme** (§6.7).
 - **Narrow screens.** Below 640px the navbar drops Print…, shortens the switch's visible label to
   "Edit" (its accessible name stays "Edit plan"), and wraps "This week" and the switch to a second
-  row at the right, leaving the brand mark, the centred arrows and week, and Settings on the first; below
-  480px the wordmark becomes the "FP" monogram. Settings is a gear IconButton named "Settings" at
-  every width. The markup keeps the desktop order, which is the tab order. Below 640px the app
-  opens on the **Today list** (brand spec K5): today's exercises and foods, each with one DayMark,
-  ticked through the same store actions as the grid, with no sideways scroll down to 320px. A
-  Today | Week switch leads to the grids; the choice is remembered on the device
-  (`fitness-planner-view-v1`, like the theme, never synced). Another week and Edit plan always show
-  the grids, since the list only ever shows today and the plan is edited in the week; choosing
-  Today returns to this week and turns Edit plan off. The grids keep a
-  748px minimum and scroll sideways inside their own container, with the **name column sticky** at
-  the left on the canvas, `scroll-padding-left` at its width so keyboard focus never lands under
-  it, and the scroller opening with the day before today beside the names (another week opens at
-  Monday). The table's minimum width keeps every day column at 76px, a DayMark cell, or more: 748px on
-  a phone and 828px above, 856px and 936px in Edit plan. In Edit plan the name
-  column is 384px, wider than the room a phone leaves for it, so there it scrolls with the days
-  instead of sticking, and the grid opens at its left edge. This reverses the earlier "the grid
-  scrolls sideways, as designed" (K5, F1).
+  row at the right, leaving the centred arrows and week and Settings on the first; below 480px the
+  wordmark becomes the "FP" monogram. Settings is a gear IconButton named "Settings" at every
+  width. The markup keeps the desktop order, which is the tab order. Held upright under 1000px wide,
+  or on any screen under 760px wide, the grids fold (K26): each row's name line spans the seven
+  days above its boxes, so nothing scrolls sideways down to 320px. A phone opens on the week, like
+  every other screen. This supersedes the phone's Today list and the sticky name column (K5).
 
 ## 6. Styling and the design system
 
@@ -349,7 +339,7 @@ have no `<style>` blocks. Everything global is in `src/styles/main.css`.
   Tailwind colour in `@theme inline` (`--color-canvas: var(--canvas)`). Templates write
   `bg-canvas`, `text-ink-secondary` or `border-control-border`, and both themes follow without
   `dark:` variants. The roles are `canvas`, `panel`, `tile`, `line`, `control-border`, `ink`,
-  `on-ink`, `ink-secondary`, `error-ink`, `focus`, `pen`, `pen-partial`, `pen-missed`, `highlight`,
+  `on-ink`, `ink-secondary`, `error-ink`, `focus`, `pen`, `pen-partial`, `pen-missed`,
   `caution-ink` and `scrim`.
 - **No palette.** `--color-*: initial` switches Tailwind's default colours off, keeping only
   `transparent` and `current`, so a palette class such as `bg-red-500` or `text-white` generates
@@ -365,7 +355,8 @@ have no `<style>` blocks. Everything global is in `src/styles/main.css`.
 - **Shape, focus and scroll.** `rounded-sm`, `rounded-md` and `rounded-lg` follow the radius tokens,
   and `shadow-overlay` is the one shadow. A global `:focus-visible` rule draws a solid 2px `focus`
   outline at a 2px offset on every interactive element. `scroll-padding-top` on `<html>` keeps
-  keyboard-focused content from scrolling under the sticky navbar.
+  keyboard-focused content from scrolling under the sticky navbar; on the planner's screens it is
+  0, since the navbar is out of sight there.
 
 ### 6.2 The marks' pens
 
@@ -398,12 +389,12 @@ component's own.
 | Basics   | Button (primary, secondary and quiet, 44px tall, `sm` 36px from 640px up), IconButton (44px, a required `label`), TextLink, BrandMark |
 | Forms    | TextField, TextArea, SegmentedControl, Switch, Stepper                                                                                |
 | Overlays | Dialog, ConfirmDialog with ConfirmHost, Popover                                                                                       |
-| Planner  | DayMark, Chip, SectionHeader, StatFigure                                                                                              |
+| Planner  | DayMark, Chip, SectionHeader                                                                                                          |
 | Feedback | InlineMessage, Banner                                                                                                                 |
 
 The other cards are composed in the screens: Header in `AppNavbar.vue`, Panel in `AuthCard.vue`
-and `ImportPrompt.vue`, WeekGrid in `TrackerGrid.vue` and `TrackerRow.vue`, TodayList in
-`TodayList.vue`. Icons are `@lucide/vue` at a 1.5px stroke, `aria-hidden` beside words. A
+and `ImportPrompt.vue`, WeekGrid in `TrackerGrid.vue` and `TrackerRow.vue`, PlannerScreen in
+`ExerciseGrid.vue` and `DietSection.vue` (the class lists in `src/lib/screens.ts`). Icons are `@lucide/vue` at a 1.5px stroke, `aria-hidden` beside words. A
 primitive's colour transitions last 120ms at most, stop under `prefers-reduced-motion`, and name
 the properties they animate, so the focus ring never fades in.
 
@@ -432,22 +423,40 @@ Each grid is one tab stop, following the WAI-ARIA grid pattern with a roving tab
   exactly one stop as rows come and go.
 - **Keys.** Arrows move cell by cell over the names, days, totals and the Picked row, and never
   wrap. Home and End go along the row, Ctrl+Home and Ctrl+End to the grid's ends. Space and Enter
-  belong to the DayMark. An `aria-hidden` cell (the empty Picked cells under "Week" and "Remove")
-  is skipped.
+  belong to the DayMark. An `aria-hidden` cell is skipped.
 - **Edit plan.** The controls in a cell (Edit in the name cell, Remove in the
   last cell) stay out of the Tab order. Enter or F2 on the cell lets them in, Tab moves among them,
   and Escape puts focus back on the cell.
 
-"Skip to today", first in the tab order in `AppNavbar.vue`, focuses today's first mark: in the
-phone's Today list when it shows, otherwise in the first grid that has today.
+"Skip to today", first in the tab order in `AppNavbar.vue`, focuses today's first mark in the
+first grid that has today. Tabbing to it brings the navbar into view on the planner's screens.
 
-### 6.6 The phone layout
+### 6.6 The planner's screens
 
-`usePhoneView` (`src/composables/phoneView.ts`) decides what the main screen shows below 640px
-(`PHONE_QUERY`, Tailwind's `sm`). §5, "Narrow screens", has the behaviour. The sticky name column
-is `stickyName()` in `TrackerRow.vue`, shared with the header and Picked cells in `TrackerGrid.vue`,
-and `TrackerGrid` opens its scroller with today in view and scrolls a focused cell wholly clear of
-the names.
+`App.vue` puts `planner-screens` on `<html>` while the planner shows outside Edit plan (K27). That
+class turns on the page's `scroll-snap-type: y mandatory` and main.css's `full:` variant. With it,
+each section is a screen (`SCREEN` in `src/lib/screens.ts`: `min-h-dvh`, `snap-start`, a centred
+column) and its grid takes the height left (`SCREEN_GRID`). Four custom variants in main.css carry
+the layout, all screen-only so paper keeps the table: `screen:` (the WeekGrid is a CSS grid),
+`full:`, `folded:` (upright under 1000px wide, or under 760px wide) and `short:` (landscape, 540px
+tall or less).
+
+- **Sizes follow the screen.** `--u` in main.css is 1 at 1280×800, clamped between 0.75 and 1.6.
+  The named sizes (`--fs-name`, `--grid-name-w`, `--screen-pad-x`, …) derive from it, and folded
+  they switch to `--n` (1 on a phone, up to 1.4). Components set `text-(length:--fs-name)` beside a
+  type class, so the class keeps the font and weight and the size follows the screen.
+- **The grid.** `TrackerGrid` makes the table `display: grid` with its row groups and rows
+  `display: contents`, so the cells place themselves and gridNav still walks `table.rows`. Rows
+  share the height (`minmax(--grid-row-min, 1fr)`), and a `max-height` stops them at 1.25 × a day's
+  width. Each day cell is a size container that `DayMark fill` fills (86%, up to 128px). Folded,
+  each `TrackerRow` sets `--line-row` and `--box-row`, the two grid lines it takes, and the name line
+  draws today's band with `today-band-line` from `--today`.
+- **The navbar.** `useBarReveal` (`src/composables/barReveal.ts`) shows it from a 14px strip at the
+  top edge (a pointer that can hover), the handle button (wherever a coarse pointer is present;
+  out of the Tab order), and `focus-within`; it hides on leaving, Escape or a press elsewhere. The
+  bar is moved out of view with a transform, never hidden, so its controls stay reachable by Tab.
+- **The way on.** A quiet "Food" button at the foot of the Exercises screen scrolls to Food. It is
+  left out when folded or short.
 
 ### 6.7 Print
 
@@ -455,7 +464,7 @@ The `@media print` block in `main.css` gives a landscape sheet in the light them
 white paper from either theme (K16). It re-points the roles at the light theme's values, the only
 literal colours the system allows (`src/styles/__tests__/print.spec.ts` holds them to
 `tokens.json`): words, boxes and marks keep their light colours, chips are outlined, and `--canvas`,
-`--panel`, `--tile` and `--highlight` go transparent. Shadows and transitions are off.
+`--panel` and `--tile` go transparent. Shadows and transitions are off.
 
 - Anything marked `data-noprint` is hidden: the navbar, the phone's view switch, the sync status,
   the import prompt, Edit plan's controls and add forms, and a section's hint line if it has one. Dialogs, the

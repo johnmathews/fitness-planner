@@ -5,7 +5,7 @@ One row in the search results: a note or an exercise that matched, with the day 
 - Part of the record layer: plain, chronological and quiet, newest first. Search is how the person finds an old note; nothing more clever than that.
 - **A note result:** the exercise name in `body` at 600, the full date beside it in `caption` `ink-secondary` ("Thursday 22 October"; add the year when it isn't this year), then the excerpt in the `note` style (serif italic, `ink`), at most two lines, cut with an ellipsis. When the match is late in a long note, start the excerpt a few words before it with a leading "…".
 - **An exercise result:** the name, then a `caption` line saying what it is ("Exercise · in your plan since 12 October").
-- **The match:** a `<mark>` styled with weight 600 and a 1px underline at 3px offset, in the text's own colour. Never the `highlight` fill: that colour means today.
+- **The match:** a `<mark>` styled with weight 600 and a 1px underline at 3px offset, in the text's own colour. Never a fill.
 - Results sit between `line` hairlines. The whole row is one link to that week (or the exercise's first week), with `tile` on hover and `space-3` vertical padding.
 - No count of its own. The SearchField above the list owns the single count line and announces it ("Three notes mention “knee”.", "No notes mention “knee”."); the results never repeat it.
 

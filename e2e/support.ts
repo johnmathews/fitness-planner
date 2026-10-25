@@ -56,17 +56,15 @@ function state() {
 
 /**
  * Opens the app signed in as alice, with the API mocked: /auth/me knows her, /state returns the
- * week above, and every write succeeds. `view` is the phone view the device remembers.
+ * week above, and every write succeeds.
  */
 export async function openApp(
   page: Page,
   {
     theme = 'light',
-    view,
     unconfirmed = false,
   }: {
     theme?: Theme
-    view?: 'today' | 'week'
     /** The account's email is not confirmed yet, so the confirm banner shows. */
     unconfirmed?: boolean
   } = {},
@@ -85,19 +83,29 @@ export async function openApp(
     return route.fulfill({ json: {} })
   })
   await page.addInitScript(
-    ([st, theme, view]) => {
+    ([st, theme]) => {
       // Once per test: a reload keeps what the app itself wrote since.
       if (sessionStorage.getItem('e2e-seeded')) return
       sessionStorage.setItem('e2e-seeded', '1')
       localStorage.setItem('fitness-planner-session-v1', JSON.stringify({ user: 'alice' }))
       localStorage.setItem('fitness-planner-cache-v2:alice', JSON.stringify(st))
       localStorage.setItem('fitness-planner-settings-v1', JSON.stringify({ theme }))
-      if (view) localStorage.setItem('fitness-planner-view-v1', JSON.stringify(view))
     },
-    [s, theme, view ?? null] as const,
+    [s, theme] as const,
   )
   await page.goto('/')
-  await page.waitForSelector('[data-slot="today-list"], [data-testid="exercise-grid"]')
+  await page.waitForSelector('[data-testid="exercise-grid"]')
+  await settle(page)
+}
+
+/**
+ * Calls up the bar on the planner's screens (Header card, Out of sight): the pointer at the top
+ * edge, as a person with a mouse would. Its controls are out of view until then.
+ */
+export async function callUpBar(page: Page): Promise<void> {
+  const width = page.viewportSize()?.width ?? 1280
+  await page.mouse.move(width / 2, 4)
+  await page.locator('[data-slot="bar"][data-shown="true"]').waitFor()
   await settle(page)
 }
 

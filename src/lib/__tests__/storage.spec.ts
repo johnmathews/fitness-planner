@@ -236,12 +236,11 @@ describe('parseDietData', () => {
 })
 
 describe('parseSettings', () => {
-  it('defaults to green accent, three a day, the system theme, the totals shown and squiggles', () => {
+  it('defaults to green accent, three a day, the system theme and squiggles', () => {
     expect(parseSettings(null)).toEqual({
       accent: '#30d158',
       dailyPick: 3,
       theme: 'system',
-      showTotals: true,
       markSet: 'squiggles',
     })
     expect(DEFAULT_SETTINGS.accent).toBe('#30d158')
@@ -254,7 +253,6 @@ describe('parseSettings', () => {
       accent: '#bf5af2',
       dailyPick: 8,
       theme: 'dark',
-      showTotals: true,
       markSet: 'squiggles',
     })
     expect(parseSettings(JSON.stringify({ dailyPick: 0 })).dailyPick).toBe(1)
@@ -269,12 +267,6 @@ describe('parseSettings', () => {
     expect(parseSettings(JSON.stringify({ theme: 'sepia' })).theme).toBe('system')
     // Settings saved before the theme option existed.
     expect(parseSettings(JSON.stringify({ accent: '#0a84ff', dailyPick: 2 })).theme).toBe('system')
-  })
-
-  it('shows the weekly totals unless the device has turned them off', () => {
-    expect(parseSettings(null).showTotals).toBe(true)
-    expect(parseSettings(JSON.stringify({ showTotals: false })).showTotals).toBe(false)
-    expect(parseSettings(JSON.stringify({ showTotals: 'no' })).showTotals).toBe(true)
   })
 
   it('reads each mark set and falls back to squiggles for anything else', () => {

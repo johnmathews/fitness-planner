@@ -117,7 +117,6 @@ export const usePlannerStore = defineStore('planner', () => {
   const accent = ref(DEFAULT_SETTINGS.accent)
   const dailyPick = ref(DEFAULT_SETTINGS.dailyPick)
   const theme = ref<Theme>(parseSettings(readKey(SETTINGS_KEY)).theme)
-  const showTotals = ref(parseSettings(readKey(SETTINGS_KEY)).showTotals)
   const markSet = ref<MarkSet>(parseSettings(readKey(SETTINGS_KEY)).markSet)
   /** Whether the user has settings of their own (from the server, a change, or an import). */
   const settingsSaved = ref(false)
@@ -282,17 +281,12 @@ export const usePlannerStore = defineStore('planner', () => {
     const stored = parseJson(readKey(SETTINGS_KEY))
     writeKey(SETTINGS_KEY, { ...(isRecord(stored) ? stored : {}), theme: next })
   })
-  watch(showTotals, (next) => {
-    const stored = parseJson(readKey(SETTINGS_KEY))
-    writeKey(SETTINGS_KEY, { ...(isRecord(stored) ? stored : {}), showTotals: next })
-  })
   watch(markSet, (next) => {
     const stored = parseJson(readKey(SETTINGS_KEY))
     writeKey(SETTINGS_KEY, { ...(isRecord(stored) ? stored : {}), markSet: next })
   })
 
   return {
-    showTotals,
     markSet,
     plans,
     exercises,

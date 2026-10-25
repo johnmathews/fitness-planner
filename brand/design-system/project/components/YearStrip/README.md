@@ -7,7 +7,7 @@ A year of weeks in one quiet strip: one `pen` dot per week, sized by the session
 - **Three sizes, not shades.** Dot diameter steps with the week's sessions, counted as the week's totals count them (every marked day, great, partial or missed): 11px for 12 or more, 8px for 6 to 11, 5px for 1 to 5. Every dot is solid `pen`; never fade a dot with opacity, which drops it below 3:1.
 - **A week off** is a 9px ring, 1.5px `control-border`: an empty sign, as an empty box is for a day. No label, no red, no gap in the strip.
 - **Weeks still to come** are empty slots.
-- **This week** carries a 9 × 2px `ink` bar under its dot. It is not highlighted: `highlight` is for today's column only.
+- **This week** carries a 9 × 2px `ink` bar under its dot. It has no fill.
 - Month labels in `caption` `ink-secondary` under the strip, at the first Monday of January, April, July and October.
 - A legend line beneath in `caption` repeats the three sizes, the ring and the bar.
 - The heading is the year in `title-2`, with one plain line beside it: "One mark per week, oldest first." Never a count of weeks off, a run length or a comparison with last year.

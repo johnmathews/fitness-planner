@@ -4,8 +4,8 @@ import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import { dayMonth } from '@/lib/dates'
 import type { Food, Mark } from '@/lib/storage'
+import { SCREEN, SCREEN_GRID } from '@/lib/screens'
 import { SectionHeader } from '@/components/ui/section-header'
-import { StatFigure } from '@/components/ui/stat-figure'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import AddFoodForm from '@/components/AddFoodForm.vue'
 import EditFoodDialog from '@/components/EditFoodDialog.vue'
@@ -39,41 +39,41 @@ watch(
 
 <!--
   The Food section: the same WeekGrid without chips and without the Picked row (foods have no
-  daily pick), under its own SectionHeader whose figure counts the foods whose goal is met. A
+  daily pick), under its own SectionHeader. A
   line rule and space-8 set it apart from Exercises. On paper the heading and the grid stay on
-  one page (F20): the header avoids a break after it, and the pair avoids a break inside.
+  one page (F20): the header avoids a break after it, and the pair avoids a break inside. On the
+  planner's screens it is the second screen, with nothing ruling it off.
 -->
 <template>
   <section
-    class="mt-8 border-t border-line pt-8 print:mt-4 print:border-0 print:pt-4"
+    class="mt-8 border-t border-line pt-8 print:mt-4 print:border-0 print:pt-4 full:mt-0 full:border-0"
+    :class="SCREEN"
     aria-labelledby="diet-heading"
   >
-    <div class="print:break-inside-avoid" data-print-keep>
-      <SectionHeader title="Food" heading-id="diet-heading">
-        <StatFigure
-          v-if="planner.showTotals"
-          :figure="diet.goalsMet"
-          :total="diet.foods.length"
-          words="goals met"
-          :met="diet.foods.length > 0 && diet.goalsMet === diet.foods.length"
-          data-testid="diet-goals-met"
-        />
-      </SectionHeader>
+    <div
+      class="print:break-inside-avoid full:flex full:min-h-0 full:flex-1 full:flex-col folded:flex-none"
+      data-print-keep
+    >
+      <SectionHeader title="Food" heading-id="diet-heading" :week="planner.label" />
       <TrackerGrid
+        :class="SCREEN_GRID"
         label="Food"
         :mark-set="planner.markSet"
         :table-label="`Food, week of ${dayMonth(planner.monday)}`"
         :items="diet.foods"
         :days="planner.days"
         :marks-for="marksFor"
-        :total-for="diet.totalFor"
         editable
         :config-mode="planner.configMode"
         data-testid="diet-grid"
         @toggle="diet.toggle"
         @remove="diet.removeFood"
         @edit="edit"
-      />
+      >
+        <template #corner>
+          <span class="title-1 text-[24px] leading-7 text-ink">Food</span>
+        </template>
+      </TrackerGrid>
     </div>
     <AddFoodForm v-if="planner.configMode" />
     <EditFoodDialog v-if="editing" :food="editing" @close="editing = null" />

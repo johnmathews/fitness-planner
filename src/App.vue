@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
-import { exerciseDetails, usePlannerStore } from '@/stores/planner'
-import { useDietStore } from '@/stores/diet'
+import { usePlannerStore } from '@/stores/planner'
 import AppNavbar from '@/components/AppNavbar.vue'
 import WeekHeader from '@/components/WeekHeader.vue'
 import SettingsPage from '@/components/SettingsPage.vue'
 import ExerciseGrid from '@/components/ExerciseGrid.vue'
 import DietSection from '@/components/DietSection.vue'
-import TodayList from '@/components/TodayList.vue'
 import LoginForm from '@/components/LoginForm.vue'
 import PasswordForm from '@/components/PasswordForm.vue'
 import SignupForm from '@/components/SignupForm.vue'
@@ -17,8 +15,6 @@ import EmailStatus from '@/components/EmailStatus.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ImportPrompt from '@/components/ImportPrompt.vue'
 import { ConfirmHost } from '@/components/ui/confirm-dialog'
-import { SegmentedControl } from '@/components/ui/segmented-control'
-import { usePhoneView } from '@/composables/phoneView'
 import { dismissConfirm } from '@/composables/useConfirm'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { isDark } from '@/lib/theme'
@@ -26,7 +22,6 @@ import { useSessionStore } from '@/stores/session'
 import { useSyncStore } from '@/stores/sync'
 
 const store = usePlannerStore()
-const diet = useDietStore()
 const session = useSessionStore()
 const sync = useSyncStore()
 // Started before the first render: a remembered user is signed in synchronously, so the app
@@ -113,41 +108,18 @@ watch(
   { immediate: true },
 )
 
-// The phone opens on today (K5): the Today list below sm, with a Today | Week switch.
-const { phone, view, showToday } = usePhoneView()
-const VIEWS = [
-  { value: 'today', label: 'Today' },
-  { value: 'week', label: 'Week' },
-]
-function chooseView(next: string): void {
-  view.value = next === 'week' ? 'week' : 'today'
-}
-/** Today's column, which the Today list only ever shows (usePhoneView keeps it to this week). */
-const todayIndex = computed(() => store.days.findIndex((d) => d.isToday))
-const today = computed(() => {
-  const i = todayIndex.value
-  return {
-    date: store.days[i]!.full,
-    pick: store.dailyPick,
-    markSet: store.markSet,
-    exercises: store.exercises.map((e) => ({
-      ...e,
-      chips: exerciseDetails(e),
-      mark: store.markOf(e.id, i),
-      total: store.totalFor(e.id),
-    })),
-    foods: diet.foods.map((f) => ({
-      ...f,
-      mark: diet.markOf(f.id, i),
-      total: diet.totalFor(f.id),
-    })),
-  }
-})
-/** A mark in the Today list: the same store actions the week's grids call. */
-function markToday(kind: 'exercise' | 'food', id: string): void {
-  if (kind === 'exercise') store.toggle(id, todayIndex.value)
-  else diet.toggle(id, todayIndex.value)
-}
+// The planner's screens (PlannerScreen card, K24–K27): outside Edit plan and Settings each section
+// fills the screen, the scroll snaps between them and the bar keeps out of sight. The class on
+// <html> turns on main.css's `full:` variant and the snapping.
+const screens = computed(
+  () =>
+    session.status === 'signed-in' &&
+    !link.value &&
+    !confirmLink.value &&
+    page.value === 'planner' &&
+    !store.configMode,
+)
+watchEffect(() => document.documentElement.classList.toggle('planner-screens', screens.value))
 
 // matchMedia is missing in some environments (jsdom), so "System" falls back to light there.
 const systemDark = useMediaQuery('(prefers-color-scheme: dark)')
@@ -226,27 +198,29 @@ onBeforeUnmount(() => {
     @leave="closeLink"
   />
   <template v-else-if="session.status === 'signed-in'">
-    <AppNavbar :page="page" />
-    <main class="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 print:max-w-none print:p-0">
-      <SyncStatus />
-      <EmailStatus />
-      <SettingsPage v-if="page === 'settings'" />
-      <ImportPrompt v-else-if="session.user" :key="session.user" :user="session.user" />
-      <template v-if="page === 'planner' && sync.loaded">
-        <div v-if="phone" class="flex justify-end pt-3" data-noprint>
-          <SegmentedControl
-            :model-value="view"
-            ariaLabel="View"
-            :options="VIEWS"
-            @update:model-value="chooseView"
-          />
-        </div>
-        <TodayList v-if="showToday" v-bind="today" @toggle="markToday" />
-        <template v-else>
+    <AppNavbar :page="page" :overlay="screens" />
+    <main
+      class="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 print:max-w-none print:p-0 full:max-w-none full:p-0"
+    >
+      <template v-if="page === 'settings'">
+        <SyncStatus />
+        <EmailStatus />
+        <SettingsPage />
+      </template>
+      <!-- On the planner the messages sit at the top of the first screen (PlannerScreen card). -->
+      <template v-else-if="sync.loaded">
+        <ExerciseGrid>
+          <SyncStatus />
+          <EmailStatus />
+          <ImportPrompt v-if="session.user" :key="session.user" :user="session.user" />
           <WeekHeader />
-          <ExerciseGrid />
-          <DietSection />
-        </template>
+        </ExerciseGrid>
+        <DietSection />
+      </template>
+      <template v-else>
+        <SyncStatus />
+        <EmailStatus />
+        <ImportPrompt v-if="session.user" :key="session.user" :user="session.user" />
       </template>
     </main>
   </template>

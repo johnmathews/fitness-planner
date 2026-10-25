@@ -1,4 +1,4 @@
-<!-- @dsCard group="Planner" height=360 subtitle="Section title, its one number, and an optional hint line" -->
+<!-- @dsCard group="Planner" height=360 subtitle="Section title, the week beside it, and an optional hint line" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -8,37 +8,30 @@
   * { box-sizing: border-box; }
   body { margin: 0; padding: var(--space-6); background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
   .section-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-1) var(--space-4); padding-bottom: var(--space-6); }
-  .section-header + .section-header { padding-top: var(--space-8); border-top: 1px solid var(--line); }
+  
   .titles { display: flex; flex-direction: column; gap: var(--space-1); }
   h2 { margin: 0; }
   .hint { margin: 0; color: var(--ink-secondary); }
+  .variant { margin: 0 0 var(--space-2); color: var(--ink-secondary); }
+  .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-4); }
+  .big { font-size: 40px; line-height: 46px; }
+  .week { font-size: 20px; line-height: 26px; color: var(--ink-secondary); }
 
-  .stat { margin: 0; display: flex; align-items: baseline; gap: var(--space-2); }
-  .stat .fig { font-size: 20px; line-height: 26px; font-weight: 600; }
-  .stat .rest { color: var(--ink-secondary); }
-  .stat.met .fig { color: var(--pen); }
-  .stat.zero .fig { color: var(--ink-secondary); font-weight: 400; }
   @media (max-width: 639px) { body { padding: var(--space-4); } }
 </style>
 </head>
 <body>
+<p class="variant caption">On a PlannerScreen: the title and the week beside it</p>
 <header class="section-header">
   <div class="titles">
-    <h2 class="title-1" id="ex">Exercises</h2>
+    <div class="line"><h2 class="title-1 big" id="ex">Exercises</h2><span class="week" aria-hidden="true">19–25 October</span></div>
   </div>
-  <p class="stat"><span class="fig">10</span><span class="rest body-large">of 12 this week</span></p>
 </header>
+<p class="variant caption">Folded, or in Edit plan: the title alone</p>
 <header class="section-header">
   <div class="titles">
     <h2 class="title-1">Food</h2>
   </div>
-  <p class="stat met"><span class="fig">4</span><span class="rest body-large">of 4 goals met</span></p>
-</header>
-<header class="section-header">
-  <div class="titles">
-    <h2 class="title-1">Exercises</h2>
-  </div>
-  <p class="stat zero"><span class="fig">0</span><span class="rest body-large">of 12 this week</span></p>
 </header>
 <script></script>
 </body>

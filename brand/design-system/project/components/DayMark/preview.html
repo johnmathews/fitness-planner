@@ -1,4 +1,4 @@
-<!-- @dsCard group="Planner" height=1240 subtitle="Empty, great, partial and missed, on the page and on today's band; the mark sets; a note, focus and print" -->
+<!-- @dsCard group="Planner" height=1240 subtitle="Empty, great, partial and missed, on the page and for today; the mark sets; a note, focus and print" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -12,7 +12,6 @@
 
   /* The cell: one day of one row, 76px square. In the grid it is a <td>. */
   .cell { position: relative; width: 76px; height: 76px; display: grid; place-items: center; }
-  .cell.today { background: var(--highlight); }
 
   .mark { width: 64px; height: 64px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; display: grid; place-items: center; cursor: pointer; color: inherit; }
   /* The mark (DayMark card): a hand-drawn box about 45px across, its stroke a mask filled with control-border, drawn over the fill. A marked day fills the box in its pen (green great, yellow partial, red missed) with one of three marker drawings traced from the owner's own ink, a mask each: an open zigzag (the default), a solid fill (data-drawing="solid") or a dense hatch (data-drawing="hatch"). A press steps through the three kinds in each drawing. The ink runs past the box, so the masks spill 6px round the 64px button (the 36-unit paths at 60px). Same paths as the app's DayMark. */
@@ -44,7 +43,7 @@
      today's band goes. The one place this system allows literal colours. In the app the same
      overrides sit under @media print. */
   .print {
-    --canvas: transparent; --panel: transparent; --tile: transparent; --highlight: transparent;
+    --canvas: transparent; --panel: transparent; --tile: transparent;
     --line: #e4dfd5; --control-border: #888175; --ink: #1f1d1a; --ink-secondary: #5f5a52;
     --pen: #2e7a4c; --pen-partial: #f2b300; --pen-missed: #c0392b; --caution-ink: #a0461a;
     display: inline-block; background: #ffffff; padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm);
@@ -95,7 +94,7 @@
 </section>
 
 <section aria-labelledby="today-h">
-  <h2 id="today-h" class="label">Today, on the band</h2>
+  <h2 id="today-h" class="label">Today (no band since K36; the name says it)</h2>
   <ul class="states">
     <li>
       <div class="cell today"><button type="button" data-drawing="solid" class="mark" aria-pressed="false" aria-current="date" aria-label="Kettlebell halos, Thursday 22 October, today"></button></div>

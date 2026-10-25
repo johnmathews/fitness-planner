@@ -1,0 +1,269 @@
+/*
+  The full-screen planner, as a prototype. One frame (.fs) is one screen: a desktop, an iPad, a
+  phone. Every size comes from the frame's own width and height (container units), so the same
+  markup fills a 1440×900 desktop, a 390×844 phone and a scaled-down picture of either.
+  Colours, fonts and type come from the system's tokens; the proposed sizes are --candidate-*.
+*/
+.fs {
+  position: relative; overflow: hidden; box-sizing: border-box;
+  container: fs / size;
+  background: var(--canvas); color: var(--ink);
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+  /* The scale: 1 on a 1280×800 screen, up to 1.6 on a large one, never below 0.75. Read where
+     it is used, so the container units measure the frame. */
+  --candidate-u: clamp(0.75px, min(calc(100cqw / 1280), calc(100cqh / 800)), 1.6px);
+  --u: var(--candidate-u);
+  /* Proposed sizes at u = 1. The type grows with the screen, never below the system's 16px. */
+  --candidate-pad: calc(var(--u) * 48);
+  --candidate-title: calc(var(--u) * 40);
+  --candidate-name: max(18px, calc(var(--u) * 24));
+  --candidate-chip: max(16px, calc(var(--u) * 17));
+  --candidate-day: max(16px, calc(var(--u) * 20));
+  --candidate-figure: max(18px, calc(var(--u) * 26));
+  --candidate-name-col: calc(var(--u) * 280);
+  --candidate-week-col: calc(var(--u) * 150);
+}
+.fs *, .fs *::before, .fs *::after { box-sizing: border-box; }
+.fs button { font: inherit; color: inherit; }
+.fs .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fs :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ---- The screens: one section per screen, the scroll snapping to each. ---- */
+.fs .scroller { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain;
+  scroll-snap-type: y mandatory; scrollbar-width: none; }
+.fs .scroller::-webkit-scrollbar { display: none; }
+.fs .screen { position: relative; min-height: 100cqh; scroll-snap-align: start;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: calc(var(--u) * 28) var(--candidate-pad) calc(var(--u) * 20); }
+.fs[data-option="c"]:not([data-layout="narrow"]) .screen { padding-top: calc(var(--u) * 28 + 56px); }
+
+/* The heading line (A and C): the section's name and week, its one figure at the right. */
+.fs .head { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 24px;
+  flex-wrap: wrap; padding-bottom: calc(var(--u) * 20); }
+.fs .head h2 { margin: 0; font: 600 var(--candidate-title) / 1.15 var(--font-serif); }
+.fs .head .wk { margin-left: calc(var(--u) * 16); font: 400 var(--candidate-day) / 1.3 var(--font-sans); color: var(--ink-secondary); }
+.fs .stat { margin: 0; display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.fs .stat .fig { font-size: var(--candidate-figure); line-height: 1.2; font-weight: 600; }
+.fs .stat .rest { font-size: max(18px, calc(var(--u) * 22)); color: var(--ink-secondary); }
+.fs .stat.met .fig { color: var(--pen); }
+.fs .stat.zero .fig { color: var(--ink-secondary); font-weight: 400; }
+.fs .check { display: inline-block; width: 0.8em; height: 0.8em; margin-left: 4px; color: var(--pen); vertical-align: -0.05em; }
+
+/* ---- The week grid, filling what the heading leaves. ---- */
+.fs .grid { flex: 1 1 auto; min-height: 0; display: grid;
+  grid-template-columns: var(--candidate-name-col) repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto repeat(var(--rows), minmax(56px, 1fr));
+  /* Rows stop at 1.25 × a day's width, so a tall screen centres the week instead of stretching it. */
+  max-height: calc(var(--rows) * (100cqw - 2 * var(--candidate-pad) - var(--candidate-name-col)) / 7 * 1.25 + var(--u) * 240); }
+.fs .grid > * { min-width: 0; }
+.fs .hd { display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding: calc(var(--u) * 12) 0; border-bottom: 1px solid var(--ink); }
+.fs .hd .dn { font-size: var(--candidate-day); line-height: 1.25; font-weight: 600; }
+.fs .hd .dt { font-size: max(16px, calc(var(--u) * 18)); line-height: 1.3; color: var(--ink-secondary); }
+.fs .hd.today .dt { color: var(--ink); font-weight: 600; }
+.fs .hd.corner { align-items: flex-start; justify-content: flex-end; }
+.fs .hd.wkh { color: var(--ink-secondary); font-size: var(--candidate-day); font-weight: 600; justify-content: center; }
+/* Round 6: no band for today; every day looks alike. */
+.fs .nm, .fs .d, .fs .tot { border-bottom: 1px solid var(--line); }
+.fs .nm { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding-right: 12px; }
+.fs .nm .n { font-size: var(--candidate-name); line-height: 1.25; font-weight: 600; overflow-wrap: anywhere; }
+.fs .chips { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.fs .chip { font-size: var(--candidate-chip); line-height: 1.35; font-weight: 600; background: var(--tile); color: var(--ink-secondary);
+  border-radius: var(--radius-sm); padding: 0 8px; white-space: nowrap; }
+.fs .tot { display: flex; align-items: center; justify-content: center; white-space: nowrap; font-size: max(18px, calc(var(--u) * 24)); }
+.fs .tot .fig { font-weight: 600; font-size: var(--candidate-figure); }
+.fs .tot .fig.met { color: var(--pen); }
+.fs .tot .of { color: var(--ink-secondary); margin-left: 0.25em; }
+
+/* A day: its own size container, so the box (--candidate) takes 86% of the cell's shorter side, up to 128px. */
+.fs .d { container-type: size; display: grid; place-items: center; }
+.fs .mark { display: grid; place-items: center; width: min(86cqw, 86cqh, 128px);
+  aspect-ratio: 1; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; cursor: pointer; touch-action: manipulation; }
+.fs .mark svg { width: 94%; height: 94%; overflow: visible; }
+.fs .mark .bx { stroke: var(--control-border); }
+.fs .mark:not([data-mark]):hover .bx { stroke: var(--ink); }
+.fs .mark[data-mark="great"] .ink { fill: var(--pen); }
+.fs .mark[data-mark="partial"] .ink { fill: var(--pen-partial); }
+.fs .mark[data-mark="missed"] .ink { fill: var(--pen-missed); }
+.fs .mark .sym { stroke: var(--canvas); }
+@media (prefers-reduced-motion: no-preference) { .fs .mark .bx, .fs .mark .ink { transition: stroke 120ms, fill 120ms; } }
+
+/* The Picked row. */
+.fs .pk { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: calc(var(--u) * 14) 2px; }
+.fs .pk .fig { font-size: max(18px, calc(var(--u) * 24)); line-height: 1.3; font-weight: 600; }
+.fs .pk .fig.under { color: var(--ink-secondary); font-weight: 400; }
+.fs .pk .fig.over { color: var(--caution-ink); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.fs .pk .extra { font-size: 16px; line-height: 22px; color: var(--caution-ink); }
+.fs .pk.lbl { align-items: flex-start; padding-left: 0; }
+.fs .pk.lbl .n { font-size: var(--candidate-name); line-height: 1.25; }
+.fs .pk.lbl .g { font-size: var(--candidate-chip); color: var(--ink-secondary); }
+
+/* Option B, and any short screen (a phone on its side): the title sits in the grid's corner. */
+.fs .corner h2 { margin: 0; font: 600 var(--candidate-title) / 1.1 var(--font-serif); }
+.fs .corner .wk { font-size: max(16px, calc(var(--u) * 18)); color: var(--ink-secondary); line-height: 1.3; }
+.fs .corner .stat { margin-top: 4px; }
+.fs .corner .stat .fig { font-size: max(18px, calc(var(--u) * 22)); }
+.fs .corner .stat .rest { font-size: max(16px, calc(var(--u) * 18)); }
+
+/* The way on (A and C): "Food" and an arrow at the foot of the first screen. */
+.fs .cue { align-self: center; display: inline-flex; align-items: center; gap: 6px; margin-top: calc(var(--u) * 10);
+  min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--radius-md); background: transparent;
+  color: var(--ink-secondary); font-size: max(16px, calc(var(--u) * 18)); font-weight: 600; cursor: pointer; }
+.fs .cue:hover { background: var(--tile); color: var(--ink); }
+.fs .cue svg { width: 20px; height: 20px; }
+
+/* Option B: two marks at the right edge say which screen this is. */
+.fs .dots { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; z-index: 5; }
+.fs[data-option="b"]:not([data-layout="narrow"]) .dots { display: flex; }
+.fs .dots button { width: 44px; height: 44px; padding: 0; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; }
+.fs .dots span { width: 4px; height: 24px; border-radius: 2px; background: var(--control-border); }
+.fs .dots [aria-current="true"] span { background: var(--ink); }
+
+/* ---- The bar: the Header card, out of sight until it is wanted (A and B). ---- */
+.fs .bar { position: absolute; z-index: 20; top: 0; left: 0; right: 0;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px 16px;
+  min-height: 56px; padding: 4px var(--candidate-pad); background: var(--canvas); border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow-overlay); transform: translateY(-105%); visibility: hidden; }
+@media (prefers-reduced-motion: no-preference) { .fs .bar { transition: transform 160ms ease-out, visibility 160ms; } }
+.fs[data-bar="shown"] .bar, .fs .bar:focus-within { transform: none; visibility: visible; }
+.fs .bar .wordmark { display: block; height: 20px; width: auto; fill: var(--ink); justify-self: start; }
+.fs .bar .wordmark { height: 20px; }
+.fs .bar .start { justify-self: start; }
+.fs .bar .end { justify-self: end; display: flex; align-items: center; gap: 8px; }
+.fs .bar .week { display: flex; align-items: center; }
+.fs .bar .week-label { min-width: 116px; padding-inline: 8px; text-align: center; font: 600 16px/24px var(--font-sans); white-space: nowrap; }
+.fs .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0;
+  border-radius: var(--radius-md); background: transparent; color: var(--ink); cursor: pointer; }
+.fs .icon-btn svg { width: 20px; height: 20px; }
+.fs .icon-btn:hover, .fs .btn:hover, .fs .switch:hover { background: var(--tile); }
+.fs .btn { display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border: 0; border-radius: var(--radius-md);
+  background: transparent; color: var(--ink); font: 600 14px/20px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.fs .switch { display: inline-flex; align-items: center; gap: 12px; height: 44px; padding: 0 8px; border: 0; border-radius: var(--radius-md);
+  background: transparent; color: var(--ink); font: 400 16px/24px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.fs .track { position: relative; flex: none; width: 40px; height: 24px; border: 1px solid var(--control-border); border-radius: var(--radius-full); }
+.fs .thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: var(--radius-full); background: var(--ink-secondary); }
+.fs .seg { display: inline-flex; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+.fs .seg button { height: 42px; padding: 0 16px; border: 0; border-radius: var(--radius-sm); background: transparent; font: 600 14px/20px var(--font-sans); cursor: pointer; }
+.fs .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
+
+/* The pointer's way in: a strip along the top edge (a desktop, a trackpad on an iPad). */
+.fs .hot { position: absolute; z-index: 19; top: 0; left: 0; right: 0; height: 14px; }
+.fs[data-input="touch"] .hot { display: none; }
+/* The finger's way in: a handle at the top centre. Press it, or pull it down. */
+.fs .grab { position: absolute; z-index: 19; top: 0; left: 50%; transform: translateX(-50%); display: none;
+  width: 88px; height: 28px; padding: 0; border: 0; background: transparent; cursor: pointer; touch-action: none; }
+.fs .grab span { display: block; width: 40px; height: 5px; margin: 8px auto 0; border-radius: 3px; background: var(--control-border); }
+.fs[data-input="touch"] .grab { display: block; }
+
+/* Option C: the bar never hides; it is quiet instead, the tools in ink-secondary and no wordmark. */
+.fs[data-option="c"] .bar { transform: none; visibility: visible; background: transparent; border-bottom-color: transparent; box-shadow: none; }
+.fs[data-option="c"] .bar .start { visibility: hidden; }
+.fs[data-option="c"] .bar .icon-btn, .fs[data-option="c"] .bar .btn, .fs[data-option="c"] .bar .switch,
+.fs[data-option="c"] .bar .week-label { color: var(--ink-secondary); }
+.fs[data-option="c"] .hot, .fs[data-option="c"] .grab { display: none; }
+/* The bar already names the week, so the title line doesn't repeat it. */
+.fs[data-option="c"] .head .wk { display: none; }
+
+/* ---- Phone, held upright ---- */
+.fs[data-layout="narrow"] { --candidate-pad: 16px;
+  /* The narrow scale: 1 on a phone, up to 1.4 on an iPad held upright. */
+  --candidate-n: clamp(1px, calc(100cqw / 600), 1.4px); --n: var(--candidate-n); }
+.fs[data-layout="narrow"] .screen { padding: calc(var(--n) * 34) calc(var(--n) * 16) 12px; justify-content: flex-start; }
+.fs[data-layout="narrow"][data-device="tablet"] .screen { justify-content: center; }
+.fs[data-layout="narrow"] .bar { grid-template-columns: 1fr auto 1fr; padding: 4px 8px 4px 16px; }
+.fs[data-layout="narrow"] .bar .row-2 { grid-column: 1 / -1; justify-self: end; display: flex; align-items: center; gap: 8px; }
+.fs[data-layout="narrow"] .bar .start { visibility: hidden; }
+.fs[data-layout="narrow"] .head { padding-bottom: 12px; }
+.fs[data-layout="narrow"] .head h2 { font-size: calc(var(--n) * 30); }
+.fs[data-layout="narrow"] .head .wk { display: none; }
+.fs[data-layout="narrow"] .stat .fig { font-size: calc(var(--n) * 20); }
+.fs[data-layout="narrow"] .stat .rest { font-size: calc(var(--n) * 18); }
+
+/* P2: the week, narrow. A row's name line spans the seven days; its seven boxes sit beneath. */
+.fs .ngrid { flex: 1 1 auto; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto; grid-auto-rows: auto; align-content: start; }
+.fs .ngrid .hd { padding: 6px 0; }
+.fs .ngrid .hd .dn, .fs .ngrid .hd .dt { font-size: calc(var(--n) * 16); }
+.fs .ngrid .line { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; padding: calc(var(--n) * 10) 0 2px; }
+.fs .ngrid .line .n { font-size: calc(var(--n) * 18); line-height: 1.45; font-weight: 600; }
+.fs .ngrid .line .chip { font-size: calc(var(--n) * 16); }
+.fs .ngrid .line .tot { margin-left: auto; border: 0; font-size: calc(var(--n) * 18); }
+.fs .ngrid .line .tot .fig { font-size: calc(var(--n) * 18); }
+/* A row of boxes takes a share of the screen's height, so a tall phone spreads the week instead of leaving the foot empty. */
+.fs .ngrid .d { height: clamp(48px, min(19cqw, 7.5cqh), 110px); border-bottom: 1px solid var(--line); }
+.fs .ngrid .pk { padding: 6px 0 4px; }
+.fs .ngrid .pk .fig { font-size: calc(var(--n) * 18); }
+.fs .ngrid .pk .extra { font-size: 14px; line-height: 18px; }
+.fs .ngrid .pkl { grid-column: 1 / -1; display: flex; gap: 8px; align-items: baseline; padding-top: calc(var(--n) * 12); }
+.fs .ngrid .pkl .n { font-size: calc(var(--n) * 18); } .fs .ngrid .pkl .g { color: var(--ink-secondary); font-size: calc(var(--n) * 16); }
+
+/* P1: today, full screen. One row per exercise, its mark at the right, sized to fill the screen. */
+.fs .band { margin: 0 -16px 8px; padding: 14px 16px; background: var(--highlight); }
+.fs .band h2 { margin: 0; font: 600 22px/28px var(--font-sans); }
+.fs .band p { margin: 2px 0 0; font-size: 18px; line-height: 26px; }
+.fs .tl { flex: 1 1 auto; display: grid; grid-auto-rows: minmax(72px, 1fr); max-height: calc(var(--rows) * 120px); }
+.fs .tl .row { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
+.fs .tl .row:first-child { border-top: 1px solid var(--line); }
+.fs .tl .text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fs .tl .n { font-size: 20px; line-height: 26px; font-weight: 600; }
+.fs .tl .sub { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 16px; color: var(--ink-secondary); }
+.fs .tl .sub .met { color: var(--pen); font-weight: 600; }
+.fs .tl .d { flex: none; width: 96px; height: 100%; max-height: 96px; border: 0; }
+.fs .tl h3 { margin: 0; padding: 4px 0 8px; font-size: 16px; font-weight: 600; color: var(--ink-secondary); }
+
+/* A short screen (a phone on its side): the chips, the hint lines and the way on drop out, so five rows fit. Last, so it wins. */
+@container fs (max-height: 540px) {
+  .fs .screen { padding-top: 8px; padding-bottom: 6px; }
+  .fs .chips { display: none; }
+  .fs .corner h2 { font-size: 26px; }
+  .fs .corner .wk { display: none; }
+  .fs .hd { padding: 4px 0; }
+  .fs .pk { padding: 4px 2px; }
+  .fs .pk .extra { display: none; }
+  .fs .pk.lbl .g { display: none; }
+  .fs .cue { display: none; }
+}
+
+/* ---- Round 3: a day that meets the daily pick (Exercises only). ---- */
+/* G1: the day's name turns pen, with a check after it. */
+.fs .hd.met .dn { color: var(--pen); }
+.fs .hd .dn .check { width: 0.75em; height: 0.75em; margin-left: 3px; vertical-align: -0.02em; }
+/* G2, round 5: G1, and a bold pen line along the foot of the day's column (the wash was too weak). */
+.fs .d.last { position: relative; }
+.fs[data-affirm="g2"] .d.met.last::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: 0; height: 6px; border-radius: 3px 3px 0 0; background: var(--pen); }
+/* G3: the day's header stamped: filled in pen, the name and check in paper. */
+.fs[data-affirm="g3"] .hd.met { background: var(--pen); }
+.fs[data-affirm="g3"] .hd.met .dn, .fs[data-affirm="g3"] .hd.met .dn .check { color: var(--on-ink); }
+/* The wash is a new colour, so a candidate with a value per theme; the nearest data-theme wins. */
+.fs { --candidate-pen-wash: #e3efe6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) .fs { --candidate-pen-wash: #1e3325; } }
+:root[data-theme="dark"] .fs, :root [data-theme="dark"] .fs { --candidate-pen-wash: #1e3325; }
+:root[data-theme="light"] .fs, :root [data-theme="light"] .fs { --candidate-pen-wash: #e3efe6; }
+
+/* ---- Round 4, N2: the sidebar. Hidden off the left edge, or expanded: an icon and a name per item. ---- */
+.fs .side { position: absolute; z-index: 20; top: 0; bottom: 0; left: 0; width: 280px; max-width: 86%;
+  display: flex; flex-direction: column; gap: 12px; padding: 20px 16px 16px; overflow-y: auto;
+  background: var(--canvas); border-right: 1px solid var(--line); transform: translateX(-105%); }
+@media (prefers-reduced-motion: no-preference) { .fs .side { transition: transform 160ms ease-out; } }
+.fs[data-bar="shown"] .side, .fs .side:focus-within { transform: none; box-shadow: var(--shadow-overlay); }
+.fs .side .brand { padding: 4px 8px 8px; }
+.fs .side .brand svg { display: block; height: 20px; width: auto; fill: var(--ink); }
+.fs .side .week { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.fs .side .week-label { font: 600 16px/24px var(--font-sans); white-space: nowrap; }
+.fs .side .switch { justify-content: space-between; width: 100%; font-size: 18px; padding: 0 12px; }
+.fs .side .items { display: flex; flex-direction: column; gap: 2px; }
+.fs .side .item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--radius-md);
+  background: transparent; color: var(--ink); font: 400 18px/26px var(--font-sans); text-align: left; cursor: pointer; }
+.fs .side .item:hover { background: var(--tile); }
+.fs .side .item svg { flex: none; width: 20px; height: 20px; }
+.fs .side .room { flex: 1 1 auto; min-height: 24px; }
+.fs .side .foot { border-top: 1px solid var(--line); padding-top: 8px; }
+/* The ways in, moved to the left edge: a strip for a pointer, a handle half-way down for a finger. */
+.fs[data-nav="side"] .hot { top: 0; bottom: 0; right: auto; width: 14px; height: auto; }
+.fs[data-nav="side"] .grab { top: 50%; left: 0; transform: translateY(-50%); width: 44px; height: 88px; }
+.fs[data-nav="side"] .grab span { width: 5px; height: 40px; margin: 24px 0 0 6px; }
+/* A phone held upright: the sidebar comes in over the week, which dims behind it. */
+.fs .scrim { display: none; position: absolute; inset: 0; z-index: 19; background: var(--scrim); opacity: 0.4; }
+.fs[data-nav="side"][data-layout="narrow"][data-bar="shown"] .scrim { display: block; }
+.fs[data-nav="side"] .bar { display: none; }
