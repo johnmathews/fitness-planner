@@ -73,6 +73,11 @@ describe('the planner grids (W10)', () => {
       // The rest of the week, and the Food grid, stay as they are.
       expect(ex().findAll('[data-testid="day-head"]')[1]!.attributes('data-met')).toBeUndefined()
       expect(diet().find('[data-testid="day-head"][data-met]').exists()).toBe(false)
+      // The hand-drawn underline (K39) sits under Monday's column, below the last row only.
+      const lines = ex().findAll('[data-slot="met-underline"]')
+      expect(lines).toHaveLength(1)
+      expect(lines[0]!.element.closest('tr')).toBe(ex().findAll('tbody tr').at(-1)!.element)
+      expect(diet().find('[data-slot="met-underline"]').exists()).toBe(false)
     })
 
     it('stays plain below the pick, and turns when a press reaches it', async () => {

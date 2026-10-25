@@ -48,6 +48,7 @@ watch(
   <section
     class="mt-8 border-t border-line pt-8 print:mt-4 print:border-0 print:pt-4 full:mt-0 full:border-0"
     :class="SCREEN"
+    data-planner-screen
     aria-labelledby="diet-heading"
   >
     <div

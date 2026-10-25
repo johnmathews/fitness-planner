@@ -23,7 +23,7 @@ const props = defineProps<{
   configMode: boolean
   /**
    * Exercises only: which days reach the daily pick (K30). A met day's name turns pen with a
-   * check, and a bold pen line runs along the foot of its column (K35).
+   * check, and a green marker stroke underlines its column (K39).
    */
   metDays?: boolean[]
 }>()

@@ -63,14 +63,32 @@ export async function openApp(
   {
     theme = 'light',
     unconfirmed = false,
+    moreExercises = 0,
+    moreFoods = 0,
   }: {
     theme?: Theme
     /** The account's email is not confirmed yet, so the confirm banner shows. */
     unconfirmed?: boolean
+    /** Extra exercises after the mocked five, for a week taller than the screen. */
+    moreExercises?: number
+    /** Foods for the Food screen, enough to run past it. */
+    moreFoods?: number
   } = {},
 ): Promise<void> {
   await page.clock.setFixedTime(TODAY)
   const s = state()
+  for (let i = 1; i <= moreExercises; i++) {
+    s.exercise.plans[MONDAY]!.push({ id: `x${i}`, name: `Exercise ${i}`, reps: 10, target: 2 })
+  }
+  if (moreFoods) {
+    s.diet.plans = {
+      [MONDAY]: Array.from({ length: moreFoods }, (_, i) => ({
+        id: `f${i}`,
+        name: `Food ${i + 1}`,
+        target: 3,
+      })),
+    }
+  }
   await page.route('**/api/**', async (route) => {
     const req = route.request()
     const path = new URL(req.url()).pathname.replace(/^\/api/, '')

@@ -17,6 +17,7 @@ import ImportPrompt from '@/components/ImportPrompt.vue'
 import { ConfirmHost } from '@/components/ui/confirm-dialog'
 import { dismissConfirm } from '@/composables/useConfirm'
 import { useMediaQuery } from '@/composables/useMediaQuery'
+import { useScreenSprint } from '@/composables/screenSprint'
 import { isDark } from '@/lib/theme'
 import { useSessionStore } from '@/stores/session'
 import { useSyncStore } from '@/stores/sync'
@@ -109,8 +110,8 @@ watch(
 )
 
 // The planner's screens (PlannerScreen card, K24–K27): outside Edit plan and Settings each section
-// fills the screen, the scroll snaps between them and the bar keeps out of sight. The class on
-// <html> turns on main.css's `full:` variant and the snapping.
+// fills the screen, the page sprints between them and the bar keeps out of sight. The class on
+// <html> turns on main.css's `full:` variant.
 const screens = computed(
   () =>
     session.status === 'signed-in' &&
@@ -120,6 +121,8 @@ const screens = computed(
     !store.configMode,
 )
 watchEffect(() => document.documentElement.classList.toggle('planner-screens', screens.value))
+// The page never rests showing part of both screens: it sprints from one to the other (K38).
+useScreenSprint(screens)
 
 // matchMedia is missing in some environments (jsdom), so "System" falls back to light there.
 const systemDark = useMediaQuery('(prefers-color-scheme: dark)')

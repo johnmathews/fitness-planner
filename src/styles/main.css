@@ -186,10 +186,10 @@
     scroll-padding-top: 4.5rem;
   }
 
-  /* The planner's screens: the scroll stops on each one, and no bar covers the top (K24). */
+  /* The planner's screens: no bar covers the top (K24). The page sprints between them in
+     script (useScreenSprint, K38), not with CSS snapping, which a mouse wheel couldn't cross. */
   @media screen {
     html.planner-screens {
-      scroll-snap-type: y mandatory;
       scroll-padding-top: 0;
     }
   }

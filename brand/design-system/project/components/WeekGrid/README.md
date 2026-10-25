@@ -10,7 +10,7 @@ One week, Monday to Sunday, as a grid: a row per exercise or food, and a DayMark
 - **Today:** no band (K36): today looks like every other day. Its header says ", today" and its marks "today" for a screen reader, and today's first mark is the grid's tab stop.
 - **No Week column** (K33): the grid has no row totals ("3 of 4"). A week's progress shows in its marks and in the days that turn green.
 - **No Picked row** (K28): the grid has no row counting each day against the daily pick.
-- **A day that meets the daily pick** (exercises only; K30, K35): once a day's marked exercises reach the pick ("3 a day"), its name turns `pen` with a 16px Lucide `check` after it, and a 6px `pen` line runs along the foot of its column, under the last row, inset 12% from the column's edges so neighbouring days' lines stay apart, its top corners rounded 3px. A visually hidden ", daily goal met" follows the day's name in its header. The line prints too.
+- **A day that meets the daily pick** (exercises only; K30, K39): once a day's marked exercises reach the pick ("3 a day"), its name turns `pen` with a 16px Lucide `check` after it, and a green marker stroke underlines its column, just below the last row: filled `pen`, 88% of the column wide, max(18px, 24u) tall (12px folded), bowed, tapered to rounded ends and uneven at the edges, as if drawn with a whiteboard marker. There are three strokes (DayMark's `MET_UNDERLINES`) and the days take them in turn, so neighbours differ. A visually hidden ", daily goal met" follows the day's name in its header. The stroke prints too.
 - **Food:** the same grid without chips. A food's day has one kind: pressing toggles it between empty and great.
 - **Edit plan:** each row's edit (`pencil`) IconButton follows its name, 4px after it, with a -10px vertical margin so the name line keeps its height and the button keeps its 44px target. It opens the item's dialog (Edit exercise, Edit food), where everything about it changes, the goal ("Times a week") included, so rows have no Stepper. The remove (`trash-2`) IconButton ends the row, in a 56px column after the days whose header is a visually hidden "Remove". The name column widens by the edit button and its gap (52px), the same in both grids so their days line up. The name block is at least 44px tall, an IconButton's target, so rows keep their height when Edit plan toggles (F25). Folded, the edit button follows the name on its line and the remove button ends the line.
 - **Print:** the light theme on white paper, from either theme (K16). Words, boxes and marks keep the light theme's colours; the surfaces go transparent, chips are outlined. A section hint, when there is one, and every button stay off paper (F24). On paper the grid is a table again, at the fixed sizes: a 64px DayMark in a 76px cell, and a 200px name column. A table split across pages repeats its `<thead>`. In the app, put the token overrides shown in the preview's `.print` rule under `@media print`; they are the only literal colours the system allows.
@@ -20,7 +20,7 @@ One week, Monday to Sunday, as a grid: a row per exercise or food, and a DayMark
 | Part | State | Look |
 | --- | --- | --- |
 | Day cell | empty / great / partial / missed / today / has a note / focus | see DayMark |
-| Day | meets the daily pick | name `pen` with a check, a 6px `pen` line at the column's foot |
+| Day | meets the daily pick | name `pen` with a check, a hand-drawn `pen` underline below the column |
 
 ## Accessibility
 

@@ -78,3 +78,7 @@ Round 6 removed today's band (K36).
 - **6, 2026-10-25:** John on today's band: "lets remove it. we do not need to show which day of the
   week it currently is". Gone from every screen; today is still the grid's first tab stop and is
   still named "today" for a screen reader.
+- **7, 2026-10-25:** John: the lines "are not thick enough. lets make them slightly curved as if
+  drawn by hand - a user on a whiteboard with a green whiteboard marker has underlined the
+  column", with the squiggles' "irregular organic by-hand aesthetic". Three marker strokes, one per
+  day in turn: bowed, tapered to rounded ends, uneven at the edges, about 16u thick.

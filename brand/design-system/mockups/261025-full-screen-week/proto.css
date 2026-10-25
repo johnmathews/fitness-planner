@@ -231,7 +231,9 @@
 .fs .hd .dn .check { width: 0.75em; height: 0.75em; margin-left: 3px; vertical-align: -0.02em; }
 /* G2, round 5: G1, and a bold pen line along the foot of the day's column (the wash was too weak). */
 .fs .d.last { position: relative; }
-.fs[data-affirm="g2"] .d.met.last::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: 0; height: 6px; border-radius: 3px 3px 0 0; background: var(--pen); }
+/* Round 7: the underline is drawn by hand, a thick green marker stroke under the column's last box. */
+.fs .uline { position: absolute; left: 6%; width: 88%; bottom: -10px; height: max(18px, calc(var(--u) * 24)); fill: var(--pen); pointer-events: none; overflow: visible; }
+.fs[data-layout="narrow"] .uline { bottom: -6px; height: 12px; }
 /* G3: the day's header stamped: filled in pen, the name and check in paper. */
 .fs[data-affirm="g3"] .hd.met { background: var(--pen); }
 .fs[data-affirm="g3"] .hd.met .dn, .fs[data-affirm="g3"] .hd.met .dn .check { color: var(--on-ink); }
