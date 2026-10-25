@@ -414,7 +414,7 @@ dots print black, rings grey, chips outlined, and `--highlight` goes transparent
 there too, so the user's ink can't leak through. Shadows and transitions are off.
 
 - Anything marked `data-noprint` is hidden: the navbar, the phone's view switch, the sync status,
-  the import prompt, Edit plan's controls and add forms, and each section's hint line. Dialogs, the
+  the import prompt, Edit plan's controls and add forms, and a section's hint line if it has one. Dialogs, the
   popover and Banners carry `print:hidden`.
 - "One extra" keeps its underline and words. The Picked row's `<tfoot>` prints as an ordinary row
   group, so a table split across pages repeats its header but prints the Picked row once, at the

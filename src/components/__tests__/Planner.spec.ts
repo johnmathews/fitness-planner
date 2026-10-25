@@ -404,13 +404,11 @@ describe('the planner grids (W10)', () => {
       expect(wrapper.get('h1').text()).toBe('19–25 October')
     })
 
-    it('gives each section an h2 and its one figure, and Food a hint that does not print', () => {
+    it('gives each section an h2 and no hint line', () => {
       mountApp()
       const sections = wrapper.findAll('section[aria-labelledby]')
       expect(sections.map((s) => s.get('h2').text())).toEqual(['Exercises', 'Food'])
-      const hints = wrapper.findAll('[data-slot="section-hint"]')
-      expect(hints.map((h) => h.text())).toEqual(['Mark each day you ate it.'])
-      for (const hint of hints) expect(hint.attributes('data-noprint')).toBeDefined()
+      expect(wrapper.find('[data-slot="section-hint"]').exists()).toBe(false)
     })
 
     it('keeps the Food heading with its grid on paper', () => {
