@@ -1,6 +1,6 @@
 ## Colour
 
-Ten standard roles carry every screen: `canvas` (the page), `panel` (dialogs, popovers, cards), `tile` (quiet fills and hover), `line` (hairline rules, never a control border), `control-border` (inputs, outlined buttons, the empty-day ring), `ink` (text, icons and the primary button's fill), `on-ink`, `ink-secondary` (dates, goals, hints), `error-ink` and `focus`.
+Ten standard roles carry every screen: `canvas` (the page), `panel` (dialogs, popovers, cards), `tile` (quiet fills and hover), `line` (hairline rules, never a control border), `control-border` (inputs, outlined buttons, the day's box), `ink` (text, icons and the primary button's fill), `on-ink`, `ink-secondary` (dates, goals, hints), `error-ink` and `focus`.
 
 Three project roles each mean exactly one thing:
 
@@ -10,7 +10,7 @@ Three project roles each mean exactly one thing:
 | `highlight` | Today: the band down today's column | Anything but today |
 | `caution-ink` | Over the daily pick, always with words ("one extra") | Errors |
 
-**Inks.** The person picks the pen: `ink-blue` (default), `forest`, `violet` or `graphite`. Each reaches 4.5:1 as text on `canvas` and `panel` and 3:1 as a dot on `highlight`, in its theme. One pen colour shows at a time.
+**Inks.** The person picks the pen: `ink-blue` (default), `forest`, `violet` or `graphite`. Each reaches 4.5:1 as text on `canvas` and `panel` and 3:1 as a squiggle on `highlight`, in its theme. One pen colour shows at a time.
 
 **Print** is black on white in either theme: squiggles solid black, boxes grey, the highlight gone, "one extra" keeps its words.
 
@@ -39,7 +39,7 @@ Three project roles each mean exactly one thing:
 
 ## Shape and depth
 
-Hairline `line` rules, almost no shadow. Radius `radius-sm` 4px (fields, tiles, chips), `radius-md` 6px (buttons), `radius-lg` 10px (panels), `radius-full` (day marks). `shadow-overlay` on dialogs and the popover in light; none in dark. Spacing on a 4px base, `space-1` to `space-16`.
+Hairline `line` rules, almost no shadow. Radius `radius-sm` 4px (fields, tiles, chips), `radius-md` 6px (buttons), `radius-lg` 10px (panels), `radius-full` (the ink dots, the Switch, the year strip); a day mark is drawn by hand, with no radius token. `shadow-overlay` on dialogs and the popover in light; none in dark. Spacing on a 4px base, `space-1` to `space-16`.
 
 ## Focus and motion
 
