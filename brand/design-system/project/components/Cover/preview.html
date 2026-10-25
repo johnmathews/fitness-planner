@@ -18,7 +18,7 @@
   .slab { fill: var(--ink); }
   .disc { fill: var(--ink); }
   .words { position: absolute; left: 48px; bottom: 40px; max-width: 440px; }
-  .name { margin: 0; font-family: var(--font-serif); font-weight: 600; font-size: 88px; line-height: .95; letter-spacing: -0.01em; }
+  .name { margin: 0; font-family: var(--font-serif); font-weight: 600; font-size: 64px; line-height: .95; letter-spacing: -0.01em; }
   .tagline { margin: 16px 0 0; font-family: var(--font-sans); font-size: 14px; line-height: 20px; color: var(--ink-secondary); }
 </style>
 </head>
@@ -30,6 +30,7 @@
     arrangement: one tile slab holding the pattern, the ink slab and the ink disc as satellites, all right of x = 480.
     pattern: the brand's own mark, a hand-drawn box, empty or marked (a full squiggle, a half one or a cross, each in its pen), 28 of them as four weeks of seven days;
              chosen because "a mark per session, read at a glance" is the one shape only this system has.
+    name: "Fitness Planner design system" at 64px on three lines in the 440px block: two lines would need 56px ("Fitness Planner" is 471px at 64px), and the name says what the document is.
     steps and radii: pitch space-8 across, space-12 down, mark 23px (the DayMark's 36-unit paths at 0.84 round their centre, so a stroke that runs past its box stays clear of the next day's), radius-sm, radius-lg, radius-full.
   -->
   <defs><path id="b" transform="translate(2.88 2.88) scale(.84)" class="box" d="M6.5 4.8C12.5 4.3 23.5 4.6 30.2 4.9C31.4 5 31.6 6.1 31.5 7.2C31.2 13.5 31.4 22.5 31.2 29.4C31.2 30.6 30.3 31.3 29.1 31.3C22.5 31.6 13 31.2 6.6 31.4C5.4 31.4 4.7 30.6 4.7 29.4C4.6 22.8 4.9 13 4.6 6.8C4.6 5.6 5.4 4.9 6.5 4.8Z"/><path id="g" transform="translate(2.88 2.88) scale(.84)" class="great" d="M3.2 7.4C11 5.4 21.5 4.6 33.4 5.4C24.5 9 14 13.2 3.8 18.6C13.5 16.3 24.2 14.8 34 15C24.2 19.4 13.6 24 4.4 29.8C14 27.6 24.6 26.4 33.4 26.9C27.2 29.6 21 32.2 15.2 34.6"/><path id="p" transform="translate(2.88 2.88) scale(.84)" class="partial" d="M3.6 19.2C12 17.6 22.5 16.8 33.6 17.2C24.6 21 14.2 25.4 4.2 30.6C14 28.6 24.4 27.6 33.2 28.2"/><path id="m" transform="translate(2.88 2.88) scale(.84)" class="missed" d="M4.4 4.6C13 12.8 22.4 22.4 33 33.2M32.6 3.8C24.2 12.2 14 22.6 3.6 32.8"/></defs>
@@ -40,7 +41,7 @@
   <circle class="disc" cx="888" cy="224" r="32"/>
 </svg>
 <div class="words">
-  <h1 class="name">Fitness Planner</h1>
+  <h1 class="name">Fitness Planner design system</h1>
   <p class="tagline">A plain weekly record of exercise and diet, kept for years.</p>
 </div>
 <script></script>

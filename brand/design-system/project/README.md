@@ -1,3 +1,5 @@
+This is the Fitness Planner design system. A design system is the agreed set of parts a product is built from, and the rules for using them: colours, type, spacing, the day marks, the components and how the app writes. One set means every screen looks and behaves like the same app. This document defines that set for Fitness Planner and shows each part in light and dark; new screens are built from it and the app is checked against it. It does not describe how the app works, its data or its code, and it is not a picture of every screen: those live in the repository's docs and in the app itself.
+
 Fitness Planner should feel like a well-made notebook kept for years: plain, dependable and calm, with today and this week in one bold, obvious place and everything older quiet and dense.
 
 Fitness Planner is a weekly plan for exercise and diet: one row per exercise or food, one mark per day, and a total that says how the week is going. A personal trainer could recommend it and use it with a client. It is (almost) as simple as a paper star chart, and it never pretends to be more than the record of someone showing up.

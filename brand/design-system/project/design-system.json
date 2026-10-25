@@ -5,7 +5,7 @@
     "v": 1,
     "at": "2026-10-24T16:03:37Z"
   },
-  "title": "Fitness Planner",
+  "title": "Fitness Planner design system",
   "namespace": "FitnessPlanner",
   "libraries": [],
   "sections": {},
@@ -199,8 +199,8 @@
   },
   "lastChange": {
     "by": "John Mathews",
-    "at": "2026-10-25T09:38:00Z",
+    "at": "2026-10-25T11:51:00Z",
     "via": "Claude Code",
-    "note": "Three kinds of day mark (great, partial, missed) with their own shapes and fixed pens (pen, pen-partial, pen-missed); the InkPicker card and the four ink tokens removed; the Header drops the wordmark on a phone's planner; a 16px gap above TodayList's band"
+    "note": "Named as a design system: the title and the cover say \"Fitness Planner design system\", and the README opens with what a design system is and what this document does and does not do"
   }
 }
