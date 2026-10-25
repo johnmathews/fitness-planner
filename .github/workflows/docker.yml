@@ -113,16 +113,23 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # Under workflow_run, github.sha is the default branch's HEAD, not the commit CI passed,
+      # so metadata-action's own `type=sha` would name the wrong commit. (Its `context: git`
+      # cannot help: it fails on the detached HEAD a SHA checkout leaves.) Tag and label the
+      # commit explicitly instead.
+      - id: commit
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: echo "short=${HEAD_SHA::7}" >> "$GITHUB_OUTPUT"
       - id: meta
         uses: docker/metadata-action@v6
         with:
-          # `git` context reads the checked-out commit, so sha-<short> names the commit CI
-          # passed, not the workflow_run's default-branch HEAD.
-          context: git
           images: ${{ matrix.image }}
           tags: |
             type=raw,value=latest
-            type=sha
+            type=raw,value=sha-${{ steps.commit.outputs.short }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
       - uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
