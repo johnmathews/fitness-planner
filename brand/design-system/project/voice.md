@@ -32,4 +32,30 @@ Plain, calm and brief, in the second person. Facts first, then the next step. Th
 
 ## Signing in and creating an account
 
-The sign-in field is "Email or username": people who signed up use their email, people who were invited use the name in their invite. A failed sign-in names all three and blames none: "Wrong email, username or password. Check them and try again." Creating an account asks only for an email and a password, twice; the button says "Create account", and the card's last line is a "Go to sign in" link. The email is never checked by mail, so the app never says "verify" or "confirm your email".
+The sign-in field is "Email or username": people who signed up use their email, people who were invited use the name in their invite. A failed sign-in names all three and blames none: "Wrong email, username or password. Check them and try again." Creating an account asks only for an email and a password, twice; the button says "Create account", and the card's last line is a "Go to sign in" link. Where the planner sends email, the new account is signed in at once and gets one email, to confirm the address; the word is "confirm", never "verify". Until then a neutral banner over the week says "Confirm your email. The link is in the email sent to sam@example.com." with a "Send it again" button. A planner that sends no email says none of this.
+
+"Forgot your password?" sits on its own line under the sign-in form, only where the planner sends email. Its card is "Reset your password": "Enter the email you signed up with, and a link to choose a new password goes there.", one Email field with the hint "Signed in with a username? Ask whoever runs this planner for a reset link.", and "Send link" ("Sending link…"). Afterwards it says the same whether or not there is an account, so it gives nothing away: "If there’s an account for sam@example.com, a link to choose a new password is on its way. It works for one hour."
+
+The confirm link opens "Email confirmed": "Password resets for sam@example.com will reach you there." A used or expired one says "This link has expired or was already used. Sign in and choose “Send it again” for a new one." ("Choose “Send it again”…" to someone signed in).
+
+## Email
+
+The planner sends two emails, both in the EmailLayout card, both from "Fitness Planner". The voice is the app's: plain, calm, second person, no exclamation marks.
+
+- **Subject:** the one thing the email is for, with the app's name, in sentence case: "Confirm your email for Fitness Planner", "Reset your Fitness Planner password".
+- **Heading, then one sentence:** what happened, and what the link does. "You created a Fitness Planner account with this address. Confirm it, so a password reset can reach you here." "Someone asked to reset the password for sam@example.com. If it was you, choose a new one with this link." Someone, not you: the email can't know who asked.
+- **One button,** a verb phrase: "Confirm email", "Choose a new password". Never "Click here".
+- **How long the link works,** in words, and what using it does: "The link works for seven days." "The link works once, for one hour. Choosing a password signs you out on your other devices."
+- **The link, written out,** under "If the button doesn’t work, paste this link into your browser:".
+- **If it wasn't them,** last and without alarm: "If you didn’t create this account, you can ignore this email." "If you didn’t ask, ignore this email. Your password stays as it is."
+- **No reply address.** Nobody reads replies, so no email asks for one, promises help, or signs off with a name.
+- **Nothing else:** no tips, no marketing, no tracking pixels, no images.
+
+| Instead of | Write |
+| --- | --- |
+| Verify your email address! | Confirm your email |
+| Click here to reset | Choose a new password |
+| This link expires in 60 minutes | The link works once, for one hour. |
+| If you did not request this, please contact support | If you didn’t ask, ignore this email. Your password stays as it is. |
+| Email sent! | A new link is on its way to sam@example.com. |
+| Please wait before requesting another email | Can’t send another email yet. Try again in one minute. (It doesn't say why: a minute's gap, five a day, or the whole planner's hour.) |

@@ -60,7 +60,16 @@ function state() {
  */
 export async function openApp(
   page: Page,
-  { theme = 'light', view }: { theme?: Theme; view?: 'today' | 'week' } = {},
+  {
+    theme = 'light',
+    view,
+    unconfirmed = false,
+  }: {
+    theme?: Theme
+    view?: 'today' | 'week'
+    /** The account's email is not confirmed yet, so the confirm banner shows. */
+    unconfirmed?: boolean
+  } = {},
 ): Promise<void> {
   await page.clock.setFixedTime(TODAY)
   const s = state()
@@ -68,7 +77,9 @@ export async function openApp(
     const req = route.request()
     const path = new URL(req.url()).pathname.replace(/^\/api/, '')
     if (req.method() === 'GET' && path === '/auth/me')
-      return route.fulfill({ json: { username: 'alice' } })
+      return route.fulfill({
+        json: unconfirmed ? { username: 'alice', confirmed: false } : { username: 'alice' },
+      })
     if (req.method() === 'GET' && path === '/state') return route.fulfill({ json: s })
     if (req.method() === 'PUT') return route.fulfill({ json: { rev: 1 } })
     return route.fulfill({ json: {} })
@@ -90,7 +101,8 @@ export async function openApp(
   await settle(page)
 }
 
-/** Opens the sign-in screen: nobody is signed in and the API says so. */
+/** Opens the sign-in screen: nobody is signed in and the API says so. It sends email, so
+ * "Forgot your password?" shows. */
 export async function openSignIn(page: Page, theme: Theme): Promise<void> {
   await openSignedOut(page, theme, '/')
 }
@@ -100,13 +112,35 @@ export async function openSignUp(page: Page, theme: Theme): Promise<void> {
   await openSignedOut(page, theme, '/#/signup')
 }
 
-async function openSignedOut(page: Page, theme: Theme, path: string): Promise<void> {
-  await page.route('**/api/**', (route) => route.fulfill({ status: 401, json: {} }))
+/** Opens the reset-your-password screen (`#/forgot`), signed out. */
+export async function openForgot(page: Page, theme: Theme): Promise<void> {
+  await openSignedOut(page, theme, '/#/forgot')
+}
+
+/** Opens a confirm-your-email link that works, signed out: the "Email confirmed" card. */
+export async function openConfirmed(page: Page, theme: Theme): Promise<void> {
+  await openSignedOut(page, theme, '/#/confirm/tok', '[data-testid="confirm-done"]')
+}
+
+async function openSignedOut(
+  page: Page,
+  theme: Theme,
+  path: string,
+  ready = 'form',
+): Promise<void> {
+  await page.route('**/api/**', (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/api/, '')
+    if (path === '/auth/options') return route.fulfill({ json: { mail: true } })
+    if (path === '/auth/forgot') return route.fulfill({ status: 202, json: {} })
+    if (path === '/auth/confirm')
+      return route.fulfill({ json: { username: 'sam@example.com', confirmed: true } })
+    return route.fulfill({ status: 401, json: {} })
+  })
   await page.addInitScript((theme) => {
     localStorage.setItem('fitness-planner-settings-v1', JSON.stringify({ theme }))
   }, theme)
   await page.goto(path)
-  await page.waitForSelector('form')
+  await page.waitForSelector(ready)
   await settle(page)
 }
 

@@ -38,12 +38,25 @@ test suites run.
 | ID  | Topic   | Decision                                                                                                                                                                                    | Rejected                                                                                          |
 | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | D9  | Sign-up | Anyone can create an account with an email and a password. Guardrails: `MAX_USERS` (default 50; 0 closes sign-up, leaving invites), 10 sign-ups an hour, and a 5 MiB quota on every account | Approval by `fp-admin` before first login; a shared sign-up code; no limits at all                |
-| D10 | Email   | The email is only a login name, stored lower-cased in `users.username`. No mail is sent: no verification, no self-service reset                                                             | Verification and "forgot password" by mail, which need a mail provider; a separate `email` column |
+| D10 | Email   | The email is only a login name, stored lower-cased in `users.username`. No mail is sent: no verification, no self-service reset (the "no mail" part superseded by D12–D14)                  | Verification and "forgot password" by mail, which need a mail provider; a separate `email` column |
 | D11 | Sign-in | One field takes an email or a username, since both live in the same column                                                                                                                  | Email only, which would strand invited users until each had an email attached                     |
 
 D9 supersedes D1, and with it the premise behind two accepted risks in [api.md](api.md) §8: the
 unbounded per-user data (now the quota) and an account count bounded only by invites (now
 `MAX_USERS` and the hourly limit). John chose all three on 2026-10-25.
+
+### 2.2 Transactional email (2026-10-25)
+
+| ID  | Topic      | Decision                                                                                                                                                                                                       | Rejected                                                                                                     |
+| --- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| D12 | Provider   | Resend's HTTP API, called with the standard library, from a subdomain of `itsa-pizza.com` in the EU region. A send-only key in the home-server vault turns it on; without one, mail is off and nothing changes | Self-hosted SMTP from infra-vm (a residential IP); a provider SDK as a dependency                            |
+| D13 | Confirming | Sign-up still signs in at once and still says when an email is taken. A link confirms the address; until then a banner asks, and nothing else is limited                                                       | Holding the account until confirmed, which would also hide taken emails but makes everyone wait for an email |
+| D14 | Resets     | "Forgot your password?" emails a one-hour reset link, answering the same for every address; using it confirms the email. Mail is rate-limited per account and across the API                                   | Reset by `fp-admin` only                                                                                     |
+
+John chose Resend on 2026-10-25 and asked for password-reset and confirm-your-email emails. The
+rest of D12–D14 (the subdomain and region, signing in before confirming, keeping the `exists`
+answer, the one-hour lifetime and the limits) were Claude's calls, stated to him before the build.
+Monthly progress reports, which will use the confirmed addresses, are issue #29.
 
 ## 3. Made while planning and building (2026-10-24)
 
@@ -106,8 +119,9 @@ for a day tried and not managed, with a press stepping through them.
 Each is described where it applies:
 
 - the lockout and sign-up reveal which usernames and emails have accounts; the lockout can block
-  one; sessions have no absolute lifetime; anyone can claim an email that is not theirs; strangers
-  can fill the account cap or the hourly limit ([api.md](api.md) §8);
+  one; sessions have no absolute lifetime; anyone can claim an email that is not theirs until it is
+  confirmed; whoever holds an account's inbox can reset its password; Resend sees the addresses and
+  links; strangers can fill the account cap or the hourly limit ([api.md](api.md) §8);
 - two tabs racing on the shared outbox inside Chrome's cross-process delay, and a session that ends
   by itself keeping its cache ([architecture.md](architecture.md) §7);
 - while the API restarts, Docker's DNS can forward the web container's `fitness-api` lookup to the
@@ -147,3 +161,7 @@ one journal entry (`journal/261025-email-signup.md`):
 | W2   | The per-user quota                                | #23 |
 | W3   | The create-an-account screen and the sign-in copy | #23 |
 | W4   | The decision record, docs and journal             | #23 |
+
+Transactional email (D12–D14, issue #27) shipped in one pull request with one journal entry
+(`journal/261025-transactional-email.md`); the vault entry and the environment that turn it on
+are a home-server change.

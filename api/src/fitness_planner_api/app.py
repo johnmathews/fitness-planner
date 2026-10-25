@@ -2,18 +2,19 @@
 
 import sqlite3
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, Path, Request, Response
+from fastapi import BackgroundTasks, Depends, FastAPI, Path, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import auth, data
+from . import auth, data, outbox
 from .backup import BackupThread
 from .config import Config
 from .db import connect, migrate
+from .mail import Mailer, Message, ResendMailer, send_quietly
 from .validate import (
     Days,
     ExportError,
@@ -38,6 +39,9 @@ AUTH_STATUS = {
     "email": 400,
     "closed": 403,
     "too-many": 429,
+    "too-soon": 429,
+    "confirmed": 409,
+    "no-email": 409,
 }
 
 
@@ -65,7 +69,13 @@ def error_response(
     )
 
 
-def create_app(config: Config, run_backups: bool = True) -> FastAPI:
+def create_app(config: Config, run_backups: bool = True, mailer: Mailer | None = None) -> FastAPI:
+    """The API. Mail goes through `mailer`, by default Resend's when the config turns mail on."""
+    if not config.mail_enabled:
+        mailer = None
+    elif mailer is None:
+        mailer = ResendMailer(config.resend_api_key or "", config.mail_from)
+
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         conn = connect(config.db_path)
@@ -79,6 +89,7 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
             backups.stop()
 
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+    app.state.mailer = mailer
 
     @app.middleware("http")
     async def guard(
@@ -185,6 +196,23 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         wait = e.retry_after
         return ApiError(AUTH_STATUS[e.code], e.code, {"Retry-After": str(wait)}, retryAfter=wait)
 
+    def account(conn: sqlite3.Connection, uid: int) -> dict[str, Any]:
+        """Who is signed in: the username, and with mail on, whether its email is confirmed (an
+        invited account has none, so no flag)."""
+        name = conn.execute("SELECT username FROM users WHERE id = ?", (uid,)).fetchone()[0]
+        state = auth.confirmed(conn, uid) if mailer is not None else None
+        return {"username": name} | ({} if state is None else {"confirmed": state})
+
+    def deliver(background: BackgroundTasks, message: Message) -> None:
+        # After the response: Resend's latency never shows, so timing can't tell who has an account.
+        assert mailer is not None
+        background.add_task(send_quietly, mailer, message)
+
+    def need_mail() -> Mailer:
+        if mailer is None:
+            raise ApiError(503, "mail-off")
+        return mailer
+
     def tick_mark(body: dict[str, Any]) -> Mark | None:
         """`{"mark": ...}`, or `{"done": bool}` from a client (or a queued tick) from before marks
         had kinds: true is `great`, false clears the day."""
@@ -209,26 +237,30 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         return {"ok": True}
 
     @app.post("/api/auth/login")
-    def login(body: Body, response: Response, conn: Conn) -> dict[str, str]:
+    def login(body: Body, response: Response, conn: Conn) -> dict[str, Any]:
         username, password = strings(body, "username", "password")
         try:
             uid = auth.login(conn, config, username, password)
         except auth.AuthError as e:
             raise refused(e) from None
         set_session_cookie(response, auth.create_session(conn, config, uid))
-        name = conn.execute("SELECT username FROM users WHERE id = ?", (uid,)).fetchone()[0]
-        return {"username": name}
+        return account(conn, uid)
 
     @app.post("/api/auth/signup")
-    def signup(body: Body, response: Response, conn: Conn) -> dict[str, str]:
+    def signup(
+        body: Body, response: Response, background: BackgroundTasks, conn: Conn
+    ) -> dict[str, Any]:
         email, password = strings(body, "email", "password")
         try:
             uid = auth.signup(conn, config, email, password)
         except auth.AuthError as e:
             raise refused(e) from None
         set_session_cookie(response, auth.create_session(conn, config, uid))
-        name = conn.execute("SELECT username FROM users WHERE id = ?", (uid,)).fetchone()[0]
-        return {"username": name}
+        if mailer is not None:
+            # Over the hourly cap no email goes now; the banner's "Send it again" asks later.
+            with suppress(auth.AuthError):
+                deliver(background, outbox.confirmation(conn, config, uid))
+        return account(conn, uid)
 
     @app.post("/api/auth/logout", status_code=204)
     def logout(_: Body, request: Request, response: Response, conn: Conn) -> None:
@@ -240,8 +272,42 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         )
 
     @app.get("/api/auth/me")
-    def me(user: User) -> dict[str, str]:
-        return {"username": user.username}
+    def me(user: User, conn: Conn) -> dict[str, Any]:
+        return account(conn, user.id)
+
+    @app.get("/api/auth/options")
+    def options() -> dict[str, bool]:
+        return {"mail": mailer is not None}
+
+    @app.post("/api/auth/forgot", status_code=202)
+    def forgot(body: Body, background: BackgroundTasks, conn: Conn) -> dict[str, str]:
+        need_mail()
+        (email,) = strings(body, "email")
+        try:
+            message = outbox.reset(conn, config, email)
+        except auth.AuthError as e:
+            raise refused(e) from None
+        if message is not None:
+            deliver(background, message)
+        return {}
+
+    @app.post("/api/auth/confirm")
+    def confirm(body: Body, conn: Conn) -> dict[str, Any]:
+        (token,) = strings(body, "token")
+        try:
+            uid = auth.confirm(conn, config, token)
+        except auth.AuthError as e:
+            raise refused(e) from None
+        return account(conn, uid)
+
+    @app.post("/api/auth/confirm/resend", status_code=202)
+    def resend(_: Body, user: User, background: BackgroundTasks, conn: Conn) -> dict[str, str]:
+        need_mail()
+        try:
+            deliver(background, outbox.confirmation(conn, config, user.id))
+        except auth.AuthError as e:
+            raise refused(e) from None
+        return {}
 
     @app.post("/api/invites/lookup")
     def lookup(body: Body, conn: Conn) -> dict[str, str]:
@@ -252,15 +318,14 @@ def create_app(config: Config, run_backups: bool = True) -> FastAPI:
         return {"kind": info[0], "username": info[1]}
 
     @app.post("/api/invites/redeem")
-    def redeem(body: Body, response: Response, conn: Conn) -> dict[str, str]:
+    def redeem(body: Body, response: Response, conn: Conn) -> dict[str, Any]:
         token, password = strings(body, "token", "password")
         try:
             uid = auth.redeem(conn, config, token, password)
         except auth.AuthError as e:
             raise refused(e) from None
         set_session_cookie(response, auth.create_session(conn, config, uid))
-        name = conn.execute("SELECT username FROM users WHERE id = ?", (uid,)).fetchone()[0]
-        return {"username": name}
+        return account(conn, uid)
 
     @app.get("/api/state")
     def get_state(user: User, conn: Conn) -> dict[str, Any]:

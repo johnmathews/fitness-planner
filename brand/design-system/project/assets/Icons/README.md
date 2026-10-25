@@ -16,6 +16,7 @@ Size: 20px inside buttons and icon buttons, 16px beside text. An icon never carr
 | trash-2 | Remove a row (always confirmed) |
 | search | Search field |
 | cloud-off | Offline banner |
+| mail | Confirm-your-email banner |
 | refresh-cw | Sync conflict banner: reload |
 | sun, moon, monitor | Theme segments: Light, Dark, System |
 | calendar-days, list | Switch between the week and the phone's Today list |

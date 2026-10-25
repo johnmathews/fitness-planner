@@ -64,3 +64,41 @@ def test_rejects_an_unclear_boolean(value: str) -> None:
 def test_rejects_a_bad_max_users(value: str) -> None:
     with pytest.raises(ValueError, match="MAX_USERS"):
         Config.from_env({"PUBLIC_ORIGIN": "https://f.example", "MAX_USERS": value})
+
+
+def test_mail_is_off_unless_a_key_is_set() -> None:
+    cfg = Config.from_env({"PUBLIC_ORIGIN": "https://f.example", "RESEND_API_KEY": ""})
+    assert cfg.mail_enabled is False
+    assert (cfg.mail_per_hour, cfg.confirm_days, cfg.mail_reset_minutes) == (30, 7, 60)
+
+
+def test_reads_mail_settings_and_hides_the_key() -> None:
+    cfg = Config.from_env(
+        {
+            "PUBLIC_ORIGIN": "https://f.example",
+            "RESEND_API_KEY": "re_secret",
+            "MAIL_FROM": "Fitness Planner <planner@updates.f.example>",
+            "MAIL_PER_HOUR": "5",
+        }
+    )
+    assert cfg.mail_enabled is True
+    assert cfg.mail_from == "Fitness Planner <planner@updates.f.example>"
+    assert cfg.mail_per_hour == 5
+    assert "re_secret" not in repr(cfg)
+    bare = {"PUBLIC_ORIGIN": "https://f.example", "RESEND_API_KEY": "k", "MAIL_FROM": "p@f.example"}
+    assert Config.from_env(bare).mail_from == "p@f.example"
+
+
+@pytest.mark.parametrize("sender", [None, "", "planner", "Planner <planner>", "<a@b.c>"])
+def test_a_key_needs_a_sender(sender: str | None) -> None:
+    env = {"PUBLIC_ORIGIN": "https://f.example", "RESEND_API_KEY": "k"}
+    if sender is not None:
+        env["MAIL_FROM"] = sender
+    with pytest.raises(ValueError, match="MAIL_FROM"):
+        Config.from_env(env)
+
+
+def test_mail_per_hour_must_allow_one() -> None:
+    env = {"PUBLIC_ORIGIN": "https://f.example", "MAIL_PER_HOUR": "0"}
+    with pytest.raises(ValueError, match="MAIL_PER_HOUR"):
+        Config.from_env(env)

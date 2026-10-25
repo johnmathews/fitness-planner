@@ -31,6 +31,19 @@ export function describeProblem(p: AuthProblem): string {
       const minutes = Math.max(1, Math.ceil((p.retryAfter ?? 3600) / 60))
       return `Too many new accounts at once. Try again in ${countOf(minutes, 'minute')}.`
     }
+    case 'too-soon': {
+      // The daily limit can mean hours: past an hour, say hours.
+      const wait = p.retryAfter ?? 60
+      const when =
+        wait > 3600
+          ? countOf(Math.ceil(wait / 3600), 'hour')
+          : countOf(Math.max(1, Math.ceil(wait / 60)), 'minute')
+      return `Can’t send another email yet. Try again in ${when}.`
+    }
+    case 'confirmed':
+      return 'Your email is already confirmed.'
+    case 'mail-off':
+      return 'This planner doesn’t send email. Ask whoever runs it for a reset link.'
     default:
       return 'Something went wrong. Try again.'
   }

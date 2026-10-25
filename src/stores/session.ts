@@ -22,9 +22,16 @@ export type AuthProblem = {
     | 'exists'
     | 'closed'
     | 'too-many'
+    | 'too-soon'
+    | 'confirmed'
+    | 'no-email'
+    | 'mail-off'
     | 'error'
   retryAfter?: number
 }
+
+/** Who the server says is signed in; `confirmed` only for an email account while mail is on. */
+type Account = { username: string; confirmed?: boolean }
 
 export type LinkKind = 'invite' | 'reset'
 
@@ -41,6 +48,10 @@ function problem(error: ApiError): AuthProblem {
     'exists',
     'closed',
     'too-many',
+    'too-soon',
+    'confirmed',
+    'no-email',
+    'mail-off',
   ] as const
   const code = known.find((c) => c === error.code) ?? 'error'
   return error.retryAfter === undefined ? { code } : { code, retryAfter: error.retryAfter }
@@ -61,8 +72,12 @@ export const useSessionStore = defineStore('session', () => {
   const user = ref<string | null>(null)
   /** The session ended by itself (expired or revoked), rather than by signing out. */
   const expired = ref(false)
+  /** Whether the signed-in account's email is confirmed; null when that doesn't apply. */
+  const confirmed = ref<boolean | null>(null)
+  /** Whether this planner sends email, so the sign-in screen can offer a reset by email. */
+  const mail = ref(false)
 
-  function begin(name: string): void {
+  function begin(name: string, account?: Account): void {
     // A different user's data must never show, even for a moment.
     if (user.value !== null && user.value !== name) {
       planner.clear()
@@ -71,6 +86,7 @@ export const useSessionStore = defineStore('session', () => {
     user.value = name
     status.value = 'signed-in'
     expired.value = false
+    if (account) confirmed.value = account.confirmed ?? null
     writeKey(SESSION_KEY, { user: name })
     sync.start(name, lost)
   }
@@ -86,9 +102,11 @@ export const useSessionStore = defineStore('session', () => {
   async function init(): Promise<void> {
     const remembered = savedUser()
     if (remembered) begin(remembered)
-    const res = await request<{ username: string }>('GET', '/auth/me')
+    const res = await request<Account>('GET', '/auth/me')
     if (res.ok) {
-      if (res.data.username !== user.value || status.value !== 'signed-in') begin(res.data.username)
+      if (res.data.username !== user.value || status.value !== 'signed-in') {
+        begin(res.data.username, res.data)
+      } else confirmed.value = res.data.confirmed ?? null
       return
     }
     if (res.error.kind === 'auth' && remembered) lost()
@@ -96,23 +114,19 @@ export const useSessionStore = defineStore('session', () => {
     // Offline with a remembered user: keep working from the cache until the server is back.
   }
 
-  async function signedIn(res: Awaited<ReturnType<typeof request<{ username: string }>>>) {
+  async function signedIn(res: Awaited<ReturnType<typeof request<Account>>>) {
     if (!res.ok) return problem(res.error)
-    begin(res.data.username)
+    begin(res.data.username, res.data)
     return null
   }
 
   async function login(username: string, password: string): Promise<AuthProblem | null> {
-    return signedIn(
-      await request<{ username: string }>('POST', '/auth/login', { username, password }),
-    )
+    return signedIn(await request<Account>('POST', '/auth/login', { username, password }))
   }
 
   /** Create an account named by its email (docs/api.md §4) and sign in as it. */
   async function signup(email: string, password: string): Promise<AuthProblem | null> {
-    return signedIn(
-      await request<{ username: string }>('POST', '/auth/signup', { email, password }),
-    )
+    return signedIn(await request<Account>('POST', '/auth/signup', { email, password }))
   }
 
   async function lookup(
@@ -125,9 +139,37 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   async function redeem(token: string, password: string): Promise<AuthProblem | null> {
-    return signedIn(
-      await request<{ username: string }>('POST', '/invites/redeem', { token, password }),
-    )
+    return signedIn(await request<Account>('POST', '/invites/redeem', { token, password }))
+  }
+
+  /** Ask the server whether it sends email (docs/api.md §4.1); unknown counts as no. */
+  async function loadOptions(): Promise<void> {
+    const res = await request<{ mail: boolean }>('GET', '/auth/options')
+    mail.value = res.ok && res.data.mail === true
+  }
+
+  /** Ask for a reset link by email. The answer is the same whether or not the account exists. */
+  async function forgot(email: string): Promise<AuthProblem | null> {
+    const res = await request('POST', '/auth/forgot', { email })
+    return res.ok ? null : problem(res.error)
+  }
+
+  /** Use a confirmation link; it works signed in or out, on any device. */
+  async function confirmEmail(token: string): Promise<{ username: string } | AuthProblem> {
+    const res = await request<Account>('POST', '/auth/confirm', { token })
+    if (!res.ok) return problem(res.error)
+    if (res.data.username === user.value) confirmed.value = true
+    return { username: res.data.username }
+  }
+
+  /** Send the signed-in account a new confirmation link. */
+  async function resendConfirmation(): Promise<AuthProblem | null> {
+    const res = await request('POST', '/auth/confirm/resend', {})
+    if (res.ok) return null
+    const p = problem(res.error)
+    // Confirmed meanwhile, in another tab or on another device: the banner can go.
+    if (p.code === 'confirmed') confirmed.value = true
+    return p
   }
 
   /**
@@ -145,6 +187,7 @@ export const useSessionStore = defineStore('session', () => {
     diet.clear()
     removeKey(SESSION_KEY)
     user.value = null
+    confirmed.value = null
     status.value = 'signed-out'
     expired.value = false
     return null
@@ -162,10 +205,28 @@ export const useSessionStore = defineStore('session', () => {
     planner.clear()
     diet.clear()
     user.value = null
+    confirmed.value = null
     expired.value = false
     status.value = 'signed-out'
     if (remembered) await init()
   }
 
-  return { status, user, expired, init, login, signup, lookup, redeem, logout, onStorage }
+  return {
+    status,
+    user,
+    expired,
+    confirmed,
+    mail,
+    init,
+    login,
+    signup,
+    lookup,
+    redeem,
+    loadOptions,
+    forgot,
+    confirmEmail,
+    resendConfirmation,
+    logout,
+    onStorage,
+  }
 })

@@ -2,8 +2,8 @@
 
 > Purpose
 >
-> The API service in `api/`: accounts, sessions, invites, the synced data, the admin CLI and
-> backups. It is the reference for the endpoints the client calls and for running the service.
+> The API service in `api/`: accounts, sessions, invites, email, the synced data, the admin CLI
+> and backups. It is the reference for the endpoints the client calls and for running the service.
 
 ## 1. Overview
 
@@ -12,27 +12,32 @@ in SQLite at `$DATA_DIR/fitness.db` (WAL mode, foreign keys on). The web contain
 `/api/` to it, so the browser sees one origin and the CSP stays unchanged. Every user's rows are
 scoped by `user_id`, and no endpoint reads another user's data.
 
-| Module        | Holds                                                                              |
-| ------------- | ---------------------------------------------------------------------------------- |
-| `config.py`   | `Config`, read from the environment (§6)                                           |
-| `db.py`       | connections, the schema and its migrations                                         |
-| `validate.py` | the port of `src/lib/storage.ts` and `src/lib/transfer.ts`                         |
-| `auth.py`     | password hashing, lockout, sessions, sign-up and its caps, invite and reset tokens |
-| `data.py`     | reading and writing plans, ticks and settings; import, export; the quota (`usage`) |
-| `app.py`      | the HTTP layer: routes, the write checks, error mapping                            |
-| `backup.py`   | the daily `VACUUM INTO` copy                                                       |
-| `cli.py`      | `fp-admin`                                                                         |
+| Module        | Holds                                                                                            |
+| ------------- | ------------------------------------------------------------------------------------------------ |
+| `config.py`   | `Config`, read from the environment (§6)                                                         |
+| `db.py`       | connections, the schema and its migrations                                                       |
+| `validate.py` | the port of `src/lib/storage.ts` and `src/lib/transfer.ts`                                       |
+| `auth.py`     | password hashing, lockout, sessions, sign-up and its caps, invite, reset and confirmation tokens |
+| `outbox.py`   | which emails go out and when: the limits (§4.1), the links, the message                          |
+| `emails.py`   | the two emails, built to the EmailLayout card, and that card's preview                           |
+| `mail.py`     | the Resend client, and sending after the response                                                |
+| `data.py`     | reading and writing plans, ticks and settings; import, export; the quota (`usage`)               |
+| `app.py`      | the HTTP layer: routes, the write checks, error mapping                                          |
+| `backup.py`   | the daily `VACUUM INTO` copy                                                                     |
+| `cli.py`      | `fp-admin`                                                                                       |
 
 ## 2. Data model
 
-| Table      | Key                                 | Columns                                                                                                                                           |
-| ---------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `users`    | `id`                                | `username` (unique, case-insensitive; the lower-cased email for a signed-up account), `password_hash`, `disabled`, lockout counters, `created_at` |
-| `sessions` | `token_hash`                        | `user_id`, `created_at`, `last_seen`, `expires_at`                                                                                                |
-| `invites`  | `token_hash`                        | `kind` (`invite` or `reset`), `username`, `user_id` (resets), `expires_at`, `used_at`                                                             |
-| `settings` | `user_id`                           | `accent`, `daily_pick`                                                                                                                            |
-| `plans`    | `(user_id, section, week)`          | `items_json`, `rev`                                                                                                                               |
-| `ticks`    | `(user_id, section, week, item_id)` | `days`, `partial`, `missed`: 7-bit masks (bit 0 is Monday); see below                                                                             |
+| Table           | Key                                 | Columns                                                                                                                                                                 |
+| --------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users`         | `id`                                | `username` (unique, case-insensitive; the lower-cased email for a signed-up account), `password_hash`, `disabled`, lockout counters, `created_at`, `email_confirmed_at` |
+| `sessions`      | `token_hash`                        | `user_id`, `created_at`, `last_seen`, `expires_at`                                                                                                                      |
+| `invites`       | `token_hash`                        | `kind` (`invite` or `reset`), `username`, `user_id` (resets), `expires_at`, `used_at`, `mailed` (a reset sent by email)                                                 |
+| `confirmations` | `token_hash`                        | `user_id`, `created_at`, `expires_at`, `used_at`: confirm-your-email links                                                                                              |
+| `mail_log`      | `id`                                | `user_id`, `kind` (`confirm` or `reset`), `sent_at`: one row per email attempted (a failed send still counts), for the limits                                           |
+| `settings`      | `user_id`                           | `accent`, `daily_pick`                                                                                                                                                  |
+| `plans`         | `(user_id, section, week)`          | `items_json`, `rev`                                                                                                                                                     |
+| `ticks`         | `(user_id, section, week, item_id)` | `days`, `partial`, `missed`: 7-bit masks (bit 0 is Monday); see below                                                                                                   |
 
 `section` is `exercise` or `diet`. Every row cascades from its user. Tokens and session ids are
 stored only as SHA-256 hashes. A database lookup with a stolen copy of the file cannot recover a
@@ -43,8 +48,10 @@ working cookie or link. Times are Unix seconds. The theme is not stored: it belo
 are disjoint subsets of it. A day in `days` and in neither subset is `great`.
 
 The schema version lives in `PRAGMA user_version`, and `db.migrate` applies each step in order at
-startup inside a transaction. Version 1 is the tables above; version 2 adds `partial` and `missed`
-(default 0), so every tick stored before marks had kinds reads as `great`.
+startup inside a transaction. Version 1 is the first six tables; version 2 adds `partial` and
+`missed` (default 0), so every tick stored before marks had kinds reads as `great`; version 3 adds
+email: `email_confirmed_at`, `mailed`, `confirmations` and `mail_log`. Every account from before
+it starts unconfirmed.
 
 ## 3. Endpoints
 
@@ -61,21 +68,29 @@ would not stop a request from another `*.itsa-pizza.com` host, because the brows
 same-site. Bodies over 1 MiB get 413 `too-large`, counted as they stream in, so a chunked body is
 cut off at the limit rather than read whole. A body with nothing to send, such as logout's, is `{}`.
 
-| Method and path                            | Auth    | Does                                                                 |
-| ------------------------------------------ | ------- | -------------------------------------------------------------------- |
-| `GET /healthz`                             | no      | `SELECT 1`; `{"ok": true}`                                           |
-| `POST /auth/login`                         | no      | `{username, password}` → `{username}` and the session cookie         |
-| `POST /auth/signup`                        | no      | `{email, password}` creates an account → `{username}` and the cookie |
-| `POST /auth/logout`                        | session | ends this session and clears the cookie; 204                         |
-| `GET /auth/me`                             | session | `{username}`                                                         |
-| `POST /invites/lookup`                     | no      | `{token}` → `{kind, username}` for a live link; 410 `gone` otherwise |
-| `POST /invites/redeem`                     | no      | `{token, password}` sets the password, consumes the link, signs in   |
-| `GET /state`                               | session | everything the client renders (below)                                |
-| `PUT /plans/{section}/{week}`              | session | `{items, rev}` → `{rev}`; 409 `conflict` with the server copy        |
-| `PUT /ticks/{section}/{week}/{item}/{day}` | session | `{mark}` → `{days}`, the week's seven marks for that item            |
-| `PUT /settings`                            | session | `{accent, dailyPick}` → the stored settings                          |
-| `GET /export`                              | session | the export file (`architecture.md` §4)                               |
-| `POST /import`                             | session | an export file, merged in; → `{weeks, ticks, settings}` added        |
+| Method and path                            | Auth    | Does                                                                                           |
+| ------------------------------------------ | ------- | ---------------------------------------------------------------------------------------------- |
+| `GET /healthz`                             | no      | `SELECT 1`; `{"ok": true}`                                                                     |
+| `POST /auth/login`                         | no      | `{username, password}` → the account and the session cookie                                    |
+| `POST /auth/signup`                        | no      | `{email, password}` creates an account → the account and the cookie                            |
+| `POST /auth/logout`                        | session | ends this session and clears the cookie; 204                                                   |
+| `GET /auth/me`                             | session | the account: `{username}`, plus `confirmed` (below)                                            |
+| `GET /auth/options`                        | no      | `{mail}`: whether this API sends email (§4.1)                                                  |
+| `POST /auth/forgot`                        | no      | `{email}` → 202 `{}` for any well-formed email; a reset link goes to a matching account (§4.1) |
+| `POST /auth/confirm`                       | no      | `{token}` confirms the email → the account; 410 `gone` otherwise                               |
+| `POST /auth/confirm/resend`                | session | a new confirm link → 202 `{}`; refusals in §4.1                                                |
+| `POST /invites/lookup`                     | no      | `{token}` → `{kind, username}` for a live link; 410 `gone` otherwise                           |
+| `POST /invites/redeem`                     | no      | `{token, password}` sets the password, consumes the link, signs in                             |
+| `GET /state`                               | session | everything the client renders (below)                                                          |
+| `PUT /plans/{section}/{week}`              | session | `{items, rev}` → `{rev}`; 409 `conflict` with the server copy                                  |
+| `PUT /ticks/{section}/{week}/{item}/{day}` | session | `{mark}` → `{days}`, the week's seven marks for that item                                      |
+| `PUT /settings`                            | session | `{accent, dailyPick}` → the stored settings                                                    |
+| `GET /export`                              | session | the export file (`architecture.md` §4)                                                         |
+| `POST /import`                             | session | an export file, merged in; → `{weeks, ticks, settings}` added                                  |
+
+**The account** is `{username}`. While mail is on, an account created by sign-up (its username is
+an email) also carries `confirmed`, true once its address is confirmed; an invited account, and
+every account while mail is off, has no such key.
 
 `GET /state` returns `{exercise, diet, settings}`. Each section is `{plans, log, revs}`: `plans`
 and `log` have the same shape as in `localStorage` (a log row is seven marks or nulls), and `revs`
@@ -122,8 +137,8 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
   at most 254 characters, with printable ASCII before the `@` (no spaces, no second `@`) and a
   domain of letters, digits and hyphens with at least one dot; otherwise 400 `email`. It is ASCII
   because the name travels in a header. Invite usernames never contain `@`, so the two kinds
-  cannot collide. No mail is sent: the address is not verified, and a forgotten password still
-  needs `fp-admin reset <email>`. A taken email gets 409 `exists`, a password outside 10 to 256
+  cannot collide. With mail on, a confirm-your-email link goes to the address (§4.1); the account
+  works at once either way. A taken email gets 409 `exists`, a password outside 10 to 256
   characters 400 `password`. When `MAX_USERS` accounts exist (every account counts, invited or not)
   or `MAX_USERS` is 0, sign-up gets 403 `closed`; a disabled account still counts. At most 10
   sign-ups land in any rolling hour (invited accounts do not count); beyond that, 429 `too-many`
@@ -135,8 +150,9 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
   (10 to 256 characters). The username is fixed by the invite: 1 to 32 letters, digits, `.`, `_`
   or `-`, unique regardless of case. Inviting a name that already exists fails; use `reset`. `fp-admin reset <username>` mints a
   reset link the same way, valid for 24 hours. Using it ends every session of that user and clears
-  any lockout. Minting a new link revokes the earlier unused links of the same kind for that
-  username (a new invite leaves a reset link alone, and the reverse). The token travels
+  any lockout. Minting a new link revokes the earlier unused `fp-admin` links of the same kind for
+  that username (a new invite leaves a reset link alone, and the reverse). A reset sent by email
+  (§4.1) revokes nothing, and nothing revokes it but its hour running out. The token travels
   in the URL fragment and then in request bodies, never in a path, so no access log (Traefik, nginx
   or uvicorn) records it. Redeeming with a password outside 10 to 256 characters gets 400
   `password`, and a used, expired or unknown link gets 410 `gone`.
@@ -157,6 +173,41 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
   `fp-admin revoke-sessions <username>` and a reset end them all. A disabled user's sessions stop
   working at once.
 
+### 4.1 Email
+
+Mail is on when `RESEND_API_KEY` is set (§6), and goes through [Resend](https://resend.com)'s
+`POST /emails`, from `MAIL_FROM`, as HTML and plain text. With no key nothing is sent, the routes
+that send get 503 `mail-off`, and the app hides "Forgot your password?" and the confirm banner;
+resets are `fp-admin`'s, as before.
+
+- **Confirm your email.** Sign-up sends a link, `$PUBLIC_ORIGIN/#/confirm/<token>`, valid for 7
+  days; `POST /auth/confirm/resend` sends a new one and revokes the old. Using it (no session
+  needed, so it works on any device) sets `email_confirmed_at`. A resend for a confirmed account
+  gets 409 `confirmed`, for an invited one 409 `no-email`. An unconfirmed account is not limited
+  in anything; the flag only drives the banner, and later, who may get a report. `POST
+/auth/confirm` works with mail off too, so a link sent before mail was turned off still
+  confirms.
+- **Forgot your password.** `POST /auth/forgot` with `{email}` mints a reset link (the same
+  `#/reset/<token>` as `fp-admin reset`, the same lookup and redeem) and emails it, valid for one
+  hour. A malformed email gets 400 `email`; otherwise the answer is 202 `{}` whether or not an
+  account has that email, it is disabled, or a limit was reached, so the reply tells nobody
+  which addresses have accounts. A new request leaves earlier links working, so a stranger asking
+  for resets for someone's address cannot cancel the link that person was just sent. Using a mailed reset also confirms the address, since only its
+  owner could have opened it; an `fp-admin` reset does not.
+- **Limits.** Per account and kind, one email a minute and five a day; across the whole API,
+  `MAIL_PER_HOUR` (30, at least 1) emails of any kind in any rolling hour, which keeps a flood of resets from
+  spending the Resend quota. Each send is logged in `mail_log` under the write lock before the
+  link is minted, so parallel requests cannot pass a limit. Over a limit, a resend gets 429
+  `too-soon` with `Retry-After`; a reset request still gets its 202 and sends nothing; a sign-up
+  just goes without its email (the banner can ask again).
+- **Sending** happens after the response (FastAPI background tasks), so Resend's latency never
+  shows in the reply and timing does not tell a real account from a missing one. A failed send is
+  logged as a warning with its kind, never the address, and the person sees nothing; they can ask
+  again. Each request carries a fresh `Idempotency-Key`.
+- **The emails** are built by `emails.py` to the design system's EmailLayout card (inline styles,
+  light only, the link written out) in the words of `voice.md`'s Email section. The card's
+  preview is generated from the same code, and `test_mail.py` fails when they differ.
+
 ## 5. Admin CLI
 
 `fp-admin` runs in the API container against the same database:
@@ -173,13 +224,16 @@ docker compose exec fitness-api fp-admin revoke-sessions alice
 
 ## 6. Configuration
 
-| Variable        | Default    | Meaning                                                                 |
-| --------------- | ---------- | ----------------------------------------------------------------------- |
-| `DATA_DIR`      | `/data`    | holds `fitness.db` and `backup/`                                        |
-| `PUBLIC_ORIGIN` | (required) | e.g. `https://fitness.itsa-pizza.com`; checked on writes, used in links |
-| `COOKIE_SECURE` | `true`     | `false` for plain-http local runs; the cookie is then `session`         |
-| `BACKUP_KEEP`   | `7`        | daily copies kept in `$DATA_DIR/backup/`                                |
-| `MAX_USERS`     | `50`       | sign-up closes once this many accounts exist; `0` turns sign-up off     |
+| Variable         | Default               | Meaning                                                                   |
+| ---------------- | --------------------- | ------------------------------------------------------------------------- |
+| `DATA_DIR`       | `/data`               | holds `fitness.db` and `backup/`                                          |
+| `PUBLIC_ORIGIN`  | (required)            | e.g. `https://fitness.itsa-pizza.com`; checked on writes, used in links   |
+| `COOKIE_SECURE`  | `true`                | `false` for plain-http local runs; the cookie is then `session`           |
+| `BACKUP_KEEP`    | `7`                   | daily copies kept in `$DATA_DIR/backup/`                                  |
+| `MAX_USERS`      | `50`                  | sign-up closes once this many accounts exist; `0` turns sign-up off       |
+| `RESEND_API_KEY` | (unset)               | turns mail on (§4.1); a key with sending access is enough. Never logged   |
+| `MAIL_FROM`      | (required with a key) | the From line, `Name <address>` on a domain verified in Resend            |
+| `MAIL_PER_HOUR`  | `30`                  | emails of every kind, across all accounts, in any rolling hour; 1 or more |
 
 ## 7. Backups
 
@@ -193,12 +247,25 @@ Export gives each person a JSON copy of their own data as well.
 Reviewed and kept on purpose, for a small service with open sign-up (D9 in
 [decisions.md](decisions.md)):
 
-- **Sign-up reveals which emails have accounts.** A taken email gets 409 `exists`, because with no
-  mail the only way to tell someone they already have an account is to say so on screen. It widens
-  the lockout's existing leak (below) rather than opening a new kind.
-- **Anyone can claim any email.** Nothing is verified, so a person can sign up with an address
-  that is not theirs, and its owner then gets 409 `exists`. `fp-admin disable` blocks the account;
-  there is no delete, so the owner needs an invite under another name, or a reset of that account.
+- **Sign-up reveals which emails have accounts.** A taken email gets 409 `exists`. Hiding it would
+  mean nobody is signed in at sign-up (everyone would have to wait for an email), which is not worth
+  it at this size. It widens the lockout's existing leak (below) rather than opening a new kind;
+  "Forgot your password?" does not add to it, since it answers the same for everyone.
+- **Anyone can claim any email until it is confirmed.** A person can sign up with an address that
+  is not theirs; its owner then gets 409 `exists`, but "Forgot your password?" sends them a reset
+  link, which takes the account back and confirms the address. With mail off, `fp-admin disable`
+  blocks such an account or `fp-admin reset` hands it over.
+- **An inbox can reset the password.** Whoever controls an account's email can choose a new
+  password from it, as on most sites. The link lasts an hour, works once, and ends every session.
+- **Strangers can spend the email limits.** Anyone who knows an address can ask for its resets:
+  five a day stop that account's own requests for up to 24 hours, and enough accounts can
+  use up `MAIL_PER_HOUR`, after which sign-ups go without their confirm email for the hour. Links
+  already sent keep working. And an existing account's request writes to the database where a
+  missing one only reads, so its reply can be a few milliseconds slower: a statistical hint, not
+  an answer.
+- **Resend sees the addresses and the links.** Every email passes through Resend (EU region), with
+  its reset or confirm link in it. A leaked reset link from their logs would be good for at most
+  an hour, and only until used.
 - **Strangers can fill the account cap, or the hour.** Ten sign-ups an hour fill the default
   `MAX_USERS` of 50 in five hours, after which sign-up says it is closed; ten at once block real
   sign-ups for up to an hour. Nothing else is harmed: invited and existing accounts keep working,
@@ -262,7 +329,13 @@ Tests sit in `api/tests/`:
   sign-up's email rule (254 characters, ASCII), password length, taken emails, `MAX_USERS`, the
   hourly limit (invites not counted), parallel sign-ups against the cap and for one email, and a
   reset for an email account.
+- `test_mail.py`: the Resend request's shape and its errors, the two emails (words, escaping,
+  the email rules) and the EmailLayout card being current, `GET /auth/options`, confirming
+  (links, expiry, resend and its limits, invited accounts, mail off, a failed send), forgot
+  password (same answer for anyone, the hour's lifetime, confirming by a mailed reset only, silent
+  limits) and `MAIL_PER_HOUR` across kinds.
 - `test_db.py`, `test_config.py`, `test_backup.py`, `test_cli.py`: migrations (including racing
   ones, the WAL switch, and old ticks reading as `great` after step 2), configuration from the environment, daily copies, `fp-admin`.
-- `conftest.py` gives each test a temporary database, a controllable clock and a cheap hasher;
+- `conftest.py` gives each test a temporary database, a controllable clock, a cheap hasher and a
+  mailer that records instead of sending (`mail_client`);
   `fixtures.py` reads `fixtures/transfer/`.
