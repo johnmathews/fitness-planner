@@ -10,6 +10,7 @@
     "TextField",
     "TextArea",
     "SegmentedControl",
+    "RadioCard",
     "Switch",
     "Stepper",
     "SearchField",
@@ -141,6 +142,21 @@
       "pen",
       "tile",
       3.0
+    ],
+    [
+      "canvas",
+      "pen",
+      3.0
+    ],
+    [
+      "canvas",
+      "pen-missed",
+      3.0
+    ],
+    [
+      "canvas",
+      "pen-partial",
+      1.5
     ]
   ],
   "forbidden_words": [

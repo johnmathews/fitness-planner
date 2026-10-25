@@ -8,6 +8,7 @@ import TextLinkSection from './sections/TextLinkSection.vue'
 import TextFieldSection from './sections/TextFieldSection.vue'
 import TextAreaSection from './sections/TextAreaSection.vue'
 import SegmentedControlSection from './sections/SegmentedControlSection.vue'
+import RadioCardSection from './sections/RadioCardSection.vue'
 import SwitchSection from './sections/SwitchSection.vue'
 import StepperSection from './sections/StepperSection.vue'
 import PopoverSection from './sections/PopoverSection.vue'
@@ -106,6 +107,13 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     summary:
       'A row of two or three toggle buttons, exactly one chosen, for a setting whose options all fit on screen at once.',
     component: SegmentedControlSection,
+  },
+  {
+    id: 'sg-radio-card',
+    title: 'RadioCard',
+    summary:
+      'A list of choices, exactly one chosen, each a bordered row with a radio dot, its name and a picture of what it chooses, for a setting best decided by seeing the options.',
+    component: RadioCardSection,
   },
   {
     id: 'sg-switch',

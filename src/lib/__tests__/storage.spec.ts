@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   DATA_KEY,
   DEFAULT_SETTINGS,
+  MARK_SETS,
   SETTINGS_KEY,
   defaultExercises,
   defaultFoods,
@@ -235,12 +236,13 @@ describe('parseDietData', () => {
 })
 
 describe('parseSettings', () => {
-  it('defaults to green accent, three a day, the system theme and the totals shown', () => {
+  it('defaults to green accent, three a day, the system theme, the totals shown and squiggles', () => {
     expect(parseSettings(null)).toEqual({
       accent: '#30d158',
       dailyPick: 3,
       theme: 'system',
       showTotals: true,
+      markSet: 'squiggles',
     })
     expect(DEFAULT_SETTINGS.accent).toBe('#30d158')
   })
@@ -253,6 +255,7 @@ describe('parseSettings', () => {
       dailyPick: 8,
       theme: 'dark',
       showTotals: true,
+      markSet: 'squiggles',
     })
     expect(parseSettings(JSON.stringify({ dailyPick: 0 })).dailyPick).toBe(1)
   })
@@ -272,6 +275,14 @@ describe('parseSettings', () => {
     expect(parseSettings(null).showTotals).toBe(true)
     expect(parseSettings(JSON.stringify({ showTotals: false })).showTotals).toBe(false)
     expect(parseSettings(JSON.stringify({ showTotals: 'no' })).showTotals).toBe(true)
+  })
+
+  it('reads each mark set and falls back to squiggles for anything else', () => {
+    for (const markSet of MARK_SETS) {
+      expect(parseSettings(JSON.stringify({ markSet })).markSet).toBe(markSet)
+    }
+    expect(parseSettings(JSON.stringify({ markSet: 'stars' })).markSet).toBe('squiggles')
+    expect(parseSettings(JSON.stringify({ markSet: 3 })).markSet).toBe('squiggles')
   })
 })
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { MarkSet } from '@/lib/storage'
 import { todaySummary, type TodayItem } from '@/lib/tracker'
 import { Chip } from '@/components/ui/chip'
 import { DayMark } from '@/components/ui/day-mark'
@@ -11,6 +12,8 @@ const props = defineProps<{
   pick: number
   exercises: TodayItem[]
   foods: TodayItem[]
+  /** How the marks are drawn: the device's mark set. The squiggles when not given. */
+  markSet?: MarkSet
 }>()
 
 defineEmits<{ toggle: [kind: 'exercise' | 'food', id: string] }>()
@@ -73,6 +76,7 @@ const groups = computed(() =>
               :date="date"
               today
               :mark="it.mark"
+              :set="markSet"
               @toggle="$emit('toggle', g.kind, it.id)"
             />
           </div>

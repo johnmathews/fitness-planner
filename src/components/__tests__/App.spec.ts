@@ -248,6 +248,37 @@ describe('App', () => {
     })
   })
 
+  it('draws the marks in the set chosen in Settings, and the device remembers it', async () => {
+    mountApp()
+    const cell = () => rowCells('Squats')[0]!
+    await cell().trigger('click')
+    expect(cell().find('[data-slot="day-mark-stroke"]').attributes('data-drawing')).toBe('zigzag')
+    await openSettings()
+    const marks = wrapper.get(PANEL).get('[role="radiogroup"]')
+    const rows = marks.findAll('[role="radio"]')
+    expect(rows.map((r) => r.text())).toEqual([
+      'Squiggles',
+      'Ticks',
+      'Stamped ticks',
+      'Faces',
+      'Stamped faces',
+    ])
+    expect(rows.map((r) => r.attributes('aria-checked'))[0]).toBe('true')
+    // Each row shows its set's three marks, as pictures rather than buttons.
+    expect(rows[3]!.findAll('[data-testid="mark-set-sample"]')).toHaveLength(3)
+    expect(rows[3]!.find('button').exists()).toBe(false)
+    await rows[3]!.trigger('click')
+    expect(JSON.parse(localStorage.getItem('fitness-planner-settings-v1')!)).toMatchObject({
+      markSet: 'faces',
+    })
+    await backToWeek()
+    expect(cell().get('[data-slot="day-mark-symbol"]').attributes('data-set')).toBe('faces')
+    // The stored mark is unchanged; a press steps the kinds once (K21).
+    expect(cell().attributes('aria-label')).not.toContain('partly done')
+    await cell().trigger('click')
+    expect(cell().attributes('aria-label')).toContain('partly done')
+  })
+
   it('navigates weeks and returns to this week', async () => {
     mountApp()
     const thisWeek = () => wrapper.findAll('button').find((b) => b.text() === 'This week')

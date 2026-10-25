@@ -129,6 +129,7 @@ const today = computed(() => {
   return {
     date: store.days[i]!.full,
     pick: store.dailyPick,
+    markSet: store.markSet,
     exercises: store.exercises.map((e) => ({
       ...e,
       chips: exerciseDetails(e),

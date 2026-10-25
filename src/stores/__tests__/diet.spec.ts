@@ -59,6 +59,15 @@ describe('diet store', () => {
     expect(d.markOf('fish', 3)).toBeNull()
   })
 
+  it('marks a food once and clears it on the next press in a tick or face set', () => {
+    const d = useDietStore()
+    usePlannerStore().markSet = 'ticks'
+    d.toggle('fish', 0)
+    expect(d.markOf('fish', 0)).toBe('great')
+    d.toggle('fish', 0)
+    expect(d.markOf('fish', 0)).toBeNull()
+  })
+
   it('follows week navigation from the planner store', () => {
     const d = useDietStore()
     const p = usePlannerStore()

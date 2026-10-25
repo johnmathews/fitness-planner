@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
-import { markDrawing, markKind, type Mark } from '@/lib/storage'
-import { BOX_PATH, MARK_DRAWINGS, MARK_PENS, dayMarkLabel } from '.'
+import type { Mark, MarkSet } from '@/lib/storage'
+import { dayMarkLabel } from '.'
+import DayMarkDrawing from './DayMarkDrawing.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -16,9 +17,11 @@ const props = withDefaults(
     today?: boolean
     /** Draws the folded corner and adds "has a note" to the name. Only where a note exists. */
     note?: boolean
+    /** How the mark is drawn: the device's mark set (K20). The squiggles by default. */
+    set?: MarkSet
     class?: HTMLAttributes['class']
   }>(),
-  { today: false, note: false, class: undefined },
+  { today: false, note: false, set: 'squiggles', class: undefined },
 )
 
 defineEmits<{ toggle: [] }>()
@@ -28,10 +31,12 @@ const label = computed(() => dayMarkLabel(props))
 
 <!--
   One day of one row (brand/design-system/project/components/DayMark): a 64px button centred in a
-  76px square cell, drawing a hand-drawn box about 45px across in control-border. A marked day fills
-  it in its pen (green great, yellow partial, red missed) with the marker drawing its mark names
-  (zigzag, solid or hatch), running a little past the box; the box is drawn over the fill, as a pen
-  line shows through marker. The rest of the cell is quiet space, so the 2px focus ring at 2px
+  76px square cell, drawing a hand-drawn box about 45px across in control-border. A marked day is
+  drawn in its pen (green great, yellow partial, red missed) as the device's mark set says: the
+  squiggles fill it with the marker drawing its mark names (zigzag, solid or hatch); a tick or face
+  set strokes its symbol (tick, circle, cross; happy, so-so, sad), or stamps it, the box filled
+  solid with the symbol in paper. The ink runs a little past the box, and the box is drawn over it,
+  as a pen line shows through marker. The rest of the cell is quiet space, so the 2px focus ring at 2px
   offset never touches a neighbour.
 -->
 <template>
@@ -49,38 +54,7 @@ const label = computed(() => dayMarkLabel(props))
       :aria-current="today ? 'date' : undefined"
       @click="$emit('toggle')"
     >
-      <svg
-        data-slot="day-mark-box"
-        aria-hidden="true"
-        viewBox="0 0 36 36"
-        :data-mark="mark ? markKind(mark) : undefined"
-        fill="none"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="size-15 overflow-visible"
-      >
-        <path
-          v-if="mark"
-          :d="MARK_DRAWINGS[markDrawing(mark)]"
-          data-slot="day-mark-stroke"
-          :data-drawing="markDrawing(mark)"
-          fill="currentColor"
-          fill-rule="evenodd"
-          stroke="none"
-          :class="MARK_PENS[markKind(mark)]"
-        />
-        <path
-          :d="BOX_PATH"
-          data-slot="day-mark-outline"
-          stroke-width="1.75"
-          :class="
-            cn(
-              'stroke-control-border motion-safe:transition-[stroke] motion-safe:duration-120 motion-safe:ease-out',
-              mark === null && 'group-hover:stroke-ink',
-            )
-          "
-        />
-      </svg>
+      <DayMarkDrawing :mark="mark" :set="set" />
     </button>
     <!-- NoteMark: a 10px folded corner in ink-secondary, flush in the cell's top-right corner. -->
     <span

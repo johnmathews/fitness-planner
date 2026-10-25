@@ -47,7 +47,7 @@ App.vue                 picks the screen (a link, planner, sign-up, reset or sig
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
 │                       the Edit plan Switch, Settings (to the Settings page) and Print…
 ├── SettingsPage.vue    the SettingsPage card, at #/settings: Back to the week, then Appearance
-│                       (Theme), Planner (Exercises a day, Show weekly totals), Your data
+│                       (Theme, Marks), Planner (Exercises a day, Show weekly totals), Your data
 │                       (Export and Import…, see §4) and Account (who is signed in, Sign out)
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── EmailStatus.vue     "Confirm your email." Banner, with Send it again, until it is confirmed
@@ -101,6 +101,7 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 | `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is kept but draws nothing (K13)     |
 | `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                                      |
 | `showTotals`          | `fitness-planner-settings-v1` (the device) | `true` (default): the sections' StatFigures show                           |
+| `markSet`             | `fitness-planner-settings-v1` (the device) | `squiggles` (default), `ticks`, `stamped-ticks`, `faces`, `stamped-faces`  |
 | `configMode`          | no                                         | `false` (normal mode) on every load                                        |
 | `weekOffset`          | no                                         | `0` is the current week                                                    |
 | `now`                 | no                                         | a ref so "today" can move; see §5                                          |
@@ -137,7 +138,7 @@ empty name), `updateFood` (name and goal from the Edit food dialog, `false` for 
 food not in the week), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
 like exercise goals (met once the count reaches a non-zero goal); foods have no daily target.
 
-The planner writes only the theme and `showTotals`, each merged into whatever
+The planner writes only the theme, `showTotals` and `markSet`, each merged into whatever
 `fitness-planner-settings-v1` already holds.
 `writeKey` skips the write when the stored string already matches, and swallows storage errors, so
 with storage blocked or full the app keeps working in memory.
@@ -150,7 +151,7 @@ with storage blocked or full the app keeps working in memory.
 | `fitness-planner-cache-v2:<user>`                      | the user's state as `GET /api/state` returns it, with `revs`                                         | yes     |
 | `fitness-planner-outbox-v2:<user>`                     | writes not yet sent (§7)                                                                             | yes     |
 | `fitness-planner-import-v1:<user>`                     | the first-login prompt's answer, `imported` or `dismissed` (§7)                                      | yes     |
-| `fitness-planner-settings-v1`                          | `theme`, read before first paint by `public/theme-init.js`, and `showTotals`                         | both    |
+| `fitness-planner-settings-v1`                          | `theme`, read before first paint by `public/theme-init.js`, `showTotals` and `markSet`               | both    |
 | `fitness-planner-view-v1`                              | the phone's Today or Week choice, `today` or `week` (§5); the device's own, never synced or exported | yes     |
 | `fitness-planner-cache-v1:<user>`, `-outbox-v1:<user>` | the cache and outbox from before marks had kinds; moved to `-v2` at sign-in (below)                  | never   |
 | `fitness-planner-v2`, `-diet-v2`                       | exercise and food `{ plans, log }` from before accounts                                              | never   |
@@ -205,8 +206,9 @@ v2; now the conversion only feeds the import.
 Fish 2, Nuts 3).
 
 `parseSettings` accepts any `#rrggbb` accent (K3a, K13), clamps the daily pick to
-1–8, and accepts only `system`, `light` or `dark` as the theme, falling back to the defaults
-otherwise. Settings saved before the theme option existed load as `system`.
+1–8, accepts only `system`, `light` or `dark` as the theme and only one of `MARK_SETS` as the
+mark set, falling back to the defaults otherwise. Settings saved before the theme option existed
+load as `system`, and before the mark set existed as `squiggles`.
 
 **Export and import.** Settings → Export downloads `fitness-planner-YYYY-MM-DD.json`:
 
@@ -277,7 +279,8 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   focus to the page's heading, and coming back to the week puts it on the Settings button. Signing
   out there drops the hash, so the next sign-in opens on the week. The marks' pens are fixed, so
   there is no Ink setting (K10). The theme and per-side choices are SegmentedControls: `aria-pressed` buttons in a
-  `role="group"`.
+  `role="group"`. Marks is a RadioCard (a `radiogroup` of `role="radio"` rows), each row showing
+  its set's three marks with `DayMarkDrawing`, the mark without its button (K20).
 - **Config mode and normal mode.** Normal mode, the default on every load, only marks cells. The
   "Edit plan" Switch in the navbar (a `role="switch"` button) turns on config mode, which shows the
   edit and remove IconButtons, the add forms and "Copy plan to next week". An item is changed only
@@ -372,9 +375,14 @@ have no `<style>` blocks. Everything global is in `src/styles/main.css`.
 the others (K17); `markKind` and `markDrawing` read them back. For a marked day `DayMark` fills the
 mark's drawing (`MARK_DRAWINGS`, traced outlines filled with `fill-rule: evenodd`) in its kind's pen
 (`MARK_PENS` in `src/components/ui/day-mark`), then draws the box over it. The ink runs a little
-past the box. A press emits `toggle`; the stores step the day with `cycleDay` and `nextMark`
-(`src/lib/tracker.ts`): `EXERCISE_CYCLE` is every mark, drawing first, and `FOOD_CYCLE` the three
-green ones.
+past the box. The device's mark set (`markSet` in the planner store, passed to DayMark as `set`)
+changes only the drawing (K20, K21): `markLook` gives the squiggle drawing, or a tick or face
+symbol (`MARK_SYMBOLS`) stroked in the pen, or stamped: the solid drawing in the pen with the
+symbol in `canvas` (in print, the light canvas). A press emits `toggle`; the stores step the day
+with `cycleDay` and `nextMark` (`src/lib/tracker.ts`) over `cycleFor(item, markSet)`: in the
+squiggles `EXERCISE_CYCLE` is every mark, drawing first, and `FOOD_CYCLE` the three green ones; in
+a symbol set the plain kinds once (`EXERCISE_KIND_CYCLE`, `FOOD_KIND_CYCLE`). A squiggle drawing
+there steps on from its kind.
 `isDone` and the totals count every kind. [brand.md](brand.md) §4 has the values.
 
 ### 6.3 The primitives

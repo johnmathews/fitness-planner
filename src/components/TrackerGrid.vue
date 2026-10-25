@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Day } from '@/stores/planner'
-import type { Mark } from '@/lib/storage'
+import type { Mark, MarkSet } from '@/lib/storage'
 import type { CountTone, PickedCount, Tracked } from '@/lib/tracker'
 import { useGridNav } from '@/composables/gridNav'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -14,6 +14,8 @@ const props = defineProps<{
   items: Tracked[]
   days: Day[]
   marksFor: (id: string) => (Mark | null)[]
+  /** How the marks are drawn: the device's mark set. The squiggles when not given. */
+  markSet?: MarkSet
   totalFor: (id: string) => number
   detailsFor?: (item: Tracked) => string[]
   /** Adds an edit button to each row in config mode, which emits `edit`. */
@@ -173,6 +175,7 @@ function reveal(ev: FocusEvent): void {
           :config-mode="configMode"
           :days="days"
           :marks="marksFor(it.id)"
+          :mark-set="markSet"
           :total="totalFor(it.id)"
           @toggle="$emit('toggle', it.id, $event)"
           @remove="$emit('remove', it.id)"

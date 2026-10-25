@@ -54,9 +54,9 @@ Five project roles each mean one thing, and nothing else may use them:
 
 | Role          | Means                                                                      | Never                      |
 | ------------- | -------------------------------------------------------------------------- | -------------------------- |
-| `pen`         | Great: a day's fill, and a total or figure whose goal is met               | Links, buttons, decoration |
-| `pen-partial` | Partly done: a day's fill                                                  | Over the pick, warnings    |
-| `pen-missed`  | Tried and couldn't: a day's fill                                           | Errors                     |
+| `pen`         | Great: a day's mark, and a total or figure whose goal is met               | Links, buttons, decoration |
+| `pen-partial` | Partly done: a day's mark                                                  | Over the pick, warnings    |
+| `pen-missed`  | Tried and couldn't: a day's mark                                           | Errors                     |
 | `highlight`   | Today: the neutral band down today's column, and the Today list's heading  | Anything but today         |
 | `caution-ink` | Over the daily pick, always with words and an underline ("4", "one extra") | Errors                     |
 
@@ -73,14 +73,15 @@ K15, K18). The pens are fixed: there is no Ink setting any more.
 
 | Pen           | Mark                    | Light     | Dark      |
 | ------------- | ----------------------- | --------- | --------- |
-| `pen`         | Great: the box filled   | `#2e7a4c` | `#8fcbaa` |
-| `pen-partial` | Partial: the box filled | `#f2b300` | `#f5c518` |
-| `pen-missed`  | Missed: the box filled  | `#c0392b` | `#ee7d72` |
+| `pen`         | Great: the box filled   | `#2e7a4c` | `#3fd273` |
+| `pen-partial` | Partial: the box filled | `#f2b300` | `#ffc21a` |
+| `pen-missed`  | Missed: the box filled  | `#c0392b` | `#ff5c4d` |
 
 `pen` reaches 4.5:1 as text on `canvas` and `panel` (a met total), and `pen` and `pen-missed` reach
 3:1 as a mark on `canvas`, `panel`, `tile` and `highlight` in both themes; the gate measures every
 pair. `pen-partial` is a sunny marker yellow by the owner's choice (K18): 1.5–1.9:1 on the light
-grounds, below the 3:1 a mark should reach, and above 7:1 in dark. The gate holds it to 1.5:1 so it
+grounds, below the 3:1 a mark should reach, and above 7:1 in dark. The dark pens are vivid, a grass
+green, a sunflower yellow and a tomato red (K22). The gate holds it to 1.5:1 so it
 can't fade further, and the box drawn over every mark keeps a yellow day findable. Today's band is a
 neutral warm grey (`#ece7dd`, `#34312c` in dark), like masking tape, so the yellow stands out on it
 too; `control-border` went one step darker (`#888175`) to keep the box at 3:1 on it.
@@ -129,6 +130,16 @@ carries no meaning; the person chooses it by pressing, and it is saved with the 
 an exercise's day drawing first: great, partial and missed in the zigzag, then in the solid, then in
 the hatch, then back to empty. A food has one kind, so it steps through great in each drawing, then
 empty. The box is drawn over the fill, and the ink runs a little past the box, as a quick hand does. Every mark counts towards the week, the Picked row and the Today summary.
+
+**Mark sets** (K20, K21). Settings' **Marks** chooses how marked days are drawn on this device:
+Squiggles (the drawings above, the default), Ticks (a tick, a circle, a cross), Stamped ticks,
+Faces (happy, so-so, sad) and Stamped faces. Ticks and faces are a marker stroke in the pen with
+the box drawn over it; a stamped set colours the box solid in the pen and leaves the symbol in
+paper (`canvas`, the light canvas in print). In light, paper on `pen-partial` is 1.8:1, below 3:1,
+by the owner's choice (K23); the gate holds it to 1.5:1. A set changes only the look: the stored
+mark stays, so a squiggle drawing comes back on switching back. In a tick or face set a press steps
+an exercise great, partial, missed, then empty, and a food great, then empty. The symbols give
+each kind its own shape, so in those sets the kinds no longer rest on colour alone.
 
 Print is the light theme on white paper, from either theme (K16): words, boxes and marks keep their
 light colours, the surfaces and the band go transparent, chips are outlined, "one extra" is kept. Icons are Lucide outline at 1.5px stroke, never Unicode glyphs or emoji. Colour transitions

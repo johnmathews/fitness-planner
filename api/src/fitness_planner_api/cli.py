@@ -1,4 +1,5 @@
-"""`fp-admin`: invites, resets and account switches, run in the API container (docs/api.md §5)."""
+"""`fp-admin`: invites, resets and account switches, run in the API container, and demo data for a
+local stack (docs/api.md §5)."""
 
 import argparse
 import os
@@ -8,13 +9,16 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
 
-from . import auth
+from . import auth, seed
 from .config import Config
 from .db import connect, migrate
 
 MESSAGES = {
     "email": "invites name an email address, like name@example.com",
     "exists": "already exists; use reset to give them a new password",
+    "password": "a password is 10 to 256 characters",
+    "closed": "sign-up is closed: MAX_USERS accounts exist",
+    "too-many": "too many sign-ups in the last hour; try again later",
 }
 
 
@@ -36,6 +40,17 @@ def _parser() -> argparse.ArgumentParser:
         # took an email, the username it was invited with).
         commands.add_parser(name, help=text).add_argument("username", metavar="email")
     commands.add_parser("users", help="list users")
+    demo = commands.add_parser(
+        "seed-demo",
+        help="local stacks only: create a demo account (or fill an existing one) with three"
+        " weeks of marks, never overwriting any",
+    )
+    demo.add_argument("username", metavar="email", nargs="?", default=seed.DEMO_EMAIL)
+    demo.add_argument(
+        "--password",
+        help=f"for a new account only (default {seed.DEMO_PASSWORD!r});"
+        " an existing one keeps its own",
+    )
     return parser
 
 
@@ -56,6 +71,9 @@ def main(
     try:
         migrate(conn)
         return _run(args, config, conn)
+    except seed.NotLocal as e:
+        print(f"fp-admin: {e}", file=sys.stderr)
+        return 1
     except auth.AuthError as e:
         name = getattr(args, "username", "")
         text = f"no user named {name!r}" if e.code == "no-user" else f"{name}: {MESSAGES[e.code]}"
@@ -85,6 +103,18 @@ def _run(args: argparse.Namespace, config: Config, conn: sqlite3.Connection) -> 
             print(
                 f"{args.username} is now {'disabled' if args.command == 'disable' else 'enabled'}."
             )
+        case "seed-demo":
+            result = seed.seed(conn, config, args.username, args.password)
+            if result["created"]:
+                password = args.password or seed.DEMO_PASSWORD
+                print(f"Created {args.username} with the password {password!r}.")
+            else:
+                print(f"{args.username} already exists; its password is unchanged.")
+            if result["weeks"] or result["ticks"]:
+                print(f"Added {result['weeks']} week plans and {result['ticks']} marks.")
+            else:
+                print("Nothing to add: the demo weeks are already there.")
+            print(f"Sign in at {config.public_origin}/")
         case "revoke-sessions":
             n = auth.revoke_sessions(conn, args.username)
             print(f"Ended {n} session{'' if n == 1 else 's'} for {args.username}.")

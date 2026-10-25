@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import { DayMark } from '@/components/ui/day-mark'
-import { MARKS, markDrawing, markKind, type Mark } from '@/lib/storage'
+import { MARKS, MARK_KINDS, markDrawing, markKind, type Mark, type MarkSet } from '@/lib/storage'
 import { EXERCISE_CYCLE, nextMark } from '@/lib/tracker'
 import ExampleGroup from '../parts/ExampleGroup.vue'
 import StateExample from '../parts/StateExample.vue'
@@ -19,6 +19,15 @@ const marks = reactive<Record<string, Mark | null>>({
   note: 'great',
   focus: 'great',
 })
+// The four symbol sets (K20); the squiggles are the specimens above.
+const SETS: [MarkSet, string][] = [
+  ['ticks', 'Ticks'],
+  ['stamped-ticks', 'Stamped ticks'],
+  ['faces', 'Faces'],
+  ['stamped-faces', 'Stamped faces'],
+]
+const KIND_NAMES = { great: 'great', partial: 'partial', missed: 'missed' }
+
 function step(key: string): void {
   marks[key] = nextMark(marks[key] ?? null, EXERCISE_CYCLE)
 }
@@ -124,6 +133,19 @@ function step(key: string): void {
             @toggle="step('focus')"
           />
         </div>
+      </StateExample>
+    </ExampleGroup>
+
+    <ExampleGroup v-for="[set, title] in SETS" :key="set" :title="`Mark set: ${title}`">
+      <StateExample v-for="kind in MARK_KINDS" :key="kind" :state="`${title}, ${KIND_NAMES[kind]}`">
+        <DayMark
+          :id="`sg-day-mark-${set}-${kind}`"
+          name="Squats"
+          date="Monday 19 October"
+          :mark="kind"
+          :set="set"
+          @toggle="() => {}"
+        />
       </StateExample>
     </ExampleGroup>
   </div>
