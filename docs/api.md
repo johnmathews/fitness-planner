@@ -170,17 +170,22 @@ Export gives each person a JSON copy of their own data as well.
 
 ## 8. Accepted risks
 
-Reviewed and kept on purpose, for a service with a handful of invited users:
+Reviewed and kept on purpose, for a small service with open sign-up (D9 in
+[decisions.md](decisions.md)):
 
+- **Sign-up reveals which emails have accounts.** A taken email gets 409 `exists`, because with no
+  mail the only way to tell someone they already have an account is to say so on screen. It widens
+  the lockout's existing leak (below) rather than opening a new kind.
+- **Strangers can fill the account cap.** Ten sign-ups an hour fill the default `MAX_USERS` of 50
+  in five hours, after which sign-up says it is closed. Nothing else is harmed: invited and existing
+  accounts keep working, and each stranger's data is bounded by the quota. `fp-admin users` shows
+  who signed up; `disable` blocks one; raising `MAX_USERS` reopens sign-up.
 - **Lockout reveals and can block a username.** Five wrong passwords lock a real account, but an
   unknown name never locks, so guessing shows which names exist. The same five guesses every 15
   minutes keep someone out. The lock is per account because the LAN port means no client IP can
   be trusted. `fp-admin reset` clears it.
 - **Sessions have no absolute lifetime.** A session used at least every 90 days lasts
   indefinitely. Logout, `revoke-sessions`, a reset and `disable` all end it.
-- **A signed-in user can grow their own data without a cap.** Week keys only need the
-  `YYYY-MM-DD` shape, and plans and logs have no size limit beyond 1 MiB per request. A cap would
-  change the export format on both sides, so it waits until it is needed.
 
 ## 9. Validation parity
 

@@ -257,7 +257,9 @@ listed in [api.md](api.md) §10):
   labels or on the exercise form coming first in the DOM. Every mount is signed in as alice through
   `signedIn()`.
 - `src/components/__tests__/Auth.spec.ts`: the sign-in form and its messages, an ended session, a
-  double submit, invite and reset links (matching passwords, the length rule, expired links, a link
+  double submit, creating an account (the link from sign-in, signing in by email, matching
+  passwords, each refusal on its field or the form, offline, a double submit, back to sign in, and
+  `#/signup` while signed in), invite and reset links (matching passwords, the length rule, expired links, a link
   pasted into a running tab), sign-out (with unsynced changes, and refused offline), and the sync
   status messages and triggers (loading, offline with and without a copy, retry, the conflict
   notice, focus, visibility and the minute tick).

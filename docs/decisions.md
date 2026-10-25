@@ -20,7 +20,7 @@ unauthenticated header.
 
 | ID  | Topic                   | Decision                                                                | Rejected                                       |
 | --- | ----------------------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
-| D1  | Users                   | John plus a few named people; no open sign-up                           | —                                              |
+| D1  | Users                   | John plus a few named people; no open sign-up (superseded by D9)        | —                                              |
 | D2  | Scope                   | Server accounts, synced across devices                                  | Local profiles per browser: no sync, no backup |
 | D3  | Auth                    | Username and password in the app; Cloudflare Access stays off the route | Verifying Access JWTs                          |
 | D4  | Shape                   | The nginx web container plus a separate API container                   | One Node container serving both                |
@@ -32,6 +32,18 @@ unauthenticated header.
 The rejected options in D3, D4, D5 and D7 were the recommendations at the time. D5's cost, two
 copies of the validation rules, is paid by the shared fixtures in `fixtures/transfer/`, which both
 test suites run.
+
+### 2.1 Open sign-up (2026-10-25)
+
+| ID  | Topic   | Decision                                                                                                                                                          | Rejected                                                                                          |
+| --- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| D9  | Sign-up | Anyone can create an account with an email and a password. Guardrails: `MAX_USERS` (default 50, 0 = off), 10 sign-ups an hour, and a 5 MiB quota on every account | Approval by `fp-admin` before first login; a shared sign-up code; no limits at all                |
+| D10 | Email   | The email is only a login name, stored lower-cased in `users.username`. No mail is sent: no verification, no self-service reset                                   | Verification and "forgot password" by mail, which need a mail provider; a separate `email` column |
+| D11 | Sign-in | One field takes an email or a username, since both live in the same column                                                                                        | Email only, which would strand invited users until each had an email attached                     |
+
+D9 supersedes D1, and with it the premise behind two accepted risks in [api.md](api.md) §8: the
+unbounded per-user data (now the quota) and an account count bounded only by invites (now
+`MAX_USERS` and the hourly limit). John chose all three on 2026-10-25.
 
 ## 3. Made while planning and building (2026-10-24)
 
@@ -79,8 +91,9 @@ on the owner's behalf, open to veto by ID. All were approved, and K3a was added 
 
 Each is described where it applies:
 
-- the lockout can reveal and block a username; sessions have no absolute lifetime; a user's own
-  data has no size cap ([api.md](api.md) §8);
+- the lockout and sign-up reveal which usernames and emails have accounts; the lockout can block
+  one; sessions have no absolute lifetime; the account cap can be filled by strangers
+  ([api.md](api.md) §8);
 - two tabs racing on the shared outbox inside Chrome's cross-process delay, and a session that ends
   by itself keeping its cache ([architecture.md](architecture.md) §7);
 - while the API restarts, Docker's DNS can forward the web container's `fitness-api` lookup to the

@@ -37,8 +37,9 @@
 - **Settings** sets the theme (System, Light or Dark), the ink that marks a day done (Ink blue,
   Forest, Violet or Graphite) and the exercises-per-day target (1–8), and shows who is signed in,
   with **Sign out**.
-- **Accounts and sync.** Each person signs in with a username and password. Accounts come only from
-  invite links (`docs/api.md` §4). Plans, ticks, the ink and the daily pick are stored on the
+- **Accounts and sync.** Anyone can **Create an account** from the sign-in screen with an email and
+  a password; people can also be invited by link, with a username. Sign-in takes either. Sign-up
+  closes once `MAX_USERS` accounts exist, and each account may store 5 MiB (`docs/api.md` §4). Plans, ticks, the ink and the daily pick are stored on the
   server and sync across devices; the theme stays with each device. The app opens from a cached
   copy and keeps working offline, sending changes once the connection is back.
 - **Export and import.** Settings → **Export** downloads your plans, ticks, ink and daily pick as
@@ -64,7 +65,8 @@ npm run dev                # http://localhost:5173
 ```
 
 The app needs the API to sign in. Run it alongside (Python 3.13 and [uv](https://docs.astral.sh/uv/)),
-with `PUBLIC_ORIGIN` set to the dev server's origin, and mint yourself an invite:
+with `PUBLIC_ORIGIN` set to the dev server's origin. Then create an account at
+<http://localhost:5173/#/signup>, or mint yourself an invite:
 
 ```bash
 cd api && uv sync
@@ -122,6 +124,7 @@ services:
     image: ghcr.io/johnmathews/fitness-planner-api:latest
     environment:
       PUBLIC_ORIGIN: https://fitness.example.com # the address people open
+      MAX_USERS: '50' # sign-up closes at this many accounts; '0' = invites only
     volumes:
       - ./fitness-data:/data # owned by uid 10001
     mem_limit: 160m
@@ -135,12 +138,16 @@ root, and the API (uid 10001) could not write its database:
 mkdir fitness-data && sudo chown 10001:10001 fitness-data
 ```
 
-Then start both, mint the first account, and open the link it prints:
+Then start both, and create the first account at `/#/signup`, or mint one and open the link it
+prints:
 
 ```bash
 docker compose up -d
 docker compose exec fitness-api fp-admin invite <name>
 ```
+
+Sign-up is open by default: anyone who can reach the address can create an account until 50
+exist. Set `MAX_USERS` on the API to change the cap, or to `'0'` to allow invites only.
 
 Serve it over HTTPS: the session cookie is `Secure`. For a plain-http trial, set
 `COOKIE_SECURE: 'false'` on the API. Update with `docker compose pull && docker compose up -d`.

@@ -29,17 +29,19 @@ system's cards ([brand.md](brand.md)). `TrackerGrid` and `TrackerRow` (on the `D
 `ConfirmDialog` (through `useConfirm`, §6.4) before emitting `remove`, and names where focus goes
 once the row has gone. `ExerciseGrid` and `DietSection` wire them to their store. `AddExerciseForm` and `EditExerciseDialog` share their field
 state and input cleaning through `useExerciseForm` (`src/composables/exerciseForm.ts`) and the
-`PerSideToggle` segmented control. `src/lib/problems.ts` turns a sign-in, link or sign-out refusal
-into a sentence for the forms; `src/composables/importSummary.ts` says what an import would add,
+`PerSideToggle` segmented control. `src/lib/problems.ts` turns a sign-in, sign-up, link or
+sign-out refusal into a sentence for the forms; `src/composables/importSummary.ts` says what an import would add,
 for Settings → Import… and the first-login prompt.
 
 ```
-App.vue                 picks the screen (link, planner or sign-in), the pen variables (inkFor),
-│                       .dark class, clock refresh, sync triggers (focus, visibility, online, minute
+App.vue                 picks the screen (link, planner, sign-up or sign-in), the pen variables
+│                       (inkFor), .dark class, clock refresh, sync triggers (focus, visibility, online, minute
 │                       tick, storage), the phone's Today | Week switch, and the one ConfirmHost
 ├── PasswordForm.vue    an invite or reset link (#/invite/<t>, #/reset/<t>): choose a password
-├── LoginForm.vue       username and password; explains refusals; notes an ended session
-│   (both inside AuthCard.vue: a centred Panel with the BrandMark)
+├── SignupForm.vue      #/signup: email and password twice; field and form-level refusals
+├── LoginForm.vue       email or username, and password; explains refusals; notes an ended
+│                       session; links to #/signup
+│   (all three inside AuthCard.vue: a centred Panel with the BrandMark)
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
 │   │                   the Edit plan Switch, Settings and Print…
 │   └── SettingsPopover.vue   Popover: theme (SegmentedControl), Ink (InkPicker), Exercises a day
@@ -87,16 +89,16 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 
 `usePlannerStore` is a setup store.
 
-| State                 | Kept by                                    | Notes                                                            |
-| --------------------- | ------------------------------------------ | ---------------------------------------------------------------- |
+| State                 | Kept by                                    | Notes                                                                      |
+| --------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
 | `plans`               | the sync store: server and per-user cache  | week → `{ id, name, sets?, reps, duration?, perSide?, weight?, target }[]` |
-| `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven booleans          |
-| `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is drawn as an ink (§6.2) |
-| `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                            |
-| `showTotals`          | `fitness-planner-settings-v1` (the device) | `true` (default): the sections' StatFigures show                 |
-| `configMode`          | no                                         | `false` (normal mode) on every load                              |
-| `weekOffset`          | no                                         | `0` is the current week                                          |
-| `now`                 | no                                         | a ref so "today" can move; see §5                                |
+| `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven booleans                    |
+| `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is drawn as an ink (§6.2)           |
+| `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                                      |
+| `showTotals`          | `fitness-planner-settings-v1` (the device) | `true` (default): the sections' StatFigures show                           |
+| `configMode`          | no                                         | `false` (normal mode) on every load                                        |
+| `weekOffset`          | no                                         | `0` is the current week                                                    |
+| `now`                 | no                                         | a ref so "today" can move; see §5                                          |
 
 The stores start empty (showing the defaults) and never write the user's data themselves. The sync
 store fills them with `adopt` and saves their changes (§7).
@@ -438,8 +440,13 @@ browser checks run against it.
 `fitness-planner-session-v1` is signed in at once and their cache shown, then `GET /api/auth/me`
 confirms it. A 401 asks them to sign in again, keeping unsent writes; being offline keeps them
 working from the cache. With nobody remembered the app waits for the server, then shows the
-sign-in form. Invite and reset links arrive as `#/invite/<token>` and `#/reset/<token>`. The token
-goes to the API in request bodies only, and the fragment is cleared once the link is used or turns
+sign-in form, which takes an email or a username and links to `#/signup`. That form creates an
+account (`POST /api/auth/signup`) and signs straight in; once anyone is signed in, `App.vue` drops
+`#/signup` from the address. A taken or malformed email and a too-short password show on their
+own fields; a closed sign-up, the hourly limit and connection trouble show once above the button.
+`request` treats only a 409 `conflict` as a plan conflict, so a sign-up's 409 `exists` arrives as
+a refusal like any other. Invite and reset links arrive as `#/invite/<token>` and
+`#/reset/<token>`. The token goes to the API in request bodies only, and the fragment is cleared once the link is used or turns
 out to be invalid; offline or busy, the page offers to try again. Signing out ends the server
 session, then deletes the user's cache and outbox from the device. It is refused while offline: the
 cookie is HttpOnly, so only the server can end it.
