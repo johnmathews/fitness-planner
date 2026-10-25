@@ -68,6 +68,19 @@ export const useDietStore = defineStore('diet', () => {
     return true
   }
 
+  /**
+   * Renames the food and sets its goal this week (the Edit food dialog), keeping its id and
+   * history. False for an empty name or a food not in the week.
+   */
+  function updateFood(id: string, input: { name: string; target: number }): boolean {
+    const name = input.name.trim()
+    if (!name || !foods.value.some((f) => f.id === id)) return false
+    const list = own()
+    const i = list.findIndex((f) => f.id === id)
+    list[i] = { id, name, target: clamp(input.target, MIN_TARGET, MAX_TARGET) }
+    return true
+  }
+
   /** Removes the food from this week; its log history stays in storage, like exercises. */
   function removeFood(id: string): void {
     plans.value[planner.weekKey] = own().filter((f) => f.id !== id)
@@ -108,6 +121,7 @@ export const useDietStore = defineStore('diet', () => {
     toggle,
     changeTarget,
     addFood,
+    updateFood,
     removeFood,
     nextWeekHasPlan,
     copyToNextWeek,

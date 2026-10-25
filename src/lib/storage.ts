@@ -59,10 +59,7 @@ export const MAX_DAILY_PICK = 8
 export const NEW_EXERCISE_TARGET = 3
 export const MAX_WEIGHT = 500
 export const MAX_SETS = 20
-export const MAX_REPS = 999
-export const MIN_DURATION = 5
 export const MAX_DURATION = 3600
-export const DURATION_STEP = 5
 export const NEW_FOOD_TARGET = 3
 
 export const DEFAULT_SETTINGS: Settings = {

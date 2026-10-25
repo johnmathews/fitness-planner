@@ -5,11 +5,9 @@ import {
   DEFAULT_SETTINGS,
   MAX_DAILY_PICK,
   MAX_DURATION,
-  MAX_REPS,
   MAX_SETS,
   MAX_TARGET,
   MIN_DAILY_PICK,
-  MIN_DURATION,
   MIN_TARGET,
   NEW_EXERCISE_TARGET,
   SETTINGS_KEY,
@@ -178,14 +176,6 @@ export const usePlannerStore = defineStore('planner', () => {
     if (e) e.target = clamp(e.target + delta, MIN_TARGET, MAX_TARGET)
   }
 
-  /** The Edit plan stepper: a timed exercise's seconds per set, otherwise its reps per set. */
-  function changeAmount(id: string, delta: number): void {
-    const e = own().find((x) => x.id === id)
-    if (!e) return
-    if (e.duration) e.duration = clamp(e.duration + delta, MIN_DURATION, MAX_DURATION)
-    else e.reps = clamp(e.reps + delta, 1, MAX_REPS)
-  }
-
   /** Returns false (and adds nothing) when the trimmed name is empty. */
   function addExercise(input: NewExercise): boolean {
     const fields = exerciseFields(input)
@@ -311,7 +301,6 @@ export const usePlannerStore = defineStore('planner', () => {
     totalFor,
     toggle,
     changeTarget,
-    changeAmount,
     addExercise,
     updateExercise,
     removeExercise,

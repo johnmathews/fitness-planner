@@ -168,7 +168,7 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     id: 'sg-day-mark',
     title: 'DayMark',
     summary:
-      'One day of one exercise or food: a filled pen dot when it’s done, an empty ring when it isn’t, and the button that switches between them.',
+      'One day of one exercise or food: a box drawn as if on a whiteboard, filled with a pen marker squiggle when it’s done and empty when it isn’t, and the button that switches between them.',
     component: DayMarkSection,
   },
   {

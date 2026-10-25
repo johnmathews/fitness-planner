@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
-import { Download, LogOut, Settings, Upload } from '@lucide/vue'
+import { computed, onMounted, ref, useId, useTemplateRef } from 'vue'
+import { ChevronLeft, Download, LogOut, Upload } from '@lucide/vue'
 import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import { useSessionStore } from '@/stores/session'
@@ -21,13 +21,12 @@ import {
 } from '@/lib/transfer'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { IconButton } from '@/components/ui/icon-button'
 import { InkPicker } from '@/components/ui/ink-picker'
 import { InlineMessage } from '@/components/ui/inline-message'
-import { Popover } from '@/components/ui/popover'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Stepper } from '@/components/ui/stepper'
 import { Switch } from '@/components/ui/switch'
+import { TextLink } from '@/components/ui/text-link'
 
 const THEME_NAMES: Record<Theme, string> = { system: 'System', light: 'Light', dark: 'Dark' }
 const THEME_OPTIONS = THEMES.map((t) => ({ value: t, label: THEME_NAMES[t] }))
@@ -51,9 +50,12 @@ const store = usePlannerStore()
 const diet = useDietStore()
 const session = useSessionStore()
 const sync = useSyncStore()
-const open = ref(false)
-const trigger = useTemplateRef<InstanceType<typeof IconButton>>('trigger')
-const dataLabelId = useId()
+const heading = useTemplateRef<HTMLHeadingElement>('heading')
+const signOutButton = useTemplateRef<InstanceType<typeof Button>>('signOutButton')
+const ids = { look: useId(), planner: useId(), data: useId(), account: useId() }
+
+// Arriving here moves focus to the page's heading, so a screen reader starts at the top.
+onMounted(() => heading.value!.focus())
 
 const fileInput = ref<HTMLInputElement | null>(null)
 /** A parsed file waiting for "Import". */
@@ -77,13 +79,6 @@ const theme = computed({
 const dailyPick = computed({
   get: () => store.dailyPick,
   set: (value: number) => store.changeDailyPick(value - store.dailyPick),
-})
-
-// Each opening starts clean, rather than showing the last import's or sign-out's outcome.
-watch(open, () => {
-  pending.value = null
-  notice.value = null
-  signOutProblem.value = null
 })
 
 function exportData(): void {
@@ -150,9 +145,9 @@ const unsynced = computed(() => {
   return `${countOf(n, 'change', true)} on this device ${n === 1 ? 'hasn’t' : 'haven’t'} reached the server yet. Signing out now loses them.`
 })
 
-/** The Settings button, where focus returns once the sign-out question closes. */
-function settingsButton(): HTMLElement | null {
-  return (trigger.value?.$el as HTMLElement | undefined) ?? null
+/** The Sign out button, where focus returns once the sign-out question closes. */
+function signOutTarget(): HTMLElement | null {
+  return (signOutButton.value?.$el as HTMLElement | undefined) ?? null
 }
 
 async function signOut(): Promise<void> {
@@ -161,10 +156,6 @@ async function signOut(): Promise<void> {
     signOutProblem.value = problem ? describeProblem(problem) : null
     return
   }
-  // The question replaces the panel; Cancel returns focus to Settings (settingsButton) rather
-  // than to a button that is no longer on the page.
-  open.value = false
-  await nextTick()
   signOutError.value = undefined
   askSignOut.value = true
 }
@@ -180,79 +171,91 @@ async function confirmSignOut(): Promise<void> {
 </script>
 
 <!--
-  The Settings popover (brand/design-system/project/components/Popover): Theme, Ink, Exercises a
-  day, then Your data and Account after rules. The panel renders in place after its trigger, so Tab
-  from its last control moves on to Print, and focus leaving closes it (F14).
+  The Settings page (brand/design-system/project/components/SettingsPage), at #/settings: a link
+  back to the week, the heading, then Appearance (Theme, Ink), Planner (Exercises a day, Show
+  weekly totals), Your data and Account, each a section under its own heading with a line rule
+  between them. Settings take effect at once; there is no Save.
 -->
 <template>
-  <div data-noprint>
-    <Popover v-model:open="open" title="Settings">
-      <template #trigger>
-        <IconButton ref="trigger" label="Settings"><Settings /></IconButton>
-      </template>
-      <div class="flex flex-col gap-4">
-        <SegmentedControl v-model="theme" label="Theme" :options="THEME_OPTIONS" />
-        <InkPicker :model-value="ink.id" @update:model-value="chooseInk" />
-        <Stepper
-          v-model="dailyPick"
-          label="Exercises a day"
-          lower-label="Fewer exercises a day"
-          raise-label="More exercises a day"
-          :min="MIN_DAILY_PICK"
-          :max="MAX_DAILY_PICK"
+  <div class="mx-auto flex max-w-xl flex-col pt-6 pb-16" data-testid="settings-page" data-noprint>
+    <TextLink href="#/" class="inline-flex items-center gap-1 self-start"
+      ><ChevronLeft :size="20" :stroke-width="1.5" aria-hidden="true" />Back to the week</TextLink
+    >
+    <h1 ref="heading" tabindex="-1" class="display mt-4 text-ink focus:outline-none">Settings</h1>
+
+    <section :aria-labelledby="ids.look" class="mt-8 flex flex-col gap-4">
+      <h2 :id="ids.look" class="title-2 text-ink">Appearance</h2>
+      <SegmentedControl v-model="theme" label="Theme" :options="THEME_OPTIONS" />
+      <InkPicker :model-value="ink.id" @update:model-value="chooseInk" />
+    </section>
+
+    <section
+      :aria-labelledby="ids.planner"
+      class="mt-8 flex flex-col gap-4 border-t border-line pt-8"
+    >
+      <h2 :id="ids.planner" class="title-2 text-ink">Planner</h2>
+      <Stepper
+        v-model="dailyPick"
+        label="Exercises a day"
+        lower-label="Fewer exercises a day"
+        raise-label="More exercises a day"
+        :min="MIN_DAILY_PICK"
+        :max="MAX_DAILY_PICK"
+      />
+      <Switch v-model="store.showTotals" label="Show weekly totals" class="-ml-2 self-start" />
+    </section>
+
+    <section :aria-labelledby="ids.data" class="mt-8 flex flex-col gap-4 border-t border-line pt-8">
+      <h2 :id="ids.data" class="title-2 text-ink">Your data</h2>
+      <p class="body text-ink-secondary">
+        Export saves everything to a file. Import adds a file’s plans and marks to yours and never
+        deletes anything.
+      </p>
+      <div role="group" :aria-labelledby="ids.data" class="flex flex-wrap gap-3">
+        <Button @click="exportData"><Download :stroke-width="1.5" />Export</Button>
+        <Button @click="fileInput?.click()"><Upload :stroke-width="1.5" />Import…</Button>
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".json,application/json"
+          class="hidden"
+          aria-label="Export file to import"
+          data-testid="import-file"
+          @change="onFile"
         />
-        <Switch v-model="store.showTotals" label="Show weekly totals" class="-ml-2 self-start" />
-
-        <div class="flex flex-col gap-2 border-t border-line pt-4">
-          <span :id="dataLabelId" class="label text-ink">Your data</span>
-          <div role="group" :aria-labelledby="dataLabelId" class="flex gap-3">
-            <Button class="flex-1" @click="exportData"
-              ><Download :stroke-width="1.5" />Export</Button
-            >
-            <Button class="flex-1" @click="fileInput?.click()"
-              ><Upload :stroke-width="1.5" />Import…</Button
-            >
-            <input
-              ref="fileInput"
-              type="file"
-              accept=".json,application/json"
-              class="hidden"
-              aria-label="Export file to import"
-              data-testid="import-file"
-              @change="onFile"
-            />
-          </div>
-          <div v-if="pending" class="flex flex-col gap-2" role="group" aria-label="Confirm import">
-            <p class="caption text-ink" data-testid="import-summary">
-              {{ summary.describe(pending) }}
-            </p>
-            <div class="flex justify-end gap-3">
-              <Button @click="pending = null">Cancel</Button>
-              <Button variant="primary" :busy="importing" @click="confirmImport(pending)">
-                Import
-              </Button>
-            </div>
-          </div>
-          <InlineMessage v-if="notice" :tone="notice.tone" data-testid="import-notice">
-            {{ notice.text }}
-          </InlineMessage>
-        </div>
-
-        <div class="flex flex-col gap-2 border-t border-line pt-4">
-          <div class="flex items-center justify-between gap-3">
-            <p class="caption min-w-0 truncate text-ink-secondary" data-testid="signed-in-as">
-              Signed in as <span class="text-ink">{{ session.user }}</span>
-            </p>
-            <Button class="shrink-0" @click="signOut"
-              ><LogOut :stroke-width="1.5" />Sign out</Button
-            >
-          </div>
-          <InlineMessage v-if="signOutProblem" tone="error" data-testid="sign-out-problem">
-            {{ signOutProblem }}
-          </InlineMessage>
+      </div>
+      <div v-if="pending" class="flex flex-col gap-2" role="group" aria-label="Confirm import">
+        <p class="body text-ink" data-testid="import-summary">
+          {{ summary.describe(pending) }}
+        </p>
+        <div class="flex gap-3">
+          <Button @click="pending = null">Cancel</Button>
+          <Button variant="primary" :busy="importing" @click="confirmImport(pending)">
+            Import
+          </Button>
         </div>
       </div>
-    </Popover>
+      <InlineMessage v-if="notice" :tone="notice.tone" data-testid="import-notice">
+        {{ notice.text }}
+      </InlineMessage>
+    </section>
+
+    <section
+      :aria-labelledby="ids.account"
+      class="mt-8 flex flex-col gap-4 border-t border-line pt-8"
+    >
+      <h2 :id="ids.account" class="title-2 text-ink">Account</h2>
+      <p class="body min-w-0 break-words text-ink-secondary" data-testid="signed-in-as">
+        Signed in as <span class="text-ink">{{ session.user }}</span>
+      </p>
+      <Button ref="signOutButton" class="self-start" @click="signOut"
+        ><LogOut :stroke-width="1.5" />Sign out</Button
+      >
+      <InlineMessage v-if="signOutProblem" tone="error" data-testid="sign-out-problem">
+        {{ signOutProblem }}
+      </InlineMessage>
+    </section>
+
     <ConfirmDialog
       v-model:open="askSignOut"
       title="Sign out now?"
@@ -260,7 +263,7 @@ async function confirmSignOut(): Promise<void> {
       confirm-label="Sign out"
       :busy="signingOut"
       :error="signOutError"
-      :return-focus="settingsButton"
+      :return-focus="signOutTarget"
       @confirm="confirmSignOut"
     />
   </div>

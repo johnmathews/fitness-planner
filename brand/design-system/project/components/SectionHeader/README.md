@@ -3,7 +3,7 @@ The heading over a WeekGrid: the section's name in serif, an optional line of hi
 ## Use
 
 - The title in `title-1` (Source Serif 4, 26/32, 600): "Exercises", "Food". Sentence case, no icon.
-- An optional hint beneath in `caption` `ink-secondary`, one line, plain instructions: "Mark each day you ate it." Small numbers as words. The hint doesn't print. Exercises has none: the Picked row's caption ("3 a day") already states the daily pick.
+- An optional hint beneath in `caption` `ink-secondary`, one line, plain instructions. Small numbers as words. The hint doesn't print. Neither section uses one: the user asked for both to go (journal 261024, 261025).
 - The StatFigure on the right, baseline-aligned with the title. Below 640px it wraps under the title and hint, still left-aligned.
 - `space-6` between the header and its grid; `space-8` and a `line` rule between the Exercises and Food sections.
 - One StatFigure per section. No subtitle counts, no badges, no "This week's progress" eyebrow.
@@ -23,4 +23,4 @@ The heading over a WeekGrid: the section's name in serif, an optional line of hi
 
 ## You provide
 
-The section title, the hint text (with the daily pick in words for exercises), and the StatFigure's figure, total, words and met state.
+The section title, the hint text when there is one, and the StatFigure's figure, total, words and met state.

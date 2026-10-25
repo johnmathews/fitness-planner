@@ -578,18 +578,17 @@ describe('signing out', () => {
     await openSettings()
     await button('Sign out').trigger('click')
     await settle()
-    // The question replaces the panel: signing out forgets this device's unsent changes.
+    // Signing out forgets this device's unsent changes, so it asks first.
     expect(confirmation()!.get('h2').text()).toBe('Sign out now?')
     expect(confirmation()!.text()).toContain(
       'Two changes on this device haven’t reached the server yet. Signing out now loses them.',
     )
-    expect(wrapper.find('[data-slot="popover-content"]').exists()).toBe(false)
     await confirmButton('Cancel').trigger('click')
     await settle()
     expect(confirmation()).toBeNull()
     expect(api.paths('/auth/logout')).toEqual([])
-    // Focus goes back to Settings, the control the question came from.
-    expect(document.activeElement).toBe(wrapper.get('button[aria-label="Settings"]').element)
+    // Focus goes back to Sign out, the control the question came from, still on the page.
+    expect(document.activeElement).toBe(button('Sign out').element)
   })
 
   it('signs out after a confirm, in the singular for one change', async () => {
@@ -636,7 +635,7 @@ describe('signing out', () => {
       'Can’t reach the server. Check the connection and try again.',
     )
     expect(confirmButton('Sign out').attributes('aria-busy')).toBeUndefined()
-    expect(heading()).toBe('19–25 October')
+    expect(heading()).toBe('Settings')
   })
 
   it('refuses while offline, and says why', async () => {
@@ -651,7 +650,8 @@ describe('signing out', () => {
       'Can’t reach the server. Check the connection and try again.',
     )
     expect(wrapper.get('[data-testid="sign-out-problem"]').attributes('role')).toBe('alert')
-    expect(wrapper.find('nav[aria-label="Week"]').exists()).toBe(true)
+    // Still signed in, still on the Settings page.
+    expect(heading()).toBe('Settings')
   })
 })
 

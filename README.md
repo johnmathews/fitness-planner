@@ -21,10 +21,10 @@
   - add an exercise with a name, optional sets, reps or a time in seconds (a plank), "Per set" or
     "Each side", and an optional weight in kg (e.g. squats with a 12 kg kettlebell); add a food by
     name;
-  - each exercise's `−` / `+` change its reps (or seconds, in steps of 5), and each food's change
-    its goal; the pencil beside an exercise's name edits it, its goal ("Times a week") included;
-    the bin removes an item after a confirmation (its ticks stay stored). New items start with a
-    goal of 3.
+  - the pencil beside a name opens that item's dialog, where everything about it changes: for an
+    exercise its sets, reps or seconds, weight and goal ("Times a week"), for a food its name and
+    goal; the bin at the end of a row removes the item after a confirmation (its ticks stay
+    stored). New items start with a goal of 3.
 - **Weekly plans.** Each week has its own plan, so reps, sets, weights and goals can change from week
   to week. A week you haven't changed carries over the latest earlier week's plan; it gets its own
   copy the first time you change it or tick a cell. In config mode, **Copy plan to next week**

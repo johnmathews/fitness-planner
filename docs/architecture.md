@@ -43,10 +43,10 @@ App.vue                 picks the screen (link, planner, sign-up or sign-in), th
 │                       session; links to #/signup
 │   (all three inside AuthCard.vue: a centred Panel with the BrandMark)
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
-│   │                   the Edit plan Switch, Settings and Print…
-│   └── SettingsPopover.vue   Popover: theme (SegmentedControl), Ink (InkPicker), Exercises a day
-│                             (Stepper), Show weekly totals (Switch), Export and Import… (see §4),
-│                             who is signed in, Sign out
+│                       the Edit plan Switch, Settings (to the Settings page) and Print…
+├── SettingsPage.vue    the SettingsPage card, at #/settings: Back to the week, then Appearance
+│                       (Theme, Ink), Planner (Exercises a day, Show weekly totals), Your data
+│                       (Export and Import…, see §4) and Account (who is signed in, Sign out)
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
 ├── TodayList.vue       phones only (below 640px), the first view: today's exercises and foods,
@@ -58,13 +58,15 @@ App.vue                 picks the screen (link, planner, sign-up or sign-in), th
 │   ├── TrackerGrid.vue a <table> (WeekGrid card): day header, one TrackerRow per item, today's
 │   │   │               highlight band, and the Picked row ("4", "one extra" over the pick)
 │   │   └── TrackerRow.vue  name and chips; 7 × DayMark; "3 of 4" total; in config
-│   │                       mode the goal Stepper and edit/remove IconButtons in the row header
+│   │                       mode the edit IconButton after the name, and the remove
+│   │                       IconButton in a last cell of its own
 │   ├── AddExerciseForm.vue config mode only: name, sets, Measure (Reps or Time), reps or
 │   │                       seconds, PerSideToggle, weight (kg)
 │   └── EditExerciseDialog.vue  Dialog: the add form's fields, then Times a week (the goal)
 └── DietSection.vue     the Food section: SectionHeader ("2 of 4 goals met"), kept with its grid
     ├── TrackerGrid.vue wired to diet: no chips and no Picked row (foods have no daily pick)
-    └── AddFoodForm.vue config mode only: name, Add food
+    ├── AddFoodForm.vue config mode only: name, Add food
+    └── EditFoodDialog.vue  Dialog: Name, then Times a week (the goal)
 ```
 
 ## 2. Weekly plans
@@ -111,8 +113,7 @@ store fills them with `adopt` and saves their changes (§7).
 exercises, so a removed exercise's history stays in `log` without inflating the numbers.
 
 **Actions** (plan edits apply to the visible week only): `toggle`, `changeTarget` (clamps 0–7),
-`changeAmount` (Edit plan's row Stepper: a timed exercise's seconds, clamped 5–3600, else its reps,
-1–999), `addExercise` (returns `false` for an empty name; new exercises get goal 3 unless the input
+`addExercise` (returns `false` for an empty name; new exercises get goal 3 unless the input
 names one), `updateExercise` (replaces name, sets, reps or duration, per-side, weight and, when
 given, the goal, keeping the id and history; `false` for an empty name or an id not in the week).
 An exercise counts reps or time, never both: a duration stores reps as 0. Then `removeExercise`, `copyToNextWeek`, `setConfigMode`,
@@ -129,7 +130,8 @@ card's words).
 store like the planner's. It reads `planner.weekKey`, so week navigation moves both
 sections. It derives `foods`, `dayCounts`, `grandTotal`, `goalsMet` and `nextWeekHasPlan`, and
 offers `isEaten`, `totalFor`, `toggle`, `changeTarget` (0–7), `addFood` (goal 3, `false` for an
-empty name), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
+empty name), `updateFood` (name and goal from the Edit food dialog, `false` for an empty name or a
+food not in the week), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
 like exercise goals (met once the count reaches a non-zero goal); foods have no daily target.
 
 The planner writes only the theme and `showTotals`, each merged into whatever
@@ -224,8 +226,8 @@ Confirming sends the file to `POST /api/import` (`sync.importFile`): the server 
 the account's real state in one transaction, and the app then reads the account afresh (after any
 read already in flight, which predates the import). Local writes still queued go out first, so the
 server merges against everything this device has; if they cannot be sent, nothing is imported. When
-the import cannot be done, the popover says why (offline, a server failure, an ended session, a
-full account) and
+the import cannot be done, the Settings page says why (offline, a server failure, an ended session,
+a full account) and
 keeps the file ready to try again. The confirm step names how many weeks and ticks the file adds
 (`mergeSummary`, through `useImportSummary`, which the first-login prompt shares) before anything
 is written. It is computed from the current state, so it stays right if another tab or a settings
@@ -252,20 +254,27 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   `<html>`; `public/theme-init.js` applies the saved choice before first paint so a dark preference
   does not flash light while the bundle loads. It is a plain file rather than an inline script
   because the nginx CSP allows scripts only from `'self'`.
-- **Settings popover.** The handoff calls accent and daily pick user settings but shows no UI for
-  them. The popover (the Popover primitive, on Reka UI) adds one, plus the theme. The accent is a
-  choice of four inks, Ink blue by default, and the stored value keeps its old format (K3a,
-  [brand.md](brand.md) §4). The popover closes when focus leaves it, on Escape and on an outside
-  click, and returns focus to the trigger. The theme and per-side choices are SegmentedControls:
-  `aria-pressed` buttons in a `role="group"`.
+- **Settings page.** The handoff calls accent and daily pick user settings but shows no UI for
+  them. Settings started as a popover and became a page of its own (`SettingsPage.vue`, at
+  `#/settings`) so it has room to grow. App reads the hash (as it does for invite and reset links)
+  and shows the page in place of the week; the Header then holds only the wordmark. Arriving moves
+  focus to the page's heading, and coming back to the week puts it on the Settings button. Signing
+  out there drops the hash, so the next sign-in opens on the week. The accent is a choice of four
+  inks, Ink blue by default, and the stored value keeps its old format (K3a, [brand.md](brand.md)
+  §4). The theme and per-side choices are SegmentedControls: `aria-pressed` buttons in a
+  `role="group"`.
 - **Config mode and normal mode.** Normal mode, the default on every load, only ticks cells. The
   "Edit plan" Switch in the navbar (a `role="switch"` button) turns on config mode, which shows the
-  edit and remove IconButtons, the goal Steppers, the add forms and "Copy plan to next week". The mode is not saved, so the
+  edit and remove IconButtons, the add forms and "Copy plan to next week". An item is changed only
+  in its dialog (Edit exercise, Edit food), so rows have no Stepper; the remove button ends each
+  row, in a "Remove" column after "Week". The mode is not saved, so the
   app always opens ready for ticking.
-- **Exercises are editable.** The handoff had no way to change an exercise after adding it. An
-  Edit IconButton (`pencil`) on each exercise row (not foods) opens `EditExerciseDialog`, on the Dialog primitive (Reka UI),
+- **Exercises and foods are editable.** The handoff had no way to change an item after adding it.
+  An Edit IconButton (`pencil`) on each exercise row opens `EditExerciseDialog` (and on each food
+  row `EditFoodDialog`: name and Times a week), on the Dialog primitive (Reka UI),
   which traps focus, closes on Escape and returns focus to the button. Sets and
-  weight are optional, weight in kg; the sets/reps chip and the weight chip are separate so they
+  weight can be left empty (an empty weight shows a grey "Bodyweight" placeholder; no field is
+  marked optional), weight in kg; the sets/reps chip and the weight chip are separate so they
   wrap in the narrow name column.
 - **Steppers mark their bounds** (goal 0/7, daily pick 1/8) with `aria-disabled` and ignore the
   click there. `disabled` would drop keyboard focus mid-press. The store still clamps as a backstop.
@@ -285,7 +294,7 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **Print is black on white in either theme** (§6.7).
 - **Narrow screens.** Below 640px the navbar drops Print…, shortens the switch's visible label to
   "Edit" (its accessible name stays "Edit plan"), and wraps "This week" and the switch to a second
-  row at the right, leaving the brand mark, the arrows, the week and Settings on the first; below
+  row at the right, leaving the brand mark, the centred arrows and week, and Settings on the first; below
   480px the wordmark becomes the "FP" monogram. Settings is a gear IconButton named "Settings" at
   every width. The markup keeps the desktop order, which is the tab order. Below 640px the app
   opens on the **Today list** (brand spec K5): today's exercises and foods, each with one DayMark,
@@ -376,7 +385,7 @@ true for the verb, false for Cancel or Escape. One `<ConfirmHost />`, mounted on
 shows the open question in a ConfirmDialog (Reka's AlertDialog). A newer question answers an older
 one false. `returnFocus` names where focus goes on closing when the control that asked has gone, as
 after a removal. Removing a row (`TrackerRow`) and copying over next week's plan (`WeekHeader`) ask
-this way. Sign out uses a ConfirmDialog of its own in the Settings popover, because it shows the
+this way. Sign out uses a ConfirmDialog of its own on the Settings page, because it shows the
 unsynced count, a busy state and an error.
 
 A question never outlives what it asked about. It is answered false when the component that asked
@@ -394,9 +403,11 @@ Each grid is one tab stop, following the WAI-ARIA grid pattern with a roving tab
   exactly one stop as rows come and go.
 - **Keys.** Arrows move cell by cell over the names, days, totals and the Picked row, and never
   wrap. Home and End go along the row, Ctrl+Home and Ctrl+End to the grid's ends. Space and Enter
-  belong to the DayMark. An `aria-hidden` cell (the empty Picked cell under "Week") is skipped.
-- **Edit plan.** The Stepper and IconButtons in a row header stay out of the Tab order. Enter or F2
-  on the name cell lets them in, Tab moves among them, and Escape puts focus back on the cell.
+  belong to the DayMark. An `aria-hidden` cell (the empty Picked cells under "Week" and "Remove")
+  is skipped.
+- **Edit plan.** The controls in a cell (Edit in the name cell, Remove in the
+  last cell) stay out of the Tab order. Enter or F2 on the cell lets them in, Tab moves among them,
+  and Escape puts focus back on the cell.
 
 "Skip to today", first in the tab order in `AppNavbar.vue`, focuses today's first mark: in the
 phone's Today list when it shows, otherwise in the first grid that has today.
@@ -413,11 +424,11 @@ the names.
 
 The `@media print` block in `main.css` gives a black-on-white landscape sheet from either theme. It
 re-points the roles at black, white and greys, the only literal colours the system allows: done
-dots print black, rings grey, chips outlined, and `--highlight` goes transparent. `--pen` is set
+squiggles print black, boxes grey, chips outlined, and `--highlight` goes transparent. `--pen` is set
 there too, so the user's ink can't leak through. Shadows and transitions are off.
 
 - Anything marked `data-noprint` is hidden: the navbar, the phone's view switch, the sync status,
-  the import prompt, Edit plan's controls and add forms, and each section's hint line. Dialogs, the
+  the import prompt, Edit plan's controls and add forms, and a section's hint line if it has one. Dialogs, the
   popover and Banners carry `print:hidden`.
 - "One extra" keeps its underline and words. The Picked row's `<tfoot>` prints as an ordinary row
   group, so a table split across pages repeats its header but prints the Picked row once, at the

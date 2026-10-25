@@ -41,7 +41,6 @@ function save(): void {
           id="edit-exercise-sets"
           :model-value="sets"
           label="Sets"
-          hint="Optional."
           maxlength="2"
           inputmode="numeric"
           data-field="sets"
@@ -65,9 +64,8 @@ function save(): void {
         id="edit-exercise-weight"
         :model-value="weight"
         label="Weight in kg"
-        hint="Optional. Leave empty for bodyweight."
         inputmode="decimal"
-        placeholder="e.g. 12"
+        placeholder="Bodyweight"
         class="w-44"
         @input="form.onWeightInput"
       />

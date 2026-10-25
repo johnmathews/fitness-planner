@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
-import { dayMarkLabel } from '.'
+import { BOX_PATH, SQUIGGLE_PATH, dayMarkLabel } from '.'
 
 const props = withDefaults(
   defineProps<{
@@ -26,8 +26,9 @@ const label = computed(() => dayMarkLabel(props))
 
 <!--
   One day of one row (brand/design-system/project/components/DayMark): a 44px button centred in a
-  56 × 60px cell, drawing a 24px pen dot when done and a 1.5px control-border ring when not. The
-  rest of the cell is quiet space, so the 2px focus ring at 2px offset never touches a neighbour.
+  56 × 60px cell, drawing a hand-drawn box about 30px across in control-border, filled with a pen
+  marker squiggle when done. The rest of the cell is quiet space, so the 2px focus ring at 2px
+  offset never touches a neighbour.
 -->
 <template>
   <div
@@ -44,18 +45,35 @@ const label = computed(() => dayMarkLabel(props))
       :aria-current="today ? 'date' : undefined"
       @click="$emit('toggle')"
     >
-      <span
-        data-slot="day-mark-dot"
+      <svg
+        data-slot="day-mark-box"
         aria-hidden="true"
+        viewBox="0 0 36 36"
         :data-on="done"
-        :class="
-          cn(
-            'size-6 rounded-full border-[1.5px]',
-            'motion-safe:transition-[background-color,border-color] motion-safe:duration-120 motion-safe:ease-out',
-            done ? 'border-pen bg-pen' : 'border-control-border group-hover:border-ink',
-          )
-        "
-      />
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="size-10 overflow-visible"
+      >
+        <path
+          :d="BOX_PATH"
+          data-slot="day-mark-outline"
+          stroke-width="1.75"
+          :class="
+            cn(
+              'stroke-control-border motion-safe:transition-[stroke] motion-safe:duration-120 motion-safe:ease-out',
+              !done && 'group-hover:stroke-ink',
+            )
+          "
+        />
+        <path
+          v-if="done"
+          :d="SQUIGGLE_PATH"
+          data-slot="day-mark-squiggle"
+          stroke-width="3.5"
+          class="stroke-pen"
+        />
+      </svg>
     </button>
     <!-- NoteMark: a 10px folded corner in ink-secondary, flush in the cell's top-right corner. -->
     <span

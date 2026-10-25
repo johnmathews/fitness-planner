@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import { exerciseDetails, usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import AppNavbar from '@/components/AppNavbar.vue'
 import WeekHeader from '@/components/WeekHeader.vue'
+import SettingsPage from '@/components/SettingsPage.vue'
 import ExerciseGrid from '@/components/ExerciseGrid.vue'
 import DietSection from '@/components/DietSection.vue'
 import TodayList from '@/components/TodayList.vue'
@@ -40,10 +41,33 @@ function isSignup(): boolean {
   return location.hash === '#/signup'
 }
 const signup = ref(isSignup())
+
+/** The page the hash asks for: Settings at `#/settings`, otherwise the planner. */
+type Page = 'planner' | 'settings'
+function pageFor(): Page {
+  return location.hash === '#/settings' ? 'settings' : 'planner'
+}
+const page = ref<Page>(pageFor())
 function onHash(): void {
   link.value = linkToken()
   signup.value = isSignup()
+  page.value = pageFor()
 }
+// Back from Settings, focus returns to the Settings button that opened it.
+watch(page, async (now) => {
+  if (now !== 'planner') return
+  await nextTick()
+  document.querySelector<HTMLElement>('[data-testid="settings-button"]')?.focus()
+})
+// Signing out on the Settings page lands on the sign-in screen, and the next sign-in on the week.
+watch(
+  () => session.status,
+  (status) => {
+    if (status !== 'signed-out' || page.value !== 'settings') return
+    history.replaceState(null, '', location.pathname + location.search)
+    page.value = 'planner'
+  },
+)
 /** Drop the token from the address bar and history, where a used or dead one has no place. */
 function forgetToken(): void {
   history.replaceState(null, '', location.pathname + location.search)
@@ -179,11 +203,12 @@ onBeforeUnmount(() => {
     @leave="closeLink"
   />
   <template v-else-if="session.status === 'signed-in'">
-    <AppNavbar />
+    <AppNavbar :page="page" />
     <main class="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 print:max-w-none print:p-0">
       <SyncStatus />
-      <ImportPrompt v-if="session.user" :key="session.user" :user="session.user" />
-      <template v-if="sync.loaded">
+      <SettingsPage v-if="page === 'settings'" />
+      <ImportPrompt v-else-if="session.user" :key="session.user" :user="session.user" />
+      <template v-if="page === 'planner' && sync.loaded">
         <div v-if="phone" class="flex justify-end pt-3" data-noprint>
           <SegmentedControl
             :model-value="view"

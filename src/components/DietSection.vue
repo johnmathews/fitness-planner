@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import { dayMonth } from '@/lib/dates'
+import type { Food } from '@/lib/storage'
 import { SectionHeader } from '@/components/ui/section-header'
 import { StatFigure } from '@/components/ui/stat-figure'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import AddFoodForm from '@/components/AddFoodForm.vue'
+import EditFoodDialog from '@/components/EditFoodDialog.vue'
 
 const planner = usePlannerStore()
 const diet = useDietStore()
@@ -13,6 +16,25 @@ const diet = useDietStore()
 function flagsFor(id: string): boolean[] {
   return planner.days.map((_, i) => diet.isEaten(id, i))
 }
+
+const editing = ref<Food | null>(null)
+
+function edit(id: string): void {
+  editing.value = diet.foods.find((f) => f.id === id) ?? null
+}
+
+// As in ExerciseGrid: close the dialog if another tab deletes the food, or if the week changes
+// under it, rather than save into a week the user didn't open it for.
+watch(
+  () => diet.foods,
+  (list) => {
+    if (editing.value && !list.some((f) => f.id === editing.value!.id)) editing.value = null
+  },
+)
+watch(
+  () => planner.weekKey,
+  () => (editing.value = null),
+)
 </script>
 
 <!--
@@ -27,7 +49,7 @@ function flagsFor(id: string): boolean[] {
     aria-labelledby="diet-heading"
   >
     <div class="print:break-inside-avoid" data-print-keep>
-      <SectionHeader title="Food" hint="Mark each day you ate it." heading-id="diet-heading">
+      <SectionHeader title="Food" heading-id="diet-heading">
         <StatFigure
           v-if="planner.showTotals"
           :figure="diet.goalsMet"
@@ -44,13 +66,15 @@ function flagsFor(id: string): boolean[] {
         :days="planner.days"
         :flags-for="flagsFor"
         :total-for="diet.totalFor"
+        editable
         :config-mode="planner.configMode"
         data-testid="diet-grid"
         @toggle="diet.toggle"
-        @change-target="diet.changeTarget"
         @remove="diet.removeFood"
+        @edit="edit"
       />
     </div>
     <AddFoodForm v-if="planner.configMode" />
+    <EditFoodDialog v-if="editing" :food="editing" @close="editing = null" />
   </section>
 </template>

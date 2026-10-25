@@ -5,7 +5,7 @@ A year of weeks in one quiet strip: one `pen` dot per week, sized by the session
 - Part of the record layer: small, dense and `ink-secondary` around the marks. It sits below the week's grids, never above them.
 - **One slot per week**, Monday to Sunday, 52 or 53 per year, oldest first. Two half-years of 26 slots each: side by side when there is room, stacked below about 640px. Slots are 28px tall between two `line` rules.
 - **Three sizes, not shades.** Dot diameter steps with the week's sessions: 11px for 12 or more, 8px for 6 to 11, 5px for 1 to 5. Every dot is solid `pen`; never fade a dot with opacity, which drops it below 3:1.
-- **A week off** is a 9px ring, 1.5px `control-border`: the same sign as a day not done. No label, no red, no gap in the strip.
+- **A week off** is a 9px ring, 1.5px `control-border`: an empty sign, as an empty box is for a day. No label, no red, no gap in the strip.
 - **Weeks still to come** are empty slots.
 - **This week** carries a 9 × 2px `ink` bar under its dot. It is not highlighted: `highlight` is for today's column only.
 - Month labels in `caption` `ink-secondary` under the strip, at the first Monday of January, April, July and October.

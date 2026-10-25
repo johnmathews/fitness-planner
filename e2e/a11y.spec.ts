@@ -68,11 +68,11 @@ test.describe('the app passes axe', () => {
       await expectNoAxeViolations(page)
     })
 
-    test(`settings open, desktop, ${theme}`, async ({ page }) => {
+    test(`the Settings page, desktop, ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 900 })
       await openApp(page, { theme })
       await page.getByRole('button', { name: /Settings/ }).click()
-      await page.waitForSelector('[role="dialog"]')
+      await page.getByRole('heading', { level: 1, name: 'Settings' }).waitFor()
       await settle(page)
       await expectNoAxeViolations(page)
     })

@@ -14,7 +14,8 @@ and reviewed there. Two comments on the desktop week view led to this change.
   plan toggles (F25), including Diet rows, which have no chips.
 - **SectionHeader's hint is optional, and Exercises has none.** "Pick three a day. Mark each one
   when it's done." is gone; the Picked row's caption ("3 a day") still states the daily pick.
-  Diet keeps "Mark each day you ate it." until the user decides on it.
+  Diet kept "Mark each day you ate it." until the user removed it the next day
+  ([261025-review-comments](261025-review-comments.md)).
 
 The WeekGrid, Chip and SectionHeader cards in `brand/design-system/` changed first. The gate passes
 with `--complete`. The Design System artifact has not been republished from them yet.

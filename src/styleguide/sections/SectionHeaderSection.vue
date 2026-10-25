@@ -23,7 +23,6 @@ import StateExample from '../parts/StateExample.vue'
         id="sg-section-header-met"
         class="w-full"
         title="Food"
-        hint="Mark each day you ate it."
         heading-id="sg-section-header-met-title"
       >
         <StatFigure :figure="4" :total="4" words="goals met" met />

@@ -71,6 +71,17 @@ describe('diet store', () => {
     d.changeTarget('missing', 1)
   })
 
+  it('renames a food and sets its goal, clamped, keeping its id and marks', () => {
+    const d = useDietStore()
+    d.toggle('fish', 0)
+    expect(d.updateFood('fish', { name: ' Salmon ', target: 9 })).toBe(true)
+    expect(d.foods[2]).toEqual({ id: 'fish', name: 'Salmon', target: 7 })
+    expect(d.isEaten('fish', 0)).toBe(true)
+    expect(d.updateFood('fish', { name: '  ', target: 1 })).toBe(false)
+    expect(d.updateFood('missing', { name: 'Beans', target: 1 })).toBe(false)
+    expect(d.foods[2]!.name).toBe('Salmon')
+  })
+
   it('adds a food with goal 3, ignores an empty name, and removes', () => {
     const d = useDietStore()
     expect(d.addFood('  ')).toBe(false)

@@ -16,8 +16,8 @@ import { onBeforeUnmount, onMounted, type Ref } from 'vue'
  * - **Keys.** Arrows move cell by cell and never wrap; Home and End go to the first and last cell
  *   in the row, Ctrl+Home and Ctrl+End to the first and last cell of the grid. Space and Enter are
  *   the widget's own (a DayMark toggles); on a cell without one they do nothing.
- * - **Controls inside a cell (Edit plan).** Anything else focusable in a cell (the goal Stepper,
- *   Edit and Remove in a row header) is parked at `tabindex="-1"`, so Tab doesn't stop on every
+ * - **Controls inside a cell (Edit plan).** Anything else focusable in a cell (Edit in a
+ *   row header, Remove in the row's last cell, a Stepper) is parked at `tabindex="-1"`, so Tab doesn't stop on every
  *   row's controls. Enter or F2 on the cell lets them back into the Tab order and focuses the
  *   first; Tab and Shift+Tab move among them (Shift+Tab from the first returns to the cell, which
  *   keeps the tab stop), arrows stay with the control (a Stepper's value), and Escape parks them and

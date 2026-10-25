@@ -49,6 +49,12 @@ test.describe('no sideways scroll at 375px', () => {
     await settle(page)
     await expectNoSidewaysScroll(page)
   })
+  test('the Settings page', async ({ page }) => {
+    await openApp(page, { view: 'today' })
+    await page.getByRole('button', { name: 'Settings' }).click()
+    await page.getByRole('heading', { level: 1, name: 'Settings' }).waitFor()
+    await expectNoSidewaysScroll(page)
+  })
 })
 
 test('a focused grid cell is never under the sticky name column', async ({ page }) => {

@@ -247,7 +247,7 @@ listed in [api.md](api.md) §10):
 - `src/components/__tests__/App.spec.ts`: the mounted app in jsdom. Covers rendering, the today
   column, cell toggling and `aria-pressed`, the goal stepper and its bounds,
   navigation, confirm-before-remove, print, the visibility and one-minute clock refresh, another
-  tab's writes to the cache, the add form, the settings popover including focus return, the ink (the pen variables per K3a), and the
+  tab's writes to the cache, the add form, the Settings page (the hash, focus on arrival and on the way back), the ink (the pen variables per K3a), and the
   theme: the `dark` class following the OS (with a stubbed `matchMedia`), the theme control and
   its persistence. Also the weight and sets fields, the edit dialog (found by `role="dialog"` on
   `document.body`, where Reka's portal renders it), normal mode hiding every editing control, export (with
@@ -268,8 +268,8 @@ listed in [api.md](api.md) §10):
 - `src/components/__tests__/Planner.spec.ts`: the planner on the design system's marks, in the
   mounted app: the Picked row ("one extra" in words and underlined, en dashes for days to come, no
   empty focusable cell), today (full-date names with "today", `aria-current`, the band), totals
-  and section figures ("N of M", a check when met, zero quiet), row headers in Edit plan (Stepper
-  and IconButtons, stable row height, focus after a removal), the keyboard (one tab stop per grid,
+  and section figures ("N of M", a check when met, zero quiet), Edit plan's rows (Edit in the name
+  cell, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,
   arrows, the skip link, Edit plan's controls), headings and print attributes, and the phone width
   (the sticky names, Edit plan's name column scrolling away, opening scrolled to today).
 - `src/components/__tests__/TodayList.spec.ts`: the phone's Today view (K5): the list on its own
@@ -278,7 +278,7 @@ listed in [api.md](api.md) §10):
   the remembered view, the breakpoint, another week and Edit plan showing the week, the skip link).
 - `src/components/__tests__/DietSection.spec.ts`: the diet section in the mounted app: default
   foods, ticking, row totals and the goals-met figure, shared week navigation, add and remove (after
-  a confirmation) and the goal Stepper (in config mode), cross-tab sync.
+  a confirmation) and the goal set in the Edit food dialog (in config mode), cross-tab sync.
 
 `vitest.config.ts` sets coverage thresholds (100% lines and functions, 99% statements, 98%
 branches), so `npm run test:coverage` and CI fail when coverage drops below them. Coverage covers
