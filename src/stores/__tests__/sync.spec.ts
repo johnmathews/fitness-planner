@@ -7,6 +7,8 @@ import { useDietStore } from '@/stores/diet'
 import {
   CACHE_PREFIX,
   CONFLICT_NOTICE,
+  OLD_CACHE_PREFIX,
+  OLD_OUTBOX_PREFIX,
   OUTBOX_PREFIX,
   QUOTA_NOTICE,
   REFUSED_NOTICE,
@@ -373,6 +375,71 @@ describe('sync', () => {
     sync.onStorage(CACHE_PREFIX + USER) // after stop: ignored
   })
 
+  it('ignores a tab still open on the code from before marks had kinds', async () => {
+    api.accounts.get(USER)!.plans.exercise[WEEK] = { items: [SQUATS], rev: 1 }
+    const { sync, planner } = await start(emptyState())
+    planner.toggle('sq', 0)
+    await settle()
+    // That tab reads 'great' as an empty day and writes its copy back under the old names.
+    const stale = { ...stateWith({ [WEEK]: [SQUATS] }, { [WEEK]: 1 }) } as Record<string, unknown>
+    stale.exercise = { plans: { [WEEK]: [SQUATS] }, log: { [WEEK]: { sq: Array(7).fill(false) } } }
+    localStorage.setItem(OLD_CACHE_PREFIX + USER, JSON.stringify(stale))
+    sync.onStorage(OLD_CACHE_PREFIX + USER)
+    localStorage.setItem(OLD_OUTBOX_PREFIX + USER, '[]')
+    sync.onStorage(OLD_OUTBOX_PREFIX + USER)
+    await settle()
+    expect(planner.markOf('sq', 0)).toBe('great')
+    expect(cached().exercise.log[WEEK]!.sq![0]).toBe('great')
+    expect(api.accounts.get(USER)!.ticks.exercise[WEEK]).toEqual({ sq: 0b1 })
+  })
+
+  it('moves the cache and outbox from the names before marks had kinds', async () => {
+    const tick = { kind: 'tick', section: 'exercise', week: WEEK, item: 'sq' }
+    const old = { ...emptyState(), exercise: { plans: {}, log: { [WEEK]: { sq: [true] } } } }
+    localStorage.setItem(OLD_CACHE_PREFIX + USER, JSON.stringify(old))
+    localStorage.setItem(
+      OLD_OUTBOX_PREFIX + USER,
+      JSON.stringify([
+        { ...tick, day: 0, done: true, id: 'a' },
+        { ...tick, day: 1, done: true, id: 'b' },
+      ]),
+    )
+    localStorage.setItem(
+      OUTBOX_PREFIX + USER,
+      JSON.stringify([{ ...tick, day: 1, mark: 'missed', id: 'c' }]),
+    )
+    const sync = useSyncStore()
+    const planner = usePlannerStore()
+    sync.start(USER, lost)
+    expect(planner.markOf('sq', 0)).toBe('great')
+    expect(outbox()).toEqual([
+      { ...tick, day: 0, mark: 'great', id: 'a' },
+      { ...tick, day: 1, mark: 'missed', id: 'c' },
+    ])
+    expect(localStorage.getItem(OLD_CACHE_PREFIX + USER)).toBeNull()
+    expect(localStorage.getItem(OLD_OUTBOX_PREFIX + USER)).toBeNull()
+    await settle()
+    expect(api.accounts.get(USER)!.ticks.exercise[WEEK]).toEqual({ sq: 0b11 })
+  })
+
+  it('keeps the cache under the new name over the old one, and drops an old one it cannot read', async () => {
+    localStorage.setItem(OLD_CACHE_PREFIX + USER, JSON.stringify(stateWith({ [WEEK]: [PUSHUPS] })))
+    localStorage.setItem(OLD_OUTBOX_PREFIX + USER, '{broken')
+    localStorage.setItem(CACHE_PREFIX + USER, JSON.stringify(stateWith({ [WEEK]: [SQUATS] })))
+    const sync = useSyncStore()
+    const planner = usePlannerStore()
+    sync.start(USER, lost)
+    expect(planner.exercises).toEqual([SQUATS])
+    expect(localStorage.getItem(OLD_CACHE_PREFIX + USER)).toBeNull()
+    expect(localStorage.getItem(OLD_OUTBOX_PREFIX + USER)).toBeNull()
+    sync.stop()
+    localStorage.setItem(OLD_CACHE_PREFIX + USER, '{broken')
+    localStorage.removeItem(CACHE_PREFIX + USER)
+    sync.start(USER, lost)
+    expect(sync.loaded).toBe(false)
+    expect(localStorage.getItem(OLD_CACHE_PREFIX + USER)).toBeNull()
+  })
+
   it('stops cleanly, keeping the cache, and forgets on request', async () => {
     const { sync, planner } = await start(emptyState())
     planner.toggle('sq', 0)
@@ -384,9 +451,13 @@ describe('sync', () => {
     await settle()
     expect(api.paths(`/ticks/exercise/${WEEK}/pu`)).toEqual([])
     localStorage.setItem(OUTBOX_PREFIX + USER, '[]')
+    localStorage.setItem(OLD_CACHE_PREFIX + USER, '{}')
+    localStorage.setItem(OLD_OUTBOX_PREFIX + USER, '[]')
     sync.forget(USER)
     expect(localStorage.getItem(CACHE_PREFIX + USER)).toBeNull()
     expect(localStorage.getItem(OUTBOX_PREFIX + USER)).toBeNull()
+    expect(localStorage.getItem(OLD_CACHE_PREFIX + USER)).toBeNull()
+    expect(localStorage.getItem(OLD_OUTBOX_PREFIX + USER)).toBeNull()
   })
 
   it('never writes the keys from before accounts', async () => {

@@ -33,8 +33,15 @@ import { usePlannerStore } from '@/stores/planner'
  * is waiting to go out, so a refresh can never undo an edit that hasn't reached the server yet.
  */
 
-export const CACHE_PREFIX = 'fitness-planner-cache-v1:'
-export const OUTBOX_PREFIX = 'fitness-planner-outbox-v1:'
+export const CACHE_PREFIX = 'fitness-planner-cache-v2:'
+export const OUTBOX_PREFIX = 'fitness-planner-outbox-v2:'
+/**
+ * The names before marks had kinds. A tab still open on that code reads a mark it doesn't know as
+ * an empty day and writes its copy back, which emptied the boxes in every newer tab; it could also
+ * drop their queued marks. A new format takes new names, so the two never read each other.
+ */
+export const OLD_CACHE_PREFIX = 'fitness-planner-cache-v1:'
+export const OLD_OUTBOX_PREFIX = 'fitness-planner-outbox-v1:'
 
 const SECTIONS = ['exercise', 'diet'] as const
 type Section = (typeof SECTIONS)[number]
@@ -461,12 +468,35 @@ export const useSyncStore = defineStore('sync', () => {
     return { ok: true, added: res.data }
   }
 
+  /**
+   * Bring this user's cache and outbox over from the old names, once per sign-in. A cache already
+   * under the new name is newer and wins; queued writes from both are kept, the newer for the same
+   * cell. The old keys go, so an old tab still open finds nothing of this tab's to overwrite.
+   */
+  function moveOldKeys(name: string): void {
+    const oldCache = readKey(OLD_CACHE_PREFIX + name)
+    if (oldCache !== null) {
+      const state = normaliseState(parseJson(oldCache))
+      if (state && readKey(cacheKey()) === null) writeKey(cacheKey(), state)
+      removeKey(OLD_CACHE_PREFIX + name)
+    }
+    const oldOps = parseJson(readKey(OLD_OUTBOX_PREFIX + name))
+    if (Array.isArray(oldOps)) {
+      const queued = readOutbox()
+      const keys = new Set(queued.map(opKey))
+      const moved = oldOps.map(upgradeQueued).filter(isQueued)
+      writeOutbox([...moved.filter((op) => !keys.has(opKey(op))), ...queued])
+    }
+    removeKey(OLD_OUTBOX_PREFIX + name)
+  }
+
   /** Begin syncing for `name`: show the cache at once, then send and read in the background. */
   function start(name: string, onAuthLost: () => void): void {
     stop()
     generation++
     user.value = name
     authLost = onAuthLost
+    moveOldKeys(name)
     const cached = normaliseState(parseJson(readKey(cacheKey())))
     if (cached) adopt(cached)
     pending.value = readOutbox().length
@@ -500,8 +530,9 @@ export const useSyncStore = defineStore('sync', () => {
 
   /** Delete a user's cache and outbox: signing out on purpose leaves nothing behind. */
   function forget(name: string): void {
-    removeKey(CACHE_PREFIX + name)
-    removeKey(OUTBOX_PREFIX + name)
+    for (const prefix of [CACHE_PREFIX, OUTBOX_PREFIX, OLD_CACHE_PREFIX, OLD_OUTBOX_PREFIX]) {
+      removeKey(prefix + name)
+    }
   }
 
   /** Another tab changed this user's cache or outbox (a `storage` event). */
