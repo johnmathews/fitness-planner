@@ -85,3 +85,16 @@ box. The tick says "checked" rather than "done", and the zigzag was busier at th
   now says it is the only solid, filled mark in a cell. YearStrip, design-only, keeps its dots.
 - The 2026-10-24 brand spec still describes dots and rings; it is the record of that decision, and
   the DayMark card is now the source for the mark.
+
+## Shipping it
+
+- PR #20 merged at 08:03 CET, after `main` had moved twice under it (#21–#23, the publish gate and
+  email sign-up from another session). The conflicts were small: App.vue now reads `#/signup` and
+  `#/settings` from the hash side by side, and the import's new full-account message landed in
+  SettingsPage.vue through git's rename detection. Since #21, merging is deploying: CI on `main`
+  gates the image publish, and What's Up Docker on the infra VM recreates both containers when
+  `latest` changes. `87d4aef` was live and healthy at 08:06 CET.
+- Two follow-ups (#24, #25) took the last "dot" and "ring" wording, and the stale Settings popover
+  references, out of the design system's shared pages and `tokens.json`.
+- The Design System artifact was republished from `main` (version 8). The type wants the index's
+  `lastChange` set on every revision, so `design-system.json` records it here too.
