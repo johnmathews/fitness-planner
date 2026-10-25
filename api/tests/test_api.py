@@ -13,7 +13,7 @@ from fitness_planner_api import auth, data
 from fitness_planner_api.app import create_app
 from fitness_planner_api.config import Config
 from fitness_planner_api.db import connect
-from fitness_planner_api.validate import Mark
+from fitness_planner_api.validate import MARKS, Mark
 
 from .conftest import ORIGIN, Clock
 from .fixtures import read_fixture
@@ -430,6 +430,28 @@ def test_ticks_set_and_clear_single_days(client: TestClient, config: Config) -> 
     assert ticks_row(config, "pu") == (0b10000, 0, 0b10000)
 
 
+def test_ticks_keep_each_marks_drawing(client: TestClient, config: Config) -> None:
+    """A press steps through every kind in every drawing (K17); the row's masks keep both, and a
+    day that changes drawing or kind leaves the other days alone."""
+    sign_up(client, config)
+    url = f"/api/ticks/exercise/{WEEK}/pu"
+    _ = None
+    client.put(f"{url}/6", json={"mark": "missed-hatch"})
+    for mark in MARKS:
+        assert client.put(f"{url}/0", json={"mark": mark}).json()["days"] == [
+            mark, _, _, _, _, _, "missed-hatch"
+        ]  # fmt: skip
+    conn = connect(config.db_path)
+    try:
+        row = conn.execute("SELECT days, partial, missed, solid, hatch FROM ticks").fetchone()
+    finally:
+        conn.close()
+    # Day 0 ended on missed-hatch too.
+    assert tuple(row) == (0b1000001, 0, 0b1000001, 0, 0b1000001)
+    for bad in ("great-zigzag", "solid", "Great-solid", "great-solid "):
+        assert client.put(f"{url}/0", json={"mark": bad}).status_code == 400
+
+
 def test_ticks_accept_the_old_done_body(client: TestClient, config: Config) -> None:
     """A tab or a queued tick from before marks had kinds sends `{done}`: true is great."""
     sign_up(client, config)
@@ -579,7 +601,7 @@ def test_sample_import_then_export_round_trips(client: TestClient, config: Confi
     # The same counts the browser's confirm step shows for this file (App.spec.ts).
     assert r.json() == {"weeks": 6, "ticks": 102, "settings": True}
     exported = client.get("/api/export")
-    assert sample["version"] == exported.json()["version"] == 2
+    assert sample["version"] == exported.json()["version"] == 3
     assert (
         exported.headers["content-disposition"]
         == 'attachment; filename="fitness-planner-2026-10-23.json"'
@@ -623,7 +645,7 @@ def test_import_merges_without_deleting(client: TestClient, config: Config) -> N
         ("null", "json"),
         ('{"format": "fitness-planner-export", "version": 1, "x": NaN}', "json"),
         ({"plans": {}}, "format"),
-        ({"format": "fitness-planner-export", "version": 3}, "version"),
+        ({"format": "fitness-planner-export", "version": 4}, "version"),
         ({"format": "fitness-planner-export", "version": 0}, "version"),
     ],
 )
@@ -672,7 +694,7 @@ def test_import_keeps_existing_marks_and_fills_empty_days(
     ).json() == {"weeks": 0, "ticks": 0, "settings": False}
 
 
-def test_a_version_1_import_exports_as_version_2(client: TestClient, config: Config) -> None:
+def test_a_version_1_import_exports_as_version_3(client: TestClient, config: Config) -> None:
     sign_up(client, config)
     old = {
         "format": "fitness-planner-export",
@@ -682,7 +704,7 @@ def test_a_version_1_import_exports_as_version_2(client: TestClient, config: Con
     }
     assert post_import(client, old).json() == {"weeks": 0, "ticks": 2, "settings": False}
     exported = client.get("/api/export").json()
-    assert exported["version"] == 2
+    assert exported["version"] == 3
     assert exported["exercise"]["log"] == {
         WEEK: {"pu": ["great", None, "great", None, None, None, None]}
     }

@@ -2,7 +2,7 @@ The heading over a WeekGrid: the section's name in serif, an optional line of hi
 
 ## Use
 
-- The title in `title-1` (Source Serif 4, 26/32, 600): "Exercises", "Food". Sentence case, no icon.
+- The title in `title-1` (Source Serif 4, 30/36, 600): "Exercises", "Food". Sentence case, no icon.
 - An optional hint beneath in `caption` `ink-secondary`, one line, plain instructions. Small numbers as words. The hint doesn't print. Neither section uses one: the user asked for both to go (journal 261024, 261025).
 - The StatFigure on the right, baseline-aligned with the title. Below 640px it wraps under the title and hint, still left-aligned.
 - `space-6` between the header and its grid; `space-8` and a `line` rule between the Exercises and Food sections.

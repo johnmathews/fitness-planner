@@ -6,6 +6,7 @@ import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import { SESSION_KEY } from '@/stores/session'
 import { CACHE_PREFIX, type SyncState } from '@/stores/sync'
+import { DRAWINGS, MARKS, markDrawing, markKind } from '@/lib/storage'
 import { readFixture } from '@/lib/__tests__/fixtures'
 import type { FakeApi } from '@/lib/__tests__/fakeApi'
 import { USER, cached, emptyState, signedIn } from '@/lib/__tests__/signedIn'
@@ -171,10 +172,11 @@ describe('App', () => {
     mountApp()
     const cell = rowCells('Push-ups')[1]!
     expect(cell.attributes('aria-pressed')).toBe('false')
-    for (const mark of ['great', 'partial', 'missed']) {
+    for (const mark of MARKS) {
       await cell.trigger('click')
       expect(cell.attributes('aria-pressed')).toBe('true')
-      expect(cell.find(`[data-mark="${mark}"]`).exists()).toBe(true)
+      expect(cell.find(`[data-mark="${markKind(mark)}"]`).exists()).toBe(true)
+      expect(cell.find(`[data-drawing="${markDrawing(mark)}"]`).exists()).toBe(true)
       expect(wrapper.get('[data-testid="grand-total"]').text()).toBe('1 of 18 this week')
       expect(ex().findAll('[data-testid="day-count"]')[1]!.text()).toBe('1')
       expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('1 of 4')
@@ -184,11 +186,14 @@ describe('App', () => {
     expect(ex().findAll('[data-testid="row-total"]')[0]!.text()).toBe('0 of 4')
   })
 
-  it('marks a food eaten or not: a second press clears it', async () => {
+  it('marks a food eaten in each drawing, then clears it', async () => {
     mountApp()
     const cell = rowCells('Fish')[0]!
-    await cell.trigger('click')
-    expect(cell.find('[data-mark="great"]').exists()).toBe(true)
+    for (const drawing of DRAWINGS) {
+      await cell.trigger('click')
+      expect(cell.find('[data-mark="great"]').exists()).toBe(true)
+      expect(cell.find(`[data-drawing="${drawing}"]`).exists()).toBe(true)
+    }
     await cell.trigger('click')
     expect(cell.attributes('aria-pressed')).toBe('false')
   })
@@ -549,7 +554,7 @@ describe('export and import', () => {
     const file = JSON.parse(await blob!.text())
     expect(file).toMatchObject({
       format: 'fitness-planner-export',
-      version: 2,
+      version: 3,
       settings: { accent: '#30d158', dailyPick: 3 },
     })
     expect(file.settings).not.toHaveProperty('theme')
@@ -705,7 +710,7 @@ describe('export and import', () => {
     ['another format', jsonFile({ plans: {} }), 'That file isn’t a Fitness Planner export.'],
     [
       'a newer version',
-      jsonFile({ format: 'fitness-planner-export', version: 3 }),
+      jsonFile({ format: 'fitness-planner-export', version: 4 }),
       'That export comes from a newer version of the app.',
     ],
   ])('rejects %s with an inline error and changes nothing', async (_, file, message) => {

@@ -1,5 +1,5 @@
 import { DAY_NAMES } from '@/lib/dates'
-import type { Days, Log, Mark } from '@/lib/storage'
+import { MARKS, markKind, type Days, type Log, type Mark } from '@/lib/storage'
 import { numberWord } from '@/lib/words'
 
 /** Anything tracked as a tick per day against a weekly goal: exercises and foods. */
@@ -76,11 +76,12 @@ export function goalsMet(items: Tracked[], week: WeekLog): number {
 }
 
 /**
- * The marks a press steps through, after an empty day and back to it (DayMark card): exercises
- * go great, partial, missed; foods are eaten or not.
+ * The marks a press steps through, after an empty day and back to it (DayMark card, K17), drawing
+ * first: an exercise goes great, partial and missed in the zigzag, then in the solid, then in the
+ * hatch; a food is eaten or not, so it goes great in each drawing.
  */
-export const EXERCISE_CYCLE: readonly Mark[] = ['great', 'partial', 'missed']
-export const FOOD_CYCLE: readonly Mark[] = ['great']
+export const EXERCISE_CYCLE: readonly Mark[] = MARKS
+export const FOOD_CYCLE: readonly Mark[] = MARKS.filter((m) => markKind(m) === 'great')
 
 /** The mark after `mark` in `cycle`, and empty after the last (or after one not in it). */
 export function nextMark(mark: Mark | null, cycle: readonly Mark[]): Mark | null {

@@ -12,30 +12,34 @@ Five project roles each mean exactly one thing:
 | `highlight` | Today: the band down today's column | Anything but today |
 | `caution-ink` | Over the daily pick, always with words ("one extra") | Errors |
 
-**The three pens** are fixed, like the green, amber and red markers by a whiteboard; nobody picks them. The pen is what tells the three kinds apart on screen (K15); the accessible name says "partly done" or "couldn't do it". `pen` reaches 4.5:1 as text on `canvas` and `panel`, and all three reach 3:1 as a stroke on `canvas`, `panel`, `tile` and `highlight`, in both themes.
+**The three pens** are fixed, like the green, yellow and red markers by a whiteboard; nobody picks them. The pen is what tells the three kinds apart on screen (K15); the accessible name says "partly done" or "couldn't do it". `pen` reaches 4.5:1 as text on `canvas` and `panel`, and `pen` and `pen-missed` reach 3:1 as a mark on `canvas`, `panel`, `tile` and `highlight`, in both themes. `pen-partial` is a sunny yellow by the owner's choice (K18): 1.5–1.9:1 on the light grounds, held to 1.5:1 by the gate, and above 7:1 in dark. The box drawn over every mark keeps it findable.
+
+**Today's band** (`highlight`) is a neutral warm grey, like a strip of masking tape, so all three pens stand out on it (K18).
 
 **Print** is the light theme on white paper, from either theme: words, boxes and marks keep their light colours, the surfaces and the highlight go transparent, chips are outlined, and "one extra" keeps its words (K16).
 
 ## Type
 
+The type is set for the gym, not the desk: big enough to read at arm's length from a phone propped on a bench (K19). Nothing is delicate.
+
 **Source Serif 4** for the display date, section titles, the wordmark and notes (italic). **Source Sans 3** for everything else, numbers included, always with `font-variant-numeric: tabular-nums`. Both self-hosted. No monospace.
 
 | Style | Size | Use |
 | --- | --- | --- |
-| `display` | 40/44 serif 600 (32/36 below 640px) | The week's date, once per screen |
-| `title-1` | 26/32 serif 600 | Section titles |
-| `title-2` | 20/26 sans 600 | Dialog titles |
-| `body-large` | 17/24 | The summary line under a section title |
-| `body` | 16/24 | Running text, inputs, buttons, row names |
-| `caption` | 14/20 | Goals, hints, dates in `ink-secondary` |
-| `label` | 14/20 600 | Field labels, day initials, chips. Sentence case. |
-| `note` | 16/24 serif italic | A person's note |
+| `display` | 44/48 serif 600 (36/40 below 640px) | The week's date, once per screen |
+| `title-1` | 30/36 serif 600 | Section titles |
+| `title-2` | 22/28 sans 600 | Dialog titles |
+| `body-large` | 20/28 | The summary line under a section title |
+| `body` | 18/26 | Running text, inputs, buttons, row names |
+| `caption` | 16/22 | Goals, hints, dates in `ink-secondary` |
+| `label` | 16/22 600 | Field labels, day initials, chips. Sentence case. |
+| `note` | 18/26 serif italic | A person's note |
 
 ## The marks
 
-- **Empty:** the box, drawn by hand in `control-border`, about 30px across, centred in a cell at least 44px tall.
-- **Great, partial, missed:** the box filled in `pen`, `pen-partial` or `pen-missed` with one of three marker drawings (an open zigzag, a solid fill, a dense hatch), picked by the row and the date so the grid looks filled by hand. The box is drawn over the fill. Each runs a little past the box, as a quick hand does, and each counts towards the week.
-- **A press** steps an exercise's day from empty to great, partial, missed and back to empty; a food is eaten or not, so it goes from empty to great and back.
+- **Empty:** the box, drawn by hand in `control-border`, about 45px across, centred in a 76px cell.
+- **Great, partial, missed:** the box filled in `pen`, `pen-partial` or `pen-missed` with one of three marker drawings traced from the owner's own ink (an open zigzag, a solid fill, a dense hatch). The box is drawn over the fill. The ink runs a little past the box, as a quick hand does, and every kind counts towards the week.
+- **A press** chooses both, drawing first (K17): an exercise's day goes great, partial and missed in the zigzag, then in the solid, then in the hatch, then back to empty; a food goes great in each drawing, then empty. The drawing is saved with the day.
 - **Today:** the `highlight` band down the column, and "today" in the accessible name.
 - **Note:** a small `ink-secondary` mark in the cell's top-right corner; "has a note" in the accessible name.
 - **Over the pick:** the day's count in `caution-ink`, underlined, with "one extra" beneath.

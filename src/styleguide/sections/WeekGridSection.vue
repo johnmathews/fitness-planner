@@ -42,17 +42,14 @@ const rows = reactive<Row[]>([
   { id: 'sq', name: 'Squats', target: 3, chips: ['3 × 15', '16 kg'] },
   { id: 'kh', name: 'Kettlebell halos', target: 2, chips: ['8 each side'] },
 ])
-// Great, partial, missed and empty, so every kind of mark shows.
-const G = 'great'
-const P = 'partial'
-const M = 'missed'
+// Great, partial, missed and empty, in all three drawings, so every kind of mark shows.
 const _ = null
 const log = reactive<Log>({
   [WEEK]: {
-    pu: [G, _, P, G, _, _, _],
-    pl: [G, _, _, M, _, _, _],
-    sq: [_, G, G, P, _, _, _],
-    kh: [_, M, _, G, _, _, _],
+    pu: ['great', _, 'partial-solid', 'great-hatch', _, _, _],
+    pl: ['great-solid', _, _, 'missed', _, _, _],
+    sq: [_, 'great-hatch', 'great', 'partial-hatch', _, _, _],
+    kh: [_, 'missed-solid', _, 'great-solid', _, _, _],
   },
 })
 const week = computed(() => log[WEEK]!)
@@ -64,7 +61,7 @@ const KEYS: [string, string][] = [
   ['Arrows', 'Move cell by cell: names, days, totals and the Picked row. Never wrap.'],
   ['Home, End', 'First and last cell in the row.'],
   ['Ctrl+Home, Ctrl+End', 'First and last cell of the grid.'],
-  ['Space, Enter', 'Step a day’s mark: great, partial, missed, empty. Nothing elsewhere.'],
+  ['Space, Enter', 'Step a day’s mark: great, partial, missed in each drawing, then empty.'],
   ['Enter or F2, Escape', 'In Edit plan, on a name: into its Edit button; Escape back.'],
 ]
 

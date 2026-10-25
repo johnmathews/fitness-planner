@@ -24,10 +24,13 @@ import {
 export const EXPORT_FORMAT = 'fitness-planner-export'
 /** Files exported before the app was renamed carry this format; they import as if current. */
 export const OLD_EXPORT_FORMAT = 'exercise-planner-export'
-/** Version 2 files carry a mark per day (`great`, `partial`, `missed` or null). */
-export const EXPORT_VERSION = 2
-/** Version 1 files carry a `true` per done day; they read as `great`. */
-export const OLD_EXPORT_VERSION = 1
+/**
+ * Version 3 files carry a mark per day with its drawing (`great`, `partial-solid`, `missed-hatch`
+ * … or null). Version 2 files carry the kinds alone, which read as the zigzag; version 1 files a
+ * `true` per done day, which reads as `great`. All three import.
+ */
+export const EXPORT_VERSION = 3
+const READ_VERSIONS: readonly unknown[] = [1, 2, EXPORT_VERSION]
 
 export type ExportData = {
   exercise: PlannerData
@@ -85,7 +88,7 @@ export function parseExport(text: string): ParseResult {
   ) {
     return { ok: false, error: 'format' }
   }
-  if (parsed.version !== OLD_EXPORT_VERSION && parsed.version !== EXPORT_VERSION) {
+  if (!READ_VERSIONS.includes(parsed.version)) {
     return { ok: false, error: 'version' }
   }
   return {

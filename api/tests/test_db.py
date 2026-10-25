@@ -31,9 +31,12 @@ def test_marks_migration_reads_existing_ticks_as_great(
     c.execute("INSERT INTO ticks VALUES (1, 'exercise', '2026-10-19', 'sq', 0)")
     monkeypatch.undo()
     db.migrate(c)
-    assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 3
-    rows = [tuple(r) for r in c.execute("SELECT item_id, days, partial, missed FROM ticks")]
-    assert sorted(rows) == [("pu", 5, 0, 0), ("sq", 0, 0, 0)]
+    assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 4
+    rows = [
+        tuple(r)
+        for r in c.execute("SELECT item_id, days, partial, missed, solid, hatch FROM ticks")
+    ]
+    assert sorted(rows) == [("pu", 5, 0, 0, 0, 0), ("sq", 0, 0, 0, 0, 0)]
     assert load_tracked(c, 1, "exercise")["log"] == {
         "2026-10-19": {
             "pu": ["great", None, "great", None, None, None, None],
@@ -57,7 +60,7 @@ def test_deleting_a_user_cascades_to_their_rows(conn: sqlite3.Connection) -> Non
     )
     conn.execute("INSERT INTO settings VALUES (1, '#30d158', 3)")
     conn.execute("INSERT INTO plans VALUES (1, 'exercise', '2026-10-19', '[]', 1)")
-    conn.execute("INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 5, 0, 0)")
+    conn.execute("INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 5, 0, 0, 0, 0)")
     conn.execute("INSERT INTO sessions VALUES ('t', 1, 0, 0, 0)")
     conn.execute("INSERT INTO confirmations VALUES ('c', 1, 0, 0, NULL)")
     conn.execute("INSERT INTO mail_log (user_id, kind, sent_at) VALUES (1, 'confirm', 0)")
@@ -75,11 +78,13 @@ def test_constraints_reject_bad_rows(conn: sqlite3.Connection) -> None:
         "INSERT INTO users (username, password_hash, created_at) VALUES ('ann', 'h', 0)",
         "INSERT INTO plans VALUES (1, 'other', '2026-10-19', '[]', 1)",
         "INSERT INTO plans VALUES (1, 'exercise', '2026-10-19', '[]', 0)",
-        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 128, 0, 0)",
-        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 128, 0)",
-        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 0, -1)",
-        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 'x', 0)",  # STRICT
-        "INSERT INTO ticks VALUES (2, 'diet', '2026-10-19', 'veg', 1, 0, 0)",  # no such user
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 128, 0, 0, 0, 0)",
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 128, 0, 0, 0)",
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 0, -1, 0, 0)",
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 0, 0, 128, 0)",
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 0, 0, 0, -1)",
+        "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 'x', 0, 0, 0)",  # STRICT
+        "INSERT INTO ticks VALUES (2, 'diet', '2026-10-19', 'veg', 1, 0, 0, 0, 0)",  # no such user
         # A reset link names its user; an invite does not.
         "INSERT INTO invites VALUES ('t', 'reset', 'Ann', NULL, 0, 0, NULL, 0)",
         "INSERT INTO invites VALUES ('t', 'invite', 'bob', 1, 0, 0, NULL, 0)",

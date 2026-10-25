@@ -25,7 +25,7 @@ const FIGURE = {
 
 <!--
   The one strong number in a section (brand/design-system/project/components/StatFigure): the
-  figure at 20/26 tabular, then "of 12 this week" in body-large ink-secondary on its baseline.
+  figure at 22/28 tabular, then "of 12 this week" in body-large ink-secondary on its baseline.
   Met is pen plus a 16px check, so it never rests on colour alone: Graphite's pen is close to ink
   (F6). Plain text, not a live region: the DayMark that changed it already announces.
 -->
@@ -33,7 +33,7 @@ const FIGURE = {
   <p data-slot="stat-figure" :data-state="state" class="flex flex-wrap items-baseline gap-x-2">
     <span
       data-slot="stat-figure-value"
-      :class="['text-[20px] leading-[26px] tabular-nums', FIGURE[state]]"
+      :class="['text-[22px] leading-[28px] tabular-nums', FIGURE[state]]"
       >{{ figure }}</span
     >{{ ' '
     }}<span data-slot="stat-figure-words" class="body-large text-ink-secondary tabular-nums"

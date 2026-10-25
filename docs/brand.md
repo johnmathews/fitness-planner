@@ -57,7 +57,7 @@ Five project roles each mean one thing, and nothing else may use them:
 | `pen`         | Great: a day's fill, and a total or figure whose goal is met               | Links, buttons, decoration |
 | `pen-partial` | Partly done: a day's fill                                                  | Over the pick, warnings    |
 | `pen-missed`  | Tried and couldn't: a day's fill                                           | Errors                     |
-| `highlight`   | Today: the band down today's column, and the Today list's heading          | Anything but today         |
+| `highlight`   | Today: the neutral band down today's column, and the Today list's heading  | Anything but today         |
 | `caution-ink` | Over the daily pick, always with words and an underline ("4", "one extra") | Errors                     |
 
 The primary action is `ink`, not a brand colour (K8): one colour for "act", the pens for "done".
@@ -68,17 +68,22 @@ accessible name says "partly done" or "couldn't do it".
 
 ## 4. The three pens
 
-A day's mark comes in three kinds, like the green, amber and red markers by a whiteboard (K9, K10,
-K15). The pens are fixed: there is no Ink setting any more.
+A day's mark comes in three kinds, like the green, yellow and red markers by a whiteboard (K9, K10,
+K15, K18). The pens are fixed: there is no Ink setting any more.
 
 | Pen           | Mark                    | Light     | Dark      |
 | ------------- | ----------------------- | --------- | --------- |
 | `pen`         | Great: the box filled   | `#2e7a4c` | `#8fcbaa` |
-| `pen-partial` | Partial: the box filled | `#a56f00` | `#e6b450` |
+| `pen-partial` | Partial: the box filled | `#f2b300` | `#f5c518` |
 | `pen-missed`  | Missed: the box filled  | `#c0392b` | `#ee7d72` |
 
-`pen` reaches 4.5:1 as text on `canvas` and `panel` (a met total), and all three reach 3:1 as a
-stroke on `canvas`, `panel`, `tile` and `highlight` in both themes; the gate measures every pair.
+`pen` reaches 4.5:1 as text on `canvas` and `panel` (a met total), and `pen` and `pen-missed` reach
+3:1 as a mark on `canvas`, `panel`, `tile` and `highlight` in both themes; the gate measures every
+pair. `pen-partial` is a sunny marker yellow by the owner's choice (K18): 1.5–1.9:1 on the light
+grounds, below the 3:1 a mark should reach, and above 7:1 in dark. The gate holds it to 1.5:1 so it
+can't fade further, and the box drawn over every mark keeps a yellow day findable. Today's band is a
+neutral warm grey (`#ece7dd`, `#34312c` in dark), like masking tape, so the yellow stands out on it
+too; `control-border` went one step darker (`#888175`) to keep the box at 3:1 on it.
 `pen-missed` is not `error-ink`: a missed day is a record, not a fault, and `pen-partial` is not
 `caution-ink`.
 
@@ -88,20 +93,21 @@ nothing in the app changes it; it is kept so older data and exports round-trip u
 
 ## 5. Type
 
-Source Serif 4 sets the display date, section titles, the wordmark and notes (italic). Source Sans
-3 sets everything else, numbers included, with tabular figures (K4: no monospace). Both are
+The type is set for the gym, not the desk (K19): big enough to read at arm's length, never
+delicate. Source Serif 4 sets the display date, section titles, the wordmark and notes (italic).
+Source Sans 3 sets everything else, numbers included, with tabular figures (K4: no monospace). Both are
 self-hosted from the Fontsource variable packages, because the CSP allows fonts only from `'self'`.
 
 | Class        | Size and weight                     | Use                                                      |
 | ------------ | ----------------------------------- | -------------------------------------------------------- |
-| `display`    | 40/44 serif 600 (32/36 below 640px) | The week heading, once per screen                        |
-| `title-1`    | 26/32 serif 600                     | Section titles                                           |
-| `title-2`    | 20/26 sans 600                      | Dialog, popover and prompt titles, the Today list's date |
-| `body-large` | 17/24                               | Summary lines, week totals                               |
-| `body`       | 16/24                               | Running text, inputs, buttons, row names                 |
-| `caption`    | 14/20                               | Goals, hints, dates                                      |
-| `label`      | 14/20 600                           | Field labels, day names, chips                           |
-| `note`       | 16/24 serif italic                  | A person's note                                          |
+| `display`    | 44/48 serif 600 (36/40 below 640px) | The week heading, once per screen                        |
+| `title-1`    | 30/36 serif 600                     | Section titles                                           |
+| `title-2`    | 22/28 sans 600                      | Dialog, popover and prompt titles, the Today list's date |
+| `body-large` | 20/28                               | Summary lines, week totals                               |
+| `body`       | 18/26                               | Running text, inputs, buttons, row names                 |
+| `caption`    | 16/22                               | Goals, hints, dates                                      |
+| `label`      | 16/22 600                           | Field labels, day names, chips                           |
+| `note`       | 18/26 serif italic                  | A person's note                                          |
 
 Labels are sentence case, never uppercase with letter-spacing.
 
@@ -109,20 +115,20 @@ Labels are sentence case, never uppercase with letter-spacing.
 
 | Mark          | Look                                                              | Also carried by                            |
 | ------------- | ----------------------------------------------------------------- | ------------------------------------------ |
-| Great         | The hand-drawn box filled in `pen`, in a 44px button              | `aria-pressed="true"`                      |
+| Great         | The hand-drawn box filled in `pen`, in a 64px button              | `aria-pressed="true"`                      |
 | Partial       | The box filled in `pen-partial`                                   | `aria-pressed="true"`, "partly done"       |
 | Missed        | The box filled in `pen-missed`                                    | `aria-pressed="true"`, "couldn't do it"    |
-| Empty         | The empty hand-drawn box, about 30px, in `control-border`         | `aria-pressed="false"`                     |
+| Empty         | The empty hand-drawn box, about 45px, in `control-border`         | `aria-pressed="false"`                     |
 | Today         | The `highlight` band down the column                              | "today" in the name, `aria-current="date"` |
 | Over the pick | The day's count in `caution-ink`, underlined, "one extra" beneath | The words                                  |
 | Note          | A 10px folded corner in `ink-secondary` (NoteMark)                | "has a note" in the name                   |
 
-A marked box is filled with one of three marker drawings traced from the owner's whiteboard marks:
-an open zigzag, a solid fill and a dense hatch. The drawing carries no meaning: the app picks it from
-the row and the date, so the grid looks filled by hand and a day keeps its drawing. The box is drawn
-over the fill, and the fill runs a little past the box, as a quick hand does. A press steps an exercise's day from
-empty to great, partial, missed and back to empty; a food is eaten or not, so it steps between empty
-and great. Every mark counts towards the week, the Picked row and the Today summary.
+A marked box is filled with one of three marker drawings, each the outline of the owner's own
+marker ink traced from a photo (K17): an open zigzag, a solid fill and a dense hatch. The drawing
+carries no meaning; the person chooses it by pressing, and it is saved with the day. A press steps
+an exercise's day drawing first: great, partial and missed in the zigzag, then in the solid, then in
+the hatch, then back to empty. A food has one kind, so it steps through great in each drawing, then
+empty. The box is drawn over the fill, and the ink runs a little past the box, as a quick hand does. Every mark counts towards the week, the Picked row and the Today summary.
 
 Print is the light theme on white paper, from either theme (K16): words, boxes and marks keep their
 light colours, the surfaces and the band go transparent, chips are outlined, "one extra" is kept. Icons are Lucide outline at 1.5px stroke, never Unicode glyphs or emoji. Colour transitions

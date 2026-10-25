@@ -25,11 +25,34 @@ export type Food = {
 }
 
 /**
- * A marked day (DayMark card): done well, done in part, or tried and couldn't. Every mark counts
- * towards the week; an empty day is `null`. Foods only ever take `great`.
+ * How a marked day went (DayMark card): done well, done in part, or tried and couldn't. Every kind
+ * counts towards the week. Foods only ever take `great`.
  */
-export type Mark = 'great' | 'partial' | 'missed'
-export const MARKS: readonly Mark[] = ['great', 'partial', 'missed']
+export type MarkKind = 'great' | 'partial' | 'missed'
+export const MARK_KINDS: readonly MarkKind[] = ['great', 'partial', 'missed']
+
+/** The three marker drawings a box can be filled with, traced from the owner's own (K17). */
+export type Drawing = 'zigzag' | 'solid' | 'hatch'
+export const DRAWINGS: readonly Drawing[] = ['zigzag', 'solid', 'hatch']
+
+/**
+ * A marked day: its kind, and the drawing a press chose for it. The zigzag is the plain kind
+ * (`great`), as every mark stored before drawings reads; the others add theirs (`great-solid`,
+ * `missed-hatch`). An empty day is `null`.
+ */
+export type Mark = MarkKind | `${MarkKind}-${Exclude<Drawing, 'zigzag'>}`
+/** Every mark, drawing first: the zigzag's three kinds, then the solid's, then the hatch's. */
+export const MARKS: readonly Mark[] = DRAWINGS.flatMap((drawing) =>
+  MARK_KINDS.map((kind): Mark => (drawing === 'zigzag' ? kind : `${kind}-${drawing}`)),
+)
+
+export function markKind(mark: Mark): MarkKind {
+  return mark.split('-')[0] as MarkKind
+}
+
+export function markDrawing(mark: Mark): Drawing {
+  return (mark.split('-')[1] ?? 'zigzag') as Drawing
+}
 
 /** One item's week: a mark or `null` for each day, Monday first. */
 export type Days = (Mark | null)[]
@@ -154,7 +177,7 @@ export function normaliseFood(v: unknown): Food | null {
 }
 
 export function isMark(v: unknown): v is Mark {
-  return v === 'great' || v === 'partial' || v === 'missed'
+  return typeof v === 'string' && (MARKS as readonly string[]).includes(v)
 }
 
 /** One stored day: a mark as it is, a `true` from before marks had kinds as `great`, else empty. */

@@ -16,17 +16,17 @@ The phone's first view: today's exercises and foods as one list, each with a sin
   No praise, no exclamation marks, no guilt. With no exercises in the plan there is nothing to count, and the summary line is left out.
 - **Groups:** "Exercises" then "Food", each a `label` heading in `ink-secondary` over a list with `line` hairlines between rows.
 - **Rows:** the name in `body` at 600; beneath it the Chip(s) and the week so far in `caption` `ink-secondary` ("3 of 4 this week"); the DayMark on the right. Foods have no chips.
-- **DayMark:** the grid's own DayMark, unchanged: the same box and marks in the same 44 × 44px button, centred in a 48 × 48px cell at the row's right. A press steps the mark as in the grid: an exercise empty → great → partial → missed → empty, a food empty ↔ great. The row itself is not a button, so a scroll never marks a day by accident.
+- **DayMark:** the grid's own DayMark, unchanged: the same box and marks in the same 64 × 64px button, centred in a 72 × 72px cell at the row's right. A press steps the mark as in the grid: an exercise through great, partial and missed in each drawing, then empty; a food through great in each drawing, then empty. The row itself is not a button, so a scroll never marks a day by accident.
 - **Notes:** a day's note shows under its row in the `note` style (serif italic, `ink`), the person's words without quotation marks. The list never invites one: no "Add a note" in a row.
 - **Empty:** a week with no exercises and no foods shows the band and, beneath it in `body` `ink-secondary`: "Nothing is planned this week. Switch to Week and turn on Edit plan to add exercises and foods." A group with no items is left out.
 - **Print:** the view switch never prints. The printed sheet is the WeekGrid's job (Print… is in the Header from 640px up), so TodayList has no print styles of its own.
-- Side gutter `space-4`; rows at least 64px tall.
+- Side gutter `space-4`; rows at least 80px tall, the 72px DayMark cell and its padding.
 
 ## States
 
 | Part | State | Look |
 | --- | --- | --- |
-| Row | empty / great / partial / missed (foods: empty / great) | see DayMark |
+| Row | empty, or great / partial / missed in any drawing (foods: empty or great) | see DayMark |
 | Row | has a note | the note's text beneath the row |
 | Summary | under, at or over the pick | see the table above |
 | Food | any | no effect on the summary; foods have no pick |
@@ -44,4 +44,4 @@ The phone's first view: today's exercises and foods as one list, each with a sin
 
 ## You provide
 
-Today's full date; the daily pick; for each exercise its name, chips, weekly count of marked days and goal, today's mark (`null | 'great' | 'partial' | 'missed'`) and note; for each food its name, weekly count and goal and today's mark (`null | 'great'`); the press handler, which steps the mark with `nextMark`; the view switch handler.
+Today's full date; the daily pick; for each exercise its name, chips, weekly count of marked days and goal, today's mark (`null`, or a kind with its drawing, as DayMark says) and note; for each food its name, weekly count and goal and today's mark (`null`, or `great` in any drawing); the press handler, which steps the mark with `nextMark`; the view switch handler.
