@@ -37,21 +37,24 @@ scoped by `user_id`, and no endpoint reads another user's data.
 | `mail_log`      | `id`                                | `user_id`, `kind` (`confirm` or `reset`), `sent_at`: one row per email attempted (a failed send still counts), for the limits                                           |
 | `settings`      | `user_id`                           | `accent`, `daily_pick`                                                                                                                                                  |
 | `plans`         | `(user_id, section, week)`          | `items_json`, `rev`                                                                                                                                                     |
-| `ticks`         | `(user_id, section, week, item_id)` | `days`, `partial`, `missed`: 7-bit masks (bit 0 is Monday); see below                                                                                                   |
+| `ticks`         | `(user_id, section, week, item_id)` | `days`, `partial`, `missed`, `solid`, `hatch`: 7-bit masks (bit 0 is Monday); see below                                                                                 |
 
 `section` is `exercise` or `diet`. Every row cascades from its user. Tokens and session ids are
 stored only as SHA-256 hashes. A database lookup with a stolen copy of the file cannot recover a
 working cookie or link. Times are Unix seconds. The theme is not stored: it belongs to the device.
 
-**Marks.** Each day of a tick row is empty or holds one mark: `great`, `partial` or `missed`.
-`days` has a bit for every marked day, so it alone says which days count; `partial` and `missed`
-are disjoint subsets of it. A day in `days` and in neither subset is `great`.
+**Marks.** Each day of a tick row is empty or holds one mark: a kind (`great`, `partial` or
+`missed`) in one of three drawings. The zigzag is the plain kind; the solid and the hatch add
+theirs: `great-solid`, `missed-hatch` (K17). `days` has a bit for every marked day, so it alone
+says which days count. `partial` and `missed` are disjoint subsets of it, and a day in neither is
+`great`; `solid` and `hatch` are disjoint subsets too, and a day in neither is the zigzag.
 
 The schema version lives in `PRAGMA user_version`, and `db.migrate` applies each step in order at
 startup inside a transaction. Version 1 is the first six tables; version 2 adds `partial` and
 `missed` (default 0), so every tick stored before marks had kinds reads as `great`; version 3 adds
 email: `email_confirmed_at`, `mailed`, `confirmations` and `mail_log`. Every account from before
-it starts unconfirmed.
+it starts unconfirmed. Version 4 adds `solid` and `hatch` (default 0), so every older mark reads as
+the zigzag.
 
 ## 3. Endpoints
 
@@ -106,7 +109,8 @@ rules as stored data, so a bad item drops out rather than failing the write.
 
 **Ticks** set or clear one day for one item (an item id of 1 to 128 characters), so two devices
 marking different days never collide. `day` is 0 (Monday) to 6. The body is `{"mark": m}`, where
-`m` is `great`, `partial`, `missed` or null (clear the day). The old `{"done": bool}` body, from a
+`m` is one of the nine marks (`great`, `partial-solid`, `missed-hatch` …) or null (clear the
+day). The old `{"done": bool}` body, from a
 tab or a queued write from before marks had kinds, still works: true is `great`, false clears.
 A `mark` key is read first; any other value of it, or a `done` that is not a boolean, gets 400
 `invalid`. The app sends both keys (`{"mark": m, "done": m !== null}`), so an API from
@@ -120,9 +124,9 @@ refused. The quota measures what the account holds, not the bytes on disk, which
 indexes. The client drops a refused write with a notice that the account is full (`architecture.md`
 §7), and an import says the same.
 
-**Export** writes version 2 of the file: each log row is seven marks or nulls. Import reads
-version 2 and version 1, whose `true` days read as `great` and `false` days as empty; any other
-version gets `version`.
+**Export** writes version 3 of the file: each log row is seven marks, drawings included, or
+nulls. Import reads version 3, version 2 (kinds only, which read as the zigzag) and version 1, whose
+`true` days read as `great` and `false` days as empty; any other version gets `version`.
 
 **Import** applies the merge rule from `architecture.md` §4: existing weeks keep their plan; per
 week, item and day a marked day keeps its mark and an empty one takes the file's; and settings

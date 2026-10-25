@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { exerciseDetails, usePlannerStore } from '@/stores/planner'
-import { DATA_KEY, LEGACY_DATA_KEY, SETTINGS_KEY } from '@/lib/storage'
+import { DATA_KEY, LEGACY_DATA_KEY, MARKS, SETTINGS_KEY } from '@/lib/storage'
 
 // Friday 23 Oct 2026: the week is Mon 19 – Sun 25 and today is index 4.
 const NOW = new Date(2026, 9, 23, 18, 0)
@@ -56,9 +56,9 @@ describe('planner store', () => {
     expect(localStorage.getItem(DATA_KEY)).toBe(v2)
   })
 
-  it('steps a cell through great, partial and missed, each counting, then back to empty', () => {
+  it('steps a cell through every kind in every drawing, each counting, then back to empty', () => {
     const s = usePlannerStore()
-    for (const mark of ['great', 'partial', 'missed'] as const) {
+    for (const mark of MARKS) {
       s.toggle('pu', 0)
       expect(s.markOf('pu', 0)).toBe(mark)
       expect(s.isDone('pu', 0)).toBe(true)

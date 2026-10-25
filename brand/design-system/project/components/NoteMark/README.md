@@ -2,7 +2,7 @@ A folded corner in a day's cell that says the person wrote a note for that day.
 
 ## Use
 
-- A right triangle, 10 × 10px, filled with `ink-secondary`, its right angle flush in the top-right corner of the 56 × 60px DayMark cell. In CSS: a 10px box with `clip-path: polygon(0 0, 100% 0, 100% 100%)`.
+- A right triangle, 10 × 10px, filled with `ink-secondary`, its right angle flush in the top-right corner of the 76px DayMark cell. In CSS: a 10px box with `clip-path: polygon(0 0, 100% 0, 100% 100%)`.
 - It sits on an empty day's cell or a marked one's alike (great, partial or missed), and on the `highlight` band for today. It never touches the DayMark's box or its fill, even where a drawing runs past the box's edge.
 - Only where a note exists. Never a placeholder corner, an "add note" hint or a count of notes.
 - **Print:** prints in the light theme's `ink-secondary`, like the rest of the sheet.

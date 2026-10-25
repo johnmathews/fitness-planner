@@ -11,15 +11,17 @@ import json
 import math
 import re
 import sys
-from typing import Any, Literal, TypedDict, TypeIs
+from collections.abc import Callable
+from typing import Any, Literal, TypedDict, TypeIs, cast
 
 EXPORT_FORMAT = "fitness-planner-export"
 #: Files exported before the app was renamed carry this format; they import as if current.
 OLD_EXPORT_FORMAT = "exercise-planner-export"
-#: Version 2 files carry a mark per day (`great`, `partial`, `missed` or null).
-EXPORT_VERSION = 2
-#: Version 1 files carry a `true` per done day; they read as `great`.
-OLD_EXPORT_VERSION = 1
+#: Version 3 files carry a mark per day with its drawing (`great`, `partial-solid`,
+#: `missed-hatch` … or null). Version 2 files carry the kinds alone, which read as the zigzag;
+#: version 1 files a `true` per done day, which reads as `great`. All three import.
+EXPORT_VERSION = 3
+READ_VERSIONS = (1, 2, EXPORT_VERSION)
 
 MIN_TARGET, MAX_TARGET = 0, 7
 MIN_DAILY_PICK, MAX_DAILY_PICK = 1, 8
@@ -41,9 +43,34 @@ ACCENT_RE = re.compile(r"#[0-9a-fA-F]{6}")
 
 type Item = dict[str, Any]
 type Plans = dict[str, list[Item]]
-#: A marked day: done well, done in part, or tried and couldn't. Every mark counts as done.
-type Mark = Literal["great", "partial", "missed"]
-MARKS: tuple[Mark, ...] = ("great", "partial", "missed")
+#: How a marked day went: done well, done in part, or tried and couldn't. Every kind counts.
+type MarkKind = Literal["great", "partial", "missed"]
+MARK_KINDS: tuple[MarkKind, ...] = ("great", "partial", "missed")
+#: A marked day: its kind, and the drawing a press chose for it (K17). The zigzag is the plain
+#: kind, as every mark stored before drawings reads; the solid and the hatch add theirs.
+type Mark = Literal[
+    "great",
+    "partial",
+    "missed",
+    "great-solid",
+    "partial-solid",
+    "missed-solid",
+    "great-hatch",
+    "partial-hatch",
+    "missed-hatch",
+]
+#: Every mark, drawing first, as the web app's press steps through them.
+MARKS: tuple[Mark, ...] = (
+    "great",
+    "partial",
+    "missed",
+    "great-solid",
+    "partial-solid",
+    "missed-solid",
+    "great-hatch",
+    "partial-hatch",
+    "missed-hatch",
+)
 #: One item's week: a mark or None for each day, Monday first.
 type Days = list[Mark | None]
 type Log = dict[str, dict[str, Days]]
@@ -263,7 +290,7 @@ def parse_export(text: str) -> ExportData:
         raise ExportError("format")
     if parsed.get("format") not in (EXPORT_FORMAT, OLD_EXPORT_FORMAT):
         raise ExportError("format")
-    if as_number(parsed.get("version")) not in (OLD_EXPORT_VERSION, EXPORT_VERSION):
+    if as_number(parsed.get("version")) not in READ_VERSIONS:
         raise ExportError("version")
     settings = parsed.get("settings")
     return {
@@ -313,27 +340,36 @@ def merge_settings(existing: Portable | None, incoming: Portable | None) -> Port
     return existing if existing is not None else incoming
 
 
-def _mask(days: Days, keep: tuple[Mark, ...]) -> int:
-    return sum(1 << i for i, m in enumerate(days[:7]) if m in keep)
+type Masks = tuple[int, int, int, int, int]
 
 
-def days_to_masks(days: Days) -> tuple[int, int, int]:
+def _mask(days: Days, keep: Callable[[Mark], bool]) -> int:
+    return sum(1 << i for i, m in enumerate(days[:7]) if m is not None and keep(m))
+
+
+def days_to_masks(days: Days) -> Masks:
     """Seven marks as the `ticks` row's 7-bit masks, Monday in bit 0: `days` holds every marked
-    day, `partial` and `missed` the days with that mark (so both are inside `days`)."""
-    return _mask(days, MARKS), _mask(days, ("partial",)), _mask(days, ("missed",))
+    day; `partial` and `missed` the days of that kind, and `solid` and `hatch` the days in that
+    drawing, all inside `days`."""
+    return (
+        _mask(days, lambda m: True),
+        _mask(days, lambda m: m.startswith("partial")),
+        _mask(days, lambda m: m.startswith("missed")),
+        _mask(days, lambda m: m.endswith("-solid")),
+        _mask(days, lambda m: m.endswith("-hatch")),
+    )
 
 
-def masks_to_days(days: int, partial: int, missed: int) -> Days:
-    """A `ticks` row's masks as seven marks: a marked day in neither subset is `great`."""
+def masks_to_days(days: int, partial: int, missed: int, solid: int, hatch: int) -> Days:
+    """A `ticks` row's masks as seven marks: a marked day in neither kind's mask is `great`, and
+    in neither drawing's mask is the zigzag."""
     out: Days = []
     for i in range(7):
         bit = 1 << i
         if not days & bit:
             out.append(None)
-        elif partial & bit:
-            out.append("partial")
-        elif missed & bit:
-            out.append("missed")
-        else:
-            out.append("great")
+            continue
+        kind = "partial" if partial & bit else "missed" if missed & bit else "great"
+        drawing = "-solid" if solid & bit else "-hatch" if hatch & bit else ""
+        out.append(cast(Mark, kind + drawing))
     return out

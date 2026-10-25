@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import { DayMark } from '@/components/ui/day-mark'
-import type { Mark } from '@/lib/storage'
+import { MARKS, markDrawing, markKind, type Mark } from '@/lib/storage'
 import { EXERCISE_CYCLE, nextMark } from '@/lib/tracker'
 import ExampleGroup from '../parts/ExampleGroup.vue'
 import StateExample from '../parts/StateExample.vue'
@@ -65,6 +65,16 @@ function step(key: string): void {
           :mark="marks.missed!"
           @toggle="step('missed')"
         />
+      </StateExample>
+    </ExampleGroup>
+
+    <ExampleGroup title="The three drawings, as presses choose them">
+      <StateExample
+        v-for="mark in MARKS"
+        :key="mark"
+        :state="`${markKind(mark)}, ${markDrawing(mark)}`"
+      >
+        <DayMark name="Push-ups" date="Tuesday 20 October" :mark="mark" @toggle="() => {}" />
       </StateExample>
     </ExampleGroup>
 

@@ -17,7 +17,15 @@ import {
   totalFor,
   type WeekLog,
 } from '@/lib/tracker'
-import type { Log, Mark } from '@/lib/storage'
+import {
+  DRAWINGS,
+  MARKS,
+  MARK_KINDS,
+  markDrawing,
+  markKind,
+  type Log,
+  type Mark,
+} from '@/lib/storage'
 
 const items = [
   { id: 'a', name: 'A', target: 2 },
@@ -59,22 +67,44 @@ describe('tracker helpers', () => {
     const log: Log = {}
     cycleDay(log, '2026-10-19', 'a', 3, EXERCISE_CYCLE)
     expect(log).toEqual({ '2026-10-19': { a: [null, null, null, 'great', null, null, null] } })
-    const seen = [1, 2, 3].map(() => {
+    const seen = Array.from({ length: 9 }, () => {
       cycleDay(log, '2026-10-19', 'a', 3, EXERCISE_CYCLE)
       return log['2026-10-19']!.a![3]
     })
-    expect(seen).toEqual(['partial', 'missed', null])
+    expect(seen).toEqual([
+      'partial',
+      'missed',
+      'great-solid',
+      'partial-solid',
+      'missed-solid',
+      'great-hatch',
+      'partial-hatch',
+      'missed-hatch',
+      null,
+    ])
   })
 
-  it('steps exercises through great, partial and missed, and foods on and off', () => {
+  it('steps exercises through each drawing’s three kinds, and foods through green in each', () => {
+    // Drawing first (K17): green, yellow and red in the zigzag, then the solid, then the hatch.
+    expect(EXERCISE_CYCLE).toEqual(MARKS)
     expect(nextMark(null, EXERCISE_CYCLE)).toBe('great')
-    expect(nextMark('great', EXERCISE_CYCLE)).toBe('partial')
-    expect(nextMark('partial', EXERCISE_CYCLE)).toBe('missed')
-    expect(nextMark('missed', EXERCISE_CYCLE)).toBeNull()
+    expect(nextMark('missed', EXERCISE_CYCLE)).toBe('great-solid')
+    expect(nextMark('missed-solid', EXERCISE_CYCLE)).toBe('great-hatch')
+    expect(nextMark('missed-hatch', EXERCISE_CYCLE)).toBeNull()
+    expect(FOOD_CYCLE).toEqual(['great', 'great-solid', 'great-hatch'])
     expect(nextMark(null, FOOD_CYCLE)).toBe('great')
-    expect(nextMark('great', FOOD_CYCLE)).toBeNull()
+    expect(nextMark('great', FOOD_CYCLE)).toBe('great-solid')
+    expect(nextMark('great-hatch', FOOD_CYCLE)).toBeNull()
     // A food marked another way (an import, say) clears on the next press.
     expect(nextMark('partial', FOOD_CYCLE)).toBeNull()
+  })
+
+  it('reads a mark’s kind and drawing: a plain kind is the zigzag', () => {
+    expect(MARKS.map((m) => [markKind(m), markDrawing(m)])).toEqual(
+      DRAWINGS.flatMap((d) => MARK_KINDS.map((k) => [k, d])),
+    )
+    expect(markDrawing('partial')).toBe('zigzag')
+    expect(markKind('missed-hatch')).toBe('missed')
   })
 
   it('makes distinct x-prefixed ids', () => {

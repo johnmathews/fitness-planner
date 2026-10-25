@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
-import type { Mark } from '@/lib/storage'
-import { BOX_PATH, MARK_DRAWINGS, MARK_PENS, dayMarkLabel, markDrawing } from '.'
+import { markDrawing, markKind, type Mark } from '@/lib/storage'
+import { BOX_PATH, MARK_DRAWINGS, MARK_PENS, dayMarkLabel } from '.'
 
 const props = withDefaults(
   defineProps<{
@@ -24,14 +24,13 @@ const props = withDefaults(
 defineEmits<{ toggle: [] }>()
 
 const label = computed(() => dayMarkLabel(props))
-const drawing = computed(() => markDrawing(props.name, props.date))
 </script>
 
 <!--
-  One day of one row (brand/design-system/project/components/DayMark): a 44px button centred in a
-  56 × 60px cell, drawing a hand-drawn box about 30px across in control-border. A marked day fills
-  it in its pen (green great, amber partial, red missed) with one of three marker drawings, picked
-  by the row and the date, running a little past the box; the box is drawn over the fill, as a pen
+  One day of one row (brand/design-system/project/components/DayMark): a 64px button centred in a
+  76px square cell, drawing a hand-drawn box about 45px across in control-border. A marked day fills
+  it in its pen (green great, yellow partial, red missed) with the marker drawing its mark names
+  (zigzag, solid or hatch), running a little past the box; the box is drawn over the fill, as a pen
   line shows through marker. The rest of the cell is quiet space, so the 2px focus ring at 2px
   offset never touches a neighbour.
 -->
@@ -39,12 +38,12 @@ const drawing = computed(() => markDrawing(props.name, props.date))
   <div
     data-slot="day-mark"
     :data-today="today"
-    :class="cn('relative mx-auto grid h-15 w-14 place-items-center', props.class)"
+    :class="cn('relative mx-auto grid size-19 place-items-center', props.class)"
   >
     <button
       type="button"
       data-slot="day-mark-button"
-      class="group grid size-11 place-items-center rounded-md"
+      class="group grid size-16 place-items-center rounded-md"
       :aria-pressed="mark !== null"
       :aria-label="label"
       :aria-current="today ? 'date' : undefined"
@@ -54,21 +53,21 @@ const drawing = computed(() => markDrawing(props.name, props.date))
         data-slot="day-mark-box"
         aria-hidden="true"
         viewBox="0 0 36 36"
-        :data-mark="mark ?? undefined"
+        :data-mark="mark ? markKind(mark) : undefined"
         fill="none"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class="size-10 overflow-visible"
+        class="size-15 overflow-visible"
       >
         <path
           v-if="mark"
-          :d="MARK_DRAWINGS[drawing].d"
+          :d="MARK_DRAWINGS[markDrawing(mark)]"
           data-slot="day-mark-stroke"
-          :data-drawing="drawing"
-          stroke="currentColor"
-          :fill="MARK_DRAWINGS[drawing].filled ? 'currentColor' : 'none'"
-          :stroke-width="MARK_DRAWINGS[drawing].filled ? 1.5 : 3.5"
-          :class="MARK_PENS[mark]"
+          :data-drawing="markDrawing(mark)"
+          fill="currentColor"
+          fill-rule="evenodd"
+          stroke="none"
+          :class="MARK_PENS[markKind(mark)]"
         />
         <path
           :d="BOX_PATH"

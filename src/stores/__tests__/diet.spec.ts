@@ -49,7 +49,12 @@ describe('diet store', () => {
     expect(d.grandTotal).toBe(3)
     expect(d.goalsMet).toBe(1)
     expect(d.log['2026-10-19']!.fish).toEqual(['great', null, null, 'great', null, null, null])
-    // Foods have one kind of mark: the next press clears it.
+    // Foods have one kind of mark, green, in each drawing; then the next press clears it.
+    d.toggle('fish', 3)
+    expect(d.markOf('fish', 3)).toBe('great-solid')
+    d.toggle('fish', 3)
+    expect(d.markOf('fish', 3)).toBe('great-hatch')
+    expect(d.totalFor('fish')).toBe(2)
     d.toggle('fish', 3)
     expect(d.markOf('fish', 3)).toBeNull()
   })

@@ -78,12 +78,12 @@ def load_tracked(conn: sqlite3.Connection, user_id: int, section: Section) -> Tr
     }
     log: Log = {}
     for r in conn.execute(
-        "SELECT week, item_id, days, partial, missed FROM ticks"
+        "SELECT week, item_id, days, partial, missed, solid, hatch FROM ticks"
         " WHERE user_id = ? AND section = ? ORDER BY week",
         (user_id, section),
     ):
         log.setdefault(r["week"], {})[r["item_id"]] = masks_to_days(
-            r["days"], r["partial"], r["missed"]
+            r["days"], r["partial"], r["missed"], r["solid"], r["hatch"]
         )
     return {"plans": plans, "log": log}
 
@@ -164,7 +164,9 @@ def set_tick(
     Only a tick that adds a row can exceed the quota, so only that case pays for the check.
     """
     bit = 1 << day
-    days, partial, missed = days_to_masks([mark if i == day else None for i in range(7)])
+    days, partial, missed, solid, hatch = days_to_masks(
+        [mark if i == day else None for i in range(7)]
+    )
     key = (user_id, section, week, item_id)
     with transaction(conn):
         exists = conn.execute(
@@ -176,13 +178,16 @@ def set_tick(
             _check_growth(before, before + TICK_BYTES, quota)
         # The day's bit is cleared in every mask, then set in the ones its new mark belongs to.
         row = conn.execute(
-            "INSERT INTO ticks (user_id, section, week, item_id, days, partial, missed)"
-            " VALUES (:user, :section, :week, :item, :days, :partial, :missed)"
+            "INSERT INTO ticks"
+            " (user_id, section, week, item_id, days, partial, missed, solid, hatch)"
+            " VALUES (:user, :section, :week, :item, :days, :partial, :missed, :solid, :hatch)"
             " ON CONFLICT (user_id, section, week, item_id) DO UPDATE SET"
             " days = (days & ~:bit) | excluded.days,"
             " partial = (partial & ~:bit) | excluded.partial,"
-            " missed = (missed & ~:bit) | excluded.missed"
-            " RETURNING days, partial, missed",
+            " missed = (missed & ~:bit) | excluded.missed,"
+            " solid = (solid & ~:bit) | excluded.solid,"
+            " hatch = (hatch & ~:bit) | excluded.hatch"
+            " RETURNING days, partial, missed, solid, hatch",
             {
                 "user": user_id,
                 "section": section,
@@ -191,10 +196,18 @@ def set_tick(
                 "days": days,
                 "partial": partial,
                 "missed": missed,
+                "solid": solid,
+                "hatch": hatch,
                 "bit": bit,
             },
         ).fetchone()
-    return masks_to_days(int(row["days"]), int(row["partial"]), int(row["missed"]))
+    return masks_to_days(
+        int(row["days"]),
+        int(row["partial"]),
+        int(row["missed"]),
+        int(row["solid"]),
+        int(row["hatch"]),
+    )
 
 
 def put_settings(conn: sqlite3.Connection, user_id: int, raw: dict[str, Any]) -> Portable:
@@ -248,12 +261,15 @@ def import_data(
                     # A marked day keeps its mark: SET reads the old row, so `~days` masks off
                     # the days already marked before the file's are OR-ed in.
                     conn.execute(
-                        "INSERT INTO ticks (user_id, section, week, item_id, days, partial, missed)"
-                        " VALUES (?, ?, ?, ?, ?, ?, ?)"
+                        "INSERT INTO ticks"
+                        " (user_id, section, week, item_id, days, partial, missed, solid, hatch)"
+                        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
                         " ON CONFLICT (user_id, section, week, item_id) DO UPDATE SET"
                         " days = days | excluded.days,"
                         " partial = partial | (excluded.partial & ~days),"
-                        " missed = missed | (excluded.missed & ~days)",
+                        " missed = missed | (excluded.missed & ~days),"
+                        " solid = solid | (excluded.solid & ~days),"
+                        " hatch = hatch | (excluded.hatch & ~days)",
                         (user_id, section, week, item_id, *days_to_masks(days)),
                     )
         applied = False

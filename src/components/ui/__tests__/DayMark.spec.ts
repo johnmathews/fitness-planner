@@ -1,15 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import {
-  BOX_PATH,
-  DRAWINGS,
-  DayMark,
-  MARK_DRAWINGS,
-  MARK_PENS,
-  dayMarkLabel,
-  markDrawing,
-} from '@/components/ui/day-mark'
-import { MARKS } from '@/lib/storage'
+import { BOX_PATH, DayMark, MARK_DRAWINGS, MARK_PENS, dayMarkLabel } from '@/components/ui/day-mark'
+import { MARKS, markDrawing, markKind } from '@/lib/storage'
 
 const PROPS = { name: 'Squats', date: 'Thursday 22 October', mark: null }
 
@@ -41,20 +33,21 @@ describe('DayMark', () => {
     const stroke = () => wrapper.find('[data-slot="day-mark-stroke"]')
     expect(box().attributes('aria-hidden')).toBe('true')
     expect(box().attributes('data-mark')).toBeUndefined()
-    expect(box().classes()).toEqual(expect.arrayContaining(['size-10', 'overflow-visible']))
+    expect(box().classes()).toEqual(expect.arrayContaining(['size-15', 'overflow-visible']))
     expect(outline().attributes('d')).toBe(BOX_PATH)
     expect(outline().classes()).toEqual(
       expect.arrayContaining(['stroke-control-border', 'group-hover:stroke-ink']),
     )
     expect(stroke().exists()).toBe(false)
-    const drawing = markDrawing(PROPS.name, PROPS.date)
     for (const mark of MARKS) {
       await wrapper.setProps({ mark })
-      expect(box().attributes('data-mark')).toBe(mark)
-      // The day keeps its drawing whatever its kind; the pen says the kind.
-      expect(stroke().attributes('data-drawing')).toBe(drawing)
-      expect(stroke().attributes('d')).toBe(MARK_DRAWINGS[drawing].d)
-      expect(stroke().classes()).toContain(MARK_PENS[mark])
+      // The mark names both: its kind picks the pen, its drawing the path.
+      expect(box().attributes('data-mark')).toBe(markKind(mark))
+      expect(stroke().attributes('data-drawing')).toBe(markDrawing(mark))
+      expect(stroke().attributes('d')).toBe(MARK_DRAWINGS[markDrawing(mark)])
+      expect(stroke().classes()).toContain(MARK_PENS[markKind(mark)])
+      expect(stroke().attributes('fill')).toBe('currentColor')
+      expect(stroke().attributes('fill-rule')).toBe('evenodd')
       expect(wrapper.get('button').attributes('aria-pressed')).toBe('true')
       // Marked, the box no longer darkens on hover: the fill says it all.
       expect(outline().classes()).not.toContain('group-hover:stroke-ink')
@@ -67,30 +60,9 @@ describe('DayMark', () => {
     ])
   })
 
-  it('fills the solid drawing and strokes the two scribbles, all in currentColor', async () => {
-    expect(DRAWINGS.map((d) => MARK_DRAWINGS[d].filled)).toEqual([false, true, false])
-    for (const name of ['Push-ups', 'Squats', 'Plank', 'Lunges']) {
-      const wrapper = mount(DayMark, { props: { ...PROPS, name, mark: 'great' } })
-      const stroke = wrapper.get('[data-slot="day-mark-stroke"]')
-      const { filled } = MARK_DRAWINGS[markDrawing(name, PROPS.date)]
-      expect(stroke.attributes('stroke')).toBe('currentColor')
-      expect(stroke.attributes('fill')).toBe(filled ? 'currentColor' : 'none')
-      expect(stroke.attributes('stroke-width')).toBe(filled ? '1.5' : '3.5')
-    }
-  })
-
-  it('picks a drawing from the row and the date, the same on every render', () => {
-    expect(markDrawing('Squats', 'Thursday 22 October')).toBe(
-      markDrawing('Squats', 'Thursday 22 October'),
-    )
-    // A week of a few rows uses all three drawings, so the grid looks filled by hand.
-    const days = ['Monday 19', 'Tuesday 20', 'Wednesday 21', 'Thursday 22', 'Friday 23']
-    const used = new Set(
-      ['Push-ups', 'Squats', 'Plank'].flatMap((name) =>
-        days.map((day) => markDrawing(name, `${day} October`)),
-      ),
-    )
-    expect(used).toEqual(new Set(DRAWINGS))
+  it('has three different drawings, each traced as a filled outline', () => {
+    expect(new Set(Object.values(MARK_DRAWINGS)).size).toBe(3)
+    for (const d of Object.values(MARK_DRAWINGS)) expect(d).toMatch(/^M[\d. MCLZ-]+Z$/)
   })
 
   it('gives each kind its own pen', () => {
@@ -109,12 +81,18 @@ describe('DayMark', () => {
     expect(label()).toBe('Squats, Thursday 22 October, today, partly done')
     await wrapper.setProps({ mark: 'missed', today: false })
     expect(label()).toBe("Squats, Thursday 22 October, couldn't do it")
+    // The drawing carries no meaning, so the name never says it.
+    await wrapper.setProps({ mark: 'partial-hatch' })
+    expect(label()).toBe('Squats, Thursday 22 October, partly done')
+    await wrapper.setProps({ mark: 'great-solid' })
+    expect(label()).toBe('Squats, Thursday 22 October')
   })
 
-  it('centres a 44px button in a 56 × 60px cell, and changes colour in 120ms at most', () => {
+  it('centres a 64px button in a 76px cell, and changes colour in 120ms at most', () => {
     const wrapper = mount(DayMark, { props: PROPS })
-    expect(wrapper.classes()).toEqual(expect.arrayContaining(['h-15', 'w-14', 'relative']))
-    expect(wrapper.get('button').classes()).toContain('size-11')
+    expect(wrapper.classes()).toEqual(expect.arrayContaining(['size-19', 'relative']))
+    expect(wrapper.get('button').classes()).toContain('size-16')
+    expect(wrapper.get('[data-slot="day-mark-box"]').classes()).toContain('size-15')
     expect(wrapper.get('[data-slot="day-mark-outline"]').classes()).toContain(
       'motion-safe:duration-120',
     )

@@ -6,7 +6,7 @@ The small form for writing or changing the note on one day of one exercise, set 
 
 - A Panel (`panel`, 1px `line` border, `radius-lg`, `shadow-overlay`), 360px wide, `space-4` padding. It opens as a Popover beside the day on desktop and as a Dialog on a phone.
 - A context line first, in `caption` `ink-secondary`: the row name in `ink` at 600, then the full date ("**Squats** · Thursday 22 October"). The editor has no other title.
-- The field: the visible label "Note" in `label`, then a textarea in the `note` style (Source Serif 4 italic, 16/24) on `tile`, 1px `control-border`, `radius-sm`, at least 120px tall, resizable vertically.
+- The field: the visible label "Note" in `label`, then a textarea in the `note` style (Source Serif 4 italic, 18/26) on `tile`, 1px `control-border`, `radius-sm`, at least 120px tall, resizable vertically.
 - Buttons at the end: secondary "Cancel", primary "Save" (`ink` fill, K8).
 - No placeholder. The editor only ever opens because the person chose to write a note, so it has nothing to ask. Never "How did it go?", "Add a note…" in an empty row, a reminder or a count of days without notes.
 - Saving an empty note removes the note; there is no separate delete and no confirmation.

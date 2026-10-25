@@ -173,7 +173,7 @@ export const usePlannerStore = defineStore('planner', () => {
 
   // Any change to a week, marks included, gives it its own plan, so later edits to the week it was
   // carried from no longer move it.
-  /** Steps the day to its next mark: empty, great, partial, missed, empty again. */
+  /** Steps the day to its next mark: great, partial and missed in each drawing, then empty. */
   function toggle(id: string, day: number): void {
     own()
     tracker.cycleDay(log.value, weekKey.value, id, day, tracker.EXERCISE_CYCLE)

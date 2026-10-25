@@ -38,13 +38,13 @@ const TONE: Record<Exclude<CountTone, 'future'>, string> = {
 
 /**
  * Edit plan's widths: the name column grows by the edit button and its gap, and the table by that
- * and the 56px Remove column, so the days keep their 56px minimum (WeekGrid card). Both grids
+ * and the 56px Remove column, so the days keep their 76px minimum (WeekGrid card). Both grids
  * get the same widths, so their days line up.
  */
 const widths = computed(() =>
   props.configMode
-    ? { name: 'w-47 sm:w-63', table: 'min-w-177 sm:min-w-197' }
-    : { name: 'w-34 sm:w-50', table: 'min-w-150 sm:min-w-170' },
+    ? { name: 'w-47 sm:w-63', table: 'min-w-214 sm:min-w-234' }
+    : { name: 'w-34 sm:w-50', table: 'min-w-187 sm:min-w-207' },
 )
 
 // One tab stop for the whole grid, on today's DayMark in the first row (see gridNav for the keys
@@ -86,13 +86,14 @@ function reveal(ev: FocusEvent): void {
 
 <!--
   One week as a table (brand/design-system/project/components/WeekGrid): the name column (200px,
-  136px below 640px), seven day columns sharing the rest, and the 88px "Week" total (72px).
+  136px below 640px), seven day columns sharing the rest, and the 96px "Week" total (80px).
   Hairline rules between rows, an ink rule under the header, no boxes and no card around it.
-  Today's highlight band runs down its column from the header to the Picked row. Below 600px the
-  table scrolls sideways inside its own container, never the page: the container is positioned so
-  the visually hidden text inside it can't escape and widen the page. The name column is sticky
-  (stickyName) and the container's scroll-padding-left is its width, so a focused cell scrolls
-  clear of the names rather than under them; the container opens scrolled to today (scrollToToday).
+  Today's highlight band runs down its column from the header to the Picked row. Narrower than its
+  minimum (748px, 828px from 640px) the table scrolls sideways inside its own container, never the
+  page: the container is positioned so the visually hidden text inside it can't escape and widen
+  the page. The name column is sticky (stickyName) and the container's scroll-padding-left is its
+  width, so a focused cell scrolls clear of the names rather than under them; the container opens
+  scrolled to today (scrollToToday).
 
   Edit plan widens the name column by exactly the edit button it gains and adds a 56px Remove
   column after "Week", so each row keeps its height (F25).
@@ -114,15 +115,15 @@ function reveal(ev: FocusEvent): void {
       :aria-label="tableLabel"
       class="w-full table-fixed border-collapse tabular-nums"
       :class="
-        // Wide enough that a day column never drops below 56px: the other columns plus 7 × 56
-        // (600px on a phone and 680px above, as the card's 600px minimum assumes).
+        // Wide enough that a day column never drops below the 76px DayMark cell: the other
+        // columns plus 7 × 76 (748px on a phone and 828px above).
         widths.table
       "
     >
       <colgroup>
         <col :class="widths.name" />
         <col v-for="d in days" :key="d.key" />
-        <col class="w-18 sm:w-22" />
+        <col class="w-20 sm:w-24" />
         <col v-if="configMode" class="w-14" />
       </colgroup>
       <thead>

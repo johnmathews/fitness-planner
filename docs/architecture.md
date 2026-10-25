@@ -318,11 +318,11 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   (`fitness-planner-view-v1`, like the theme, never synced). Another week and Edit plan always show
   the grids, since the list only ever shows today and the plan is edited in the week; choosing
   Today returns to this week and turns Edit plan off. The grids keep a
-  600px minimum and scroll sideways inside their own container, with the **name column sticky** at
+  748px minimum and scroll sideways inside their own container, with the **name column sticky** at
   the left on the canvas, `scroll-padding-left` at its width so keyboard focus never lands under
   it, and the scroller opening with the day before today beside the names (another week opens at
-  Monday). The table's minimum width keeps every day column at 56px or more: 600px on a phone and
-  680px above, 848px and 928px in Edit plan. In Edit plan the name
+  Monday). The table's minimum width keeps every day column at 76px, a DayMark cell, or more: 748px on
+  a phone and 828px above, 856px and 936px in Edit plan. In Edit plan the name
   column is 384px, wider than the room a phone leaves for it, so there it scrolls with the days
   instead of sticking, and the grid opens at its left edge. This reverses the earlier "the grid
   scrolls sideways, as designed" (K5, F1).
@@ -367,11 +367,14 @@ have no `<style>` blocks. Everything global is in `src/styles/main.css`.
 ### 6.2 The marks' pens
 
 `pen`, `pen-partial` and `pen-missed` are ordinary roles with fixed values (K10), mapped to
-`text-pen`, `text-pen-partial` and `text-pen-missed`. For a marked day `DayMark` draws one of three
-marker drawings in the kind's pen (`MARK_DRAWINGS`, `MARK_PENS` in `src/components/ui/day-mark`),
-picked by `markDrawing` from the row and the date (K15), then the box over it. The fill runs a
-little past the box. A press emits `toggle`; the stores step the day with `cycleDay`
-and `nextMark` (`src/lib/tracker.ts`): `EXERCISE_CYCLE` for exercises, `FOOD_CYCLE` for foods.
+`text-pen`, `text-pen-partial` and `text-pen-missed`. A mark is a kind with its drawing (`Mark` in
+`src/lib/storage.ts`): `great`, `partial` and `missed` are the zigzag, and `-solid` or `-hatch` names
+the others (K17); `markKind` and `markDrawing` read them back. For a marked day `DayMark` fills the
+mark's drawing (`MARK_DRAWINGS`, traced outlines filled with `fill-rule: evenodd`) in its kind's pen
+(`MARK_PENS` in `src/components/ui/day-mark`), then draws the box over it. The ink runs a little
+past the box. A press emits `toggle`; the stores step the day with `cycleDay` and `nextMark`
+(`src/lib/tracker.ts`): `EXERCISE_CYCLE` is every mark, drawing first, and `FOOD_CYCLE` the three
+green ones.
 `isDone` and the totals count every kind. [brand.md](brand.md) §4 has the values.
 
 ### 6.3 The primitives

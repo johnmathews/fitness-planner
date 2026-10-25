@@ -10,8 +10,9 @@
 ## 1. What it does
 
 - **Exercises.** Each day, pick a few exercises (default three) and mark their cells. A press steps
-  a day from empty to green (done well), amber (partly done), red (tried and couldn't) and back to
-  empty, filling the box with a marker drawing in that colour. The **Week** column counts every marked day against a
+  a day through green (done well), yellow (partly done) and red (tried and couldn't), first in a
+  zigzag, then a solid fill, then a hatch, and back to empty: the colour says how it went, and the
+  marker drawing is yours to choose. The **Week** column counts every marked day against a
   weekly goal of 0–7 days, and turns green with a check once a non-zero goal is met. The **Picked** row counts each day's exercises against the
   daily pick and says so in words when a day goes over ("one extra").
 - **Food.** Below the exercises, foods work the same way, with one kind of mark: mark each day you ate one, and its Week

@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 from fitness_planner_api.validate import (
+    MARKS,
     Days,
     ExportError,
     days_to_masks,
@@ -105,11 +106,27 @@ def test_normalise_mark(value: object, mark: str | None) -> None:
 
 def test_masks_round_trip_every_mark() -> None:
     days: Days = ["great", "partial", "missed", None, "missed", "partial", "great"]
-    assert days_to_masks(days) == (0b1110111, 0b0100010, 0b0010100)
+    assert days_to_masks(days) == (0b1110111, 0b0100010, 0b0010100, 0, 0)
     assert masks_to_days(*days_to_masks(days)) == days
-    assert days_to_masks([None] * 7) == (0, 0, 0)
-    # A row from before marks had kinds has only `days`: every marked day is great.
-    assert masks_to_days(0b0000101, 0, 0) == ["great", None, "great", None, None, None, None]
+    assert days_to_masks([None] * 7) == (0, 0, 0, 0, 0)
+    # A row from before marks had kinds has only `days`: every marked day is a great zigzag.
+    assert masks_to_days(0b0000101, 0, 0, 0, 0) == ["great", None, "great", None, None, None, None]
+
+
+def test_masks_round_trip_every_drawing() -> None:
+    days: Days = [
+        "great-solid",
+        "partial-hatch",
+        "missed-solid",
+        None,
+        "great-hatch",
+        "partial-solid",
+        "missed-hatch",
+    ]
+    assert days_to_masks(days) == (0b1110111, 0b0100010, 0b1000100, 0b0100101, 0b1010010)
+    assert masks_to_days(*days_to_masks(days)) == days
+    for mark in MARKS:
+        assert masks_to_days(*days_to_masks([mark] + [None] * 6))[0] == mark
 
 
 def test_deliberate_divergences_from_javascript() -> None:

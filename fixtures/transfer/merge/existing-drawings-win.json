@@ -1,0 +1,31 @@
+{
+  "description": "A marked day keeps its own mark and drawing whatever the file says; an empty day takes the file's mark with its drawing. Two days gain one here.",
+  "existing": {
+    "plans": {},
+    "log": {
+      "2026-10-19": {
+        "pu": ["great", "partial-solid", null, null, "missed-hatch", null, null]
+      }
+    }
+  },
+  "incoming": {
+    "plans": {},
+    "log": {
+      "2026-10-19": {
+        "pu": ["great-hatch", "partial", "missed-solid", "great-solid", "missed", null, null]
+      }
+    }
+  },
+  "expected": {
+    "plans": {},
+    "log": {
+      "2026-10-19": {
+        "pu": ["great", "partial-solid", "missed-solid", "great-solid", "missed-hatch", null, null]
+      }
+    }
+  },
+  "summary": {
+    "weeks": 0,
+    "ticks": 2
+  }
+}

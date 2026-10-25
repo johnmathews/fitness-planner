@@ -2,7 +2,7 @@ A small quiet tag under an exercise name that says how much: sets × reps or tim
 
 ## Use
 
-- `label` type (14/20, 600) in `ink-secondary` on a `tile` fill, `radius-sm`, `space-2` side padding, no border. Chips sit `space-2` apart and wrap; they never truncate.
+- `label` type (16/22, 600) in `ink-secondary` on a `tile` fill, `radius-sm`, `space-2` side padding, no border. Chips sit `space-2` apart and wrap; they never truncate.
 - One chip for the count, one for the weight. Write them from the exercise's fields:
 
   | Fields | Chip |

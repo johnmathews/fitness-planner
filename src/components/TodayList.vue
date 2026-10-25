@@ -37,8 +37,8 @@ const groups = computed(() =>
   parent's `toggle`). Nothing here is a grid: Tab moves mark to mark, and the skip link finds the
   first one by `data-slot="today-list"`.
 
-  The DayMark is the grid's own, named with the full date and "today" (DayMark card), in a 48px
-  cell; its button is the grid's 44px. No Edit plan here: the plan is edited in the Week view.
+  The DayMark is the grid's own, named with the full date and "today" (DayMark card), in a 72px
+  cell; its button is the grid's 64px, with room for the focus ring. No Edit plan here: the plan is edited in the Week view.
 -->
 <template>
   <div data-slot="today-list" class="pt-4 pb-6">
@@ -54,8 +54,8 @@ const groups = computed(() =>
     <section v-for="g in groups" :key="g.kind" :aria-labelledby="`today-${g.kind}`">
       <h2 :id="`today-${g.kind}`" class="label pt-6 pb-2 text-ink-secondary">{{ g.title }}</h2>
       <ul class="-mx-4 border-t border-line">
-        <li v-for="it in g.items" :key="it.id" class="border-b border-line py-2 pr-2 pl-4">
-          <div class="flex min-h-12 items-center gap-3">
+        <li v-for="it in g.items" :key="it.id" class="border-b border-line py-1 pr-2 pl-4">
+          <div class="flex min-h-18 items-center gap-3">
             <div class="min-w-0 flex-auto">
               <span class="block font-semibold break-words text-ink" data-testid="item-name">{{
                 it.name
@@ -68,7 +68,7 @@ const groups = computed(() =>
               </span>
             </div>
             <DayMark
-              class="h-12 w-12 shrink-0"
+              class="size-18 shrink-0"
               :name="it.name"
               :date="date"
               today

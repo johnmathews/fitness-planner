@@ -97,6 +97,14 @@ MIGRATIONS = [
     CREATE INDEX mail_log_by_time ON mail_log (sent_at);
     CREATE INDEX mail_log_by_user ON mail_log (user_id, kind, sent_at);
     """,
+    # Marks have drawings (K17). `solid` and `hatch` are disjoint subsets of `days`; a marked day
+    # in neither is the zigzag, as every older tick reads.
+    """
+    ALTER TABLE ticks ADD COLUMN solid INTEGER NOT NULL DEFAULT 0
+        CHECK (solid BETWEEN 0 AND 127);
+    ALTER TABLE ticks ADD COLUMN hatch INTEGER NOT NULL DEFAULT 0
+        CHECK (hatch BETWEEN 0 AND 127);
+    """,
 ]
 SCHEMA_VERSION = len(MIGRATIONS)
 
