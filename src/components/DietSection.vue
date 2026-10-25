@@ -38,8 +38,8 @@ watch(
 </script>
 
 <!--
-  The Food section: the same WeekGrid without chips and without the Picked row (foods have no
-  daily pick), under its own SectionHeader. A
+  The Food section: the same WeekGrid without chips (foods have no
+  daily pick), under its own SectionHeader. In Edit plan a
   line rule and space-8 set it apart from Exercises. On paper the heading and the grid stay on
   one page (F20): the header avoids a break after it, and the pair avoids a break inside. On the
   planner's screens it is the second screen, with nothing ruling it off.

@@ -49,7 +49,7 @@ async function copyToNextWeek(): Promise<void> {
 
 <!--
   The page's one h1: the week, as the Header writes it ("19–25 October"), set in display above the
-  sections (SectionHeader card). Each section brings its own heading and figure. In Edit plan the
+  sections (SectionHeader card). Each section brings its own heading. In Edit plan the
   plan's own actions follow, off paper. On the planner's screens it is visually hidden: each
   SectionHeader shows the week beside its title (K25).
 -->

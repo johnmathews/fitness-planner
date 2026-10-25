@@ -61,8 +61,8 @@ build and coverage output. ESLint also ignores Playwright's `playwright-report/`
 - **Role utilities only.** Colours come from the roles (`bg-canvas`, `text-ink-secondary`,
   `border-control-border`, `text-pen`), never a palette class, a hex value or an arbitrary colour.
   The palette is switched off, so a class such as `bg-red-500` silently draws nothing.
-  [brand.md](brand.md) §3 says what each role means. `pen` is for done and a met day, and
-  `caution-ink` for over the pick, nothing else.
+  [brand.md](brand.md) §3 says what each role means. `pen` is for done and a met day, nothing else.
+  `caution-ink` is kept for InlineMessage's caution tone; nothing on the planner uses it (K28).
 - **Type-style classes for text.** Set text with `display`, `title-1`, `title-2`, `body-large`,
   `body`, `caption`, `label` or `note`, rather than font-size and line-height utilities. The type
   classes sit in Tailwind's `components` layer, so a utility beside one wins as it reads
@@ -78,7 +78,7 @@ build and coverage output. ESLint also ignores Playwright's `playwright-report/`
   real control, and generate an id with Vue's `useId()` when none is given. Pass a fixed `id` only
   where a test or another element needs it (the sign-in, sign-up and link forms).
 - Tests find elements by role, label, `data-testid`, `data-slot` or state attributes (`data-today`,
-  `data-tone`, `data-met`, `data-on`, `aria-pressed`, `aria-current`), never by styling classes.
+  `data-tone`, `data-met`, `data-shown`, `aria-pressed`, `aria-current`), never by styling classes.
 
 ### 3.1 The style guide
 
@@ -137,6 +137,9 @@ clock is fixed to Wednesday 21 October 2026, so every run sees the same week.
   the folded week and Edit plan, and every cell of the folded week stays on screen as the keyboard
   walks it. `callUpBar` in `support.ts` brings the navbar into view before a test presses its
   controls, since on the planner's screens it is out of sight.
+- `screens.spec.ts`: a tall Exercises screen and a tall Food screen (`openApp`'s `moreExercises`
+  and `moreFoods`), wheel-scrolled down and back up a notch at a time at 1280×800: the page never
+  rests showing part of both, and it reaches Food (K38).
 
 CI (`.github/workflows/ci.yml`) runs three jobs on every pull request and every push to `main`.
 `check` runs lint, format, types, unit tests with coverage, the build, the design gate and
@@ -196,12 +199,19 @@ listed in [api.md](api.md) §10):
   question answered false when the component that asked goes away or `dismissConfirm()` runs.
 - `src/composables/__tests__/useMediaQuery.spec.ts`: the media query's match, its updates, the
   listener removed with the scope, and a browser without `matchMedia`.
+- `src/composables/__tests__/screenSprint.spec.ts`: where a scroll at rest goes (`sprintTarget`:
+  nowhere inside a screen, on in the direction of travel across a line) and the composable's
+  timing, reduced motion and switching off (K38).
+- `src/composables/__tests__/fullscreen.spec.ts`: full screen unsupported (an iPhone), entering and
+  leaving it, and a refusal leaving the page as it is (K34).
+- `src/styles/__tests__/print.spec.ts`: the print block's literal colours match `tokens.json`'s light
+  values, and the surfaces go transparent.
 - `src/composables/__tests__/gridNav.spec.ts`: the grid keyboard model on a small table: the one
   tab stop (today, the first day, the last cell focused), arrows, Home and End with and without
   Ctrl, Space and Enter left to the DayMark, Edit plan's
   controls (Enter or F2 in, Escape out, parked when focus leaves), and rows coming and going.
 - `src/components/ui/__tests__/`: one spec per primitive (Banner, BrandMark, Button, Chip,
-  ConfirmDialog, DayMark, Dialog, IconButton, InlineMessage, Popover, SectionHeader,
+  ConfirmDialog, DayMark, Dialog, IconButton, InlineMessage, Popover, RadioCard, SectionHeader,
   SegmentedControl, Stepper, Switch, TextArea, TextField, TextLink), each checking its
   roles, accessible names, sizes, states and the role colours its card names. Examples: an
   IconButton renders nothing without a label, the Popover closes when focus leaves it (F14), the
@@ -266,13 +276,17 @@ listed in [api.md](api.md) §10):
   status messages and triggers (loading, offline with and without a copy, retry, the conflict
   notice, focus, visibility and the minute tick).
 - `src/components/__tests__/Planner.spec.ts`: the planner on the design system's marks, in the
-  mounted app: the Picked row ("one extra" in words and underlined, en dashes for days to come, no
-  empty focusable cell), today (full-date names with "today", `aria-current`, the band), totals
-  and section figures ("N of M", a check when met, zero quiet), Edit plan's rows (Edit in the name
+  mounted app: a day that meets the daily pick (its name, check, words and underline, K30, K39),
+  today (full-date names with "today", `aria-current`, no band, K36), rows with no goal or total
+  (K33), Edit plan's rows (Edit in the name
   cell, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,
   arrows, the skip link, the way on to Food, Edit plan's controls), and headings and print
   attributes. The layouts themselves (filling, folding, the out-of-sight navbar) depend on media
   queries jsdom doesn't apply, so the e2e suite covers them.
+- `src/components/__tests__/Email.spec.ts`: Forgot your password? (offered only when the planner
+  sends email, the same words whatever the answer, a malformed email, one request however often
+  it's pressed) and confirming an email (the banner, Send it again, too soon, already confirmed,
+  the link while signed in).
 - `src/components/__tests__/PlannerScreen.spec.ts`: the planner's screens in the mounted app (K24–K27):
   the `planner-screens` class and Edit plan's sticky bar, the bar from the top edge (a pointer,
   not a finger), the handle's press and pull, a press elsewhere and Escape hiding it, and the way

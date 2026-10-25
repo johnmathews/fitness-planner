@@ -19,7 +19,6 @@ Plain, calm and brief, in the second person. Facts first, then the next step. Th
 | --- | --- |
 | Great job! You crushed today's workout! | Three of three today. |
 | You missed 2 days this week | Two of four this week. |
-| 4/3 (over!) | 4, one extra |
 | Sync failed!! | Not synced. Your changes are saved on this device and will sync when you're back online. |
 | Invalid link | This link has expired or was already used. Ask for a new one. (Then, on its own line, a "Go to sign in" link.) |
 | Accounts are by invitation. | New here? Create an account ("Create an account" is the link, with no full stop after it) |
