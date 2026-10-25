@@ -7,6 +7,8 @@ import {
   openApp,
   openSignIn,
   openSignUp,
+  openForgot,
+  openConfirmed,
   openStyleGuide,
   settle,
 } from './support'
@@ -28,6 +30,22 @@ test.describe('no sideways scroll at 375px', () => {
 
   test('create an account', async ({ page }) => {
     await openSignUp(page, 'light')
+    await expectNoSidewaysScroll(page)
+  })
+
+  test('reset your password', async ({ page }) => {
+    await openForgot(page, 'light')
+    await expectNoSidewaysScroll(page)
+  })
+
+  test('email confirmed', async ({ page }) => {
+    await openConfirmed(page, 'light')
+    await expectNoSidewaysScroll(page)
+  })
+
+  test('the app with the confirm-your-email banner', async ({ page }) => {
+    await openApp(page, { view: 'week', unconfirmed: true })
+    await expect(page.getByTestId('email-status')).toBeVisible()
     await expectNoSidewaysScroll(page)
   })
 

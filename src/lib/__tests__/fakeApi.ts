@@ -1,7 +1,8 @@
 /**
  * An in-memory stand-in for the API (docs/api.md), installed as `fetch` in tests. It keeps the
  * rules the client depends on: plan revisions with 409s, identical-items creates succeeding,
- * single-day ticks, settings, sessions and invite links. Controls let a test go offline, fail
+ * single-day ticks, settings, sessions, invite links and, with `mail` on, email confirmation and
+ * reset requests. Controls let a test go offline, fail
  * a request, or hold replies back to provoke races.
  */
 import type { Days } from '@/lib/storage'
@@ -63,6 +64,14 @@ export class FakeApi {
   /** The user the browser's cookie belongs to, or null. */
   signedIn: string | null = null
   links = new Map<string, { kind: 'invite' | 'reset'; username: string }>()
+  /** Whether the API sends email; off, as on a planner without a Resend key. */
+  mail = false
+  /** Email accounts whose address is confirmed. */
+  confirmed = new Set<string>()
+  /** Live confirmation links: token → username. */
+  confirmLinks = new Map<string, string>()
+  /** Every address a reset link was asked for, sent or not. */
+  forgotten: string[] = []
   offline = false
   calls: { method: string; path: string; body: unknown; expectedUser?: string }[] = []
   private failures: { method: string; path: string; status: number; body?: unknown }[] = []
@@ -154,6 +163,12 @@ export class FakeApi {
     return this.route(method, path, body as Record<string, unknown>, expectedUser)
   }
 
+  /** What the API says about a signed-in account: the name, and the flag when it applies. */
+  private account(name: string): Response {
+    const flag = this.mail && name.includes('@') ? { confirmed: this.confirmed.has(name) } : {}
+    return Response.json({ username: name, ...flag })
+  }
+
   private route(
     method: string,
     path: string,
@@ -162,11 +177,26 @@ export class FakeApi {
   ): Response {
     const error = (status: number, code: string, extra: object = {}) =>
       Response.json({ error: code, ...extra }, { status })
+    if (method === 'GET' && path === '/auth/options') return Response.json({ mail: this.mail })
+    if (method === 'POST' && path === '/auth/forgot') {
+      if (!this.mail) return error(503, 'mail-off')
+      const email = String(body.email).trim().toLowerCase()
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return error(400, 'email')
+      this.forgotten.push(email)
+      return Response.json({}, { status: 202 })
+    }
+    if (method === 'POST' && path === '/auth/confirm') {
+      const name = this.confirmLinks.get(String(body.token))
+      if (!name) return error(410, 'gone')
+      this.confirmLinks.delete(String(body.token))
+      this.confirmed.add(name)
+      return this.account(name)
+    }
     if (method === 'POST' && path === '/auth/login') {
       const a = this.accounts.get(String(body.username))
       if (!a || a.password !== body.password) return error(401, 'invalid')
       this.signedIn = String(body.username)
-      return Response.json({ username: this.signedIn })
+      return this.account(this.signedIn)
     }
     if (method === 'POST' && path === '/auth/signup') {
       const email = String(body.email).trim().toLowerCase()
@@ -176,7 +206,7 @@ export class FakeApi {
       if (this.accounts.has(email)) return error(409, 'exists')
       this.addUser(email, password)
       this.signedIn = email
-      return Response.json({ username: email })
+      return this.account(email)
     }
     if (method === 'POST' && path === '/invites/lookup') {
       const link = this.links.get(String(body.token))
@@ -191,7 +221,7 @@ export class FakeApi {
       if (link.kind === 'invite') this.addUser(link.username, password)
       else this.accounts.get(link.username)!.password = password
       this.signedIn = link.username
-      return Response.json({ username: link.username })
+      return this.account(link.username)
     }
     if (method === 'POST' && path === '/auth/logout') {
       this.signedIn = null
@@ -204,7 +234,13 @@ export class FakeApi {
     if (expectedUser !== undefined && expectedUser.toLowerCase() !== user!.toLowerCase()) {
       return error(401, 'auth')
     }
-    if (method === 'GET' && path === '/auth/me') return Response.json({ username: user })
+    if (method === 'GET' && path === '/auth/me') return this.account(user!)
+    if (method === 'POST' && path === '/auth/confirm/resend') {
+      if (!this.mail) return error(503, 'mail-off')
+      if (!user!.includes('@')) return error(409, 'no-email')
+      if (this.confirmed.has(user!)) return error(409, 'confirmed')
+      return Response.json({}, { status: 202 })
+    }
     if (method === 'GET' && path === '/state') return Response.json(this.state(user!))
     if (method === 'POST' && path === '/import') return this.import(a, body)
     if (method === 'PUT' && path === '/settings') {

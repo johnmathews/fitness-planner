@@ -34,20 +34,23 @@ sign-out refusal into a sentence for the forms; `src/composables/importSummary.t
 for Settings → Import… and the first-login prompt.
 
 ```
-App.vue                 picks the screen (link, planner, sign-up or sign-in), the
+App.vue                 picks the screen (a link, planner, sign-up, reset or sign-in), the
 │                       .dark class, clock refresh, sync triggers (focus, visibility, online, minute
 │                       tick, storage), the phone's Today | Week switch, and the one ConfirmHost
+├── ConfirmEmail.vue    a confirm-your-email link (#/confirm/<t>), signed in or out: confirms it
 ├── PasswordForm.vue    an invite or reset link (#/invite/<t>, #/reset/<t>): choose a password
 ├── SignupForm.vue      #/signup: email and password twice; field and form-level refusals
+├── ForgotForm.vue      #/forgot: an email; then the same words whether or not it has an account
 ├── LoginForm.vue       email or username, and password; explains refusals; notes an ended
-│                       session; links to #/signup
-│   (all three inside AuthCard.vue: a centred Panel with the BrandMark)
+│                       session; links to #/signup, and to #/forgot where the API sends email
+│   (all five inside AuthCard.vue: a centred Panel with the BrandMark)
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
 │                       the Edit plan Switch, Settings (to the Settings page) and Print…
 ├── SettingsPage.vue    the SettingsPage card, at #/settings: Back to the week, then Appearance
 │                       (Theme), Planner (Exercises a day, Show weekly totals), Your data
 │                       (Export and Import…, see §4) and Account (who is signed in, Sign out)
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
+├── EmailStatus.vue     "Confirm your email." Banner, with Send it again, until it is confirmed
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
 ├── TodayList.vue       phones only (below 640px), the first view: today's exercises and foods,
 │                       one DayMark each, "Two of three. One to go."; a Today | Week switch above
@@ -473,7 +476,17 @@ show on their own fields; a closed sign-up, the hourly limit and connection trou
 `request` treats only a 409 `conflict` as a plan conflict, so a sign-up's 409 `exists` arrives as
 a refusal like any other. Invite and reset links arrive as `#/invite/<token>` and
 `#/reset/<token>`. The token goes to the API in request bodies only, and the fragment is cleared once the link is used or turns
-out to be invalid; offline or busy, the page offers to try again. Signing out ends the server
+out to be invalid; offline or busy, the page offers to try again.
+
+**Email** (`api.md` §4.1). The sign-in form asks `GET /api/auth/options` whether the API sends
+email, and only then links "Forgot your password?" to `#/forgot`. That form posts the email and
+then always says a link is on its way if there is an account, whatever the server found. The
+account the API returns on sign-in and from `/auth/me` carries `confirmed` for an email account
+while mail is on; the session store keeps it, and `EmailStatus` shows the confirm banner while it
+is false, with "Send it again" (`POST /api/auth/confirm/resend`). A confirm link,
+`#/confirm/<token>`, opens `ConfirmEmail` whether or not anyone is signed in, ahead of every other
+screen; it posts the token, clears the fragment once used or dead, and, when the link was for the
+signed-in user, ends the banner. A mailed reset link is the same `#/reset/<token>` as before. Signing out ends the server
 session, then deletes the user's cache and outbox from the device. It is refused while offline: the
 cookie is HttpOnly, so only the server can end it.
 

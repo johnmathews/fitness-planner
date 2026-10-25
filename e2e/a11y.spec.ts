@@ -13,6 +13,8 @@ import {
   openApp,
   openSignIn,
   openSignUp,
+  openForgot,
+  openConfirmed,
   openStyleGuide,
   settle,
 } from './support'
@@ -88,6 +90,27 @@ test.describe('the app passes axe', () => {
 
     test(`create an account, ${theme}`, async ({ page }) => {
       await openSignUp(page, theme)
+      await expectNoAxeViolations(page)
+    })
+
+    test(`reset your password, before and after sending, ${theme}`, async ({ page }) => {
+      await openForgot(page, theme)
+      await expectNoAxeViolations(page)
+      await page.getByLabel('Email').fill('sam@example.com')
+      await page.getByRole('button', { name: 'Send link' }).click()
+      await expect(page.getByTestId('forgot-sent')).toBeVisible()
+      await settle(page)
+      await expectNoAxeViolations(page)
+    })
+
+    test(`email confirmed, ${theme}`, async ({ page }) => {
+      await openConfirmed(page, theme)
+      await expectNoAxeViolations(page)
+    })
+
+    test(`the confirm-your-email banner, ${theme}`, async ({ page }) => {
+      await openApp(page, { theme, unconfirmed: true })
+      await expect(page.getByTestId('email-status')).toBeVisible()
       await expectNoAxeViolations(page)
     })
 

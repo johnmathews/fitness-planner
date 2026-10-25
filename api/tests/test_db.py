@@ -31,7 +31,7 @@ def test_marks_migration_reads_existing_ticks_as_great(
     c.execute("INSERT INTO ticks VALUES (1, 'exercise', '2026-10-19', 'sq', 0)")
     monkeypatch.undo()
     db.migrate(c)
-    assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 2
+    assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 3
     rows = [tuple(r) for r in c.execute("SELECT item_id, days, partial, missed FROM ticks")]
     assert sorted(rows) == [("pu", 5, 0, 0), ("sq", 0, 0, 0)]
     assert load_tracked(c, 1, "exercise")["log"] == {
@@ -59,8 +59,10 @@ def test_deleting_a_user_cascades_to_their_rows(conn: sqlite3.Connection) -> Non
     conn.execute("INSERT INTO plans VALUES (1, 'exercise', '2026-10-19', '[]', 1)")
     conn.execute("INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 5, 0, 0)")
     conn.execute("INSERT INTO sessions VALUES ('t', 1, 0, 0, 0)")
+    conn.execute("INSERT INTO confirmations VALUES ('c', 1, 0, 0, NULL)")
+    conn.execute("INSERT INTO mail_log (user_id, kind, sent_at) VALUES (1, 'confirm', 0)")
     conn.execute("DELETE FROM users WHERE id = 1")
-    for table in ("settings", "plans", "ticks", "sessions"):
+    for table in ("settings", "plans", "ticks", "sessions", "confirmations", "mail_log"):
         assert conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0] == 0  # noqa: S608
 
 
@@ -79,8 +81,13 @@ def test_constraints_reject_bad_rows(conn: sqlite3.Connection) -> None:
         "INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 1, 'x', 0)",  # STRICT
         "INSERT INTO ticks VALUES (2, 'diet', '2026-10-19', 'veg', 1, 0, 0)",  # no such user
         # A reset link names its user; an invite does not.
-        "INSERT INTO invites VALUES ('t', 'reset', 'Ann', NULL, 0, 0, NULL)",
-        "INSERT INTO invites VALUES ('t', 'invite', 'bob', 1, 0, 0, NULL)",
+        "INSERT INTO invites VALUES ('t', 'reset', 'Ann', NULL, 0, 0, NULL, 0)",
+        "INSERT INTO invites VALUES ('t', 'invite', 'bob', 1, 0, 0, NULL, 0)",
+        "INSERT INTO invites VALUES ('t', 'reset', 'Ann', 1, 0, 0, NULL, 2)",
+        # Mail is logged against a user, as one of the two kinds.
+        "INSERT INTO mail_log (user_id, kind, sent_at) VALUES (1, 'report', 0)",
+        "INSERT INTO mail_log (user_id, kind, sent_at) VALUES (2, 'reset', 0)",
+        "INSERT INTO confirmations VALUES ('c', 2, 0, 0, NULL)",
     ]
     for sql in bad:
         with pytest.raises(sqlite3.IntegrityError):

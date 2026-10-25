@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 ORIGIN_RE = re.compile(r"https?://[^/\s]+")
+# `planner@example.com`, or a display name before it: `Fitness Planner <planner@example.com>`.
+SENDER_RE = re.compile(r"(?:[^<>@]+ <[^<>@\s]+@[^<>@\s]+>|[^<>@\s]+@[^<>@\s]+)")
 
 
 def _now() -> int:
@@ -47,8 +49,21 @@ class Config:
     signups_per_hour: int = 10
     #: What each user may store, as `data.usage` measures it.
     user_quota_bytes: int = 5 * 1024 * 1024
+    #: Mail is on when this is set. Kept out of repr, so a logged config never shows it.
+    resend_api_key: str | None = field(default=None, repr=False)
+    #: The From line; required when mail is on.
+    mail_from: str = ""
+    #: Emails of every kind across all accounts, in any hour.
+    mail_per_hour: int = 30
+    confirm_days: int = 7
+    #: A reset link sent by email; one minted by `fp-admin reset` lasts `reset_hours`.
+    mail_reset_minutes: int = 60
     #: Unix seconds; injectable so tests can move time.
     clock: Callable[[], int] = field(default=_now)
+
+    @property
+    def mail_enabled(self) -> bool:
+        return self.resend_api_key is not None
 
     @property
     def db_path(self) -> Path:
@@ -68,10 +83,20 @@ class Config:
         origin = env.get("PUBLIC_ORIGIN", "")
         if not ORIGIN_RE.fullmatch(origin):
             raise ValueError(f"PUBLIC_ORIGIN must look like https://host[:port], not {origin!r}")
+        key = env.get("RESEND_API_KEY") or None
+        sender = env.get("MAIL_FROM", "")
+        if key is not None and not SENDER_RE.fullmatch(sender):
+            raise ValueError(
+                "MAIL_FROM must look like Name <address@domain> when RESEND_API_KEY is set,"
+                f" not {sender!r}"
+            )
         return cls(
             data_dir=Path(env.get("DATA_DIR", "/data")),
             public_origin=origin,
             cookie_secure=_flag(env, "COOKIE_SECURE", True),
             backup_keep=int(env.get("BACKUP_KEEP", "7")),
             max_users=_count(env, "MAX_USERS", 50),
+            resend_api_key=key,
+            mail_from=sender,
+            mail_per_hour=_count(env, "MAIL_PER_HOUR", 30),
         )

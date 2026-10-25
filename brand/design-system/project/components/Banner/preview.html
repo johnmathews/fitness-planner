@@ -1,4 +1,4 @@
-<!-- @dsCard group="Feedback" height=470 subtitle="Sync status across the page: offline in tile, a lost change in the error tone" -->
+<!-- @dsCard group="Feedback" height=700 subtitle="Sync status and an unconfirmed email across the page: neutral in tile, a lost change in the error tone" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -46,6 +46,15 @@
     <div class="banner">
       <div class="body-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 2 20 20"/><path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193"/><path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07"/></svg><p class="body"><span class="lead">Can’t reach the server.</span> This device has no saved copy of your data yet.</p></div>
       <div class="actions"><button class="btn secondary" type="button" aria-busy="true">Retrying…</button></div>
+    </div></div>
+  <div class="cell"><p class="caption state">Email not confirmed</p>
+    <div class="banner">
+      <div class="body-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg><p class="body"><span class="lead">Confirm your email.</span> The link is in the email sent to sam@example.com.</p></div>
+      <div class="actions"><button class="btn secondary" type="button">Send it again</button></div>
+    </div></div>
+  <div class="cell"><p class="caption state">Email not confirmed, a new link sent; the action goes</p>
+    <div class="banner">
+      <div class="body-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg><p class="body"><span class="lead">Confirm your email.</span> A new link is on its way to sam@example.com.</p></div>
     </div></div>
   <div class="cell"><p class="caption state">Conflict: a change was replaced</p>
     <div class="banner error">

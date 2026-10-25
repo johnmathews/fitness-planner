@@ -113,6 +113,24 @@ instantly and works offline (`architecture.md` §7). Moving to a new hostname no
 cache: signing in again fetches everything from the server. Settings → Export still saves a JSON
 copy of one person's data.
 
+**Email** (`api.md` §4.1) is off until the API gets `RESEND_API_KEY` and `MAIL_FROM`. To turn it
+on:
+
+1. In Resend, add the sending domain (a subdomain, such as `updates.itsa-pizza.com`, keeps the
+   root domain's mail reputation apart) in region **eu-west-1**.
+2. Add the records Resend shows in Cloudflare, all **DNS only**: a TXT at `resend._domainkey` (DKIM),
+   and an MX and a TXT (SPF) at `send` (for the subdomain, `send.updates`). Wait until Resend says
+   the domain is verified.
+3. Create an API key with **sending access**, limited to that domain, and keep it in the
+   home-server vault; the compose template passes it to `fitness-api` with
+   `MAIL_FROM=Fitness Planner <planner@updates.itsa-pizza.com>`.
+4. Redeploy the API. `GET /api/auth/options` then answers `{"mail": true}`, and the sign-in screen
+   shows "Forgot your password?".
+
+A failed send never shows to the person; it is logged by the API as `confirm email not sent` or
+`reset email not sent` with Resend's answer, so `docker logs fitness-api` is the place to look.
+Resend's own dashboard lists every email it accepted.
+
 The web container must reach the API as `fitness-api` on a shared Docker network: `nginx.conf`
 names that host. `docker-compose.yml` does this locally, and the home-server compose file does it
 in production.

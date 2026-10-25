@@ -11,6 +11,9 @@ import TodayList from '@/components/TodayList.vue'
 import LoginForm from '@/components/LoginForm.vue'
 import PasswordForm from '@/components/PasswordForm.vue'
 import SignupForm from '@/components/SignupForm.vue'
+import ForgotForm from '@/components/ForgotForm.vue'
+import ConfirmEmail from '@/components/ConfirmEmail.vue'
+import EmailStatus from '@/components/EmailStatus.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ImportPrompt from '@/components/ImportPrompt.vue'
 import { ConfirmHost } from '@/components/ui/confirm-dialog'
@@ -40,6 +43,16 @@ function isSignup(): boolean {
   return location.hash === '#/signup'
 }
 const signup = ref(isSignup())
+/** `#/forgot`, the ask-for-a-reset-link form: shown only while nobody is signed in. */
+function isForgot(): boolean {
+  return location.hash === '#/forgot'
+}
+const forgot = ref(isForgot())
+/** A confirm-your-email link (`#/confirm/<token>`): its token, else null. Works signed in or out. */
+function confirmToken(): string | null {
+  return /^#\/confirm\/([A-Za-z0-9_-]+)$/.exec(location.hash)?.[1] ?? null
+}
+const confirmLink = ref(confirmToken())
 
 /** The page the hash asks for: Settings at `#/settings`, otherwise the planner. */
 type Page = 'planner' | 'settings'
@@ -49,7 +62,9 @@ function pageFor(): Page {
 const page = ref<Page>(pageFor())
 function onHash(): void {
   link.value = linkToken()
+  confirmLink.value = confirmToken()
   signup.value = isSignup()
+  forgot.value = isForgot()
   page.value = pageFor()
 }
 // Back from Settings, focus returns to the Settings button that opened it.
@@ -75,15 +90,25 @@ function closeLink(): void {
   forgetToken()
   link.value = null
 }
+function closeConfirm(): void {
+  forgetToken()
+  confirmLink.value = null
+}
 function closeSignup(): void {
   history.replaceState(null, '', location.pathname + location.search)
   signup.value = false
 }
+function closeForgot(): void {
+  history.replaceState(null, '', location.pathname + location.search)
+  forgot.value = false
+}
 // Signed in, by this form or otherwise, the address no longer names a screen that applies.
 watch(
-  () => session.status === 'signed-in' && signup.value,
+  () => session.status === 'signed-in' && (signup.value || forgot.value),
   (stale) => {
-    if (stale) closeSignup()
+    if (!stale) return
+    if (signup.value) closeSignup()
+    if (forgot.value) closeForgot()
   },
   { immediate: true },
 )
@@ -184,8 +209,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <ConfirmEmail
+    v-if="confirmLink"
+    :key="confirmLink"
+    :token="confirmLink"
+    @spent="forgetToken"
+    @leave="closeConfirm"
+  />
   <PasswordForm
-    v-if="link"
+    v-else-if="link"
     :key="link"
     :token="link"
     @done="closeLink"
@@ -196,6 +228,7 @@ onBeforeUnmount(() => {
     <AppNavbar :page="page" />
     <main class="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 print:max-w-none print:p-0">
       <SyncStatus />
+      <EmailStatus />
       <SettingsPage v-if="page === 'settings'" />
       <ImportPrompt v-else-if="session.user" :key="session.user" :user="session.user" />
       <template v-if="page === 'planner' && sync.loaded">
@@ -217,6 +250,7 @@ onBeforeUnmount(() => {
     </main>
   </template>
   <SignupForm v-else-if="session.status === 'signed-out' && signup" @leave="closeSignup" />
+  <ForgotForm v-else-if="session.status === 'signed-out' && forgot" @leave="closeForgot" />
   <LoginForm v-else-if="session.status === 'signed-out'" />
   <!-- The one host for useConfirm(): removing a row and copying over next week's plan ask here. -->
   <ConfirmHost />

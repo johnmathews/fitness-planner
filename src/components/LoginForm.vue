@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useSessionStore, type AuthProblem } from '@/stores/session'
 import { describeProblem } from '@/lib/problems'
 import AuthCard from '@/components/AuthCard.vue'
@@ -22,6 +22,9 @@ const intro = computed(() =>
 // One message covers both fields: the server doesn't say which of the two was wrong.
 const wrong = computed(() => problem.value?.code === 'invalid')
 const describedBy = computed(() => (problem.value ? 'login-problem' : undefined))
+
+// "Forgot your password?" only where the planner sends email; otherwise a reset is fp-admin's.
+onMounted(() => void session.loadOptions())
 
 async function submit(): Promise<void> {
   if (busy.value) return
@@ -72,6 +75,9 @@ async function submit(): Promise<void> {
         {{ busy ? 'Signing in…' : 'Sign in' }}
       </Button>
     </form>
+    <p v-if="session.mail" class="body mt-4">
+      <TextLink href="#/forgot">Forgot your password?</TextLink>
+    </p>
     <p class="body mt-6 text-ink-secondary">
       New here? <TextLink href="#/signup">Create an account</TextLink>
     </p>

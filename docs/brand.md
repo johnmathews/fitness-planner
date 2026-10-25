@@ -131,8 +131,11 @@ no hype, no guilt: facts, then the next step. A confirmation names the thing and
 ("Remove Push-ups?", Remove), never OK or Yes. `voice.md` in the system has the rules and examples,
 and its corrected copy is the source for screen strings. Its "Signing in and creating an account" section
 sets the account screens' words: the sign-in field is "Email or username", a failed sign-in names
-all three and blames none, and creating an account asks for an email and a password (twice) under
-"Create account", with no promise of a confirmation email, because none is sent. The gate rejects the banned words in
+all three and blames none, creating an account asks for an email and a password (twice) under
+"Create account", and where the planner sends email, "confirm" (never "verify") and "Forgot your
+password?" join them. Its "Email" section sets the two emails' words: a subject naming the one
+thing, one sentence, one button, how long the link works, and what to do if it wasn't you. The
+gate rejects the banned words in
 `checks.json`. The app's name, "Fitness Planner", is a working name held in one constant,
 `APP_NAME` in `src/lib/app.ts`.
 
@@ -184,3 +187,7 @@ before editing here.
 3. **Then the style guide section,** `src/styleguide/sections/<Name>Section.vue`, with one entry in
    `src/styleguide/sections.ts`, showing every state from the card.
 4. Publish the card to the artifact as in §9.
+
+The EmailLayout card is the one exception to steps 2 and 3: an email is not app UI, so it has no
+Vue primitive or style guide section. Its code is `api/src/fitness_planner_api/emails.py`, which
+writes the card's preview; a test fails when the two differ.

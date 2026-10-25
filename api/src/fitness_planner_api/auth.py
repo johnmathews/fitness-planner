@@ -1,4 +1,4 @@
-"""Passwords, lockout, sessions, and invite and reset links (docs/api.md §4)."""
+"""Passwords, lockout, sessions, invite and reset links, and email confirmation (docs/api.md §4)."""
 
 import hashlib
 import re
@@ -247,8 +247,18 @@ def set_disabled(conn: sqlite3.Connection, username: str, disabled: bool) -> Non
             conn.execute("DELETE FROM sessions WHERE user_id = ?", (uid,))
 
 
-def mint_link(conn: sqlite3.Connection, config: Config, kind: LinkKind, username: str) -> str:
-    """A new invite or reset token; earlier unused links of that kind for the name stop working."""
+def mint_link(
+    conn: sqlite3.Connection,
+    config: Config,
+    kind: LinkKind,
+    username: str,
+    *,
+    mailed: bool = False,
+) -> str:
+    """A new invite or reset token; earlier unused links of that kind for the name stop working.
+
+    A `mailed` reset went to the account's email, so it lasts `mail_reset_minutes` and using it
+    confirms the address."""
     # Invites name a new user, so the username rule applies; a reset may name a signed-up email.
     if kind == "invite" and not USERNAME_RE.fullmatch(username):
         raise AuthError("username")
@@ -264,10 +274,14 @@ def mint_link(conn: sqlite3.Connection, config: Config, kind: LinkKind, username
             (username, kind),
         )
         token = secrets.token_urlsafe(32)
-        lifetime = config.invite_days * DAY if kind == "invite" else config.reset_hours * 3600
+        if kind == "invite":
+            lifetime = config.invite_days * DAY
+        else:
+            lifetime = config.mail_reset_minutes * 60 if mailed else config.reset_hours * 3600
         conn.execute(
-            "INSERT INTO invites (token_hash, kind, username, user_id, created_at, expires_at)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO invites"
+            " (token_hash, kind, username, user_id, created_at, expires_at, mailed)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 token_hash(token),
                 kind,
@@ -275,13 +289,14 @@ def mint_link(conn: sqlite3.Connection, config: Config, kind: LinkKind, username
                 existing["id"] if existing else None,
                 now,
                 now + lifetime,
+                int(mailed),
             ),
         )
     return token
 
 
 _LIVE_LINK = (
-    "SELECT kind, username, user_id FROM invites"
+    "SELECT kind, username, user_id, mailed FROM invites"
     " WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?"
 )
 
@@ -321,5 +336,55 @@ def redeem(conn: sqlite3.Connection, config: Config, token: str, password: str) 
             " locked_until = NULL WHERE id = ?",
             (password_hash, uid),
         )
+        if row["mailed"]:
+            conn.execute(
+                "UPDATE users SET email_confirmed_at = coalesce(email_confirmed_at, ?)"
+                " WHERE id = ?",
+                (now, uid),
+            )
         conn.execute("DELETE FROM sessions WHERE user_id = ?", (uid,))
         return uid
+
+
+def confirmed(conn: sqlite3.Connection, user_id: int) -> bool | None:
+    """Whether the account's email is confirmed; None for an invited account, which has none."""
+    row = conn.execute(
+        "SELECT username, email_confirmed_at FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
+    if "@" not in row["username"]:
+        return None
+    return row["email_confirmed_at"] is not None
+
+
+def mint_confirmation(conn: sqlite3.Connection, config: Config, user_id: int) -> str:
+    """A new confirmation token for the user; their earlier unused ones stop working."""
+    token = secrets.token_urlsafe(32)
+    now = config.clock()
+    with transaction(conn):
+        conn.execute("DELETE FROM confirmations WHERE user_id = ? AND used_at IS NULL", (user_id,))
+        conn.execute(
+            "INSERT INTO confirmations (token_hash, user_id, created_at, expires_at)"
+            " VALUES (?, ?, ?, ?)",
+            (token_hash(token), user_id, now, now + config.confirm_days * DAY),
+        )
+    return token
+
+
+def confirm(conn: sqlite3.Connection, config: Config, token: str) -> int:
+    """Use a confirmation link: the address is confirmed; returns the user's id, or `gone`."""
+    now = config.clock()
+    th = token_hash(token)
+    with transaction(conn):
+        row = conn.execute(
+            "SELECT user_id FROM confirmations"
+            " WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?",
+            (th, now),
+        ).fetchone()
+        if row is None:
+            raise AuthError("gone")
+        conn.execute("UPDATE confirmations SET used_at = ? WHERE token_hash = ?", (now, th))
+        conn.execute(
+            "UPDATE users SET email_confirmed_at = coalesce(email_confirmed_at, ?) WHERE id = ?",
+            (now, row["user_id"]),
+        )
+        return int(row["user_id"])

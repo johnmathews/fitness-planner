@@ -1,7 +1,8 @@
-"""Shared fixtures: a config on a temp dir, a controllable clock, and a cheap password hasher."""
+"""Shared fixtures: a config on a temp dir, a controllable clock, a cheap password hasher, and a
+mailer that records instead of sending."""
 
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,7 @@ from fitness_planner_api import auth
 from fitness_planner_api.app import create_app
 from fitness_planner_api.config import Config
 from fitness_planner_api.db import connect, migrate
+from fitness_planner_api.mail import MailError, Message
 
 ORIGIN = "https://testserver"
 START = 1_792_742_400  # 2026-10-23 08:00 UTC
@@ -56,5 +58,35 @@ def conn(config: Config) -> Iterator[object]:
 def client(config: Config) -> Iterator[TestClient]:
     app = create_app(config, run_backups=False)
     # https, so the Secure session cookie is sent back; Origin on every request, as browsers do.
+    with TestClient(app, base_url=ORIGIN, headers={"Origin": ORIGIN}) as c:
+        yield c
+
+
+class RecordingMailer:
+    """Keeps what would have been sent; `fail` makes the next sends raise, as Resend down would."""
+
+    def __init__(self) -> None:
+        self.sent: list[Message] = []
+        self.fail = False
+
+    def send(self, message: Message) -> None:
+        if self.fail:
+            raise MailError("Resend unreachable: test")
+        self.sent.append(message)
+
+
+@pytest.fixture
+def mailer() -> RecordingMailer:
+    return RecordingMailer()
+
+
+@pytest.fixture
+def mail_config(config: Config) -> Config:
+    return replace(config, resend_api_key="re_test", mail_from="Fitness Planner <p@example.com>")
+
+
+@pytest.fixture
+def mail_client(mail_config: Config, mailer: RecordingMailer) -> Iterator[TestClient]:
+    app = create_app(mail_config, run_backups=False, mailer=mailer)
     with TestClient(app, base_url=ORIGIN, headers={"Origin": ORIGIN}) as c:
         yield c

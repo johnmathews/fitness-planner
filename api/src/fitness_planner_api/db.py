@@ -73,6 +73,30 @@ MIGRATIONS = [
     ALTER TABLE ticks ADD COLUMN missed INTEGER NOT NULL DEFAULT 0
         CHECK (missed BETWEEN 0 AND 127);
     """,
+    # Email: a confirmed address, confirmation links, whether a reset link was mailed (which
+    # proves the address too), and a log of sends for the rate limits.
+    """
+    ALTER TABLE users ADD COLUMN email_confirmed_at INTEGER;
+    ALTER TABLE invites ADD COLUMN mailed INTEGER NOT NULL DEFAULT 0 CHECK (mailed IN (0, 1));
+
+    CREATE TABLE confirmations (
+        token_hash TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+        created_at INTEGER NOT NULL,
+        expires_at INTEGER NOT NULL,
+        used_at INTEGER
+    ) STRICT;
+    CREATE INDEX confirmations_by_user ON confirmations (user_id);
+
+    CREATE TABLE mail_log (
+        id INTEGER PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+        kind TEXT NOT NULL CHECK (kind IN ('confirm', 'reset')),
+        sent_at INTEGER NOT NULL
+    ) STRICT;
+    CREATE INDEX mail_log_by_time ON mail_log (sent_at);
+    CREATE INDEX mail_log_by_user ON mail_log (user_id, kind, sent_at);
+    """,
 ]
 SCHEMA_VERSION = len(MIGRATIONS)
 

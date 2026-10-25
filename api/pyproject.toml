@@ -56,3 +56,5 @@ ignore = ["S101"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S105", "S106", "ANN401"]
+# Email copy uses typographic apostrophes, as the app's copy does.
+"src/fitness_planner_api/emails.py" = ["RUF001"]

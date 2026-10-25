@@ -28,7 +28,8 @@
     "YearStrip",
     "SearchResult",
     "InlineMessage",
-    "Banner"
+    "Banner",
+    "EmailLayout"
   ],
   "extra_contrast_pairs": [
     [
@@ -155,5 +156,6 @@
     "Overlays",
     "Planner",
     "Feedback"
-  ]
+  ],
+  "email_preview": "components/EmailLayout/preview.html"
 }
