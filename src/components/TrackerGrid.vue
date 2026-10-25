@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
 import type { Day } from '@/stores/planner'
 import type { CountTone, PickedCount, Tracked } from '@/lib/tracker'
 import { useGridNav } from '@/composables/gridNav'
-import TrackerRow, { stickyName, type Amount } from '@/components/TrackerRow.vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import TrackerRow, { stickyName } from '@/components/TrackerRow.vue'
 
 const props = defineProps<{
   /** The rows' kind, for the name column's hidden header: "Exercise" or "Food". */
@@ -15,9 +15,7 @@ const props = defineProps<{
   flagsFor: (id: string) => boolean[]
   totalFor: (id: string) => number
   detailsFor?: (item: Tracked) => string[]
-  /** What each row's Edit plan Stepper edits instead of the goal (exercises' reps or seconds). */
-  amountFor?: (item: Tracked) => Amount | undefined
-  /** Adds an edit button to each row, which emits `edit`. */
+  /** Adds an edit button to each row, which emits `edit`, in place of the goal Stepper. */
   editable?: boolean
   configMode: boolean
   /** The Picked row (exercises only): its caption ("3 a day") and each day's count. */
@@ -27,7 +25,6 @@ const props = defineProps<{
 defineEmits<{
   toggle: [id: string, day: number]
   changeTarget: [id: string, delta: number]
-  changeAmount: [id: string, delta: number]
   remove: [id: string]
   edit: [id: string]
 }>()
@@ -38,6 +35,18 @@ const TONE: Record<Exclude<CountTone, 'future'>, string> = {
   met: 'font-semibold text-ink',
   over: 'font-semibold text-caution-ink underline decoration-[1.5px] underline-offset-[3px]',
 }
+
+/**
+ * Edit plan's widths: the name column grows by the widest thing a row gains there (a food's 136px
+ * goal Stepper and its gap; an exercise's edit button takes less), the same in both grids so their
+ * days line up, and the table by that and the 56px Remove column, so the days keep their 56px
+ * minimum (WeekGrid card).
+ */
+const widths = computed(() =>
+  props.configMode
+    ? { name: 'w-70 sm:w-86', table: 'min-w-200 sm:min-w-220' }
+    : { name: 'w-34 sm:w-50', table: 'min-w-150 sm:min-w-170' },
+)
 
 // One tab stop for the whole grid, on today's DayMark in the first row (see gridNav for the keys
 // and for Edit plan's controls in the row headers).
@@ -86,8 +95,8 @@ function reveal(ev: FocusEvent): void {
   (stickyName) and the container's scroll-padding-left is its width, so a focused cell scrolls
   clear of the names rather than under them; the container opens scrolled to today (scrollToToday).
 
-  Edit plan widens only the name column, by exactly the controls it gains (a 136px Stepper and
-  two 44px IconButtons, with 8px gaps), so each row keeps its height (F25).
+  Edit plan widens the name column by exactly the controls it gains (the edit button, or a food's
+  goal Stepper) and adds a 56px Remove column after "Week", so each row keeps its height (F25).
 
   Keyboard (F15): the WAI-ARIA grid, one tab stop per grid (useGridNav). A day cell's focus is its
   DayMark, the cell's one widget; the names, totals and Picked cells take focus themselves and
@@ -106,15 +115,16 @@ function reveal(ev: FocusEvent): void {
       :aria-label="tableLabel"
       class="w-full table-fixed border-collapse tabular-nums"
       :class="
-        // Wide enough that a day column never drops below 56px: the name and Week columns plus
-        // 7 × 56 (600px on a phone and 680px above, as the card's 600px minimum assumes).
-        configMode ? 'min-w-212 sm:min-w-232' : 'min-w-150 sm:min-w-170'
+        // Wide enough that a day column never drops below 56px: the other columns plus 7 × 56
+        // (600px on a phone and 680px above, as the card's 600px minimum assumes).
+        widths.table
       "
     >
       <colgroup>
-        <col :class="configMode ? 'w-96 sm:w-112' : 'w-34 sm:w-50'" />
+        <col :class="widths.name" />
         <col v-for="d in days" :key="d.key" />
         <col class="w-18 sm:w-22" />
+        <col v-if="configMode" class="w-14" />
       </colgroup>
       <thead>
         <tr role="row" class="border-b border-ink">
@@ -147,6 +157,9 @@ function reveal(ev: FocusEvent): void {
           >
             Week
           </th>
+          <th v-if="configMode" scope="col" role="columnheader" class="p-0" data-noprint>
+            <span class="sr-only">Remove</span>
+          </th>
         </tr>
       </thead>
 
@@ -156,7 +169,6 @@ function reveal(ev: FocusEvent): void {
           :key="it.id"
           :item="it"
           :details="detailsFor?.(it)"
-          :amount="amountFor?.(it)"
           :editable="editable"
           :config-mode="configMode"
           :days="days"
@@ -164,7 +176,6 @@ function reveal(ev: FocusEvent): void {
           :total="totalFor(it.id)"
           @toggle="$emit('toggle', it.id, $event)"
           @change-target="$emit('changeTarget', it.id, $event)"
-          @change-amount="$emit('changeAmount', it.id, $event)"
           @remove="$emit('remove', it.id)"
           @edit="$emit('edit', it.id)"
         />
@@ -207,9 +218,10 @@ function reveal(ev: FocusEvent): void {
               </template>
             </template>
           </td>
-          <!-- Nothing to total for the picks (the section's figure counts the week), so the cell is
-               out of the accessibility tree and out of the grid's navigation. -->
+          <!-- Nothing to total for the picks (the section's figure counts the week) and nothing to
+               remove, so these cells are out of the accessibility tree and the grid's navigation. -->
           <td aria-hidden="true" class="p-0" />
+          <td v-if="configMode" aria-hidden="true" class="p-0" data-noprint />
         </tr>
       </tfoot>
     </table>

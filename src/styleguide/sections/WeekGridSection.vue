@@ -66,10 +66,6 @@ const picked = computed(() => ({
 function flagsFor(id: string): boolean[] {
   return week.value[id] ?? []
 }
-function changeTarget(id: string, delta: number): void {
-  const row = rows.find((r) => r.id === id)!
-  row.target = Math.max(0, Math.min(7, row.target + delta))
-}
 function remove(id: string): void {
   rows.splice(
     rows.findIndex((r) => r.id === id),
@@ -97,7 +93,6 @@ function remove(id: string): void {
           :config-mode="editing"
           :picked="picked"
           @toggle="(id, day) => toggleDay(log, WEEK, id, day)"
-          @change-target="changeTarget"
           @remove="remove"
         />
       </div>

@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { exerciseDetails, usePlannerStore } from '@/stores/planner'
-import { DURATION_STEP, MAX_DURATION, MAX_REPS, MIN_DURATION, type Exercise } from '@/lib/storage'
+import type { Exercise } from '@/lib/storage'
 import { goalMet, pickedCount, type Tracked } from '@/lib/tracker'
 import { dayMonth } from '@/lib/dates'
 import { SectionHeader } from '@/components/ui/section-header'
 import { StatFigure } from '@/components/ui/stat-figure'
 import TrackerGrid from '@/components/TrackerGrid.vue'
-import type { Amount } from '@/components/TrackerRow.vue'
 import AddExerciseForm from '@/components/AddExerciseForm.vue'
 import EditExerciseDialog from '@/components/EditExerciseDialog.vue'
 
@@ -29,20 +28,6 @@ function flagsFor(id: string): boolean[] {
 // The grid hands back the item it was given, which is always an Exercise here.
 function detailsFor(item: Tracked): string[] {
   return exerciseDetails(item as Exercise)
-}
-
-/** Edit plan's Stepper edits what changes most often: seconds per set when timed, else reps. */
-function amountFor(item: Tracked): Amount {
-  const e = item as Exercise
-  return e.duration
-    ? {
-        value: e.duration,
-        min: MIN_DURATION,
-        max: MAX_DURATION,
-        step: DURATION_STEP,
-        noun: 'seconds',
-      }
-    : { value: e.reps, min: 1, max: MAX_REPS, step: 1, noun: 'reps' }
 }
 
 const editing = ref<Exercise | null>(null)
@@ -89,13 +74,11 @@ watch(
       :flags-for="flagsFor"
       :total-for="store.totalFor"
       :details-for="detailsFor"
-      :amount-for="amountFor"
       editable
       :config-mode="store.configMode"
       :picked="picked"
       data-testid="exercise-grid"
       @toggle="store.toggle"
-      @change-amount="store.changeAmount"
       @remove="store.removeExercise"
       @edit="edit"
     />

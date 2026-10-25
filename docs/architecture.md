@@ -56,7 +56,8 @@ App.vue                 picks the screen (link, planner or sign-in), the pen var
 │   ├── TrackerGrid.vue a <table> (WeekGrid card): day header, one TrackerRow per item, today's
 │   │   │               highlight band, and the Picked row ("4", "one extra" over the pick)
 │   │   └── TrackerRow.vue  name and chips; 7 × DayMark; "3 of 4" total; in config
-│   │                       mode the goal Stepper and edit/remove IconButtons in the row header
+│   │                       mode the edit IconButton (exercises) or goal Stepper (foods) in the
+│   │                       row header, and the remove IconButton in a last cell of its own
 │   ├── AddExerciseForm.vue config mode only: name, sets, Measure (Reps or Time), reps or
 │   │                       seconds, PerSideToggle, weight (kg)
 │   └── EditExerciseDialog.vue  Dialog: the add form's fields, then Times a week (the goal)
@@ -109,8 +110,7 @@ store fills them with `adopt` and saves their changes (§7).
 exercises, so a removed exercise's history stays in `log` without inflating the numbers.
 
 **Actions** (plan edits apply to the visible week only): `toggle`, `changeTarget` (clamps 0–7),
-`changeAmount` (Edit plan's row Stepper: a timed exercise's seconds, clamped 5–3600, else its reps,
-1–999), `addExercise` (returns `false` for an empty name; new exercises get goal 3 unless the input
+`addExercise` (returns `false` for an empty name; new exercises get goal 3 unless the input
 names one), `updateExercise` (replaces name, sets, reps or duration, per-side, weight and, when
 given, the goal, keeping the id and history; `false` for an empty name or an id not in the week).
 An exercise counts reps or time, never both: a duration stores reps as 0. Then `removeExercise`, `copyToNextWeek`, `setConfigMode`,
@@ -257,12 +257,15 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   `aria-pressed` buttons in a `role="group"`.
 - **Config mode and normal mode.** Normal mode, the default on every load, only ticks cells. The
   "Edit plan" Switch in the navbar (a `role="switch"` button) turns on config mode, which shows the
-  edit and remove IconButtons, the goal Steppers, the add forms and "Copy plan to next week". The mode is not saved, so the
+  edit and remove IconButtons, the foods' goal Steppers, the add forms and "Copy plan to next week".
+  An exercise is changed only in its Edit exercise dialog, so its row has no Stepper; the remove
+  button ends each row, in a "Remove" column after "Week". The mode is not saved, so the
   app always opens ready for ticking.
 - **Exercises are editable.** The handoff had no way to change an exercise after adding it. An
   Edit IconButton (`pencil`) on each exercise row (not foods) opens `EditExerciseDialog`, on the Dialog primitive (Reka UI),
   which traps focus, closes on Escape and returns focus to the button. Sets and
-  weight are optional, weight in kg; the sets/reps chip and the weight chip are separate so they
+  weight can be left empty (the weight hint says empty means bodyweight; no field is marked
+  optional), weight in kg; the sets/reps chip and the weight chip are separate so they
   wrap in the narrow name column.
 - **Steppers mark their bounds** (goal 0/7, daily pick 1/8) with `aria-disabled` and ignore the
   click there. `disabled` would drop keyboard focus mid-press. The store still clamps as a backstop.
@@ -391,9 +394,11 @@ Each grid is one tab stop, following the WAI-ARIA grid pattern with a roving tab
   exactly one stop as rows come and go.
 - **Keys.** Arrows move cell by cell over the names, days, totals and the Picked row, and never
   wrap. Home and End go along the row, Ctrl+Home and Ctrl+End to the grid's ends. Space and Enter
-  belong to the DayMark. An `aria-hidden` cell (the empty Picked cell under "Week") is skipped.
-- **Edit plan.** The Stepper and IconButtons in a row header stay out of the Tab order. Enter or F2
-  on the name cell lets them in, Tab moves among them, and Escape puts focus back on the cell.
+  belong to the DayMark. An `aria-hidden` cell (the empty Picked cells under "Week" and "Remove")
+  is skipped.
+- **Edit plan.** The controls in a cell (Edit or a food's Stepper in the name cell, Remove in the
+  last cell) stay out of the Tab order. Enter or F2 on the cell lets them in, Tab moves among them,
+  and Escape puts focus back on the cell.
 
 "Skip to today", first in the tab order in `AppNavbar.vue`, focuses today's first mark: in the
 phone's Today list when it shows, otherwise in the first grid that has today.

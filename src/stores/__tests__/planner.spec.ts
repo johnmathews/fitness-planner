@@ -117,21 +117,6 @@ describe('planner store', () => {
     s.changeTarget('missing', 1)
   })
 
-  it('steps reps (1 or more) or, for a timed exercise, seconds (5 to 3600)', () => {
-    const s = usePlannerStore()
-    for (let i = 0; i < 20; i++) s.changeAmount('pl', -1)
-    expect(s.exercises.find((e) => e.id === 'pl')!.reps).toBe(1)
-    s.addExercise({ name: 'Plank', reps: 0, duration: 30, perSide: false })
-    const plank = () => s.exercises.at(-1)!
-    s.changeAmount(plank().id, 5)
-    expect(plank()).toMatchObject({ reps: 0, duration: 35 })
-    s.changeAmount(plank().id, -100)
-    expect(plank().duration).toBe(5)
-    s.changeAmount(plank().id, 10_000)
-    expect(plank().duration).toBe(3600)
-    s.changeAmount('missing', 1)
-  })
-
   it('keeps a duration over reps, and takes a goal from the form', () => {
     const s = usePlannerStore()
     s.addExercise({ name: 'Wall sit', reps: 12, duration: 60.7, perSide: false, target: 5 })

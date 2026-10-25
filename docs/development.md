@@ -264,8 +264,8 @@ listed in [api.md](api.md) §10):
 - `src/components/__tests__/Planner.spec.ts`: the planner on the design system's marks, in the
   mounted app: the Picked row ("one extra" in words and underlined, en dashes for days to come, no
   empty focusable cell), today (full-date names with "today", `aria-current`, the band), totals
-  and section figures ("N of M", a check when met, zero quiet), row headers in Edit plan (Stepper
-  and IconButtons, stable row height, focus after a removal), the keyboard (one tab stop per grid,
+  and section figures ("N of M", a check when met, zero quiet), Edit plan's rows (Edit in the name
+  cell, a food's Stepper, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,
   arrows, the skip link, Edit plan's controls), headings and print attributes, and the phone width
   (the sticky names, Edit plan's name column scrolling away, opening scrolled to today).
 - `src/components/__tests__/TodayList.spec.ts`: the phone's Today view (K5): the list on its own

@@ -25,22 +25,16 @@ import { DayMark } from '@/components/ui/day-mark'
 import { IconButton } from '@/components/ui/icon-button'
 import { Stepper } from '@/components/ui/stepper'
 
-/**
- * What an exercise row's Edit plan Stepper edits instead of the goal: its reps per set, or its
- * seconds per set when timed. `noun` names it in the Stepper's labels ("Squats reps").
- */
-export type Amount = { value: number; min: number; max: number; step: number; noun: string }
-
 const props = defineProps<{
   item: Tracked
   /** The chips under the name, already in the Chip card's words ("3 × 12", "16 kg"). */
   details?: string[]
-  /** Shows an edit button (in config mode) that emits `edit`. */
+  /** Shows an edit button (in config mode) that emits `edit`; the dialog it opens edits the
+   * whole item, so an editable row has no goal Stepper. */
   editable?: boolean
-  /** Config mode shows the Stepper and the edit and remove buttons in the row header. */
+  /** Config mode shows the edit button or goal Stepper in the row header, and the remove button
+   * in a cell of its own at the end of the row. */
   configMode: boolean
-  /** The Stepper edits this rather than the weekly goal (exercises); foods leave it out. */
-  amount?: Amount
   days: Day[]
   flags: boolean[]
   total: number
@@ -48,14 +42,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggle: [day: number]
   changeTarget: [delta: number]
-  changeAmount: [delta: number]
   remove: []
   edit: []
 }>()
 
 const met = computed(() => goalMet(props.total, props.item.target))
-/** The name block's width: in Edit plan an editable row's block takes the edit button's 44px and
- * its gap beside the name, so the column is as wide as when the button sat with the others. */
+/** The name block's width: in Edit plan an editable row's block also takes the edit button's 44px
+ * and its gap beside the name (TrackerGrid widens the column to match). */
 const nameWidth = computed(() =>
   props.configMode && props.editable ? 'w-44 sm:w-60' : 'w-31 sm:w-47',
 )
@@ -98,36 +91,20 @@ async function remove(event: MouseEvent): Promise<void> {
   if (yes && props.days[0]!.key === week) emit('remove')
 }
 
-/** The Stepper reports a new value (only ever a changed one); the stores take a step. */
-function setStepper(value: number): void {
-  if (props.amount) emit('changeAmount', value - props.amount.value)
-  else emit('changeTarget', value - props.item.target)
+/** The goal Stepper reports a new value (only ever a changed one); the store takes a step. */
+function setTarget(value: number): void {
+  emit('changeTarget', value - props.item.target)
 }
-
-/** The Stepper's value, range and names: the exercise's amount, else the food's weekly goal. */
-const stepper = computed(() => {
-  const a = props.amount
-  const noun = a?.noun ?? 'goal'
-  return {
-    value: a?.value ?? props.item.target,
-    min: a?.min ?? MIN_TARGET,
-    max: a?.max ?? MAX_TARGET,
-    step: a?.step ?? 1,
-    label: `${props.item.name} ${noun}`,
-    lower: `Lower ${props.item.name} ${noun}`,
-    raise: `Raise ${props.item.name} ${noun}`,
-  }
-})
 </script>
 
 <!--
   One row of the WeekGrid card: the name in body 600, then the chips; a DayMark per day; the
-  week's total as "3 of 4", the only place the goal shows. In Edit plan the edit IconButton follows
-  the name, and the Stepper (an exercise's reps or seconds per set, a food's weekly goal) and the
-  remove IconButton sit beside the name block; the edit
+  week's total as "3 of 4", the only place the goal shows. In Edit plan an editable row's edit
+  IconButton follows the name (its dialog edits everything, goal included), a food's goal Stepper
+  sits beside the name block, and the remove IconButton ends the row in a cell of its own. The edit
   button's negative margin keeps the name line's height, and the header is at least the Stepper's
   44px tall in both modes, so the row keeps its height (F25).
-  Those controls stay out of the Tab order until Enter (or F2) on the name cell lets them in, and
+  Those controls stay out of the Tab order until Enter (or F2) on their cell lets them in, and
   Escape leaves them (gridNav), so each grid stays one tab stop in Edit plan too.
 -->
 <template>
@@ -160,22 +137,19 @@ const stepper = computed(() => {
             <Chip v-for="d in details" :key="d" data-testid="item-detail">{{ d }}</Chip>
           </span>
         </div>
-        <div v-if="configMode" class="flex shrink-0 items-center gap-2" data-noprint>
-          <Stepper
-            :model-value="stepper.value"
-            :label="stepper.label"
-            hide-label
-            :lower-label="stepper.lower"
-            :raise-label="stepper.raise"
-            :min="stepper.min"
-            :max="stepper.max"
-            :step="stepper.step"
-            @update:model-value="setStepper"
-          />
-          <IconButton :label="`Remove ${item.name}`" data-action="remove" @click="remove">
-            <Trash2 />
-          </IconButton>
-        </div>
+        <Stepper
+          v-if="configMode && !editable"
+          :model-value="item.target"
+          :label="`${item.name} goal`"
+          hide-label
+          :lower-label="`Lower ${item.name} goal`"
+          :raise-label="`Raise ${item.name} goal`"
+          :min="MIN_TARGET"
+          :max="MAX_TARGET"
+          class="shrink-0"
+          data-noprint
+          @update:model-value="setTarget"
+        />
       </div>
     </th>
     <td
@@ -209,6 +183,16 @@ const stepper = computed(() => {
           class="shrink-0 text-pen"
         />
       </span>
+    </td>
+    <td
+      v-if="configMode"
+      role="gridcell"
+      class="px-1.5 text-center align-middle focus-visible:-outline-offset-2"
+      data-noprint
+    >
+      <IconButton :label="`Remove ${item.name}`" data-action="remove" @click="remove">
+        <Trash2 />
+      </IconButton>
     </td>
   </tr>
 </template>

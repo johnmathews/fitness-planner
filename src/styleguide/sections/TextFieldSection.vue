@@ -37,13 +37,13 @@ const repeat = ref('correct-horse')
         class="w-full"
       />
     </StateExample>
-    <StateExample state="Optional, said in the hint; focus (Tab to it)" class="w-full">
+    <StateExample state="With a hint; focus (Tab to it)" class="w-full">
       <TextField
         id="sg-text-field-optional"
         v-model="weight"
         label="Weight in kg"
         inputmode="decimal"
-        hint="Optional. Leave empty for bodyweight."
+        hint="Leave empty for bodyweight."
         class="w-full"
       />
     </StateExample>
