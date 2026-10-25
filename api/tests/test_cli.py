@@ -98,3 +98,15 @@ def test_no_users_yet(env: dict[str, str], capsys: pytest.CaptureFixture[str]) -
 def test_needs_a_public_origin(capsys: pytest.CaptureFixture[str], config: Config) -> None:
     code, _, err = run({"DATA_DIR": str(config.data_dir)}, capsys, "users")
     assert code == 1 and "PUBLIC_ORIGIN" in err
+
+
+def test_reset_works_for_a_signed_up_email(
+    env: dict[str, str],
+    config: Config,
+    conn: sqlite3.Connection,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    auth.signup(conn, config, "bob@example.com", PASSWORD)
+    code, out, _ = run(env, capsys, "reset", "bob@example.com")
+    assert code == 0
+    assert auth.link_info(conn, config, link_token(out, "reset")) == ("reset", "bob@example.com")

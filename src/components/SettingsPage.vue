@@ -38,10 +38,11 @@ const IMPORT_ERRORS: Record<ParseError | 'read', string> = {
   read: 'That file couldn’t be read.',
 }
 
-const IMPORT_FAILED: Record<'offline' | 'server' | 'auth' | 'error', string> = {
+const IMPORT_FAILED: Record<'offline' | 'server' | 'auth' | 'quota' | 'error', string> = {
   offline: 'Can’t reach the server, so nothing was imported. Try again when you’re online.',
   server: 'The server had a problem, so nothing was imported. Try again in a while.',
   auth: 'Your session has ended. Sign in again, then import the file.',
+  quota: 'Your account is full, so nothing was imported.',
   error: 'The server refused the import, so nothing changed.',
 }
 

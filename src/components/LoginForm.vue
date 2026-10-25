@@ -6,6 +6,7 @@ import AuthCard from '@/components/AuthCard.vue'
 import { Button } from '@/components/ui/button'
 import { InlineMessage } from '@/components/ui/inline-message'
 import { TextField } from '@/components/ui/text-field'
+import { TextLink } from '@/components/ui/text-link'
 
 const session = useSessionStore()
 const username = ref(session.user ?? '')
@@ -46,7 +47,7 @@ async function submit(): Promise<void> {
       <TextField
         id="login-username"
         v-model="username"
-        label="Username"
+        label="Email or username"
         autocomplete="username"
         autocapitalize="none"
         spellcheck="false"
@@ -71,6 +72,8 @@ async function submit(): Promise<void> {
         {{ busy ? 'Signing in…' : 'Sign in' }}
       </Button>
     </form>
-    <p class="caption mt-6 text-ink-secondary">Accounts are by invitation.</p>
+    <p class="body mt-6 text-ink-secondary">
+      New here? <TextLink href="#/signup">Create an account</TextLink>
+    </p>
   </AuthCard>
 </template>

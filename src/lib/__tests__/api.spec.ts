@@ -59,6 +59,14 @@ describe('request', () => {
     })
   })
 
+  it('treats any other 409 as a refusal with its code', async () => {
+    respond(409, { error: 'exists' })
+    expect(await request('POST', '/auth/signup', {})).toEqual({
+      ok: false,
+      error: { kind: 'refused', status: 409, code: 'exists' },
+    })
+  })
+
   it.each([502, 503, 504])('treats a %i from the proxy as offline', async (status) => {
     respond(status, undefined, '<html>Bad Gateway</html>')
     expect(await request('GET', '/state')).toEqual({ ok: false, error: { kind: 'offline' } })

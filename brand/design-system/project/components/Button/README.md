@@ -2,7 +2,7 @@ The text button in three weights: primary for the one action a step exists for, 
 
 ## Use
 
-- **Primary:** `ink` fill, `on-ink` text (K8: one colour for "act"). One per form or panel: "Sign in", "Set password", "Add to my account", "Save".
+- **Primary:** `ink` fill, `on-ink` text (K8: one colour for "act"). One per form or panel: "Sign in", "Create account", "Set password", "Add to my account", "Save".
 - **Secondary:** transparent, 1px `control-border`, `ink` text. Alternatives next to a primary, or a row of equals: "Not mine", "Export", "Import…", "Retry".
 - **Quiet:** no border, `ink` text, a `tile` fill on hover. The least likely choice or a way out: "Later", "Cancel", "This week".
 - Shape: `radius-md`, the `body` size at weight 600, padding `space-4` (md) or `space-3` (sm). **md** is 44px tall and the default; **sm** is 36px for dense rows on desktop only (the Header's "This week", the Banner's action), and those become md (44px) below 640px, so every target on a phone stays 44px. The settings Popover uses md everywhere, because it is used on phones.

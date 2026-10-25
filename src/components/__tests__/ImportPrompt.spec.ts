@@ -219,6 +219,18 @@ describe('the first-login import prompt', () => {
     )
   })
 
+  it('says when the account is full', async () => {
+    recordBeforeAccounts()
+    api = signedIn()
+    await mountApp()
+    api.failNext('POST', '/import', 413, { error: 'quota' })
+    await button('Add to my account').trigger('click')
+    await flushPromises()
+    expect(prompt().get('[role="alert"]').text()).toBe(
+      'Your account is full, so nothing was added.',
+    )
+  })
+
   it('asks each user on the same browser separately', async () => {
     recordBeforeAccounts()
     api = signedIn()

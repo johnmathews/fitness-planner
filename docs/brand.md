@@ -126,7 +126,10 @@ Plain, calm and brief, in the second person. Small numbers in running sentences 
 three. One to go."), and figures stay figures in data ("10 of 12 this week"). No exclamation marks,
 no hype, no guilt: facts, then the next step. A confirmation names the thing and uses the verb
 ("Remove Push-ups?", Remove), never OK or Yes. `voice.md` in the system has the rules and examples,
-and its corrected copy is the source for screen strings. The gate rejects the banned words in
+and its corrected copy is the source for screen strings. Its "Signing in and creating an account" section
+sets the account screens' words: the sign-in field is "Email or username", a failed sign-in names
+all three and blames none, and creating an account asks for an email and a password (twice) under
+"Create account", with no promise of a confirmation email, because none is sent. The gate rejects the banned words in
 `checks.json`. The app's name, "Fitness Planner", is a working name held in one constant,
 `APP_NAME` in `src/lib/app.ts`.
 

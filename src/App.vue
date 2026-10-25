@@ -10,6 +10,7 @@ import DietSection from '@/components/DietSection.vue'
 import TodayList from '@/components/TodayList.vue'
 import LoginForm from '@/components/LoginForm.vue'
 import PasswordForm from '@/components/PasswordForm.vue'
+import SignupForm from '@/components/SignupForm.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ImportPrompt from '@/components/ImportPrompt.vue'
 import { ConfirmHost } from '@/components/ui/confirm-dialog'
@@ -35,6 +36,11 @@ function linkToken(): string | null {
   return /^#\/(?:invite|reset)\/([A-Za-z0-9_-]+)$/.exec(location.hash)?.[1] ?? null
 }
 const link = ref(linkToken())
+/** `#/signup`, the create-an-account form: shown only while nobody is signed in. */
+function isSignup(): boolean {
+  return location.hash === '#/signup'
+}
+const signup = ref(isSignup())
 
 /** The page the hash asks for: Settings at `#/settings`, otherwise the planner. */
 type Page = 'planner' | 'settings'
@@ -44,6 +50,7 @@ function pageFor(): Page {
 const page = ref<Page>(pageFor())
 function onHash(): void {
   link.value = linkToken()
+  signup.value = isSignup()
   page.value = pageFor()
 }
 // Back from Settings, focus returns to the Settings button that opened it.
@@ -69,6 +76,18 @@ function closeLink(): void {
   forgetToken()
   link.value = null
 }
+function closeSignup(): void {
+  history.replaceState(null, '', location.pathname + location.search)
+  signup.value = false
+}
+// Signed in, by this form or otherwise, the address no longer names a screen that applies.
+watch(
+  () => session.status === 'signed-in' && signup.value,
+  (stale) => {
+    if (stale) closeSignup()
+  },
+  { immediate: true },
+)
 
 // The phone opens on today (K5): the Today list below sm, with a Today | Week switch.
 const { phone, view, showToday } = usePhoneView()
@@ -207,6 +226,7 @@ onBeforeUnmount(() => {
       </template>
     </main>
   </template>
+  <SignupForm v-else-if="session.status === 'signed-out' && signup" @leave="closeSignup" />
   <LoginForm v-else-if="session.status === 'signed-out'" />
   <!-- The one host for useConfirm(): removing a row and copying over next week's plan ask here. -->
   <ConfirmHost />

@@ -8,6 +8,7 @@ import {
   CACHE_PREFIX,
   CONFLICT_NOTICE,
   OUTBOX_PREFIX,
+  QUOTA_NOTICE,
   REFUSED_NOTICE,
   diff,
   normaliseState,
@@ -460,6 +461,16 @@ describe('sync, after review', () => {
     expect(sync.notice).toBe(REFUSED_NOTICE)
   })
 
+  it('says the account is full when it drops a write refused for quota', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { sync, planner } = await start(emptyState())
+    api.failNext('PUT', '/ticks', 413, { error: 'quota' })
+    planner.toggle('sq', 0)
+    await settle()
+    expect(sync.pending).toBe(0)
+    expect(sync.notice).toBe(QUOTA_NOTICE)
+  })
+
   it('gives up on a request that never answers, and tries again', async () => {
     vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
     vi.setSystemTime(NOW)
@@ -591,6 +602,8 @@ describe('importFile', () => {
     const { sync } = await start(emptyState())
     api.failNext('POST', '/import', 400, { error: 'format' })
     expect(await sync.importFile(data)).toEqual({ ok: false, code: 'error' })
+    api.failNext('POST', '/import', 413, { error: 'quota' })
+    expect(await sync.importFile(data)).toEqual({ ok: false, code: 'quota' })
     api.failNext('POST', '/import', 500)
     expect(await sync.importFile(data)).toEqual({ ok: false, code: 'server' })
     api.signedIn = null

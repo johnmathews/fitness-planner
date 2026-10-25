@@ -3,6 +3,7 @@
 import asyncio
 import json
 from collections.abc import MutableMapping
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -20,6 +21,7 @@ PASSWORD = "correct horse battery"
 DAY = 86_400
 WEEK = "2026-10-19"
 PUSHUPS = {"id": "pu", "name": "Push-ups", "reps": 10, "target": 4}
+QUOTA = 5 * 1024 * 1024
 
 
 def invite(config: Config, name: str) -> str:
@@ -223,6 +225,43 @@ def test_login_logout(client: TestClient, config: Config) -> None:
     assert client.get("/api/auth/me").status_code == 401
 
 
+def test_signup_signs_in_by_email(client: TestClient) -> None:
+    r = client.post("/api/auth/signup", json={"email": "Bob@Example.com", "password": PASSWORD})
+    assert (r.status_code, r.json()) == (200, {"username": "bob@example.com"})
+    assert client.get("/api/auth/me").json() == {"username": "bob@example.com"}
+    headers = {"X-Expected-User": "bob@example.com"}
+    assert client.get("/api/state", headers=headers).status_code == 200
+    client.post("/api/auth/logout", json={})
+    r = client.post("/api/auth/login", json={"username": "BOB@example.com", "password": PASSWORD})
+    assert r.json() == {"username": "bob@example.com"}
+
+
+def test_signup_refusals(client: TestClient, config: Config, clock: Clock) -> None:
+    def signup(email: str, password: str = PASSWORD) -> Any:
+        return client.post("/api/auth/signup", json={"email": email, "password": password})
+
+    r = signup("bob")
+    assert (r.status_code, r.json()) == (400, {"error": "email"})
+    r = signup("bob@example.com", "short")
+    assert (r.status_code, r.json()) == (400, {"error": "password"})
+    assert client.post("/api/auth/signup", json={"email": "b@example.com"}).status_code == 400
+    assert signup("bob@example.com").status_code == 200
+    r = signup("BOB@example.com")
+    assert (r.status_code, r.json()) == (409, {"error": "exists"})
+    for i in range(9):
+        assert signup(f"u{i}@example.com").status_code == 200
+    r = signup("late@example.com")
+    assert (r.status_code, r.json()) == (429, {"error": "too-many", "retryAfter": 3600})
+    assert r.headers["retry-after"] == "3600"
+
+
+def test_signup_closed(config: Config) -> None:
+    app = create_app(replace(config, max_users=0), run_backups=False)
+    with TestClient(app, base_url=ORIGIN, headers={"Origin": ORIGIN}) as c:
+        r = c.post("/api/auth/signup", json={"email": "bob@example.com", "password": PASSWORD})
+    assert (r.status_code, r.json()) == (403, {"error": "closed"})
+
+
 def test_logout_without_a_session_is_harmless(client: TestClient) -> None:
     assert client.post("/api/auth/logout", json={}).status_code == 204
 
@@ -381,6 +420,62 @@ def test_ticks_set_and_clear_single_days(client: TestClient, config: Config) -> 
     }
 
 
+def usage(config: Config, uid: int = 1) -> int:
+    conn = connect(config.db_path)
+    try:
+        return data.usage(conn, uid)
+    finally:
+        conn.close()
+
+
+def test_the_quota_refuses_growth_but_never_level_or_shrinking_writes(
+    client: TestClient, config: Config
+) -> None:
+    sign_up(client, config)
+    plan = f"/api/plans/exercise/{WEEK}"
+    assert client.put(plan, json={"items": [PUSHUPS], "rev": 0}).status_code == 200
+    room = usage(config) + 64  # room for exactly one more tick row
+    with other_client(replace(config, user_quota_bytes=room)) as c:
+        c.post("/api/auth/login", json={"username": "alice", "password": PASSWORD})
+        ticks = f"/api/ticks/exercise/{WEEK}"
+        assert c.put(f"{ticks}/pu/0", json={"done": True}).status_code == 200
+        assert usage(config) == room
+        r = c.put(f"{ticks}/sq/0", json={"done": True})
+        assert (r.status_code, r.json()) == (413, {"error": "quota"})
+        # A full account still changes the rows it has and keeps or trims its plans.
+        assert c.put(f"{ticks}/pu/3", json={"done": True}).status_code == 200
+        assert c.put(f"{ticks}/pu/0", json={"done": False}).status_code == 200
+        r = c.put("/api/plans/exercise/2026-10-26", json={"items": [PUSHUPS], "rev": 0})
+        assert (r.status_code, r.json()) == (413, {"error": "quota"})
+        assert c.put(plan, json={"items": [PUSHUPS], "rev": 1}).json() == {"rev": 2}
+        assert c.put(plan, json={"items": [], "rev": 2}).json() == {"rev": 3}
+        assert usage(config) < room
+        state = c.get("/api/state").json()["exercise"]
+    assert "2026-10-26" not in state["plans"]
+    assert state["log"] == {WEEK: {"pu": [False, False, False, True, False, False, False]}}
+
+
+def test_an_import_over_the_quota_adds_nothing(client: TestClient, config: Config) -> None:
+    sign_up(client, config)
+    sample = read_fixture("sample/export.json")
+    with other_client(replace(config, user_quota_bytes=len(json.dumps(sample)) // 4)) as c:
+        c.post("/api/auth/login", json={"username": "alice", "password": PASSWORD})
+        r = post_import(c, sample)
+        assert (r.status_code, r.json()) == (413, {"error": "quota"})
+    assert usage(config) == 0
+
+
+def test_the_quota_is_per_user(client: TestClient, config: Config) -> None:
+    sign_up(client, config)
+    plan = f"/api/plans/exercise/{WEEK}"
+    assert client.put(plan, json={"items": [PUSHUPS], "rev": 0}).status_code == 200
+    room = usage(config)
+    with other_client(replace(config, user_quota_bytes=room)) as c:
+        sign_up(c, config, "bob")
+        assert c.put(plan, json={"items": [PUSHUPS], "rev": 0}).status_code == 200
+    assert usage(config, 2) == room
+
+
 def test_settings_are_normalised(client: TestClient, config: Config) -> None:
     sign_up(client, config)
     assert client.put(
@@ -516,7 +611,7 @@ def test_ticks_on_different_days_from_many_connections_all_land(
     def tick(day: int) -> None:
         barrier.wait()
         for _ in range(20):
-            data.set_tick(conns[day], uid, "exercise", WEEK, "pu", day, True)
+            data.set_tick(conns[day], uid, "exercise", WEEK, "pu", day, True, quota=QUOTA)
 
     threads = [threading.Thread(target=tick, args=(d,)) for d in range(7)]
     for t in threads:

@@ -19,10 +19,11 @@ import {
  * remembers the answer, and "Later" asks again on the next load.
  */
 const props = defineProps<{ user: string }>()
-const ADD_FAILED: Record<'offline' | 'server' | 'auth' | 'error', string> = {
+const ADD_FAILED: Record<'offline' | 'server' | 'auth' | 'quota' | 'error', string> = {
   offline: 'Can’t reach the server, so nothing was added. Try again when you’re online.',
   server: 'The server had a problem, so nothing was added. Try again in a while.',
   auth: 'Your session has ended. Sign in again to add it.',
+  quota: 'Your account is full, so nothing was added.',
   error: 'Something went wrong, so nothing was added. Try again later.',
 }
 const planner = usePlannerStore()

@@ -13,8 +13,11 @@ when the `latest` digest changes. So an image on GHCR is now a production deploy
   unchanged. PR-time `build` and `compose` still run on `pull_request`.
 - **It builds exactly the commit CI passed.** A `workflow_run` starts on the default branch's newest
   commit, which can be newer than the one CI checked, so the checkout uses
-  `workflow_run.head_sha`, and metadata-action uses `context: git` so `sha-<short>` names that same
-  commit.
+  `workflow_run.head_sha`. The `sha-<short>` tag and the `org.opencontainers.image.revision` label
+  are set from that SHA explicitly. The first version used metadata-action's `context: git` for
+  this, and the first `main` run failed on it: "Cannot infer ref from detached HEAD", because a
+  SHA checkout leaves no branch. The gate held (nothing published), and the follow-up PR replaced
+  it with the explicit tag.
 - **`latest` is unconditional.** `{{is_default_branch}}` reads the workflow's ref, and the trigger is
   already limited to `main`.
 - The cost is a slower path from merge to deploy: publish now starts after the slowest CI job
