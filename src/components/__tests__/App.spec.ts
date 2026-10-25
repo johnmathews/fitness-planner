@@ -105,6 +105,14 @@ async function openEdit(name: string): Promise<DOMWrapper<HTMLElement>> {
   return dialog()!
 }
 
+/** Changes this week's food plan: one more Fish a week, saved from its dialog. */
+async function raiseFish(): Promise<void> {
+  const edit = await openEdit('Fish')
+  await edit.get('button[aria-label="More times a week"]').trigger('click')
+  await edit.get('form').trigger('submit')
+  await flushPromises()
+}
+
 /** Changes this week's exercise plan: one more Squats a week, saved from its dialog. */
 async function raiseSquats(): Promise<void> {
   const edit = await openEdit('Squats')
@@ -176,49 +184,27 @@ describe('App', () => {
     expect(counts()[1]!.attributes('data-tone')).toBe('under')
   })
 
-  it('highlights the row total once a food’s goal is reached, and steps the goal', async () => {
+  it('highlights the row total once a food’s goal is reached, with the goal set in its dialog', async () => {
     await mountConfig()
     const food = () => wrapper.get('[data-testid="diet-grid"]')
     const total = () => food().findAll('[data-testid="row-total"]')[3]!
     await rowCells('Nuts')[0]!.trigger('click')
     expect(total().attributes('data-met')).toBe('false')
-    const lower = wrapper.get('button[aria-label="Lower Nuts goal"]')
-    await lower.trigger('click')
-    await lower.trigger('click')
+    const edit = await openEdit('Nuts')
+    const fewer = edit.get('button[aria-label="Fewer times a week"]')
+    await fewer.trigger('click')
+    await fewer.trigger('click')
+    await edit.get('form').trigger('submit')
+    await flushPromises()
     expect(total().text()).toBe('1 of 1')
     expect(total().attributes('data-met')).toBe('true')
-    await lower.trigger('click')
-    expect(total().text()).toBe('1 of 0')
-    expect(total().attributes('data-met')).toBe('false')
-    expect(lower.attributes('aria-disabled')).toBe('true')
-    await lower.trigger('click')
-    expect(total().text()).toBe('1 of 0')
-    await wrapper.get('button[aria-label="Raise Nuts goal"]').trigger('click')
-    expect(total().text()).toBe('1 of 1')
   })
 
-  it('edits exercises only in their dialog: Edit plan gives their rows no Stepper', async () => {
+  it('gives Edit plan rows no Stepper: both grids edit in a dialog', async () => {
     await mountConfig()
-    expect(ex().find('[role="spinbutton"]').exists()).toBe(false)
-    expect(wrapper.get('[data-testid="diet-grid"]').findAll('[role="spinbutton"]')).toHaveLength(4)
-  })
-
-  it('takes a typed food goal, and leaves the plan alone when it does not change', async () => {
-    await mountConfig()
-    const goal = wrapper.get('[data-testid="diet-grid"]').get('[role="spinbutton"]')
-    expect(document.getElementById(goal.attributes('aria-labelledby')!)!.textContent!.trim()).toBe(
-      'Vegetables goal',
-    )
-    await goal.setValue('4')
-    await goal.trigger('keydown', { key: 'Enter' })
-    await flushPromises()
-    expect(useDietStore().foods[0]!.target).toBe(4)
-    const plans = () => JSON.stringify(useDietStore().plans)
-    const before = plans()
-    await goal.setValue('4')
-    await goal.trigger('keydown', { key: 'Enter' })
-    await flushPromises()
-    expect(plans()).toBe(before)
+    expect(wrapper.find('[data-testid="exercise-grid"] [role="spinbutton"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="diet-grid"] [role="spinbutton"]').exists()).toBe(false)
+    expect(wrapper.find('button[aria-label="Edit Vegetables"]').exists()).toBe(true)
   })
 
   it('hides both weekly totals from Settings, and the device remembers it', async () => {
@@ -1077,9 +1063,90 @@ describe('exercise weight', () => {
     expect(dialog()).not.toBeNull()
   })
 
-  it('offers no edit button for foods', () => {
+  it('offers no edit buttons outside Edit plan', () => {
     mountApp()
     expect(wrapper.find('button[aria-label="Edit Vegetables"]').exists()).toBe(false)
+    expect(wrapper.find('button[aria-label="Edit Squats"]').exists()).toBe(false)
+  })
+})
+
+describe('the Edit food dialog', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(NOW)
+    localStorage.clear()
+  })
+  afterEach(() => {
+    wrapper?.unmount()
+    vi.useRealTimers()
+  })
+
+  it('renames a food and sets its goal, keeping its marks', async () => {
+    await mountConfig()
+    await rowCells('Fish')[0]!.trigger('click')
+    const edit = await openEdit('Fish')
+    expect(edit.get('h2').text()).toBe('Edit food')
+    const labels = edit
+      .findAll('input')
+      .map((i) => edit.get(`label[for="${i.attributes('id')}"]`).text())
+    expect(labels).toEqual(['Name', 'Times a week'])
+    expect(document.activeElement).toBe(edit.get('#edit-food-name').element)
+    await edit.get('#edit-food-name').setValue('Salmon')
+    await edit.get('button[aria-label="More times a week"]').trigger('click')
+    await edit.get('form').trigger('submit')
+    await flushPromises()
+    expect(dialog()).toBeNull()
+    expect(rowCells('Salmon')[0]!.attributes('aria-pressed')).toBe('true')
+    expect(useDietStore().foods[2]).toMatchObject({ name: 'Salmon', target: 3 })
+  })
+
+  it('keeps the dialog open on an empty name, and discards changes on Cancel', async () => {
+    await mountConfig()
+    const edit = await openEdit('Fish')
+    await edit.get('#edit-food-name').setValue('   ')
+    await edit.get('form').trigger('submit')
+    await flushPromises()
+    expect(dialog()).not.toBeNull()
+    await edit
+      .findAll('button')
+      .find((b) => b.text() === 'Cancel')!
+      .trigger('click')
+    await flushPromises()
+    expect(dialog()).toBeNull()
+    expect(useDietStore().foods[2]!.name).toBe('Fish')
+  })
+
+  it('closes on Close without saving', async () => {
+    await mountConfig()
+    const edit = await openEdit('Fish')
+    await edit.get('#edit-food-name').setValue('Salmon')
+    await edit.get('button[aria-label="Close"]').trigger('click')
+    await flushPromises()
+    expect(dialog()).toBeNull()
+    expect(useDietStore().foods[2]!.name).toBe('Fish')
+  })
+
+  it('closes when another tab deletes the food, but not for a different one', async () => {
+    await mountConfig()
+    await openEdit('Fish')
+    const foods = useDietStore().foods
+    const other = emptyState()
+    other.diet.plans = { '2026-10-19': foods.filter((f) => f.id !== 'nuts') }
+    otherTabWrites(other)
+    await flushPromises()
+    expect(dialog()).not.toBeNull()
+    other.diet.plans = { '2026-10-19': foods.filter((f) => f.id !== 'fish') }
+    otherTabWrites(other)
+    await flushPromises()
+    expect(dialog()).toBeNull()
+  })
+
+  it('closes if the week changes under it', async () => {
+    await mountConfig()
+    await openEdit('Fish')
+    usePlannerStore().nextWeek()
+    await flushPromises()
+    expect(dialog()).toBeNull()
   })
 })
 
@@ -1180,7 +1247,7 @@ describe('config mode and weekly plans', () => {
   it('names exercise and food sources separately once they differ', async () => {
     await mountConfig()
     await raiseSquats()
-    await wrapper.get('button[aria-label="Raise Fish goal"]').trigger('click')
+    await raiseFish()
     await wrapper.get('button[aria-label="Next week"]').trigger('click')
     expect(wrapper.get('[data-testid="carried-from"]').text()).toBe(
       'Uses the plan from the week of 19 October until you change this week.',

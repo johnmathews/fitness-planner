@@ -56,14 +56,15 @@ App.vue                 picks the screen (link, planner or sign-in), the pen var
 │   ├── TrackerGrid.vue a <table> (WeekGrid card): day header, one TrackerRow per item, today's
 │   │   │               highlight band, and the Picked row ("4", "one extra" over the pick)
 │   │   └── TrackerRow.vue  name and chips; 7 × DayMark; "3 of 4" total; in config
-│   │                       mode the edit IconButton (exercises) or goal Stepper (foods) in the
-│   │                       row header, and the remove IconButton in a last cell of its own
+│   │                       mode the edit IconButton after the name, and the remove
+│   │                       IconButton in a last cell of its own
 │   ├── AddExerciseForm.vue config mode only: name, sets, Measure (Reps or Time), reps or
 │   │                       seconds, PerSideToggle, weight (kg)
 │   └── EditExerciseDialog.vue  Dialog: the add form's fields, then Times a week (the goal)
 └── DietSection.vue     the Food section: SectionHeader ("2 of 4 goals met"), kept with its grid
     ├── TrackerGrid.vue wired to diet: no chips and no Picked row (foods have no daily pick)
-    └── AddFoodForm.vue config mode only: name, Add food
+    ├── AddFoodForm.vue config mode only: name, Add food
+    └── EditFoodDialog.vue  Dialog: Name, then Times a week (the goal)
 ```
 
 ## 2. Weekly plans
@@ -127,7 +128,8 @@ card's words).
 store like the planner's. It reads `planner.weekKey`, so week navigation moves both
 sections. It derives `foods`, `dayCounts`, `grandTotal`, `goalsMet` and `nextWeekHasPlan`, and
 offers `isEaten`, `totalFor`, `toggle`, `changeTarget` (0–7), `addFood` (goal 3, `false` for an
-empty name), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
+empty name), `updateFood` (name and goal from the Edit food dialog, `false` for an empty name or a
+food not in the week), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
 like exercise goals (met once the count reaches a non-zero goal); foods have no daily target.
 
 The planner writes only the theme and `showTotals`, each merged into whatever
@@ -257,12 +259,13 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   `aria-pressed` buttons in a `role="group"`.
 - **Config mode and normal mode.** Normal mode, the default on every load, only ticks cells. The
   "Edit plan" Switch in the navbar (a `role="switch"` button) turns on config mode, which shows the
-  edit and remove IconButtons, the foods' goal Steppers, the add forms and "Copy plan to next week".
-  An exercise is changed only in its Edit exercise dialog, so its row has no Stepper; the remove
-  button ends each row, in a "Remove" column after "Week". The mode is not saved, so the
+  edit and remove IconButtons, the add forms and "Copy plan to next week". An item is changed only
+  in its dialog (Edit exercise, Edit food), so rows have no Stepper; the remove button ends each
+  row, in a "Remove" column after "Week". The mode is not saved, so the
   app always opens ready for ticking.
-- **Exercises are editable.** The handoff had no way to change an exercise after adding it. An
-  Edit IconButton (`pencil`) on each exercise row (not foods) opens `EditExerciseDialog`, on the Dialog primitive (Reka UI),
+- **Exercises and foods are editable.** The handoff had no way to change an item after adding it.
+  An Edit IconButton (`pencil`) on each exercise row opens `EditExerciseDialog` (and on each food
+  row `EditFoodDialog`: name and Times a week), on the Dialog primitive (Reka UI),
   which traps focus, closes on Escape and returns focus to the button. Sets and
   weight can be left empty (an empty weight shows a grey "Bodyweight" placeholder; no field is
   marked optional), weight in kg; the sets/reps chip and the weight chip are separate so they
@@ -396,7 +399,7 @@ Each grid is one tab stop, following the WAI-ARIA grid pattern with a roving tab
   wrap. Home and End go along the row, Ctrl+Home and Ctrl+End to the grid's ends. Space and Enter
   belong to the DayMark. An `aria-hidden` cell (the empty Picked cells under "Week" and "Remove")
   is skipped.
-- **Edit plan.** The controls in a cell (Edit or a food's Stepper in the name cell, Remove in the
+- **Edit plan.** The controls in a cell (Edit in the name cell, Remove in the
   last cell) stay out of the Tab order. Enter or F2 on the cell lets them in, Tab moves among them,
   and Escape puts focus back on the cell.
 

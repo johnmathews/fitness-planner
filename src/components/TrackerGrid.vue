@@ -15,7 +15,7 @@ const props = defineProps<{
   flagsFor: (id: string) => boolean[]
   totalFor: (id: string) => number
   detailsFor?: (item: Tracked) => string[]
-  /** Adds an edit button to each row, which emits `edit`, in place of the goal Stepper. */
+  /** Adds an edit button to each row in config mode, which emits `edit`. */
   editable?: boolean
   configMode: boolean
   /** The Picked row (exercises only): its caption ("3 a day") and each day's count. */
@@ -24,7 +24,6 @@ const props = defineProps<{
 
 defineEmits<{
   toggle: [id: string, day: number]
-  changeTarget: [id: string, delta: number]
   remove: [id: string]
   edit: [id: string]
 }>()
@@ -37,14 +36,13 @@ const TONE: Record<Exclude<CountTone, 'future'>, string> = {
 }
 
 /**
- * Edit plan's widths: the name column grows by the widest thing a row gains there (a food's 136px
- * goal Stepper and its gap; an exercise's edit button takes less), the same in both grids so their
- * days line up, and the table by that and the 56px Remove column, so the days keep their 56px
- * minimum (WeekGrid card).
+ * Edit plan's widths: the name column grows by the edit button and its gap, and the table by that
+ * and the 56px Remove column, so the days keep their 56px minimum (WeekGrid card). Both grids
+ * get the same widths, so their days line up.
  */
 const widths = computed(() =>
   props.configMode
-    ? { name: 'w-70 sm:w-86', table: 'min-w-200 sm:min-w-220' }
+    ? { name: 'w-47 sm:w-63', table: 'min-w-177 sm:min-w-197' }
     : { name: 'w-34 sm:w-50', table: 'min-w-150 sm:min-w-170' },
 )
 
@@ -95,8 +93,8 @@ function reveal(ev: FocusEvent): void {
   (stickyName) and the container's scroll-padding-left is its width, so a focused cell scrolls
   clear of the names rather than under them; the container opens scrolled to today (scrollToToday).
 
-  Edit plan widens the name column by exactly the controls it gains (the edit button, or a food's
-  goal Stepper) and adds a 56px Remove column after "Week", so each row keeps its height (F25).
+  Edit plan widens the name column by exactly the edit button it gains and adds a 56px Remove
+  column after "Week", so each row keeps its height (F25).
 
   Keyboard (F15): the WAI-ARIA grid, one tab stop per grid (useGridNav). A day cell's focus is its
   DayMark, the cell's one widget; the names, totals and Picked cells take focus themselves and
@@ -175,7 +173,6 @@ function reveal(ev: FocusEvent): void {
           :flags="flagsFor(it.id)"
           :total="totalFor(it.id)"
           @toggle="$emit('toggle', it.id, $event)"
-          @change-target="$emit('changeTarget', it.id, $event)"
           @remove="$emit('remove', it.id)"
           @edit="$emit('edit', it.id)"
         />

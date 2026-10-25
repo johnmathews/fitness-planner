@@ -223,10 +223,12 @@ describe('the planner grids (W10)', () => {
       expect(ex().findAll('[data-testid="row-total"]')[2]!.element.closest('td')!.textContent).toBe(
         '0 of 4',
       )
-      // A food has no dialog, so its goal Stepper stays in the row header.
+      // Foods are the same: edit after the name, remove at the end.
       const food = diet().get('button[aria-label="Remove Fish"]').element.closest('tr')!
-      expect(food.querySelector('[role="rowheader"] [role="spinbutton"]')).not.toBeNull()
-      expect(diet().find('button[aria-label="Edit Fish"]').exists()).toBe(false)
+      expect(food.lastElementChild!.contains(food.querySelector('[data-action="remove"]'))).toBe(
+        true,
+      )
+      expect(food.querySelector('[role="rowheader"] button[aria-label="Edit Fish"]')).not.toBeNull()
     })
 
     it('drops the Remove column outside Edit plan', async () => {
@@ -236,7 +238,7 @@ describe('the planner grids (W10)', () => {
       expect(ex().find('button[aria-label^="Remove"]').exists()).toBe(false)
     })
 
-    it('holds the row header at the Stepper’s height in both modes, so rows keep their height (F25)', async () => {
+    it('holds the row header at an IconButton’s height in both modes, so rows keep their height (F25)', async () => {
       await mountConfig()
       const block = () => ex().findAll('[role="rowheader"]')[0]!.get('div')
       expect(block().classes()).toContain('min-h-11')

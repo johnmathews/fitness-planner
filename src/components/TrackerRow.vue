@@ -17,23 +17,21 @@ export function stickyName(configMode: boolean): string {
 import { computed, ref } from 'vue'
 import { Check, Pencil, Trash2 } from '@lucide/vue'
 import type { Day } from '@/stores/planner'
-import { MAX_TARGET, MIN_TARGET } from '@/lib/storage'
 import { goalMet, type Tracked } from '@/lib/tracker'
 import { useConfirm } from '@/composables/useConfirm'
 import { Chip } from '@/components/ui/chip'
 import { DayMark } from '@/components/ui/day-mark'
 import { IconButton } from '@/components/ui/icon-button'
-import { Stepper } from '@/components/ui/stepper'
 
 const props = defineProps<{
   item: Tracked
   /** The chips under the name, already in the Chip card's words ("3 × 12", "16 kg"). */
   details?: string[]
   /** Shows an edit button (in config mode) that emits `edit`; the dialog it opens edits the
-   * whole item, so an editable row has no goal Stepper. */
+   * whole item, its goal included. */
   editable?: boolean
-  /** Config mode shows the edit button or goal Stepper in the row header, and the remove button
-   * in a cell of its own at the end of the row. */
+  /** Config mode shows the edit button after the name, and the remove button in a cell of its
+   * own at the end of the row. */
   configMode: boolean
   days: Day[]
   flags: boolean[]
@@ -41,7 +39,6 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   toggle: [day: number]
-  changeTarget: [delta: number]
   remove: []
   edit: []
 }>()
@@ -90,20 +87,14 @@ async function remove(event: MouseEvent): Promise<void> {
   })
   if (yes && props.days[0]!.key === week) emit('remove')
 }
-
-/** The goal Stepper reports a new value (only ever a changed one); the store takes a step. */
-function setTarget(value: number): void {
-  emit('changeTarget', value - props.item.target)
-}
 </script>
 
 <!--
   One row of the WeekGrid card: the name in body 600, then the chips; a DayMark per day; the
-  week's total as "3 of 4", the only place the goal shows. In Edit plan an editable row's edit
-  IconButton follows the name (its dialog edits everything, goal included), a food's goal Stepper
-  sits beside the name block, and the remove IconButton ends the row in a cell of its own. The edit
-  button's negative margin keeps the name line's height, and the header is at least the Stepper's
-  44px tall in both modes, so the row keeps its height (F25).
+  week's total as "3 of 4", the only place the goal shows. In Edit plan the edit IconButton follows
+  the name (its dialog edits everything, goal included) and the remove IconButton ends the row in a
+  cell of its own. The edit button's negative margin keeps the name line's height, and the header
+  is at least 44px tall (an IconButton's target) in both modes, so the row keeps its height (F25).
   Those controls stay out of the Tab order until Enter (or F2) on their cell lets them in, and
   Escape leaves them (gridNav), so each grid stays one tab stop in Edit plan too.
 -->
@@ -137,19 +128,6 @@ function setTarget(value: number): void {
             <Chip v-for="d in details" :key="d" data-testid="item-detail">{{ d }}</Chip>
           </span>
         </div>
-        <Stepper
-          v-if="configMode && !editable"
-          :model-value="item.target"
-          :label="`${item.name} goal`"
-          hide-label
-          :lower-label="`Lower ${item.name} goal`"
-          :raise-label="`Raise ${item.name} goal`"
-          :min="MIN_TARGET"
-          :max="MAX_TARGET"
-          class="shrink-0"
-          data-noprint
-          @update:model-value="setTarget"
-        />
       </div>
     </th>
     <td

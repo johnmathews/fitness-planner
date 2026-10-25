@@ -265,7 +265,7 @@ listed in [api.md](api.md) §10):
   mounted app: the Picked row ("one extra" in words and underlined, en dashes for days to come, no
   empty focusable cell), today (full-date names with "today", `aria-current`, the band), totals
   and section figures ("N of M", a check when met, zero quiet), Edit plan's rows (Edit in the name
-  cell, a food's Stepper, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,
+  cell, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,
   arrows, the skip link, Edit plan's controls), headings and print attributes, and the phone width
   (the sticky names, Edit plan's name column scrolling away, opening scrolled to today).
 - `src/components/__tests__/TodayList.spec.ts`: the phone's Today view (K5): the list on its own
@@ -274,7 +274,7 @@ listed in [api.md](api.md) §10):
   the remembered view, the breakpoint, another week and Edit plan showing the week, the skip link).
 - `src/components/__tests__/DietSection.spec.ts`: the diet section in the mounted app: default
   foods, ticking, row totals and the goals-met figure, shared week navigation, add and remove (after
-  a confirmation) and the goal Stepper (in config mode), cross-tab sync.
+  a confirmation) and the goal set in the Edit food dialog (in config mode), cross-tab sync.
 
 `vitest.config.ts` sets coverage thresholds (100% lines and functions, 99% statements, 98%
 branches), so `npm run test:coverage` and CI fail when coverage drops below them. Coverage covers

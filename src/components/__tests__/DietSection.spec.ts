@@ -117,9 +117,15 @@ describe('DietSection', () => {
     expect(diet().findAll('[role="row"]')).toHaveLength(5)
   })
 
-  it('adjusts a food goal with the stepper', async () => {
+  it('sets a food goal in its Edit food dialog', async () => {
     await mountConfig()
-    await diet().get('button[aria-label="Lower Fish goal"]').trigger('click')
+    await diet().get('button[aria-label="Edit Fish"]').trigger('click')
+    await flushPromises()
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+    dialog.querySelector<HTMLButtonElement>('button[aria-label="Fewer times a week"]')!.click()
+    await flushPromises()
+    dialog.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }))
+    await flushPromises()
     expect(diet().findAll('[data-testid="row-total"]')[2]!.text()).toBe('0 of 1')
   })
 
