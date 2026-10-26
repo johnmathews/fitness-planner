@@ -28,10 +28,19 @@ types, format, the design gate, and the API's pytest. The same checks were green
 
 ## What is deliberately not done
 
-- **Rotation and resizing.** The sprint runs only after a scroll. Rotating a phone or resizing the
-  window can leave the page across two screens until the next scroll. Reported to John, not fixed.
 - **The design system artifact** (claude.ai) still shows the cards from before #41. The repo is the
   source of truth, and republishing it is a separate step.
 - **The sidebar.** It stays on the mockup only. John kept the top bar (K37).
 - **The stale remote branch** `eng-pin-actions-sha` (PR #35, merged) waits for John's say-so before
   it is deleted.
+
+
+## Later the same day: the gaps closed
+
+John asked to merge #43, reap what could be reaped, republish the design system artifact, and fix
+the rotate and resize gap.
+
+- **Rotate and resize (K40).** `useScreenSprint` now listens for `resize`. With no scroll to give a
+  direction, it settles on the screen that fills more of the window. The new e2e test turns
+  1280×800 to 800×1280, back, and then to 844×390. It failed without the fix (at 800×1280
+  Exercises ended at 932 of 1280) and passes with it. Status: confirmed.
