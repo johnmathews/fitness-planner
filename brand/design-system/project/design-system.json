@@ -158,23 +158,23 @@
     },
     "Wordmark": {
       "files": {
-        "fitness-planner-wordmark-ink.svg": {
-          "blob": "a208160d040149b1f3c58d330142d55b",
-          "name": "fitness-planner-wordmark-ink.svg",
-          "size": 9896,
+        "tracker-wordmark-ink.svg": {
+          "blob": "faefddaa260454952354e158ce27f351",
+          "name": "tracker-wordmark-ink.svg",
+          "size": 4929,
           "type": "image/svg+xml"
         },
-        "fitness-planner-wordmark-light.svg": {
-          "blob": "3567d7499b95894b40ea18d80dcc9fb7",
-          "name": "fitness-planner-wordmark-light.svg",
-          "size": 9896,
+        "tracker-wordmark-light.svg": {
+          "blob": "edc6deba8536e04123ffbe7175b88d23",
+          "name": "tracker-wordmark-light.svg",
+          "size": 4929,
           "type": "image/svg+xml"
         }
       },
       "name": "Wordmark",
       "order": [
-        "fitness-planner-wordmark-ink.svg",
-        "fitness-planner-wordmark-light.svg"
+        "tracker-wordmark-ink.svg",
+        "tracker-wordmark-light.svg"
       ],
       "tile": "l"
     }
@@ -196,10 +196,10 @@
     "Icons"
   ],
   "lastChange": {
-    "at": "2026-10-26T06:09:22Z",
     "by": "John Mathews",
+    "at": "2026-10-26T08:08:11Z",
     "via": "Claude Code",
-    "note": "The full-screen week (K24-K40): PlannerScreen and EmailLayout cards added; TodayList and StatFigure removed; WeekGrid, Header, SectionHeader, DayMark and others updated; highlight and the Picked row gone; a met day turns green with a hand-drawn underline"
+    "note": "Renamed to Tracker (K44): the wordmark, no monogram; item notes in WeekGrid and Dialog (K43); arrows in PlannerScreen (K42)."
   },
   "layout": "files",
   "libraries": [],
