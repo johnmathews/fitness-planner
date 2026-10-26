@@ -36,6 +36,26 @@ async function wheel(page: Page, steps: number, dy: number) {
   return { stops, ends }
 }
 
+test('a rotation never leaves the page resting across two screens (K40)', async ({ page }) => {
+  await openApp(page, { moreExercises: 10 })
+  await page.mouse.move(640, 400)
+  // Down into Food, then turn the screen: the layout changes height under the scroll position.
+  for (let i = 0; i < 12; i++) await page.mouse.wheel(0, 120)
+  await atRest(page)
+  for (const size of [
+    { width: 800, height: 1280 },
+    { width: 1280, height: 800 },
+    { width: 844, height: 390 },
+  ]) {
+    await page.setViewportSize(size)
+    const at = await atRest(page)
+    expect(
+      at.exBottom > 1 && at.exBottom < at.vh - 1,
+      `at ${size.width}×${size.height} Exercises ends at ${at.exBottom} of ${at.vh}`,
+    ).toBe(false)
+  }
+})
+
 for (const [name, opts] of [
   ['a tall Exercises screen', { moreExercises: 10 }],
   ['a tall Food screen', { moreFoods: 14 }],

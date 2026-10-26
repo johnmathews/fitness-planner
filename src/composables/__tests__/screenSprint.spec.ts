@@ -19,6 +19,14 @@ describe('sprintTarget (K38)', () => {
     expect(sprintTarget(1200, 800, starts, -1)).toBe(500)
   })
 
+  it('settles on the screen that fills more of the window when nobody scrolled (K40)', () => {
+    // Food shows from 1300 to 1400 of 600–1400: Exercises fills more, so back to its end.
+    expect(sprintTarget(600, 800, starts, 0)).toBe(500)
+    // Food shows from 1300 to 1500 of 700–1500: it is half-way, so Food (ties go down).
+    expect(sprintTarget(1100, 800, starts, 0)).toBe(1300)
+    expect(sprintTarget(300, 800, starts, 0)).toBeNull()
+  })
+
   it('counts a line within a pixel of the edge as no line', () => {
     expect(sprintTarget(500.5, 800, starts, 1)).toBeNull()
     expect(sprintTarget(1299.5, 800, starts, 1)).toBeNull()
@@ -96,6 +104,18 @@ describe('useScreenSprint', () => {
     scrollToY(1100)
     vi.advanceTimersByTime(REST_MS)
     expect(scrollTo).toHaveBeenLastCalledWith({ top: 500, behavior: 'auto' })
+    wrapper.unmount()
+  })
+
+  it('settles a resize or rotation on the screen that fills more of the window', () => {
+    const wrapper = holder()
+    // A scroll down sets a direction; the resize after it clears it.
+    scrollToY(100)
+    vi.advanceTimersByTime(REST_MS)
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 600 })
+    window.dispatchEvent(new Event('resize'))
+    vi.advanceTimersByTime(REST_MS)
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 500, behavior: 'smooth' })
     wrapper.unmount()
   })
 

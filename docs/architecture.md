@@ -444,7 +444,8 @@ class turns on main.css's `full:` variant. With it, each section is a screen (`S
 `src/lib/screens.ts`: `min-h-dvh`, a centred column, and `data-planner-screen`) and its grid takes
 the height left (`SCREEN_GRID`). `useScreenSprint` (`src/composables/screenSprint.ts`) keeps the
 page from resting across two screens: 120ms after a scroll stops, `sprintTarget` sends it on in the
-direction of travel (K38). It replaced `scroll-snap-type: y mandatory`, which a mouse wheel couldn't
+direction of travel (K38); after a resize or rotation, to the screen that fills more of the window
+(K40). It replaced `scroll-snap-type: y mandatory`, which a mouse wheel couldn't
 cross from the end of a tall screen. Four custom variants in main.css carry
 the layout, all screen-only so paper keeps the table: `screen:` (the WeekGrid is a CSS grid),
 `full:`, `folded:` (upright under 1000px wide, or under 760px wide) and `short:` (landscape, 540px
