@@ -1,7 +1,7 @@
 """The two emails the API sends, built to the design system's EmailLayout card (docs/api.md §4.1).
 
 Email clients read neither CSS variables nor <style>, so the light theme's token values are
-written out here, inline. `python -m fitness_planner_api.emails <path>` writes the card's
+written out here, inline. `python -m tracker_api.emails <path>` writes the card's
 preview from this module; a test fails when the committed preview is out of date.
 """
 
@@ -68,7 +68,7 @@ def layout(
         '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" '
         'style="max-width:560px;">'
         f'<tr><td style="padding:0 0 16px;font:600 20px/26px {SERIF};color:{INK};">'
-        "Fitness Planner</td></tr>"
+        "Tracker</td></tr>"
         f'<tr><td style="padding:32px 24px;background:{PANEL};border:1px solid {LINE};'
         'border-radius:10px;">'
         f'<h1 style="margin:0 0 16px;font:600 26px/32px {SERIF};color:{INK};">'
@@ -91,7 +91,7 @@ def layout(
         f'<a href="{link}" style="color:{INK};text-decoration:underline;">{link}</a></p>'
         "</td></tr>"
         f'<tr><td style="padding:16px 0 0;font:400 14px/20px {SANS};color:{INK_SECONDARY};">'
-        f"{escape(footnote)}<br>Fitness Planner · {escape(host)}</td></tr>"
+        f"{escape(footnote)}<br>Tracker · {escape(host)}</td></tr>"
         "</table></td></tr></table></body></html>"
     )
 
@@ -108,13 +108,13 @@ def confirm(origin: str, token: str, lifetime: int) -> Email:
     url = f"{origin}/#/confirm/{token}"
     heading = "Confirm your email"
     lines = [
-        "You created a Fitness Planner account with this address. Confirm it, so a password "
+        "You created a Tracker account with this address. Confirm it, so a password "
         "reset can reach you here."
     ]
     note = f"The link works for {duration(lifetime)}."
     footnote = "If you didn’t create this account, you can ignore this email."
     return Email(
-        subject="Confirm your email for Fitness Planner",
+        subject="Confirm your email for Tracker",
         html=layout(heading, lines, "Confirm email", url, note, footnote, _host(origin)),
         text=_text(heading, lines, url, note, footnote),
     )
@@ -133,7 +133,7 @@ def reset(origin: str, address: str, token: str, lifetime: int) -> Email:
     )
     footnote = "If you didn’t ask, ignore this email. Your password stays as it is."
     return Email(
-        subject="Reset your Fitness Planner password",
+        subject="Reset your Tracker password",
         html=layout(heading, lines, "Choose a new password", url, note, footnote, _host(origin)),
         text=_text(heading, lines, url, note, footnote),
     )

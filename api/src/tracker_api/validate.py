@@ -14,9 +14,10 @@ import sys
 from collections.abc import Callable
 from typing import Any, Literal, TypedDict, TypeIs, cast
 
-EXPORT_FORMAT = "fitness-planner-export"
-#: Files exported before the app was renamed carry this format; they import as if current.
-OLD_EXPORT_FORMAT = "exercise-planner-export"
+EXPORT_FORMAT = "tracker-export"
+#: Files exported under the app's earlier names (Fitness Planner, and Exercise Planner before it)
+#: carry these formats; they import as if current.
+OLD_EXPORT_FORMATS = ("fitness-planner-export", "exercise-planner-export")
 #: Version 4 files may carry a note on an exercise or a food (K43). Version 3 files carry a mark
 #: per day with its drawing (`great`, `partial-solid`, `missed-hatch` … or null). Version 2 files
 #: carry the kinds alone, which read as the zigzag; version 1 files a `true` per done day, which
@@ -308,7 +309,7 @@ def parse_export(text: str) -> ExportData:
         raise ExportError("json")
     if not isinstance(parsed, dict):
         raise ExportError("format")
-    if parsed.get("format") not in (EXPORT_FORMAT, OLD_EXPORT_FORMAT):
+    if parsed.get("format") not in (EXPORT_FORMAT, *OLD_EXPORT_FORMATS):
         raise ExportError("format")
     if as_number(parsed.get("version")) not in READ_VERSIONS:
         raise ExportError("version")

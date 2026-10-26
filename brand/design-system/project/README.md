@@ -1,14 +1,14 @@
 ## About this document
 
-This is the Fitness Planner design system. A design system is a product's design language (its colours, type, spacing, marks and the way it writes), plus the components built from it and the rules for using them. This design system is not the app's code, but the code follows it closely. The app's styles are generated from its tokens, and the app's components are built from its cards.
+This is the Tracker design system. A design system is a product's design language (its colours, type, spacing, marks and the way it writes), plus the components built from it and the rules for using them. This design system is not the app's code, but the code follows it closely. The app's styles are generated from its tokens, and the app's components are built from its cards.
 
-This document shows each part of the Fitness Planner web app in light and dark. New screens are built off of this design system, and the app is checked against it. This document does not describe how the app works, the data model or the code itself. It is also not a picture of every screen.
+This document shows each part of the Tracker web app in light and dark. New screens are built off of this design system, and the app is checked against it. This document does not describe how the app works, the data model or the code itself. It is also not a picture of every screen.
 
 ## Introduction
 
-Fitness Planner should feel like a well-made notebook kept for years: plain, dependable and calm, with today and this week in one bold, obvious place and everything older quiet and dense.
+Tracker should feel like a well-made notebook kept for years: plain, dependable and calm, with today and this week in one bold, obvious place and everything older quiet and dense.
 
-Fitness Planner is a weekly plan for exercise and diet: one row per exercise or food, one mark per day, and a day that turns green once it reaches the daily pick. A personal trainer could recommend it and use it with a client. It is (almost) as simple as a paper star chart, and it never pretends to be more than the record of someone showing up.
+Tracker is a weekly plan for exercise and diet: one row per exercise or food, one mark per day, and a day that turns green once it reaches the daily pick. A personal trainer could recommend it and use it with a client. It is (almost) as simple as a paper star chart, and it never pretends to be more than the record of someone showing up.
 
 ## The feeling
 

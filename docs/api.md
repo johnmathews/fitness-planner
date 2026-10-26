@@ -24,8 +24,8 @@ scoped by `user_id`, and no endpoint reads another user's data.
 | `data.py`     | reading and writing plans, ticks and settings; import, export; the quota (`usage`)               |
 | `app.py`      | the HTTP layer: routes, the write checks, error mapping                                          |
 | `backup.py`   | the daily `VACUUM INTO` copy                                                                     |
-| `cli.py`      | `fp-admin`                                                                                       |
-| `seed.py`     | `fp-admin seed-demo`: a demo account and three weeks of marks, on a local stack only             |
+| `cli.py`      | `tracker-admin`                                                                                       |
+| `seed.py`     | `tracker-admin seed-demo`: a demo account and three weeks of marks, on a local stack only             |
 
 ## 2. Data model
 
@@ -145,7 +145,7 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
 
 - **Sign-up.** `POST /auth/signup` with `{email, password}` creates an account and signs it in.
   The email is trimmed and lower-cased, then stored in `users.username`, so it is what the
-  person signs in with and what `X-Expected-User`, the cache keys and `fp-admin` name. It must be
+  person signs in with and what `X-Expected-User`, the cache keys and `tracker-admin` name. It must be
   at most 254 characters, with printable ASCII before the `@` (no spaces, no second `@`) and a
   domain of letters, digits and hyphens with at least one dot; otherwise 400 `email`. It is ASCII
   because the name travels in a header. With mail on, a confirm-your-email link goes to the address (§4.1); the account
@@ -156,14 +156,14 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
   with `Retry-After` saying when the oldest of them leaves the hour. The caps are checked before the password is
   hashed and again under the write lock with the insert, so parallel sign-ups cannot pass them.
   Sign-ups wait for the same bounded hasher as logins and get 503 `busy` the same way.
-- **Invites.** `fp-admin invite <email>` mints a single-use link,
+- **Invites.** `tracker-admin invite <email>` mints a single-use link,
   `$PUBLIC_ORIGIN/#/invite/<token>`, valid for 7 days. The person opens it and chooses a password
   (10 to 256 characters). The account is the email the invite names, under sign-up's email rule
   and lower-cased, so every new account, invited or signed up, signs in with an email. Inviting
   an email that already has an account fails; use `reset`. With mail on, redeeming an invite
-  sends a confirm link, as sign-up does. `fp-admin reset <email>` mints a reset link the same
+  sends a confirm link, as sign-up does. `tracker-admin reset <email>` mints a reset link the same
   way, valid for 24 hours. Using it ends every session of that user and clears any lockout.
-  Minting a new link revokes the earlier unused `fp-admin` links of the same kind for that account
+  Minting a new link revokes the earlier unused `tracker-admin` links of the same kind for that account
   (a new invite leaves a reset link alone, and the reverse). A reset sent by email
   (§4.1) revokes nothing, and nothing revokes it but its hour running out. The token travels
   in the URL fragment and then in request bodies, never in a path, so no access log (Traefik, nginx
@@ -188,7 +188,7 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
 - **Sessions** are 32 random bytes in an `HttpOnly; Secure; SameSite=Lax; Path=/` cookie named
   `__Host-session`. They last 90 days from the last use: a request more than a day after the last
   refresh moves the expiry forward and re-sends the cookie. Logout ends one session.
-  `fp-admin revoke-sessions <email>` and a reset end them all. A disabled user's sessions stop
+  `tracker-admin revoke-sessions <email>` and a reset end them all. A disabled user's sessions stop
   working at once.
 
 ### 4.1 Email
@@ -196,7 +196,7 @@ that gained a mark), in one transaction. A file that fails to parse gets 400 wit
 Mail is on when `RESEND_API_KEY` is set (§6), and goes through [Resend](https://resend.com)'s
 `POST /emails`, from `MAIL_FROM`, as HTML and plain text. With no key nothing is sent, the routes
 that send get 503 `mail-off`, and the app hides "Forgot your password?" and the confirm banner;
-resets are `fp-admin`'s, as before.
+resets are `tracker-admin`'s, as before.
 
 - **Confirm your email.** Sign-up sends a link, `$PUBLIC_ORIGIN/#/confirm/<token>`, valid for 7
   days; `POST /auth/confirm/resend` sends a new one and revokes the old. Using it (no session
@@ -206,12 +206,12 @@ resets are `fp-admin`'s, as before.
 /auth/confirm` works with mail off too, so a link sent before mail was turned off still
   confirms.
 - **Forgot your password.** `POST /auth/forgot` with `{email}` mints a reset link (the same
-  `#/reset/<token>` as `fp-admin reset`, the same lookup and redeem) and emails it, valid for one
+  `#/reset/<token>` as `tracker-admin reset`, the same lookup and redeem) and emails it, valid for one
   hour. A malformed email gets 400 `email`; otherwise the answer is 202 `{}` whether or not an
   account has that email, it is disabled, or a limit was reached, so the reply tells nobody
   which addresses have accounts. A new request leaves earlier links working, so a stranger asking
   for resets for someone's address cannot cancel the link that person was just sent. Using a mailed reset also confirms the address, since only its
-  owner could have opened it; an `fp-admin` reset does not.
+  owner could have opened it; an `tracker-admin` reset does not.
 - **Limits.** Per account and kind, one email a minute and five a day; across the whole API,
   `MAIL_PER_HOUR` (30, at least 1) emails of any kind in any rolling hour, which keeps a flood of resets from
   spending the Resend quota. Each send is logged in `mail_log` under the write lock before the
@@ -228,18 +228,18 @@ resets are `fp-admin`'s, as before.
 
 ## 5. Admin CLI
 
-`fp-admin` runs in the API container against the same database:
+`tracker-admin` runs in the API container against the same database:
 
 ```sh
-docker compose exec fitness-api fp-admin invite alice@example.com   # prints the invite link
-docker compose exec fitness-api fp-admin reset alice@example.com    # prints a reset link
-docker compose exec fitness-api fp-admin users            # email, created, disabled, sessions
-docker compose exec fitness-api fp-admin disable alice@example.com  # blocks login, ends sessions
-docker compose exec fitness-api fp-admin enable alice@example.com
-docker compose exec fitness-api fp-admin revoke-sessions alice@example.com
+docker compose exec fitness-api tracker-admin invite alice@example.com   # prints the invite link
+docker compose exec fitness-api tracker-admin reset alice@example.com    # prints a reset link
+docker compose exec fitness-api tracker-admin users            # email, created, disabled, sessions
+docker compose exec fitness-api tracker-admin disable alice@example.com  # blocks login, ends sessions
+docker compose exec fitness-api tracker-admin enable alice@example.com
+docker compose exec fitness-api tracker-admin revoke-sessions alice@example.com
 ```
 
-`fp-admin seed-demo [email] [--password …]` is for a local stack only. It refuses unless
+`tracker-admin seed-demo [email] [--password …]` is for a local stack only. It refuses unless
 `PUBLIC_ORIGIN` is `http://localhost` or `http://127.0.0.1` (any port) and `COOKIE_SECURE=false`.
 It creates the account when it doesn't exist (`demo@example.com` with the password
 `demo-password` by default), confirms its email, and merges in three weeks of plans and marks
@@ -279,8 +279,8 @@ Reviewed and kept on purpose, for a small service with open sign-up (D9 in
   "Forgot your password?" does not add to it, since it answers the same for everyone.
 - **Anyone can claim any email until it is confirmed.** A person can sign up with an address that
   is not theirs; its owner then gets 409 `exists`, but "Forgot your password?" sends them a reset
-  link, which takes the account back and confirms the address. With mail off, `fp-admin disable`
-  blocks such an account or `fp-admin reset` hands it over.
+  link, which takes the account back and confirms the address. With mail off, `tracker-admin disable`
+  blocks such an account or `tracker-admin reset` hands it over.
 - **An inbox can reset the password.** Whoever controls an account's email can choose a new
   password from it, as on most sites. The link lasts an hour, works once, and ends every session.
 - **Strangers can spend the email limits.** Anyone who knows an address can ask for its resets:
@@ -295,14 +295,14 @@ Reviewed and kept on purpose, for a small service with open sign-up (D9 in
 - **Strangers can fill the account cap, or the hour.** Ten sign-ups an hour fill the default
   `MAX_USERS` of 50 in five hours, after which sign-up says it is closed; ten at once block real
   sign-ups for up to an hour. Nothing else is harmed: invited and existing accounts keep working,
-  and each stranger's data is bounded by the quota. `fp-admin users` shows who signed up and
+  and each stranger's data is bounded by the quota. `tracker-admin users` shows who signed up and
   `disable` blocks one, but a disabled account still counts towards `MAX_USERS`, so only raising
   it reopens sign-up.
 - **Lockout reveals and can block an account.** Five wrong passwords lock a real account, but an
   unknown email never locks, so guessing shows which emails have accounts. Emails are easier to
   guess than the invite usernames accounts once had. The same five guesses every 15
   minutes keep someone out. The lock is per account because the LAN port means no client IP can
-  be trusted. `fp-admin reset` clears it.
+  be trusted. `tracker-admin reset` clears it.
 - **Sessions have no absolute lifetime.** A session used at least every 90 days lasts
   indefinitely. Logout, `revoke-sessions`, a reset and `disable` all end it.
 
@@ -339,7 +339,7 @@ uv run coverage run -m pytest && uv run coverage report   # fails under 98%
 uv run ruff check . && uv run ruff format --check .
 uv run mypy
 PUBLIC_ORIGIN=http://localhost:5173 COOKIE_SECURE=false DATA_DIR=./.data \
-  uv run uvicorn --factory fitness_planner_api.app:create_app_from_env --port 8000
+  uv run uvicorn --factory tracker_api.app:create_app_from_env --port 8000
 ```
 
 Tests sit in `api/tests/`:
@@ -361,7 +361,7 @@ Tests sit in `api/tests/`:
   password (same answer for anyone, the hour's lifetime, confirming by a mailed reset only, silent
   limits) and `MAIL_PER_HOUR` across kinds.
 - `test_db.py`, `test_config.py`, `test_backup.py`, `test_cli.py`: migrations (including racing
-  ones, the WAL switch, and old ticks reading as `great` after step 2), configuration from the environment, daily copies, `fp-admin`.
+  ones, the WAL switch, and old ticks reading as `great` after step 2), configuration from the environment, daily copies, `tracker-admin`.
 - `conftest.py` gives each test a temporary database, a controllable clock, a cheap hasher and a
   mailer that records instead of sending (`mail_client`);
   `fixtures.py` reads `fixtures/transfer/`.

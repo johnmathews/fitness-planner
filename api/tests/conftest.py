@@ -9,11 +9,11 @@ import pytest
 from argon2 import PasswordHasher
 from fastapi.testclient import TestClient
 
-from fitness_planner_api import auth
-from fitness_planner_api.app import create_app
-from fitness_planner_api.config import Config
-from fitness_planner_api.db import connect, migrate
-from fitness_planner_api.mail import MailError, Message
+from tracker_api import auth
+from tracker_api.app import create_app
+from tracker_api.config import Config
+from tracker_api.db import connect, migrate
+from tracker_api.mail import MailError, Message
 
 ORIGIN = "https://testserver"
 START = 1_792_742_400  # 2026-10-23 08:00 UTC
@@ -82,7 +82,7 @@ def mailer() -> RecordingMailer:
 
 @pytest.fixture
 def mail_config(config: Config) -> Config:
-    return replace(config, resend_api_key="re_test", mail_from="Fitness Planner <p@example.com>")
+    return replace(config, resend_api_key="re_test", mail_from="Tracker <p@example.com>")
 
 
 @pytest.fixture

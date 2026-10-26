@@ -261,9 +261,9 @@ def mint_link(
     *,
     mailed: bool = False,
 ) -> str:
-    """A new invite or reset token. Earlier unused `fp-admin` links of that kind for the name stop
-    working; a mailed reset leaves every other link alone, since anyone can ask for one and must
-    not be able to cancel a link already sent.
+    """A new invite or reset token. Earlier unused `tracker-admin` links of that kind for the name
+    stop working; a mailed reset leaves every other link alone, since anyone can ask for one and
+    must not be able to cancel a link already sent.
 
     A `mailed` reset went to the account's email, so it lasts `mail_reset_minutes` and using it
     confirms the address."""

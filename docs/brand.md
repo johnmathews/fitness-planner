@@ -2,7 +2,7 @@
 
 > Purpose
 >
-> Where Fitness Planner's brand lives, what its colours, type and marks mean, how the design
+> Where Tracker's brand lives, what its colours, type and marks mean, how the design
 > system is kept, and how to change it. Read it before designing or building any screen.
 
 ## 1. The direction
@@ -21,7 +21,7 @@ The design system is a claude.ai Design System artifact:
 <https://claude.ai/artifact/9pkE17ugXFGGyBirapyCgH>. It holds the brand book, the tokens in a light
 and a dark theme, 30 components with live previews and guidelines (Basics, Forms, Overlays, Planner,
 Feedback), the cover and the assets. The artifact is private to its owner until it is shared, so
-other readers work from the source below. Agents designing for Fitness Planner read its README
+other readers work from the source below. Agents designing for Tracker read its README
 first.
 
 Its source lives in this repository, at the same paths the artifact uses:
@@ -155,7 +155,7 @@ sign-in names both and blames neither, creating an account asks for an email and
 password?" join them. Its "Email" section sets the two emails' words: a subject naming the one
 thing, one sentence, one button, how long the link works, and what to do if it wasn't you. The
 gate rejects the banned words in
-`checks.json`. The app's name, "Fitness Planner", is a working name held in one constant,
+`checks.json`. The app's name, "Tracker" since 2026-10-26 (K44), is held in one constant,
 `APP_NAME` in `src/lib/app.ts`.
 
 ## 8. In the app
@@ -215,7 +215,7 @@ it is checked.
 
 The EmailLayout card is the other exception to steps 1 to 3: its preview reverses step 1's rule, with
 the light theme's values written inline and no `var(--token)` (email clients read neither; the gate
-checks it), and an email is not app UI, so it has no Vue primitive or style guide section. Its code is `api/src/fitness_planner_api/emails.py`, which
+checks it), and an email is not app UI, so it has no Vue primitive or style guide section. Its code is `api/src/tracker_api/emails.py`, which
 writes the card's preview; a test fails when the two differ.
 
 ## 11. Mockups

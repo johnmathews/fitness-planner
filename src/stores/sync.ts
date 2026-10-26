@@ -33,23 +33,19 @@ import { usePlannerStore } from '@/stores/planner'
  * is waiting to go out, so a refresh can never undo an edit that hasn't reached the server yet.
  */
 
-export const CACHE_PREFIX = 'fitness-planner-cache-v3:'
-export const OUTBOX_PREFIX = 'fitness-planner-outbox-v3:'
+export const CACHE_PREFIX = 'tracker-cache-v3:'
+export const OUTBOX_PREFIX = 'tracker-outbox-v3:'
 /**
  * The names of earlier formats, newest first (K14): `-v2` from before the solid and hatch
  * drawings, `-v1` from before marks had kinds. A tab still open on older code reads a mark it
  * doesn't know as an empty day and writes its copy back, which empties the boxes in every newer
  * tab; it could also drop their queued marks. A new format takes new names, so the two never read
  * each other. `src/lib/__tests__/format.spec.ts` fails a format change that keeps the old names.
+ * The app's rename (K44) moved every `fitness-planner-…` key to `tracker-…` before the stores
+ * start (`migrateKeyPrefix`), so the earlier versions are found under the new prefix.
  */
-export const OLD_CACHE_PREFIXES = [
-  'fitness-planner-cache-v2:',
-  'fitness-planner-cache-v1:',
-] as const
-export const OLD_OUTBOX_PREFIXES = [
-  'fitness-planner-outbox-v2:',
-  'fitness-planner-outbox-v1:',
-] as const
+export const OLD_CACHE_PREFIXES = ['tracker-cache-v2:', 'tracker-cache-v1:'] as const
+export const OLD_OUTBOX_PREFIXES = ['tracker-outbox-v2:', 'tracker-outbox-v1:'] as const
 
 const SECTIONS = ['exercise', 'diet'] as const
 type Section = (typeof SECTIONS)[number]

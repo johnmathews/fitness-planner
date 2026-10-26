@@ -203,7 +203,7 @@
   },
   "layout": "files",
   "libraries": [],
-  "namespace": "FitnessPlanner",
+  "namespace": "Tracker",
   "sections": {},
-  "title": "Fitness Planner design system"
+  "title": "Tracker design system"
 }

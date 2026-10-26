@@ -25,7 +25,7 @@
 - The API in `api/` uses Python 3.13 with uv, FastAPI, pytest with coverage, ruff and mypy
   (strict). [api.md](api.md) §10 has its commands. Its tests run the same `fixtures/transfer/` cases
   as Vitest, so a validation rule changed in `src/lib/storage.ts` must change in
-  `api/src/fitness_planner_api/validate.py` too, and the reverse.
+  `api/src/tracker_api/validate.py` too, and the reverse.
 
 ## 2. Scripts
 
@@ -203,7 +203,7 @@ listed in [api.md](api.md) §10):
   in as alice: the fake API, the remembered session, and an empty or given cache.
 - `src/lib/__tests__/theme.spec.ts`: theme names and how System, Light and Dark resolve.
 - `src/lib/__tests__/words.spec.ts`: small numbers as words (capitalised to open a sentence),
-  singular and plural, and the app name with its monogram.
+  singular and plural, and the app name (Tracker, with no monogram: K44).
 - `src/lib/__tests__/utils.spec.ts`: `cn` (conflicting utilities, role colours kept apart from text
   sizes) and `joinIds`.
 - `src/composables/__tests__/useConfirm.spec.ts`: the question, its verb and Cancel, true and false

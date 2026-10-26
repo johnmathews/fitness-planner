@@ -248,7 +248,7 @@ describe('App', () => {
     expect(rows[3]!.findAll('[data-testid="mark-set-sample"]')).toHaveLength(3)
     expect(rows[3]!.find('button').exists()).toBe(false)
     await rows[3]!.trigger('click')
-    expect(JSON.parse(localStorage.getItem('fitness-planner-settings-v1')!)).toMatchObject({
+    expect(JSON.parse(localStorage.getItem('tracker-settings-v1')!)).toMatchObject({
       markSet: 'faces',
     })
     await backToWeek()
@@ -557,12 +557,10 @@ describe('export and import', () => {
     await openSettings()
     await button('Export').trigger('click')
     expect(click).toHaveBeenCalledOnce()
-    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe(
-      'fitness-planner-2026-10-23.json',
-    )
+    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe('tracker-2026-10-23.json')
     const file = JSON.parse(await blob!.text())
     expect(file).toMatchObject({
-      format: 'fitness-planner-export',
+      format: 'tracker-export',
       version: 4,
       settings: { accent: '#30d158', dailyPick: 3 },
     })
@@ -701,7 +699,7 @@ describe('export and import', () => {
     expect(wrapper.find('[data-testid="import-summary"]').exists()).toBe(false)
     await backToWeek()
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('false')
-    expect(localStorage.getItem('fitness-planner-v2')).toBeNull()
+    expect(localStorage.getItem('tracker-v2')).toBeNull()
   })
 
   it('says so when the file adds nothing', async () => {
@@ -716,7 +714,7 @@ describe('export and import', () => {
 
   it.each([
     ['not JSON', new File(['{oops'], 'x.json'), 'That file isn’t valid JSON.'],
-    ['another format', jsonFile({ plans: {} }), 'That file isn’t a Fitness Planner export.'],
+    ['another format', jsonFile({ plans: {} }), 'That file isn’t a Tracker export.'],
     [
       'a newer version',
       jsonFile({ format: 'fitness-planner-export', version: 5 }),
@@ -764,9 +762,9 @@ describe('export and import with the sample data', () => {
   const sample = readFixture<Record<string, unknown>>('sample/export.json')
 
   type Tracked = { plans: object; log: object }
-  const exercise = storage['fitness-planner-v2'] as Tracked
-  const diet = storage['fitness-planner-diet-v2'] as Tracked
-  const { accent, dailyPick } = storage['fitness-planner-settings-v1'] as {
+  const exercise = storage['tracker-v2'] as Tracked
+  const diet = storage['tracker-diet-v2'] as Tracked
+  const { accent, dailyPick } = storage['tracker-settings-v1'] as {
     accent: string
     dailyPick: number
   }
@@ -844,7 +842,7 @@ describe('export and import with the sample data', () => {
     expect({ plans: server.diet.plans, log: server.diet.log }).toMatchObject(diet)
     expect(server.settings).toEqual({ accent, dailyPick })
     // The theme is per device, so it never left this browser.
-    expect(localStorage.getItem('fitness-planner-settings-v1')).toBeNull()
+    expect(localStorage.getItem('tracker-settings-v1')).toBeNull()
   })
 })
 
@@ -900,7 +898,7 @@ describe('theme', () => {
     await themeButton('Dark').trigger('click')
     expect(isDarkClass()).toBe(true)
     expect(themeButton('Dark').attributes('aria-pressed')).toBe('true')
-    expect(JSON.parse(localStorage.getItem('fitness-planner-settings-v1')!).theme).toBe('dark')
+    expect(JSON.parse(localStorage.getItem('tracker-settings-v1')!).theme).toBe('dark')
 
     await themeButton('Light').trigger('click')
     expect(isDarkClass()).toBe(false)

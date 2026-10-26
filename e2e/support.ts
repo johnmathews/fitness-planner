@@ -119,9 +119,9 @@ export async function openApp(
       // Once per test: a reload keeps what the app itself wrote since.
       if (sessionStorage.getItem('e2e-seeded')) return
       sessionStorage.setItem('e2e-seeded', '1')
-      localStorage.setItem('fitness-planner-session-v1', JSON.stringify({ user: 'alice' }))
-      localStorage.setItem('fitness-planner-cache-v3:alice', JSON.stringify(st))
-      localStorage.setItem('fitness-planner-settings-v1', JSON.stringify({ theme }))
+      localStorage.setItem('tracker-session-v1', JSON.stringify({ user: 'alice' }))
+      localStorage.setItem('tracker-cache-v3:alice', JSON.stringify(st))
+      localStorage.setItem('tracker-settings-v1', JSON.stringify({ theme }))
     },
     [s, theme] as const,
   )
@@ -177,7 +177,7 @@ async function openSignedOut(
     return route.fulfill({ status: 401, json: {} })
   })
   await page.addInitScript((theme) => {
-    localStorage.setItem('fitness-planner-settings-v1', JSON.stringify({ theme }))
+    localStorage.setItem('tracker-settings-v1', JSON.stringify({ theme }))
   }, theme)
   await page.goto(path)
   await page.waitForSelector(ready)

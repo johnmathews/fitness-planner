@@ -11,7 +11,7 @@ import { CACHE_PREFIX, OLD_CACHE_PREFIXES, OLD_OUTBOX_PREFIXES, OUTBOX_PREFIX } 
  * Each row records what one version stores. A row may change only before its version ships.
  */
 const FORMATS: Record<string, { marks: string[]; exercise: string[]; food: string[] }> = {
-  'fitness-planner-cache-v3:': {
+  'tracker-cache-v3:': {
     marks: [
       'great',
       'partial',

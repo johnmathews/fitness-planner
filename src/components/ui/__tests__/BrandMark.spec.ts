@@ -11,7 +11,6 @@ describe('BrandMark', () => {
       role: 'img',
       'aria-label': APP_NAME,
       viewBox: WORDMARK_VIEWBOX,
-      'data-variant': 'wordmark',
     })
     expect(svg.get('path').attributes('d')).toBe(WORDMARK_PATH)
     // 20px tall in the Header, ink only: fill follows `color`, which is the ink role.
@@ -26,24 +25,14 @@ describe('BrandMark', () => {
     ).toContain('h-8')
   })
 
-  it('sets the monogram live in the serif at 600, as one image named the same', () => {
-    const mark = mount(BrandMark, { props: { variant: 'monogram' } }).get('span')
-    expect(mark.text()).toBe('FP')
-    expect(mark.attributes('role')).toBe('img')
-    expect(mark.attributes('aria-label')).toBe(APP_NAME)
-    expect(mark.classes()).toEqual(
-      expect.arrayContaining(['font-serif', 'font-semibold', 'text-[20px]', 'text-ink']),
-    )
-    expect(mount(BrandMark, { props: { variant: 'monogram', size: 'lg' } }).classes()).toContain(
-      'text-[32px]',
-    )
+  it('has no monogram (K44): the wordmark is the only form', () => {
+    expect(mount(BrandMark).find('span').exists()).toBe(false)
+    expect(APP_NAME).toBe('Tracker')
   })
 
   it('never takes the pen', () => {
-    for (const variant of ['wordmark', 'monogram'] as const) {
-      for (const size of ['md', 'lg'] as const) {
-        expect(brandMarkVariants({ variant, size })).not.toMatch(/pen/)
-      }
+    for (const size of ['md', 'lg'] as const) {
+      expect(brandMarkVariants({ size })).not.toMatch(/pen/)
     }
   })
 

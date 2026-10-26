@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 ORIGIN_RE = re.compile(r"https?://[^/\s]+")
-# `planner@example.com`, or a display name before it: `Fitness Planner <planner@example.com>`.
+# `planner@example.com`, or a display name before it: `Tracker <planner@example.com>`.
 SENDER_RE = re.compile(r"(?:[^<>@]+ <[^<>@\s]+@[^<>@\s]+>|[^<>@\s]+@[^<>@\s]+)")
 
 
@@ -56,7 +56,7 @@ class Config:
     #: Emails of every kind across all accounts, in any hour.
     mail_per_hour: int = 30
     confirm_days: int = 7
-    #: A reset link sent by email; one minted by `fp-admin reset` lasts `reset_hours`.
+    #: A reset link sent by email; one minted by `tracker-admin reset` lasts `reset_hours`.
     mail_reset_minutes: int = 60
     #: Unix seconds; injectable so tests can move time.
     clock: Callable[[], int] = field(default=_now)

@@ -1,4 +1,4 @@
-## How Fitness Planner writes
+## How Tracker writes
 
 Plain, calm and brief, in the second person. Facts first, then the next step. The app is a record of someone showing up; the words never pretend the work is easier, more fun or more heroic than it is.
 
@@ -39,10 +39,10 @@ The confirm link opens "Email confirmed": "Password resets for sam@example.com w
 
 ## Email
 
-The planner sends two emails, both in the EmailLayout card, both from "Fitness Planner". The voice is the app's: plain, calm, second person, no exclamation marks.
+The planner sends two emails, both in the EmailLayout card, both from "Tracker". The voice is the app's: plain, calm, second person, no exclamation marks.
 
-- **Subject:** the one thing the email is for, with the app's name, in sentence case: "Confirm your email for Fitness Planner", "Reset your Fitness Planner password".
-- **Heading, then one sentence:** what happened, and what the link does. "You created a Fitness Planner account with this address. Confirm it, so a password reset can reach you here." "Someone asked to reset the password for sam@example.com. If it was you, choose a new one with this link." Someone, not you: the email can't know who asked.
+- **Subject:** the one thing the email is for, with the app's name, in sentence case: "Confirm your email for Tracker", "Reset your Tracker password".
+- **Heading, then one sentence:** what happened, and what the link does. "You created a Tracker account with this address. Confirm it, so a password reset can reach you here." "Someone asked to reset the password for sam@example.com. If it was you, choose a new one with this link." Someone, not you: the email can't know who asked.
 - **One button,** a verb phrase: "Confirm email", "Choose a new password". Never "Click here".
 - **How long the link works,** in words, and what using it does: "The link works for seven days." "The link works once, for one hour. Choosing a password signs you out on your other devices."
 - **The link, written out,** under "If the button doesn’t work, paste this link into your browser:".

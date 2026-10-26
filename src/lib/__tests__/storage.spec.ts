@@ -316,17 +316,35 @@ describe('migrateKeyPrefix', () => {
     localStorage.clear()
   })
 
-  it('moves every exercise-planner key to fitness-planner, leaving other keys alone', () => {
+  it('moves every key under an earlier name to tracker, leaving other keys alone (K44)', () => {
     localStorage.setItem('exercise-planner-v2', '{"plans":{}}')
     localStorage.setItem('exercise-planner-outbox-v1:alice', '[1]')
+    localStorage.setItem('fitness-planner-cache-v3:alice', '{"c":1}')
+    localStorage.setItem('fitness-planner-session-v1', '{"user":"alice"}')
     localStorage.setItem('other', 'x')
     migrateKeyPrefix()
     expect(localStorage.getItem(DATA_KEY)).toBe('{"plans":{}}')
-    expect(localStorage.getItem('fitness-planner-outbox-v1:alice')).toBe('[1]')
-    expect(localStorage.getItem('exercise-planner-v2')).toBeNull()
-    expect(localStorage.getItem('exercise-planner-outbox-v1:alice')).toBeNull()
+    expect(localStorage.getItem('tracker-outbox-v1:alice')).toBe('[1]')
+    expect(localStorage.getItem('tracker-cache-v3:alice')).toBe('{"c":1}')
+    expect(localStorage.getItem('tracker-session-v1')).toBe('{"user":"alice"}')
+    for (const old of [
+      'exercise-planner-v2',
+      'exercise-planner-outbox-v1:alice',
+      'fitness-planner-cache-v3:alice',
+      'fitness-planner-session-v1',
+    ]) {
+      expect(localStorage.getItem(old)).toBeNull()
+    }
     expect(localStorage.getItem('other')).toBe('x')
-    expect(localStorage).toHaveLength(3)
+    expect(localStorage).toHaveLength(5)
+  })
+
+  it('prefers the newer earlier name when both hold the same key', () => {
+    localStorage.setItem('exercise-planner-settings-v1', '{"theme":"light"}')
+    localStorage.setItem('fitness-planner-settings-v1', '{"theme":"dark"}')
+    migrateKeyPrefix()
+    expect(localStorage.getItem(SETTINGS_KEY)).toBe('{"theme":"dark"}')
+    expect(localStorage).toHaveLength(1)
   })
 
   it('keeps a value already under the new name and drops the old one', () => {

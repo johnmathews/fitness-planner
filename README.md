@@ -1,4 +1,4 @@
-# Fitness Planner
+# Tracker
 
 > Purpose
 >
@@ -65,8 +65,8 @@ Prerequisites: Node `22.18+` or `24.12+`, and **npm 11**. Node 24.12+ ships npm 
 upgrade npm first, because the bundled npm 10.9 crashes while resolving this project's dependencies.
 
 ```bash
-git clone https://github.com/johnmathews/fitness-planner.git
-cd fitness-planner
+git clone https://github.com/johnmathews/tracker.git
+cd tracker
 npm install -g npm@11      # Node 22 only; or run: npx -y npm@11 ci
 npm ci
 npm run dev                # http://localhost:5173
@@ -79,15 +79,15 @@ with `PUBLIC_ORIGIN` set to the dev server's origin. Then create an account at
 ```bash
 cd api && uv sync
 export PUBLIC_ORIGIN=http://localhost:5173 COOKIE_SECURE=false DATA_DIR=./.data
-uv run fp-admin invite you@example.com          # prints http://localhost:5173/#/invite/…
-uv run uvicorn --factory fitness_planner_api.app:create_app_from_env --port 8000
+uv run tracker-admin invite you@example.com          # prints http://localhost:5173/#/invite/…
+uv run uvicorn --factory tracker_api.app:create_app_from_env --port 8000
 ```
 
 For an account that already has data, seed the demo instead (same shell, any time; a second run
 adds nothing):
 
 ```bash
-uv run fp-admin seed-demo                       # demo@example.com, password demo-password
+uv run tracker-admin seed-demo                       # demo@example.com, password demo-password
 ```
 
 It runs only against a local stack, and never overwrites a mark. The database lives in
@@ -126,8 +126,8 @@ multi-architecture images (`linux/amd64` and `linux/arm64`) to GHCR once CI pass
 
 | Image                                     | Tags                        |
 | ----------------------------------------- | --------------------------- |
-| `ghcr.io/johnmathews/fitness-planner`     | `latest`, `sha-<short sha>` |
-| `ghcr.io/johnmathews/fitness-planner-api` | `latest`, `sha-<short sha>` |
+| `ghcr.io/johnmathews/tracker`     | `latest`, `sha-<short sha>` |
+| `ghcr.io/johnmathews/tracker-api` | `latest`, `sha-<short sha>` |
 
 Run them with Docker Compose. The API service must be named `fitness-api`, since that is the
 host `nginx.conf` forwards to:
@@ -135,18 +135,18 @@ host `nginx.conf` forwards to:
 ```yaml
 services:
   web:
-    image: ghcr.io/johnmathews/fitness-planner:latest
+    image: ghcr.io/johnmathews/tracker:latest
     ports:
       - '8080:8080'
     restart: unless-stopped
   fitness-api:
-    image: ghcr.io/johnmathews/fitness-planner-api:latest
+    image: ghcr.io/johnmathews/tracker-api:latest
     environment:
       PUBLIC_ORIGIN: https://fitness.example.com # the address people open
       MAX_USERS: '50' # sign-up closes at this many accounts; '0' = invites only
       # Optional: email for confirming addresses and resetting passwords (docs/api.md §4.1)
       # RESEND_API_KEY: re_...
-      # MAIL_FROM: Fitness Planner <planner@fitness.example.com>
+      # MAIL_FROM: Tracker <planner@fitness.example.com>
     volumes:
       - ./fitness-data:/data # owned by uid 10001
     mem_limit: 160m
@@ -165,7 +165,7 @@ prints:
 
 ```bash
 docker compose up -d
-docker compose exec fitness-api fp-admin invite <email>
+docker compose exec fitness-api tracker-admin invite <email>
 ```
 
 Sign-up is open by default: anyone who can reach the address can create an account until 50
@@ -179,7 +179,7 @@ Serve it over HTTPS: the session cookie is `Secure`. For a plain-http trial, set
 end to end.
 
 [docs/deployment.md](docs/deployment.md) covers the images, nginx and CI, and
-[docs/api.md](docs/api.md) the API, accounts, backups and `fp-admin`.
+[docs/api.md](docs/api.md) the API, accounts, backups and `tracker-admin`.
 
 ## 4. Documentation
 

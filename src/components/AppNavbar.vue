@@ -61,7 +61,7 @@ function skipToToday(): void {
   switch, Settings (which opens the Settings page) and Print. On the Settings page the bar holds
   only the wordmark. Every target is 44px on a phone. Below 640px the planner's bar drops the
   wordmark and keeps the centred arrows and week and Settings on one row, and "This week" and the
-  switch take a second row at the right (the Settings page keeps the monogram under 480px); the markup stays in the desktop order, which is
+  switch take a second row at the right (the Settings page keeps the wordmark); the markup stays in the desktop order, which is
   the tab order.
 
   "Skip to today" comes first in the tab order (F15): hidden until it has focus, then shown over
@@ -135,8 +135,9 @@ function skipToToday(): void {
       <!-- On a phone's planner the wordmark is left out (Header card): the week and Settings are
            what the bar is for. Hidden rather than removed, so the week stays in the middle. -->
       <div class="justify-self-start" :class="{ 'max-sm:invisible': page !== 'settings' }">
-        <BrandMark class="max-[479px]:hidden" />
-        <BrandMark variant="monogram" class="min-[480px]:hidden" />
+        <!-- Out of the layout too on a phone's planner, so it can't widen the bar; the empty
+             column still keeps the week in the middle. -->
+        <BrandMark :class="{ 'max-sm:hidden': page !== 'settings' }" />
       </div>
       <nav v-if="page !== 'settings'" class="flex items-center" aria-label="Week">
         <IconButton label="Previous week" @click="store.prevWeek"><ChevronLeft /></IconButton>

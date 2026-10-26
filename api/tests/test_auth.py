@@ -7,10 +7,10 @@ from typing import Any
 import pytest
 from argon2 import PasswordHasher, profiles
 
-from fitness_planner_api import auth
-from fitness_planner_api.auth import AuthError
-from fitness_planner_api.config import Config
-from fitness_planner_api.db import connect
+from tracker_api import auth
+from tracker_api.auth import AuthError
+from tracker_api.config import Config
+from tracker_api.db import connect
 
 from .conftest import Clock
 

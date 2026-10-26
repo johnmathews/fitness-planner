@@ -1,13 +1,13 @@
-The product's name as a mark: the "Fitness Planner" wordmark in Source Serif 4 600, and an "FP" monogram for small spaces. There is no drawn logo.
+The product's name as a mark: the "Tracker" wordmark in Source Serif 4 600. There is no drawn logo and no monogram (K44).
 
 ## Use
 
-- **Wordmark:** the outlined path from `assets/Wordmark/fitness-planner-wordmark-ink.svg`, inlined with `fill: var(--ink)` so it follows the theme. 32px tall on the sign-in card, 20px in the Header, and anywhere the serif font may not load. Never below 16px tall. The cover does not use it: there the name is set as live serif text (Source Serif 4 600, 88px) with a tagline beneath, as a title rather than a mark.
-- Where an inline SVG is impossible (an `<img>`, a document), use the asset files: `fitness-planner-wordmark-ink.svg` (`ink` light value) on light grounds, `fitness-planner-wordmark-light.svg` (`ink` dark value) on dark ones.
-- **Monogram:** "FP" set live in `var(--font-serif)` at 600, in `ink`. 20px in the phone Header, where the wordmark does not fit. On an `ink` square with `on-ink` letters and `radius-md`, it is the app icon and favicon.
-- Clear space: at least the height of the capital "F" on every side. Nothing touches it.
+- **Wordmark:** the outlined path from `assets/Wordmark/tracker-wordmark-ink.svg`, inlined with `fill: var(--ink)` so it follows the theme. 32px tall on the sign-in card, 20px in the Header, and anywhere the serif font may not load. Never below 16px tall. The cover does not use it: there the name is set as live serif text (Source Serif 4 600, 88px) with a tagline beneath, as a title rather than a mark.
+- Where an inline SVG is impossible (an `<img>`, a document), use the asset files: `tracker-wordmark-ink.svg` (`ink` light value) on light grounds, `tracker-wordmark-light.svg` (`ink` dark value) on dark ones.
+- **No monogram** (K44): "Tracker" is short enough for the phone's Settings bar, where "FP" stood, and a monogram served no other purpose. The favicon is the tick (`public/favicon.svg`), not a letter.
+- Clear space: at least the height of the capital "T" on every side. Nothing touches it.
 - Only `ink` (or `on-ink` on an `ink` fill). Never `pen`, a gradient, a shadow, an outline or a tagline beside the wordmark (the cover's tagline sits under the live-text name, not the mark). Never stretch, re-letter or redraw it.
-- "Fitness Planner" is the working name. The name lives in one place in the code, and the wordmark asset is regenerated from type by `scripts/wordmark.py` when it changes.
+- "Tracker" is the name since 2026-10-26 (K44), after "Fitness Planner". The name lives in one place in the code, and the wordmark asset is regenerated from type by `scripts/wordmark.py` when it changes.
 
 ## States
 
@@ -15,4 +15,4 @@ The product's name as a mark: the "Fitness Planner" wordmark in Source Serif 4 6
 
 ## You provide
 
-- `variant` (`wordmark`, `monogram`) and `size`. The component sets `role="img"` and the accessible name "Fitness Planner" from the app's one name string.
+- `size` (`md`, `lg`). The component sets `role="img"` and the accessible name "Tracker" from the app's one name string.

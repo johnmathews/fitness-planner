@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from fitness_planner_api.validate import (
+from tracker_api.validate import (
     MARKS,
     Days,
     ExportError,

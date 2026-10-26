@@ -5,28 +5,17 @@ export { default as BrandMark } from './BrandMark.vue'
 
 /**
  * The product's name as a mark (brand/design-system/project/components/BrandMark): the outlined
- * Source Serif 4 wordmark, or the "FP" monogram set live in the serif at 600 for small spaces.
- * Only ever `ink`. md is the Header's 20px, lg the sign-in card's 32px; never below 16px.
+ * Source Serif 4 wordmark. There is no monogram (K44). Only ever `ink`. md is the Header's 20px,
+ * lg the sign-in card's 32px; never below 16px.
  */
-export const brandMarkVariants = cva('shrink-0 text-ink', {
+export const brandMarkVariants = cva('block w-auto shrink-0 fill-current text-ink', {
   variants: {
-    variant: {
-      wordmark: 'block w-auto fill-current',
-      monogram: 'inline-block font-serif font-semibold tracking-normal select-none',
-    },
     size: {
-      md: '',
-      lg: '',
+      md: 'h-5',
+      lg: 'h-8',
     },
   },
-  compoundVariants: [
-    { variant: 'wordmark', size: 'md', class: 'h-5' },
-    { variant: 'wordmark', size: 'lg', class: 'h-8' },
-    { variant: 'monogram', size: 'md', class: 'text-[20px] leading-6' },
-    { variant: 'monogram', size: 'lg', class: 'text-[32px] leading-10' },
-  ],
   defaultVariants: {
-    variant: 'wordmark',
     size: 'md',
   },
 })
