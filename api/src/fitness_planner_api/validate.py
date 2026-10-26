@@ -17,11 +17,12 @@ from typing import Any, Literal, TypedDict, TypeIs, cast
 EXPORT_FORMAT = "fitness-planner-export"
 #: Files exported before the app was renamed carry this format; they import as if current.
 OLD_EXPORT_FORMAT = "exercise-planner-export"
-#: Version 3 files carry a mark per day with its drawing (`great`, `partial-solid`,
-#: `missed-hatch` … or null). Version 2 files carry the kinds alone, which read as the zigzag;
-#: version 1 files a `true` per done day, which reads as `great`. All three import.
-EXPORT_VERSION = 3
-READ_VERSIONS = (1, 2, EXPORT_VERSION)
+#: Version 4 files may carry a note on an exercise or a food (K43). Version 3 files carry a mark
+#: per day with its drawing (`great`, `partial-solid`, `missed-hatch` … or null). Version 2 files
+#: carry the kinds alone, which read as the zigzag; version 1 files a `true` per done day, which
+#: reads as `great`. All four import.
+EXPORT_VERSION = 4
+READ_VERSIONS = (1, 2, 3, EXPORT_VERSION)
 
 MIN_TARGET, MAX_TARGET = 0, 7
 MIN_DAILY_PICK, MAX_DAILY_PICK = 1, 8
@@ -30,6 +31,8 @@ NEW_FOOD_TARGET = 3
 MAX_WEIGHT = 500
 MAX_SETS = 20
 MAX_DURATION = 3600
+#: A note's length, in characters.
+MAX_NOTES = 500
 DEFAULT_ACCENT = "#30d158"
 DEFAULT_DAILY_PICK = 3
 
@@ -153,6 +156,16 @@ def normalise_weight(v: object) -> int | float | None:
     return whole(min(MAX_WEIGHT, kg)) if kg > 0 else None
 
 
+def normalise_notes(v: object) -> str | None:
+    """A usable note: a string with spaces, tabs and line breaks trimmed from its ends, cut to
+    MAX_NOTES characters; None for anything else or for nothing left. The web app's
+    `normaliseNotes` does the same."""
+    if not isinstance(v, str):
+        return None
+    notes = v.strip(" \t\n\r")[:MAX_NOTES].strip(" \t\n\r")
+    return notes or None
+
+
 def normalise_exercise(v: object) -> Item | None:
     if (
         not isinstance(v, dict)
@@ -174,6 +187,9 @@ def normalise_exercise(v: object) -> Item | None:
     if weight is not None:
         out["weight"] = weight
     out["target"] = clamp(to_int(v.get("target"), NEW_EXERCISE_TARGET), MIN_TARGET, MAX_TARGET)
+    notes = normalise_notes(v.get("notes"))
+    if notes is not None:
+        out["notes"] = notes
     return out
 
 
@@ -185,7 +201,11 @@ def normalise_food(v: object) -> Item | None:
     ):
         return None
     target = clamp(to_int(v.get("target"), NEW_FOOD_TARGET), MIN_TARGET, MAX_TARGET)
-    return {"id": v["id"], "name": v["name"], "target": target}
+    out: Item = {"id": v["id"], "name": v["name"], "target": target}
+    notes = normalise_notes(v.get("notes"))
+    if notes is not None:
+        out["notes"] = notes
+    return out
 
 
 NORMALISERS = {"exercise": normalise_exercise, "diet": normalise_food}

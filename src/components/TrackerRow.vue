@@ -19,6 +19,8 @@ import { useConfirm } from '@/composables/useConfirm'
 import { Chip } from '@/components/ui/chip'
 import { DayMark, MET_UNDERLINES } from '@/components/ui/day-mark'
 import { IconButton } from '@/components/ui/icon-button'
+import { Popover } from '@/components/ui/popover'
+import { renderNote, renderNoteLine } from '@/lib/markdown'
 
 const props = defineProps<{
   /** The row's place in the grid, 0 first: folded, it says which lines the row takes. */
@@ -50,6 +52,10 @@ const emit = defineEmits<{
   remove: []
   edit: []
 }>()
+
+/** The note (K43): one line in the row, the whole of it in the popover. Raw HTML never renders. */
+const noteLine = computed(() => (props.item.notes ? renderNoteLine(props.item.notes) : ''))
+const noteHtml = computed(() => (props.item.notes ? renderNote(props.item.notes) : ''))
 
 /** Folded, the row's name line and box line (TrackerGrid's header is line 1). */
 const lines = computed(() => ({
@@ -121,37 +127,51 @@ async function remove(event: MouseEvent): Promise<void> {
       ]"
     >
       <div class="flex min-h-11 min-w-0 items-center gap-2 folded:min-h-0">
-        <div
-          class="flex min-w-0 flex-col gap-1.5 folded:flex-row folded:items-baseline folded:gap-2"
-        >
-          <span class="flex items-center gap-1">
-            <span
-              class="block min-w-0 text-(length:--fs-name) leading-tight font-semibold break-words text-ink"
-              data-testid="item-name"
-              >{{ item.name }}</span
-            >
-            <IconButton
-              v-if="configMode && editable"
-              :label="`Edit ${item.name}`"
-              class="-my-2.5 shrink-0"
-              data-noprint
-              @click="emit('edit')"
-            >
-              <Pencil />
-            </IconButton>
-          </span>
-          <span
-            v-if="details?.length"
-            class="flex flex-wrap items-center gap-x-2 gap-y-1 short:hidden"
-          >
+        <div class="flex min-w-0 flex-col gap-1 folded:gap-0.5">
+          <!-- The name and its chips share a line, wrapping when they must (K43). -->
+          <span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <span class="flex min-w-0 items-center gap-1">
+              <span
+                class="block min-w-0 text-(length:--fs-name) leading-tight font-semibold break-words text-ink"
+                data-testid="item-name"
+                >{{ item.name }}</span
+              >
+              <IconButton
+                v-if="configMode && editable"
+                :label="`Edit ${item.name}`"
+                class="-my-2.5 shrink-0"
+                data-noprint
+                @click="emit('edit')"
+              >
+                <Pencil />
+              </IconButton>
+            </span>
             <Chip
               v-for="d in details"
               :key="d"
-              class="text-(length:--fs-chip)"
+              class="text-(length:--fs-chip) short:hidden"
               data-testid="item-detail"
               >{{ d }}</Chip
             >
           </span>
+          <!-- The note on the next line, cut to one; a press opens the whole of it (K43). -->
+          <Popover v-if="item.notes" :title="item.name" align="start">
+            <template #trigger>
+              <!-- eslint-disable-next-line vue/no-v-html -- markdown-it with raw HTML off (lib/markdown) -->
+              <button
+                type="button"
+                class="note-line block max-w-full min-w-0 cursor-pointer truncate text-left font-serif text-(length:--fs-chip) leading-snug text-ink-secondary italic hover:text-ink short:hidden"
+                data-testid="item-note"
+                v-html="noteLine"
+              ></button>
+            </template>
+            <!-- eslint-disable-next-line vue/no-v-html -- markdown-it with raw HTML off (lib/markdown) -->
+            <div
+              class="note-body font-serif text-ink italic"
+              data-testid="item-note-body"
+              v-html="noteHtml"
+            ></div>
+          </Popover>
         </div>
       </div>
     </th>

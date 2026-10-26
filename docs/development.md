@@ -137,6 +137,10 @@ clock is fixed to Wednesday 21 October 2026, so every run sees the same week.
   the folded week and Edit plan, and every cell of the folded week stays on screen as the keyboard
   walks it. `callUpBar` in `support.ts` brings the navbar into view before a test presses its
   controls, since on the planner's screens it is out of sight.
+- `notes.spec.ts`: an item's note on one line under the name and chips, and a press opening it
+  whole in a popover whose link opens a new tab, focus moving to the link and back to the cell on
+  Escape (K43). The mocked week (`e2e/support.ts`) has notes on Push-ups and Kettlebell halos, so
+  the axe checks cover the note line too.
 - `screens.spec.ts`: a tall Exercises screen and a tall Food screen (`openApp`'s `moreExercises`
   and `moreFoods`), wheel-scrolled down and back up a notch at a time at 1280×800: the page never
   rests showing part of both, and it reaches Food (K38); a rotation (and back, and a phone on
@@ -164,6 +168,12 @@ listed in [api.md](api.md) §10):
   none) and plan copies.
 - `src/composables/__tests__/exerciseForm.spec.ts`: digits-only sets/reps and decimal weight
   cleaning, loading and resetting the shared exercise form.
+- `src/lib/__tests__/markdown.spec.ts`: a note's markdown (K43): emphasis, code, lists and links
+  opening a new tab; raw HTML, script links and images never rendered; headings and rules left as
+  text; and the row's one line, where a link is its text.
+- `src/lib/__tests__/format.spec.ts`: K14 as a test (K41). Each cache key version has a row
+  recording what it stores (the marks, and the fields an exercise and a food keep). It fails when
+  the stored format changes under the same key, and when an older key isn't moved at sign-in.
 - `src/lib/__tests__/transfer.spec.ts`: every case in `fixtures/transfer/` (parsing an export and
   merging one), plus building an export, the merge summary and the download. Add a fixture rather
   than an inline case when the behaviour is part of the export contract: the API's tests

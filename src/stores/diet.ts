@@ -7,6 +7,7 @@ import {
   NEW_FOOD_TARGET,
   clamp,
   defaultFoods,
+  normaliseNotes,
   type DietData,
   type Food,
   type Log,
@@ -75,15 +76,25 @@ export const useDietStore = defineStore('diet', () => {
   }
 
   /**
-   * Renames the food and sets its goal this week (the Edit food dialog), keeping its id and
-   * history. False for an empty name or a food not in the week.
+   * Renames the food and sets its goal and note this week (the Edit food dialog), keeping its id
+   * and history; a note left out stays as it is, and an empty one clears it. False for an empty
+   * name or a food not in the week.
    */
-  function updateFood(id: string, input: { name: string; target: number }): boolean {
+  function updateFood(
+    id: string,
+    input: { name: string; target: number; notes?: string },
+  ): boolean {
     const name = input.name.trim()
     if (!name || !foods.value.some((f) => f.id === id)) return false
     const list = own()
     const i = list.findIndex((f) => f.id === id)
-    list[i] = { id, name, target: clamp(input.target, MIN_TARGET, MAX_TARGET) }
+    const notes = input.notes === undefined ? list[i]!.notes : normaliseNotes(input.notes)
+    list[i] = {
+      id,
+      name,
+      target: clamp(input.target, MIN_TARGET, MAX_TARGET),
+      ...(notes ? { notes } : {}),
+    }
     return true
   }
 

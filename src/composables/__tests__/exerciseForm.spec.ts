@@ -26,6 +26,7 @@ describe('useExerciseForm', () => {
       perSide: true,
       weight: 8,
       target: 3,
+      notes: '**Ribs down.**',
     })
     expect(form.value()).toEqual({
       name: 'Kettlebell halos',
@@ -34,6 +35,7 @@ describe('useExerciseForm', () => {
       perSide: true,
       weight: 8,
       target: 3,
+      notes: '**Ribs down.**',
     })
     expect(form.sets.value).toBe('3')
     form.load()
@@ -44,6 +46,7 @@ describe('useExerciseForm', () => {
       perSide: false,
       weight: undefined,
       target: 3,
+      notes: '',
     })
   })
 
@@ -61,6 +64,7 @@ describe('useExerciseForm', () => {
       perSide: false,
       weight: undefined,
       target: 2,
+      notes: '',
     })
     form.measureChoice.value = 'reps'
     expect(form.amountLabel.value).toBe('Reps')

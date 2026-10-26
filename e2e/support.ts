@@ -27,11 +27,25 @@ function state() {
     exercise: {
       plans: {
         [MONDAY]: [
-          { id: 'pu', name: 'Push-ups', sets: 3, reps: 12, target: 4 },
+          {
+            id: 'pu',
+            name: 'Push-ups',
+            sets: 3,
+            reps: 12,
+            target: 4,
+            notes: 'Slow on the way down. [Form video](https://example.com/push-ups)',
+          },
           { id: 'pl', name: 'Pull-ups', sets: 3, reps: 5, target: 3 },
           { id: 'sq', name: 'Squats', sets: 3, reps: 15, weight: 16, target: 3 },
           { id: 'be', name: 'Back extensions', reps: 12, target: 3 },
-          { id: 'kh', name: 'Kettlebell halos', reps: 8, perSide: true, target: 2 },
+          {
+            id: 'kh',
+            name: 'Kettlebell halos',
+            reps: 8,
+            perSide: true,
+            target: 2,
+            notes: '**Ribs down.** Change direction each set, and keep the bell close to the head.',
+          },
         ],
       },
       log: {

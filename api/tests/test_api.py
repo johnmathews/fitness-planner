@@ -601,7 +601,7 @@ def test_sample_import_then_export_round_trips(client: TestClient, config: Confi
     # The same counts the browser's confirm step shows for this file (App.spec.ts).
     assert r.json() == {"weeks": 6, "ticks": 102, "settings": True}
     exported = client.get("/api/export")
-    assert sample["version"] == exported.json()["version"] == 3
+    assert sample["version"] == exported.json()["version"] == 4
     assert (
         exported.headers["content-disposition"]
         == 'attachment; filename="fitness-planner-2026-10-23.json"'
@@ -645,7 +645,7 @@ def test_import_merges_without_deleting(client: TestClient, config: Config) -> N
         ("null", "json"),
         ('{"format": "fitness-planner-export", "version": 1, "x": NaN}', "json"),
         ({"plans": {}}, "format"),
-        ({"format": "fitness-planner-export", "version": 4}, "version"),
+        ({"format": "fitness-planner-export", "version": 5}, "version"),
         ({"format": "fitness-planner-export", "version": 0}, "version"),
     ],
 )
@@ -694,7 +694,7 @@ def test_import_keeps_existing_marks_and_fills_empty_days(
     ).json() == {"weeks": 0, "ticks": 0, "settings": False}
 
 
-def test_a_version_1_import_exports_as_version_3(client: TestClient, config: Config) -> None:
+def test_a_version_1_import_exports_as_version_4(client: TestClient, config: Config) -> None:
     sign_up(client, config)
     old = {
         "format": "fitness-planner-export",
@@ -704,7 +704,7 @@ def test_a_version_1_import_exports_as_version_3(client: TestClient, config: Con
     }
     assert post_import(client, old).json() == {"weeks": 0, "ticks": 2, "settings": False}
     exported = client.get("/api/export").json()
-    assert exported["version"] == 3
+    assert exported["version"] == 4
     assert exported["exercise"]["log"] == {
         WEEK: {"pu": ["great", None, "great", None, None, None, None]}
     }

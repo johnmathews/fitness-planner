@@ -563,7 +563,7 @@ describe('export and import', () => {
     const file = JSON.parse(await blob!.text())
     expect(file).toMatchObject({
       format: 'fitness-planner-export',
-      version: 3,
+      version: 4,
       settings: { accent: '#30d158', dailyPick: 3 },
     })
     expect(file.settings).not.toHaveProperty('theme')
@@ -719,7 +719,7 @@ describe('export and import', () => {
     ['another format', jsonFile({ plans: {} }), 'That file isn’t a Fitness Planner export.'],
     [
       'a newer version',
-      jsonFile({ format: 'fitness-planner-export', version: 4 }),
+      jsonFile({ format: 'fitness-planner-export', version: 5 }),
       'That export comes from a newer version of the app.',
     ],
   ])('rejects %s with an inline error and changes nothing', async (_, file, message) => {

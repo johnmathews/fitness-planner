@@ -100,6 +100,16 @@ describe('diet store', () => {
     expect(d.foods[2]!.name).toBe('Salmon')
   })
 
+  it("saves a food's note, keeps it when an update leaves it out, and clears it when empty (K43)", () => {
+    const d = useDietStore()
+    d.updateFood('fish', { name: 'Fish', target: 2, notes: ' Oily fish ' })
+    expect(d.foods[2]).toEqual({ id: 'fish', name: 'Fish', target: 2, notes: 'Oily fish' })
+    d.updateFood('fish', { name: 'Fish', target: 3 })
+    expect(d.foods[2]!.notes).toBe('Oily fish')
+    d.updateFood('fish', { name: 'Fish', target: 3, notes: '' })
+    expect(d.foods[2]).not.toHaveProperty('notes')
+  })
+
   it('adds a food with goal 3, ignores an empty name, and removes', () => {
     const d = useDietStore()
     expect(d.addFood('  ')).toBe(false)

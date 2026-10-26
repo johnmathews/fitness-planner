@@ -96,16 +96,16 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 
 `usePlannerStore` is a setup store.
 
-| State                 | Kept by                                    | Notes                                                                      |
-| --------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
-| `plans`               | the sync store: server and per-user cache  | week → `{ id, name, sets?, reps, duration?, perSide?, weight?, target }[]` |
-| `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven marks (`Days`, below)       |
-| `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is kept but draws nothing (K13)     |
-| `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                                      |
-| `markSet`             | `fitness-planner-settings-v1` (the device) | `squiggles` (default), `ticks`, `stamped-ticks`, `faces`, `stamped-faces`  |
-| `configMode`          | no                                         | `false` (normal mode) on every load                                        |
-| `weekOffset`          | no                                         | `0` is the current week                                                    |
-| `now`                 | no                                         | a ref so "today" can move; see §5                                          |
+| State                 | Kept by                                    | Notes                                                                              |
+| --------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `plans`               | the sync store: server and per-user cache  | week → `{ id, name, sets?, reps, duration?, perSide?, weight?, target, notes? }[]` |
+| `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven marks (`Days`, below)               |
+| `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is kept but draws nothing (K13)             |
+| `theme`               | `fitness-planner-settings-v1` (the device) | `system` (default), `light` or `dark`                                              |
+| `markSet`             | `fitness-planner-settings-v1` (the device) | `squiggles` (default), `ticks`, `stamped-ticks`, `faces`, `stamped-faces`          |
+| `configMode`          | no                                         | `false` (normal mode) on every load                                                |
+| `weekOffset`          | no                                         | `0` is the current week                                                            |
+| `now`                 | no                                         | a ref so "today" can move; see §5                                                  |
 
 The stores start empty (showing the defaults) and never write the user's data themselves. The sync
 store fills them with `adopt` and saves their changes (§7).
@@ -146,17 +146,17 @@ with storage blocked or full the app keeps working in memory.
 
 ## 4. Storage format and validation
 
-| Key                                                    | Holds                                                                               | Written |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------- | ------- |
-| `fitness-planner-session-v1`                           | `{ user }`: the last signed-in user                                                 | yes     |
-| `fitness-planner-cache-v3:<user>`                      | the user's state as `GET /api/state` returns it, with `revs`                        | yes     |
-| `fitness-planner-outbox-v3:<user>`                     | writes not yet sent (§7)                                                            | yes     |
-| `fitness-planner-import-v1:<user>`                     | the first-login prompt's answer, `imported` or `dismissed` (§7)                     | yes     |
-| `fitness-planner-settings-v1`                          | `theme`, read before first paint by `public/theme-init.js`, and `markSet`           | both    |
-| `fitness-planner-cache-v2:<user>`, `-outbox-v2:<user>` | the cache and outbox from before the solid and hatch drawings; moved at sign-in     | never   |
-| `fitness-planner-cache-v1:<user>`, `-outbox-v1:<user>` | the cache and outbox from before marks had kinds; moved at sign-in (below)          | never   |
-| `fitness-planner-v2`, `-diet-v2`                       | exercise and food `{ plans, log }` from before accounts                             | never   |
-| `fitness-planner-v1`, `-diet-v1`                       | the single-list format from before weekly plans                                     | never   |
+| Key                                                    | Holds                                                                           | Written |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------- | ------- |
+| `fitness-planner-session-v1`                           | `{ user }`: the last signed-in user                                             | yes     |
+| `fitness-planner-cache-v3:<user>`                      | the user's state as `GET /api/state` returns it, with `revs`                    | yes     |
+| `fitness-planner-outbox-v3:<user>`                     | writes not yet sent (§7)                                                        | yes     |
+| `fitness-planner-import-v1:<user>`                     | the first-login prompt's answer, `imported` or `dismissed` (§7)                 | yes     |
+| `fitness-planner-settings-v1`                          | `theme`, read before first paint by `public/theme-init.js`, and `markSet`       | both    |
+| `fitness-planner-cache-v2:<user>`, `-outbox-v2:<user>` | the cache and outbox from before the solid and hatch drawings; moved at sign-in | never   |
+| `fitness-planner-cache-v1:<user>`, `-outbox-v1:<user>` | the cache and outbox from before marks had kinds; moved at sign-in (below)      | never   |
+| `fitness-planner-v2`, `-diet-v2`                       | exercise and food `{ plans, log }` from before accounts                         | never   |
+| `fitness-planner-v1`, `-diet-v1`                       | the single-list format from before weekly plans                                 | never   |
 
 Since accounts, nothing writes the keys from before them. They stay because they hold what a browser
 recorded locally, which the first-login import (§7) reads with the parsing, migration and
@@ -202,6 +202,13 @@ v2; now the conversion only feeds the import.
 - `duration` (seconds per set) is kept only as a whole number above 0, capped at 3600.
 - `sets` is kept only as a whole number from 1 to 20 (larger values cap at 20); `weight` (kg) only
   as a positive number, rounded to 2 decimals and capped at 500. Otherwise the key is left out.
+- `notes`, on an exercise or a food (K43), is kept only as a string, trimmed of spaces, tabs and
+  line breaks at its ends and cut to 500 characters, counted as code points so the API's Python
+  agrees (`normaliseNotes`). A blank note is left out. The row renders it with `src/lib/markdown.ts`
+  (markdown-it, raw HTML off, no images, headings, tables or rules): one line of inline formatting
+  in the row, where a link is its underlined text, and the whole note in a Popover, where links
+  open in a new tab with `rel="noopener noreferrer"`. The note is edited in the Edit exercise and
+  Edit food dialogs; an update that leaves `notes` out keeps the note, and an empty one clears it.
 - Log weeks whose key is not `YYYY-MM-DD`, and entries that are not arrays, drop out; the rest
   normalise to exactly seven days (`normaliseMark`): `"great"`, `"partial"` and `"missed"` stay,
   a `true` from before marks had kinds reads as `"great"`, and anything else is an empty day (`null`).

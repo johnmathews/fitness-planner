@@ -15,6 +15,8 @@ export type Exercise = {
   weight?: number
   /** Weekly goal in days, 0–7. */
   target: number
+  /** The owner's note, in markdown (K43); absent when there is none. */
+  notes?: string
 }
 
 export type Food = {
@@ -22,6 +24,8 @@ export type Food = {
   name: string
   /** Weekly goal in days, 0–7. */
   target: number
+  /** The owner's note, in markdown (K43); absent when there is none. */
+  notes?: string
 }
 
 /**
@@ -106,6 +110,8 @@ export const MAX_WEIGHT = 500
 export const MAX_SETS = 20
 export const MAX_DURATION = 3600
 export const NEW_FOOD_TARGET = 3
+/** A note's length, in characters (code points, as Python counts them). */
+export const MAX_NOTES = 500
 
 export const DEFAULT_SETTINGS: Settings = {
   accent: '#30d158',
@@ -162,11 +168,24 @@ export function normaliseWeight(v: unknown): number | undefined {
   return kg > 0 ? Math.min(MAX_WEIGHT, kg) : undefined
 }
 
+/**
+ * A usable note: a string with spaces, tabs and line breaks trimmed from its ends, cut to
+ * MAX_NOTES characters; undefined for anything else or for nothing left. The API's
+ * `normalise_notes` does the same (the shared fixtures hold both to it).
+ */
+export function normaliseNotes(v: unknown): string | undefined {
+  if (typeof v !== 'string') return undefined
+  const trim = (s: string) => s.replace(/^[ \t\n\r]+|[ \t\n\r]+$/g, '')
+  const notes = trim(Array.from(trim(v)).slice(0, MAX_NOTES).join(''))
+  return notes || undefined
+}
+
 export function normaliseExercise(v: unknown): Exercise | null {
   if (!isRecord(v) || typeof v.id !== 'string' || typeof v.name !== 'string') return null
   const weight = normaliseWeight(v.weight)
   const sets = toInt(v.sets, 0)
   const duration = toInt(v.duration, 0)
+  const notes = normaliseNotes(v.notes)
   return {
     id: v.id,
     name: v.name,
@@ -176,15 +195,18 @@ export function normaliseExercise(v: unknown): Exercise | null {
     ...(typeof v.perSide === 'boolean' ? { perSide: v.perSide } : {}),
     ...(weight !== undefined ? { weight } : {}),
     target: clamp(toInt(v.target, NEW_EXERCISE_TARGET), MIN_TARGET, MAX_TARGET),
+    ...(notes ? { notes } : {}),
   }
 }
 
 export function normaliseFood(v: unknown): Food | null {
   if (!isRecord(v) || typeof v.id !== 'string' || typeof v.name !== 'string') return null
+  const notes = normaliseNotes(v.notes)
   return {
     id: v.id,
     name: v.name,
     target: clamp(toInt(v.target, NEW_FOOD_TARGET), MIN_TARGET, MAX_TARGET),
+    ...(notes ? { notes } : {}),
   }
 }
 

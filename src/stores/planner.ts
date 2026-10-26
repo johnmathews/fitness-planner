@@ -14,6 +14,7 @@ import {
   clamp,
   defaultExercises,
   isRecord,
+  normaliseNotes,
   normaliseWeight,
   parseJson,
   parseSettings,
@@ -55,6 +56,9 @@ export type NewExercise = {
   weight?: number
   /** The weekly goal; the add form leaves it out and gets NEW_EXERCISE_TARGET. */
   target?: number
+  /** The note in markdown; empty clears it. The add form leaves it out; an update without it keeps
+   * the note the exercise has. */
+  notes?: string
 }
 
 /**
@@ -79,7 +83,7 @@ export function exerciseDetails(e: Exercise): string[] {
  * Cleans form input into the stored fields; null when the trimmed name is empty. An exercise
  * counts reps or time, never both: a duration keeps reps at 0.
  */
-function exerciseFields(input: NewExercise): Omit<Exercise, 'id' | 'target'> | null {
+function exerciseFields(input: NewExercise): Omit<Exercise, 'id' | 'target' | 'notes'> | null {
   const name = input.name.trim()
   if (!name) return null
   const duration =
@@ -193,18 +197,23 @@ export const usePlannerStore = defineStore('planner', () => {
     const fields = exerciseFields(input)
     if (!fields) return false
     const target = clamp(input.target ?? NEW_EXERCISE_TARGET, MIN_TARGET, MAX_TARGET)
-    own().push({ id: tracker.newId(), ...fields, target })
+    const notes = normaliseNotes(input.notes)
+    own().push({ id: tracker.newId(), ...fields, target, ...(notes ? { notes } : {}) })
     return true
   }
 
-  /** Replaces name, sets, reps, per-side and weight this week, keeping the id, goal and history. */
+  /**
+   * Replaces name, sets, reps, per-side, weight and the note this week, keeping the id and history;
+   * the goal and the note stay as they are when the input leaves them out.
+   */
   function updateExercise(id: string, input: NewExercise): boolean {
     const fields = exerciseFields(input)
     if (!fields || !exercises.value.some((e) => e.id === id)) return false
     const list = own()
     const i = list.findIndex((e) => e.id === id)
     const target = clamp(input.target ?? list[i]!.target, MIN_TARGET, MAX_TARGET)
-    list[i] = { id, ...fields, target }
+    const notes = input.notes === undefined ? list[i]!.notes : normaliseNotes(input.notes)
+    list[i] = { id, ...fields, target, ...(notes ? { notes } : {}) }
     return true
   }
 

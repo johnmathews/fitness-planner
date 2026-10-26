@@ -23,8 +23,8 @@ const FORMATS: Record<string, { marks: string[]; exercise: string[]; food: strin
       'partial-hatch',
       'missed-hatch',
     ],
-    exercise: ['duration', 'id', 'name', 'perSide', 'reps', 'sets', 'target', 'weight'],
-    food: ['id', 'name', 'target'],
+    exercise: ['duration', 'id', 'name', 'notes', 'perSide', 'reps', 'sets', 'target', 'weight'],
+    food: ['id', 'name', 'notes', 'target'],
   },
 }
 

@@ -125,9 +125,15 @@ refused. The quota measures what the account holds, not the bytes on disk, which
 indexes. The client drops a refused write with a notice that the account is full (`architecture.md`
 §7), and an import says the same.
 
-**Export** writes version 3 of the file: each log row is seven marks, drawings included, or
-nulls. Import reads version 3, version 2 (kinds only, which read as the zigzag) and version 1, whose
-`true` days read as `great` and `false` days as empty; any other version gets `version`.
+**Export** writes version 4 of the file: an exercise or a food may carry `notes`, and each log
+row is seven marks, drawings included, or nulls. Import reads version 4, version 3 (no notes),
+version 2 (kinds only, which read as the zigzag) and version 1, whose `true` days read as `great`
+and `false` days as empty; any other version gets `version`.
+
+**Notes** (K43) live in a plan's items, inside `items_json`, so they took no migration. An item's
+`notes` is markdown, trimmed of spaces, tabs and line breaks at its ends and cut to 500 characters
+(`normalise_notes`); a blank note, or one that isn't a string, is left out. The API stores the
+text as written and never renders it.
 
 **Import** applies the merge rule from `architecture.md` §4: existing weeks keep their plan; per
 week, item and day a marked day keeps its mark and an empty one takes the file's; and settings

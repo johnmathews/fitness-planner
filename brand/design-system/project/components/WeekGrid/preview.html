@@ -27,6 +27,14 @@
   th[scope="row"] { text-align: left; padding: var(--space-2) var(--space-3) var(--space-2) 0; vertical-align: middle; }
   .name { display: block; font-size: 18px; line-height: 26px; font-weight: 600; }
   .meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+  /* K43: the name and its chips share a line; the note takes the next, cut to one line. */
+  .nl { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+  .nl .name { display: inline; }
+  .note-line { display: block; max-width: 100%; margin-top: 2px; padding: 0; border: 0; background: none; text-align: left; cursor: pointer;
+    font-family: var(--font-serif); font-style: italic; font-size: 16px; line-height: 22px; color: var(--ink-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note-line strong { font-weight: 600; } .note-line em { font-style: normal; }
+  .note-line .note-link { text-decoration: underline; text-underline-offset: 2px; }
   .goal { color: var(--ink-secondary); }
   .chip { background: var(--tile); color: var(--ink-secondary); border-radius: var(--radius-sm); padding: 0 var(--space-2); white-space: nowrap; }
 
@@ -106,7 +114,7 @@
     </thead>
     <tbody>
       <tr role="row" data-goal="4">
-        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Push-ups</span><span class="meta"><span class="chip label">3 × 12</span></span></th>
+        <th scope="row" role="rowheader" tabindex="-1"><span class="nl"><span class="name">Push-ups</span><span class="chip label">3 × 12</span></span><button type="button" class="note-line" tabindex="-1" aria-haspopup="dialog">Slow on the way down. <span class="note-link">Form video</span></button></th>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Monday 19 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Tuesday 20 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="partial" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="true" aria-label="Push-ups, Wednesday 21 October, partly done"></button></div></td>
@@ -116,7 +124,7 @@
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Push-ups, Sunday 25 October"></button></div></td>
       </tr>
       <tr role="row" data-goal="3">
-        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Pull-ups</span><span class="meta"><span class="chip label">3 × 5</span></span></th>
+        <th scope="row" role="rowheader" tabindex="-1"><span class="nl"><span class="name">Pull-ups</span><span class="chip label">3 × 5</span></span></th>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="true" aria-label="Pull-ups, Monday 19 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Tuesday 20 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Wednesday 21 October"></button></div></td>
@@ -126,7 +134,7 @@
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Pull-ups, Sunday 25 October"></button></div></td>
       </tr>
       <tr role="row" data-goal="3">
-        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Squats</span><span class="meta"><span class="chip label">3 × 15</span><span class="chip label">16 kg</span></span></th>
+        <th scope="row" role="rowheader" tabindex="-1"><span class="nl"><span class="name">Squats</span><span class="chip label">3 × 15</span><span class="chip label">16 kg</span></span></th>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Monday 19 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Tuesday 20 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="true" aria-label="Squats, Wednesday 21 October"></button></div></td>
@@ -136,7 +144,7 @@
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Squats, Sunday 25 October"></button></div></td>
       </tr>
       <tr role="row" data-goal="2">
-        <th scope="row" role="rowheader" tabindex="-1"><span class="name">Kettlebell halos</span><span class="meta"><span class="chip label">8 each side</span></span></th>
+        <th scope="row" role="rowheader" tabindex="-1"><span class="nl"><span class="name">Kettlebell halos</span><span class="chip label">8 each side</span></span><button type="button" class="note-line" tabindex="-1" aria-haspopup="dialog"><strong>Ribs down.</strong> Change direction each set, and keep the bell close to the head.</button></th>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="solid" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Monday 19 October"></button></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-mark="great" data-drawing="zigzag" class="mark" tabindex="-1" aria-pressed="true" aria-label="Kettlebell halos, Tuesday 20 October, has a note"></button><span class="note-mark" aria-hidden="true"></span></div></td>
         <td role="gridcell" class="d"><div class="day"><button type="button" data-drawing="hatch" class="mark" tabindex="-1" aria-pressed="false" aria-label="Kettlebell halos, Wednesday 21 October"></button></div></td>
