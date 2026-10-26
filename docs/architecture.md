@@ -149,11 +149,12 @@ with storage blocked or full the app keeps working in memory.
 | Key                                                    | Holds                                                                               | Written |
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------- | ------- |
 | `fitness-planner-session-v1`                           | `{ user }`: the last signed-in user                                                 | yes     |
-| `fitness-planner-cache-v2:<user>`                      | the user's state as `GET /api/state` returns it, with `revs`                        | yes     |
-| `fitness-planner-outbox-v2:<user>`                     | writes not yet sent (§7)                                                            | yes     |
+| `fitness-planner-cache-v3:<user>`                      | the user's state as `GET /api/state` returns it, with `revs`                        | yes     |
+| `fitness-planner-outbox-v3:<user>`                     | writes not yet sent (§7)                                                            | yes     |
 | `fitness-planner-import-v1:<user>`                     | the first-login prompt's answer, `imported` or `dismissed` (§7)                     | yes     |
 | `fitness-planner-settings-v1`                          | `theme`, read before first paint by `public/theme-init.js`, and `markSet`           | both    |
-| `fitness-planner-cache-v1:<user>`, `-outbox-v1:<user>` | the cache and outbox from before marks had kinds; moved to `-v2` at sign-in (below) | never   |
+| `fitness-planner-cache-v2:<user>`, `-outbox-v2:<user>` | the cache and outbox from before the solid and hatch drawings; moved at sign-in     | never   |
+| `fitness-planner-cache-v1:<user>`, `-outbox-v1:<user>` | the cache and outbox from before marks had kinds; moved at sign-in (below)          | never   |
 | `fitness-planner-v2`, `-diet-v2`                       | exercise and food `{ plans, log }` from before accounts                             | never   |
 | `fitness-planner-v1`, `-diet-v1`                       | the single-list format from before weekly plans                                     | never   |
 
@@ -174,10 +175,16 @@ left open on the code from before the marks reads `"great"` as an empty day, and
 `storage` event it adopted the cache and wrote it back with every box empty, which the newer tab then
 adopted in turn: a press flickered and left the box empty, though the server kept the mark. It could
 also drop the newer tab's queued marks from the shared outbox. Under the `-v2` names the two never
-read each other. At sign-in `start` moves this user's `-v1` cache (unless one under the new name
-already exists, which is newer) and merges the `-v1` outbox in, the newer write winning for the
-same cell, then deletes both old keys; signing out deletes them too. The next change to either
-format takes the next version the same way.
+read each other. At sign-in `start` walks the old names newest first (`OLD_CACHE_PREFIXES`,
+`OLD_OUTBOX_PREFIXES`): it moves this user's cache from the newest one that has it (unless one under
+the current name already exists, which is newer), merges each old outbox in, the newer write
+winning for the same cell, then deletes the old keys; signing out deletes them too.
+
+The solid and hatch drawings (#38) added mark values without a new version, so a tab left open on
+the code before them emptied every solid or hatch day in newer tabs, the same way. The names went
+to `-v3` on 2026-10-26 (K41). `src/lib/__tests__/format.spec.ts` now records what each version
+stores (the marks, and the fields an exercise and a food keep) and fails when the stored format
+changes under the same names.
 
 **Migration.** Before weekly plans, one list served every week: `{ exercises, log }` under
 `fitness-planner-v1` (the design prototype's shape, under its key renamed) and `{ foods, log }` under

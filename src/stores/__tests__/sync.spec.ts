@@ -7,8 +7,8 @@ import { useDietStore } from '@/stores/diet'
 import {
   CACHE_PREFIX,
   CONFLICT_NOTICE,
-  OLD_CACHE_PREFIX,
-  OLD_OUTBOX_PREFIX,
+  OLD_CACHE_PREFIXES,
+  OLD_OUTBOX_PREFIXES,
   OUTBOX_PREFIX,
   QUOTA_NOTICE,
   REFUSED_NOTICE,
@@ -21,6 +21,9 @@ import { DATA_KEY, DIET_KEY, LEGACY_DATA_KEY } from '@/lib/storage'
 import type { ExportData } from '@/lib/transfer'
 import { FakeApi } from '@/lib/__tests__/fakeApi'
 import { USER, cached, emptyState } from '@/lib/__tests__/signedIn'
+
+const [V2_CACHE, V1_CACHE] = OLD_CACHE_PREFIXES
+const [V2_OUTBOX, V1_OUTBOX] = OLD_OUTBOX_PREFIXES
 
 const NOW = new Date(2026, 9, 23, 18, 0)
 const WEEK = '2026-10-19'
@@ -375,6 +378,54 @@ describe('sync', () => {
     sync.onStorage(CACHE_PREFIX + USER) // after stop: ignored
   })
 
+  it('ignores a tab still open on the code from before the solid and hatch drawings', async () => {
+    api.accounts.get(USER)!.plans.exercise[WEEK] = { items: [SQUATS], rev: 1 }
+    const { sync, planner } = await start(emptyState())
+    for (let i = 0; i < 4; i++) planner.toggle('sq', 0) // great, partial, missed, great-solid
+    await settle()
+    expect(planner.markOf('sq', 0)).toBe('great-solid')
+    // That tab reads 'great-solid' as an empty day and writes its copy back under the -v2 names.
+    const stale = { ...stateWith({ [WEEK]: [SQUATS] }, { [WEEK]: 1 }) } as Record<string, unknown>
+    stale.exercise = { plans: { [WEEK]: [SQUATS] }, log: { [WEEK]: { sq: Array(7).fill(null) } } }
+    localStorage.setItem(V2_CACHE + USER, JSON.stringify(stale))
+    sync.onStorage(V2_CACHE + USER)
+    localStorage.setItem(V2_OUTBOX + USER, '[]')
+    sync.onStorage(V2_OUTBOX + USER)
+    await settle()
+    expect(planner.markOf('sq', 0)).toBe('great-solid')
+    expect(cached().exercise.log[WEEK]!.sq![0]).toBe('great-solid')
+  })
+
+  it('moves the -v2 cache and outbox, and prefers them to the -v1 ones', async () => {
+    const tick = { kind: 'tick', section: 'exercise', week: WEEK, item: 'sq' }
+    const v2 = { ...emptyState(), exercise: { plans: {}, log: { [WEEK]: { sq: ['missed-hatch'] } } } }
+    const v1 = { ...emptyState(), exercise: { plans: {}, log: { [WEEK]: { sq: [true] } } } }
+    localStorage.setItem(V2_CACHE + USER, JSON.stringify(v2))
+    localStorage.setItem(V1_CACHE + USER, JSON.stringify(v1))
+    localStorage.setItem(
+      V2_OUTBOX + USER,
+      JSON.stringify([{ ...tick, day: 1, mark: 'great-solid', id: 'b' }]),
+    )
+    localStorage.setItem(
+      V1_OUTBOX + USER,
+      JSON.stringify([
+        { ...tick, day: 1, done: true, id: 'a' },
+        { ...tick, day: 2, done: true, id: 'c' },
+      ]),
+    )
+    const sync = useSyncStore()
+    const planner = usePlannerStore()
+    sync.start(USER, lost)
+    expect(planner.markOf('sq', 0)).toBe('missed-hatch')
+    expect(outbox()).toEqual([
+      { ...tick, day: 2, mark: 'great', id: 'c' },
+      { ...tick, day: 1, mark: 'great-solid', id: 'b' },
+    ])
+    for (const prefix of [...OLD_CACHE_PREFIXES, ...OLD_OUTBOX_PREFIXES]) {
+      expect(localStorage.getItem(prefix + USER)).toBeNull()
+    }
+  })
+
   it('ignores a tab still open on the code from before marks had kinds', async () => {
     api.accounts.get(USER)!.plans.exercise[WEEK] = { items: [SQUATS], rev: 1 }
     const { sync, planner } = await start(emptyState())
@@ -383,10 +434,10 @@ describe('sync', () => {
     // That tab reads 'great' as an empty day and writes its copy back under the old names.
     const stale = { ...stateWith({ [WEEK]: [SQUATS] }, { [WEEK]: 1 }) } as Record<string, unknown>
     stale.exercise = { plans: { [WEEK]: [SQUATS] }, log: { [WEEK]: { sq: Array(7).fill(false) } } }
-    localStorage.setItem(OLD_CACHE_PREFIX + USER, JSON.stringify(stale))
-    sync.onStorage(OLD_CACHE_PREFIX + USER)
-    localStorage.setItem(OLD_OUTBOX_PREFIX + USER, '[]')
-    sync.onStorage(OLD_OUTBOX_PREFIX + USER)
+    localStorage.setItem(V1_CACHE + USER, JSON.stringify(stale))
+    sync.onStorage(V1_CACHE + USER)
+    localStorage.setItem(V1_OUTBOX + USER, '[]')
+    sync.onStorage(V1_OUTBOX + USER)
     await settle()
     expect(planner.markOf('sq', 0)).toBe('great')
     expect(cached().exercise.log[WEEK]!.sq![0]).toBe('great')
@@ -396,9 +447,9 @@ describe('sync', () => {
   it('moves the cache and outbox from the names before marks had kinds', async () => {
     const tick = { kind: 'tick', section: 'exercise', week: WEEK, item: 'sq' }
     const old = { ...emptyState(), exercise: { plans: {}, log: { [WEEK]: { sq: [true] } } } }
-    localStorage.setItem(OLD_CACHE_PREFIX + USER, JSON.stringify(old))
+    localStorage.setItem(V1_CACHE + USER, JSON.stringify(old))
     localStorage.setItem(
-      OLD_OUTBOX_PREFIX + USER,
+      V1_OUTBOX + USER,
       JSON.stringify([
         { ...tick, day: 0, done: true, id: 'a' },
         { ...tick, day: 1, done: true, id: 'b' },
@@ -416,28 +467,28 @@ describe('sync', () => {
       { ...tick, day: 0, mark: 'great', id: 'a' },
       { ...tick, day: 1, mark: 'missed', id: 'c' },
     ])
-    expect(localStorage.getItem(OLD_CACHE_PREFIX + USER)).toBeNull()
-    expect(localStorage.getItem(OLD_OUTBOX_PREFIX + USER)).toBeNull()
+    expect(localStorage.getItem(V1_CACHE + USER)).toBeNull()
+    expect(localStorage.getItem(V1_OUTBOX + USER)).toBeNull()
     await settle()
     expect(api.accounts.get(USER)!.ticks.exercise[WEEK]).toEqual({ sq: 0b11 })
   })
 
   it('keeps the cache under the new name over the old one, and drops an old one it cannot read', async () => {
-    localStorage.setItem(OLD_CACHE_PREFIX + USER, JSON.stringify(stateWith({ [WEEK]: [PUSHUPS] })))
-    localStorage.setItem(OLD_OUTBOX_PREFIX + USER, '{broken')
+    localStorage.setItem(V1_CACHE + USER, JSON.stringify(stateWith({ [WEEK]: [PUSHUPS] })))
+    localStorage.setItem(V1_OUTBOX + USER, '{broken')
     localStorage.setItem(CACHE_PREFIX + USER, JSON.stringify(stateWith({ [WEEK]: [SQUATS] })))
     const sync = useSyncStore()
     const planner = usePlannerStore()
     sync.start(USER, lost)
     expect(planner.exercises).toEqual([SQUATS])
-    expect(localStorage.getItem(OLD_CACHE_PREFIX + USER)).toBeNull()
-    expect(localStorage.getItem(OLD_OUTBOX_PREFIX + USER)).toBeNull()
+    expect(localStorage.getItem(V1_CACHE + USER)).toBeNull()
+    expect(localStorage.getItem(V1_OUTBOX + USER)).toBeNull()
     sync.stop()
-    localStorage.setItem(OLD_CACHE_PREFIX + USER, '{broken')
+    localStorage.setItem(V1_CACHE + USER, '{broken')
     localStorage.removeItem(CACHE_PREFIX + USER)
     sync.start(USER, lost)
     expect(sync.loaded).toBe(false)
-    expect(localStorage.getItem(OLD_CACHE_PREFIX + USER)).toBeNull()
+    expect(localStorage.getItem(V1_CACHE + USER)).toBeNull()
   })
 
   it('stops cleanly, keeping the cache, and forgets on request', async () => {
@@ -451,13 +502,13 @@ describe('sync', () => {
     await settle()
     expect(api.paths(`/ticks/exercise/${WEEK}/pu`)).toEqual([])
     localStorage.setItem(OUTBOX_PREFIX + USER, '[]')
-    localStorage.setItem(OLD_CACHE_PREFIX + USER, '{}')
-    localStorage.setItem(OLD_OUTBOX_PREFIX + USER, '[]')
+    localStorage.setItem(V1_CACHE + USER, '{}')
+    localStorage.setItem(V1_OUTBOX + USER, '[]')
     sync.forget(USER)
     expect(localStorage.getItem(CACHE_PREFIX + USER)).toBeNull()
     expect(localStorage.getItem(OUTBOX_PREFIX + USER)).toBeNull()
-    expect(localStorage.getItem(OLD_CACHE_PREFIX + USER)).toBeNull()
-    expect(localStorage.getItem(OLD_OUTBOX_PREFIX + USER)).toBeNull()
+    expect(localStorage.getItem(V1_CACHE + USER)).toBeNull()
+    expect(localStorage.getItem(V1_OUTBOX + USER)).toBeNull()
   })
 
   it('never writes the keys from before accounts', async () => {
