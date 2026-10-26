@@ -1,0 +1,188 @@
+/*
+  The Edit plan page, as a prototype. One frame (.ep) is one screen, sized from its own box like
+  the planner: u is 1 on a 1280×800 screen (0.75 to 1.6), n is 1 on a phone. The week's sizes are
+  the app's (K46, K47, K51); the proposals are --candidate-*.
+*/
+.ep { position: relative; overflow: hidden; box-sizing: border-box; container: ep / size;
+  background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+.ep *, .ep *::before, .ep *::after { box-sizing: border-box; }
+.ep button { font: inherit; color: inherit; }
+.ep .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.ep-scroll { position: absolute; inset: 0; overflow-y: auto;
+  --u: clamp(0.75px, min(calc(100cqw / 1280), calc(100cqh / 800)), 1.6px);
+  --n: clamp(1px, calc(100cqw / 600), 1.4px);
+  --pad: calc(var(--u) * 48);
+  /* The week's sizes, as built. */
+  --title: max(30px, calc(var(--u) * 40)); --wk: max(16px, calc(var(--u) * 20));
+  --name: max(20px, calc(var(--u) * 27)); --chip: max(18px, calc(var(--u) * 19)); --day: max(16px, calc(var(--u) * 20));
+  --set-text: max(18px, calc(var(--u) * 19)); --set-label: max(16px, calc(var(--u) * 19)); --control: max(44px, calc(var(--u) * 60)); --icon: max(20px, calc(var(--u) * 26));
+  /* The proposal: rows a fixed 100u (the screens share the window's height; a page that scrolls
+     can't), edit and remove at 52u with 28u icons. */
+  --candidate-row: max(76px, calc(var(--u) * 100));
+  --candidate-ib: max(44px, calc(var(--u) * 52));
+  --candidate-ib-icon: max(20px, calc(var(--u) * 28));
+  --candidate-name-col: calc(var(--u) * 320 + var(--candidate-ib) + var(--u) * 8);
+  --candidate-rm-col: calc(var(--u) * 72);
+}
+
+/* The bar, as built (K47–K50), sticky in Edit plan (K27), Edit plan pressed. */
+.ep-bar { position: sticky; top: 0; z-index: 5; background: var(--canvas); border-bottom: 1px solid var(--line); }
+.ep-bar-in { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: calc(var(--u) * 14) var(--pad); }
+.ep-bar .wm { display: block; height: max(26px, calc(var(--u) * 32)); width: auto; fill: var(--ink); }
+.ep-bar .week { display: flex; align-items: center; }
+.ep-bar .wl { min-width: 6.5em; text-align: center; font: 600 max(20px, calc(var(--u) * 26)) / 1.25 var(--font-sans); white-space: nowrap; }
+.ep-bar .arrow { width: max(48px, calc(var(--u) * 60)); height: max(48px, calc(var(--u) * 60)); }
+.ep-bar .arrow svg { width: max(28px, calc(var(--u) * 32)); height: max(28px, calc(var(--u) * 32)); }
+.ep-bar .end { justify-self: end; display: flex; gap: calc(var(--u) * 8); }
+.ep .ba { display: inline-flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 6); min-width: max(76px, calc(var(--u) * 96));
+  padding: calc(var(--u) * 10) calc(var(--u) * 12); border: 0; border-radius: var(--radius-md); background: transparent; cursor: pointer; }
+.ep .ba svg { width: max(26px, calc(var(--u) * 32)); height: max(26px, calc(var(--u) * 32)); }
+.ep .ba span { font: 600 max(16px, calc(var(--u) * 17)) / 1.3 var(--font-sans); white-space: nowrap; }
+.ep .ba[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
+
+/* Shared controls at the page's size (as on the Settings page, K51). */
+.ep .ib { display: inline-grid; place-items: center; width: var(--candidate-ib); height: var(--candidate-ib); padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; cursor: pointer; flex: none; }
+.ep .ib:hover, .ep .ba:not([aria-pressed="true"]):hover, .ep .btn:hover { background: var(--tile); }
+.ep .ib svg { width: var(--candidate-ib-icon); height: var(--candidate-ib-icon); }
+.ep .btn { display: inline-flex; align-items: center; gap: calc(var(--icon) * 0.4); height: var(--control); padding: 0 calc(var(--u) * 22);
+  border: 1px solid var(--control-border); border-radius: var(--radius-md); background: transparent; font-weight: 600; font-size: var(--set-label); cursor: pointer; white-space: nowrap; }
+.ep .btn svg { width: var(--icon); height: var(--icon); }
+.ep .btn.primary { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.ep .btn.primary:hover { background: color-mix(in srgb, var(--ink) 82%, var(--canvas)); }
+.ep .seg { display: inline-flex; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+.ep .seg button { height: calc(var(--control) - 2px); padding: 0 calc(var(--u) * 20); border: 0; border-radius: var(--radius-sm); background: transparent; font-weight: 600; font-size: var(--set-label); cursor: pointer; white-space: nowrap; }
+.ep .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
+.ep-field { display: flex; flex-direction: column; gap: calc(var(--u) * 8); }
+.ep-label { font: 600 var(--set-label) / 1.3 var(--font-sans); }
+.ep-input { display: flex; align-items: center; height: var(--control); padding: 0 calc(var(--u) * 14); border: 1px solid var(--control-border); border-radius: var(--radius-md); background: var(--canvas); font-size: var(--set-text); }
+.ep-input .ph { color: var(--ink-secondary); }
+.ep-field.wide { flex: 1 1 calc(var(--u) * 300); min-width: 0; }
+.ep-field.num .ep-input { width: calc(var(--u) * 96); }
+.ep-field.kg .ep-input { width: calc(var(--u) * 210); }
+
+/* ---- A and B: the page like the week. ---- */
+.ep-page { padding: calc(var(--u) * 28) var(--pad) calc(var(--u) * 64); }
+.ep-page section + section { margin-top: calc(var(--u) * 56); }
+.ep-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-bottom: calc(var(--u) * 20); }
+.ep-head h2 { margin: 0; font: 600 var(--title) / 1.15 var(--font-serif); }
+.ep-head .wk { margin-left: calc(var(--u) * 16); font: 400 var(--wk) / 1.3 var(--font-sans); color: var(--ink-secondary); }
+.ep .grid { display: grid; grid-template-columns: var(--candidate-name-col) repeat(7, minmax(0, 1fr)) var(--candidate-rm-col); }
+.ep .grid > * { min-width: 0; }
+.ep .hd { display: flex; align-items: flex-end; justify-content: center; padding: calc(var(--u) * 12) 0; border-bottom: 1px solid var(--ink); font-weight: 600; font-size: var(--day); }
+.ep .nm, .ep .d, .ep .rm { min-height: var(--candidate-row); border-bottom: 1px solid var(--line); }
+.ep .nm { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding-right: 6px; }
+.ep .nl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.ep .nl .n { font-size: var(--name); line-height: 1.25; font-weight: 600; }
+.ep .nl .edit { margin: calc(var(--candidate-ib) / -4) 0 calc(var(--candidate-ib) / -4) calc(var(--u) * -4); }
+.ep .chip { font-size: var(--chip); line-height: 1.35; font-weight: 600; background: var(--tile); color: var(--ink-secondary); border-radius: var(--radius-sm); padding: 0 8px; white-space: nowrap; }
+.ep .note { font: italic 400 var(--chip) / 1.35 var(--font-serif); color: var(--ink-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ep .note a { color: inherit; text-underline-offset: 2px; }
+.ep .d, .ep .rm { display: grid; place-items: center; }
+/* Folded, the remove button ends the name's line instead of a column of its own. */
+.ep .rm-in { display: none; }
+.ep .mark { display: grid; place-items: center; width: calc(var(--candidate-row) * 0.86); height: calc(var(--candidate-row) * 0.86); max-width: 100%; }
+.ep .mark svg { width: 94%; height: 94%; overflow: visible; }
+.ep .mark .bx { stroke: var(--control-border); }
+.ep .mark[data-mark="great"] .ink { fill: var(--pen); }
+.ep .mark[data-mark="missed"] .ink { fill: var(--pen-missed); }
+.ep .mark .sym { stroke: var(--canvas); }
+.ep-add { padding-top: calc(var(--u) * 24); }
+.ep-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--u) * 20) calc(var(--u) * 16); }
+
+/* B: the Add exercise dialog, at the page's size. */
+.ep-scrim { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; background: color-mix(in srgb, var(--ink) 40%, transparent); }
+.ep-dialog { width: min(calc(100% - 32px), calc(var(--u) * 760)); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-overlay); }
+.ep-dh { display: flex; align-items: center; justify-content: space-between; padding: calc(var(--u) * 20) calc(var(--u) * 28) 0; }
+.ep-dh h2 { margin: 0; font: 600 max(22px, calc(var(--u) * 27)) / 1.25 var(--font-sans); }
+.ep-dbody { display: flex; flex-direction: column; gap: calc(var(--u) * 20); padding: calc(var(--u) * 20) calc(var(--u) * 28); }
+.ep-drow { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 20) calc(var(--u) * 16); align-items: flex-end; }
+.ep-dfoot { display: flex; justify-content: flex-end; gap: 12px; padding: 0 calc(var(--u) * 28) calc(var(--u) * 24); }
+
+/* Folded: the week folds as on the planner; the bar's two rows; the form stacks. */
+@container ep ((orientation: portrait) and (width < 1000px)) or (width < 760px) {
+  .ep-scroll { --pad: 16px; --title: calc(var(--n) * 30); --name: calc(var(--n) * 20); --chip: calc(var(--n) * 18); --day: calc(var(--n) * 16);
+    --set-text: calc(var(--n) * 18); --set-label: calc(var(--n) * 16); --control: 48px; --icon: 22px; --candidate-ib: 44px; --candidate-ib-icon: 22px; --u: 1px; }
+  .ep-bar-in { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 10px; }
+  .ep-bar .start { display: none; }
+  .ep-bar .week { order: -1; flex-basis: 100%; justify-content: center; }
+  .ep-bar .wl { font-size: 20px; } .ep-bar .arrow { width: 48px; height: 48px; } .ep-bar .arrow svg { width: 26px; height: 26px; }
+  .ep-bar .end { display: contents; }
+  .ep .ba { flex: 1 1 0; min-width: 0; padding: 8px 4px; gap: 4px; } .ep .ba svg { width: 26px; height: 26px; } .ep .ba span { font-size: 16px; }
+  .ep .ba:nth-child(3), .ep .ba:nth-child(4) { display: none; }
+  .ep .grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .ep .hd.corner, .ep .hd.rmh { display: none; }
+  .ep .hd { padding: 6px 0; }
+  .ep .nm { grid-column: 1 / -1; min-height: 0; border: 0; padding: 10px 0 2px; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .ep .nm .nl { flex: 1 1 auto; }
+  .ep .note { flex-basis: 100%; }
+  .ep .d { min-height: 0; height: 52px; }
+  .ep .mark { width: 44px; height: 44px; }
+  .ep .rm { display: none; }
+  .ep .rm-in { display: inline-grid; margin: -6px 0 -6px auto; }
+  .ep-form { flex-direction: column; align-items: stretch; }
+  .ep-field.num .ep-input, .ep-field.kg .ep-input { width: 100%; }
+  .ep-field.wide { flex: none; }
+}
+
+/* ---- Now: as shipped, a 1152px column at fixed sizes under the new bar. ---- */
+.ep[data-layout="now"] .ep-scroll { --candidate-row: 76px; --candidate-ib: 44px; --candidate-ib-icon: 20px; --candidate-name-col: 252px; --candidate-rm-col: 56px;
+  --control: 36px; --set-label: 14px; --set-text: 16px; --icon: 16px; }
+.ep-now { max-width: 1152px; margin: 0 auto; padding: 32px 32px 64px; }
+.ep-now h1 { margin: 0 0 12px; font: 600 44px/48px var(--font-serif); }
+.ep-now h2 { margin: 32px 0 16px; font: 600 30px/36px var(--font-serif); }
+.ep-now .btn.sm { height: 36px; padding: 0 12px; font-size: 14px; }
+.ep-now .ep-form { gap: 16px 12px; }
+.ep-now .seg button { padding: 0 14px; font-size: 14px; }
+.ep-now .ep-label { font-size: 14px; }
+
+/* ==== 2026-10-26: dialogs like the week (this mockup's question). ====
+   The scrim stays fixed over the frame while the page behind scrolls. Every dialog's sizes come
+   from --dlg-* and the page's control sizes; Now sets them back to the system's. */
+.ep-scrim { position: fixed; }
+.ep-scroll { --dlg-w: calc(var(--u) * 720); --dlg-confirm-w: calc(var(--u) * 600); --dlg-pad: calc(var(--u) * 32); --dlg-title: max(22px, calc(var(--u) * 27)); --dlg-gap: calc(var(--u) * 24); }
+.ep-dialog { width: min(calc(100% - 32px), var(--dlg-w)); max-height: calc(100% - 32px); overflow-y: auto; }
+.ep-dialog.ep-confirm { width: min(calc(100% - 32px), var(--dlg-confirm-w)); }
+.ep-dh { padding: var(--dlg-pad) var(--dlg-pad) 0; }
+.ep-dh h2 { font-size: var(--dlg-title); }
+.ep-dbody { gap: var(--dlg-gap); padding: var(--dlg-gap) var(--dlg-pad); }
+.ep-dfoot { padding: 0 var(--dlg-pad) var(--dlg-pad); gap: calc(var(--u) * 12); }
+.ep-dtext { margin: 0; font-size: var(--set-text); line-height: 1.45; color: var(--ink); }
+.ep-area { height: calc(var(--control) * 1.8); align-items: flex-start; padding-top: calc(var(--u) * 10); }
+.ep-hint { display: flex; justify-content: space-between; gap: 16px; font-size: max(16px, calc(var(--u) * 16)); line-height: 1.35; color: var(--ink-secondary); }
+.ep-stepper { display: inline-flex; align-self: flex-start; height: var(--control); border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+.ep-stepper button { display: grid; place-items: center; width: var(--control); padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer; }
+.ep-stepper svg { width: var(--icon); height: var(--icon); }
+.ep-stepper output { display: grid; place-items: center; min-width: calc(var(--control) * 1.1); font-weight: 600; font-size: calc(var(--set-label) * 1.25); }
+.ep .ep-dialog .ib { width: max(44px, calc(var(--u) * 52)); height: max(44px, calc(var(--u) * 52)); }
+
+/* B: the form dialogs as a sheet from the right, the page's full height; a question stays centred. */
+.ep[data-look="b"] .ep-scrim:has(.ep-dialog:not(.ep-confirm)) { place-items: stretch end; }
+.ep[data-look="b"] .ep-dialog:not(.ep-confirm) { width: min(100%, calc(var(--u) * 640)); max-height: none; height: 100%; display: flex; flex-direction: column;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg); border-right: 0; }
+.ep[data-look="b"] .ep-dialog:not(.ep-confirm) .ep-dbody { flex: 1 1 auto; overflow-y: auto; }
+.ep[data-look="b"] .ep-dialog:not(.ep-confirm) .ep-dfoot { padding-top: var(--dlg-gap); border-top: 1px solid var(--line); }
+
+/* Now: the system's sizes, as shipped: 416px, title-2, 44px fields, 36px buttons. */
+.ep[data-look="now"] .ep-dialog { --control: 44px; --set-label: 16px; --set-text: 18px; --icon: 20px; --u: 1px; --dlg-w: 416px; --dlg-confirm-w: 400px; --dlg-pad: 24px; --dlg-title: 22px; --dlg-gap: 16px; }
+.ep[data-look="now"] .ep-dialog .ep-label { font-size: 14px; }
+.ep[data-look="now"] .ep-dialog .seg button { font-size: 14px; padding: 0 16px; }
+.ep[data-look="now"] .ep-dialog .btn { height: 44px; padding: 0 16px; font-size: 16px; }
+.ep[data-look="now"] .ep-dialog .ep-hint { font-size: 14px; }
+.ep[data-look="now"] .ep-dialog .ib { width: 44px; height: 44px; }
+
+/* Folded: A is the full width less 16px each side; B's sheet is the whole screen. */
+@container ep ((orientation: portrait) and (width < 1000px)) or (width < 760px) {
+  .ep-scroll { --dlg-pad: 16px; --dlg-gap: 16px; }
+  .ep[data-look="b"] .ep-dialog:not(.ep-confirm) { width: 100%; border-radius: 0; border: 0; }
+}
+/* In a dialog's column the fields keep their own size: no growing, no stretched segments. */
+.ep-dbody .ep-field.wide { flex: none; }
+.ep-dbody .seg { align-self: flex-start; }
+.ep-drow > * { flex: none; }
+.ep-drow { column-gap: calc(var(--u) * 24); }
+/* Shorter, so A's form fits a 1920×1200 screen: a 1.4-field note and 20u between fields. */
+.ep-scroll { --dlg-gap: calc(var(--u) * 20); }
+.ep-area { height: calc(var(--control) * 1.4); }
+/* The dialog's number fields keep their width on a phone (the page's stacked form widens them). */
+.ep-dbody .ep-field.num .ep-input { width: max(72px, calc(var(--u) * 96)); }
+.ep-dbody .ep-field.kg .ep-input { width: max(160px, calc(var(--u) * 170)); }

@@ -1,0 +1,129 @@
+<title>Bigger row names</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="proto.css">
+<!--
+  A mockup (design-system skill, references/mockups.md). One question: how much bigger the row
+  names get, and whether the name column grows with them. The screens are live: proto.js draws
+  them (proto.css sizes them from the frame, and holds the candidates at its foot), and try.html
+  shows them full size with a switch for the size and the theme.
+-->
+<style>
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .mockup-page {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: var(--space-8, 32px) var(--space-16, 64px);
+    max-width: 1200px; margin: 0 auto; display: grid; gap: var(--space-12, 48px);
+  }
+  .mockup-head { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .mockup-head h1, .option h2 { margin: 0; text-wrap: balance; }
+  .mockup-head p, .option p { margin: 0; }
+  .mockup-meta { color: var(--ink-secondary); }
+  .option { display: grid; gap: var(--space-4, 16px); }
+  .option-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2, 8px) var(--space-3, 12px); }
+  .option-tag { color: var(--ink-secondary); }
+  .option[data-recommended] .option-tag::after { content: " · Recommended"; color: var(--ink); }
+  /* The same stage in light and in dark, side by side; stacked on a phone. Each pane is a
+     data-theme subtree, so the system's own tokens switch inside it. */
+  .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-4, 16px); }
+  .pane { min-width: 0; background: var(--canvas); color: var(--ink); border: 1px solid var(--line);
+          border-radius: var(--radius-lg, 10px); padding: var(--space-4, 16px); overflow-x: auto; }
+  .pane-label { color: var(--ink-secondary); margin: 0 0 var(--space-3, 12px); }
+  .measures { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); }
+  .measures li { border: 1px solid var(--line); border-radius: var(--radius-sm, 4px); padding: 2px var(--space-2, 8px); font-variant-numeric: tabular-nums; }
+  .measures li[data-pass="no"] { border-color: currentColor; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .try { margin: 0; }
+  .try a, .mockup-head a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+  .sizes { margin: 0; padding-left: 1.2em; }
+  .sizes li { font-variant-numeric: tabular-nums; }
+
+  /* A device: the screen at its real size in pixels, scaled down to fit (the script sets the scale). */
+  .device { position: relative; width: 100%; }
+  .device > .fs { position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .device.phone > .fs { border-radius: 28px; border-width: 2px; }
+  .phones { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .phones .device { max-width: 260px; }
+</style>
+
+<main class="mockup-page">
+  <header class="mockup-head">
+    <p class="caption mockup-meta">Mockup · 2026-10-26 · Tracker</p>
+    <h1 class="title-1">Bigger row names</h1>
+    <p class="body">Each line of a row's name cell goes up one size: the exercise name, the sets-and-reps chip and the note. The question is whether the name column widens to make room. The boxes, the marks, the day names and the title stay as they are.</p>
+    <p class="body">One step on the system's type scale, on a phone and at the smallest sizes:</p>
+    <ul class="sizes body">
+      <li>Name: 18 to 20 (body to body-large), weight 600</li>
+      <li>Chip: 16 to 18, weight 600</li>
+      <li>Note: 16 to 18, serif italic</li>
+    </ul>
+    <p class="body">On a larger screen the type grows with it, by the same step: at 1280×800 the name goes from 24 to 27 and the chip and note from 17 to 19. No colour changes, so contrast stays as it is.</p>
+    <p class="try body"><a href="try.html#a">Try it full size</a>, on your own screen or phone. The switch at the bottom left changes the size and the theme.</p>
+  </header>
+
+  <section class="option" id="now" aria-labelledby="now-h">
+    <div class="option-head">
+      <h2 class="title-2" id="now-h">Now, as shipped</h2>
+      <span class="label option-tag">For comparison</span>
+    </div>
+    <p class="body">Name 24, chip and note 17, a 280 column (at u = 1; this 1920×1200 screen is u = 1.5, about the size of your screenshot).</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · desktop</p><div class="device" data-w="1920" data-h="1200" data-size="now"></div></div>
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · phone</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-size="now"></div></div></div>
+    </div>
+  </section>
+
+  <section class="option" id="a" data-recommended aria-labelledby="a-h">
+    <div class="option-head">
+      <h2 class="title-2" id="a-h">A. One size up, and a wider name column</h2>
+      <span class="label option-tag">Option A</span>
+    </div>
+    <p class="body">Name 27, chip and note 19, and the column from 280 to 320, so “Back extensions 12 reps a set” still fits on one line. The seven days share a little less width: at 1920×1200 the boxes stay 94px, since the row height still sets them.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · desktop</p><div class="device" data-w="1920" data-h="1200" data-size="a"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · desktop</p><div class="device" data-w="1920" data-h="1200" data-size="a"></div></div>
+    </div>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · phone</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-size="a"></div></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-size="a"></div></div></div>
+    </div>
+    <p class="try body"><a href="try.html#a">Try A full size</a></p>
+  </section>
+
+  <section class="option" id="b" aria-labelledby="b-h">
+    <div class="option-head">
+      <h2 class="title-2" id="b-h">B. One size up, the column as it is</h2>
+      <span class="label option-tag">Option B</span>
+    </div>
+    <p class="body">The same type, in the 280 column. The boxes keep their size; a long name and its chip wrap onto two lines. On a phone B looks like A, since the name already spans the row there.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · desktop</p><div class="device" data-w="1920" data-h="1200" data-size="b"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · desktop</p><div class="device" data-w="1920" data-h="1200" data-size="b"></div></div>
+    </div>
+    <p class="try body"><a href="try.html#b">Try B full size</a></p>
+  </section>
+</main>
+
+<script src="marks.js"></script>
+<script src="proto.js"></script>
+<script>
+  // Each .device gets a live screen at its real pixel size, scaled to the space it has.
+  for (const device of document.querySelectorAll('.device')) {
+    const w = Number(device.dataset.w), h = Number(device.dataset.h)
+    const screen = document.createElement('div')
+    screen.style.width = w + 'px'
+    screen.style.height = h + 'px'
+    device.append(screen)
+    const fit = () => {
+      const s = Math.min(1, device.clientWidth / w)
+      screen.style.transform = `scale(${s})`
+      device.style.height = Math.ceil(h * s) + 'px'
+    }
+    new ResizeObserver(fit).observe(device)
+    fit()
+    TR.mount(screen, { size: device.dataset.size, start: device.dataset.start })
+  }
+</script>

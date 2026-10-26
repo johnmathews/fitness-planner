@@ -1,0 +1,125 @@
+<title>Dialogs like the week</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="edit.css">
+<!--
+  A mockup (design-system skill, references/mockups.md). One question: how the dialogs take the
+  week's language. The page behind is Edit plan as built (K54); edit.js draws it with a dialog open
+  and edit.css sizes both from the frame. try.html shows them full size with a switch for the look,
+  the dialog and the theme.
+-->
+<style>
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .mockup-page {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: var(--space-8, 32px) var(--space-16, 64px);
+    max-width: 1200px; margin: 0 auto; display: grid; gap: var(--space-12, 48px);
+  }
+  .mockup-head { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .mockup-head h1, .option h2 { margin: 0; text-wrap: balance; }
+  .mockup-head p, .option p { margin: 0; }
+  .mockup-meta { color: var(--ink-secondary); }
+  .option { display: grid; gap: var(--space-4, 16px); }
+  .option-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2, 8px) var(--space-3, 12px); }
+  .option-tag { color: var(--ink-secondary); }
+  .option[data-recommended] .option-tag::after { content: " · Recommended"; color: var(--ink); }
+  /* The same stage in light and in dark, side by side; stacked on a phone. Each pane is a
+     data-theme subtree, so the system's own tokens switch inside it. */
+  .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-4, 16px); }
+  .pane { min-width: 0; background: var(--canvas); color: var(--ink); border: 1px solid var(--line);
+          border-radius: var(--radius-lg, 10px); padding: var(--space-4, 16px); overflow-x: auto; }
+  .pane-label { color: var(--ink-secondary); margin: 0 0 var(--space-3, 12px); }
+  .measures { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); }
+  .measures li { border: 1px solid var(--line); border-radius: var(--radius-sm, 4px); padding: 2px var(--space-2, 8px); font-variant-numeric: tabular-nums; }
+  .measures li[data-pass="no"] { border-color: currentColor; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .try { margin: 0; }
+  .try a, .mockup-head a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+  .question { display: grid; gap: var(--space-8, 32px); }
+  .question > header { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .question > header h2, .question > header p { margin: 0; }
+  .notes { margin: 0; padding-left: 1.2em; display: grid; gap: var(--space-1, 4px); }
+
+  /* A device: the screen at its real size in pixels, scaled down to fit (the script sets the scale). */
+  .device { position: relative; width: 100%; }
+  .device > .ep { position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .device.phone > .fs { border-radius: 28px; border-width: 2px; }
+  .phones { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .phones .device { max-width: 260px; }
+</style>
+
+<main class="mockup-page">
+  <header class="mockup-head">
+    <p class="caption mockup-meta">Mockup · 2026-10-26 · Tracker</p>
+    <h1 class="title-1">Dialogs like the week</h1>
+    <p class="body">Every page is now at the week's size, but the dialogs are still the system's small ones: 416px wide, 44px fields, a 22px title. The app has two kinds: the form dialogs (Add and Edit exercise, Add and Edit food) and the questions (Remove Squats?, Replace next week's plan?, Sign out now?). Both options size them from the screen like the pages:</p>
+    <ul class="notes body">
+      <li>Title 27u, like the row names and Settings' headings.</li>
+      <li>Labels and text 19u; fields, segments, the counter and buttons 60u tall, as on Settings.</li>
+      <li>Padding 32u, 24u between fields.</li>
+      <li>The same tokens, scrim and focus rules; nothing new to measure for contrast.</li>
+      <li>So Add exercise fits a 1920×1200 screen at that size, “Times a week” moves up beside Reps count and Weight, and the Note comes last. Where the row is too narrow it wraps.</li>
+    </ul>
+    <p class="body">They differ in where a form dialog sits. <strong>Decided: A</strong>, centred (K55).</p>
+    <p class="try body"><a href="try.html#a-add">Try it full size</a>. The switch at the bottom left changes the look, the dialog and the theme.</p>
+  </header>
+
+  <section class="option" id="now" aria-labelledby="now-h">
+    <div class="option-head"><h2 class="title-2" id="now-h">Now, as shipped</h2><span class="label option-tag">For comparison</span></div>
+    <p class="body">416px wide at the system's fixed sizes, over the full-size page.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, Add exercise</p><div class="device" data-w="1920" data-h="1200" data-look="now" data-dialog="add"></div></div>
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, Remove Squats?</p><div class="device" data-w="1920" data-h="1200" data-look="now" data-dialog="confirm"></div></div>
+    </div>
+  </section>
+
+  <section class="option" id="a" data-recommended aria-labelledby="a-h">
+    <div class="option-head"><h2 class="title-2" id="a-h">A. Centred, at the page's size</h2><span class="label option-tag">Option A</span></div>
+    <p class="body">The dialog you know, grown: up to 720u wide for a form and 600u for a question, centred over the page. Recommended: the same shape as now, so nothing new to learn, and it matches what you saw on the Edit plan mockup.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, Add exercise</p><div class="device" data-w="1920" data-h="1200" data-look="a" data-dialog="add"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, Remove Squats?</p><div class="device" data-w="1280" data-h="800" data-look="a" data-dialog="confirm"></div></div>
+    </div>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · phone, Add exercise</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-look="a" data-dialog="add"></div></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone, Remove Squats?</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-look="a" data-dialog="confirm"></div></div></div>
+    </div>
+    <p class="try body"><a href="try.html#a-add">Try A full size</a></p>
+  </section>
+
+  <section class="option" id="b" aria-labelledby="b-h">
+    <div class="option-head"><h2 class="title-2" id="b-h">B. A sheet from the right for forms</h2><span class="label option-tag">Option B</span></div>
+    <p class="body">A form dialog becomes a 640u sheet the height of the screen, at the right, its buttons fixed at the foot; the week stays visible beside it. A question stays centred, as in A. On a phone the sheet is the whole screen.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, Add exercise</p><div class="device" data-w="1920" data-h="1200" data-look="b" data-dialog="add"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, Add exercise</p><div class="device" data-w="1280" data-h="800" data-look="b" data-dialog="add"></div></div>
+    </div>
+    <div class="panes"><div class="pane" data-theme="light"><p class="label pane-label">Light · phone, Add exercise</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-look="b" data-dialog="add"></div></div></div></div>
+    <p class="try body"><a href="try.html#b-add">Try B full size</a></p>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script src="marks.js"></script>
+<script src="edit.js"></script>
+<script>
+  // Each .device gets a live page at its real pixel size, scaled to the space it has.
+  for (const device of document.querySelectorAll('.device')) {
+    const w = Number(device.dataset.w), h = Number(device.dataset.h)
+    const screen = document.createElement('div')
+    screen.style.width = w + 'px'
+    screen.style.height = h + 'px'
+    device.append(screen)
+    const fit = () => {
+      const s = Math.min(1, device.clientWidth / w)
+      screen.style.transform = `scale(${s})`
+      device.style.height = Math.ceil(h * s) + 'px'
+    }
+    new ResizeObserver(fit).observe(device)
+    fit()
+    EP.mount(screen, { look: device.dataset.look, dialog: device.dataset.dialog })
+  }
+</script>
