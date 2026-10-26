@@ -247,7 +247,7 @@ describe('the planner grids (W10)', () => {
       }
     })
 
-    it('stops on the skip link, the Header, then each grid once, with the way on between', () => {
+    it('stops on the skip link, the Header, then each grid once, with the arrows between', () => {
       mountApp()
       expect(tabStops().map(name)).toEqual([
         'Skip to today',
@@ -257,8 +257,9 @@ describe('the planner grids (W10)', () => {
         'Settings',
         'Print…',
         'Push-ups, Friday 23 October, today',
-        // The PlannerScreen's way on to the Food screen (K25); the handle is for a finger only.
-        'Food',
+        // The PlannerScreen's arrows between the screens (K42); the handle is for a finger only.
+        'Go to Food',
+        'Back to Exercises',
         'Vegetables, Friday 23 October, today',
       ])
     })

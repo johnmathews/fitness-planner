@@ -75,7 +75,6 @@
   --fs-day: max(16px, calc(var(--u) * 20));
   --fs-total: max(18px, calc(var(--u) * 24));
   --fs-figure: max(18px, calc(var(--u) * 26));
-  --fs-way-on: max(16px, calc(var(--u) * 18));
   --fs-stat: max(22px, calc(var(--u) * 28));
   --fs-stat-words: max(20px, calc(var(--u) * 22));
   /* A folded row of boxes: a share of the screen's height, so a tall phone spreads the week. */

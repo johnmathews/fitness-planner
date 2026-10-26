@@ -5,7 +5,10 @@ import { useDietStore } from '@/stores/diet'
 import { dayMonth } from '@/lib/dates'
 import type { Food, Mark } from '@/lib/storage'
 import { SCREEN, SCREEN_GRID } from '@/lib/screens'
+import { ChevronUp } from '@lucide/vue'
 import { SectionHeader } from '@/components/ui/section-header'
+import { IconButton } from '@/components/ui/icon-button'
+import { sprintToScreen } from '@/composables/screenSprint'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import AddFoodForm from '@/components/AddFoodForm.vue'
 import EditFoodDialog from '@/components/EditFoodDialog.vue'
@@ -46,11 +49,21 @@ watch(
 -->
 <template>
   <section
-    class="mt-8 border-t border-line pt-8 print:mt-4 print:border-0 print:pt-4 full:mt-0 full:border-0"
+    class="relative mt-8 border-t border-line pt-8 print:mt-4 print:border-0 print:pt-4 full:mt-0 full:border-0"
     :class="SCREEN"
     data-planner-screen
     aria-labelledby="diet-heading"
   >
+    <!-- The way back (PlannerScreen card, K42): an arrow on the screen's top, below the bar's
+         strip and handle, sprinting to the top of Exercises. -->
+    <IconButton
+      label="Back to Exercises"
+      class="absolute top-12 left-1/2 hidden -translate-x-1/2 text-ink-secondary hover:text-ink full:inline-flex short:hidden"
+      data-noprint
+      data-testid="to-exercises"
+      @click="sprintToScreen('exercises-heading')"
+      ><ChevronUp :size="24"
+    /></IconButton>
     <div
       class="print:break-inside-avoid full:flex full:min-h-0 full:flex-1 full:flex-col folded:flex-none"
       data-print-keep

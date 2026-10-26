@@ -68,6 +68,12 @@ export function sprintTo(top: number, done?: () => void): void {
   frame = requestAnimationFrame(step)
 }
 
+/** Sprint to the top of the screen labelled by `headingId` (the arrows between screens, K42). */
+export function sprintToScreen(headingId: string): void {
+  const screen = document.querySelector(`[aria-labelledby="${headingId}"]`)
+  if (screen) sprintTo(screen.getBoundingClientRect().top + window.scrollY)
+}
+
 /** Stop a running sprint where it is. */
 export function stopSprint(): void {
   cancelAnimationFrame(frame)

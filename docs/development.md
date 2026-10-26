@@ -284,7 +284,7 @@ listed in [api.md](api.md) §10):
   today (full-date names with "today", `aria-current`, no band, K36), rows with no goal or total
   (K33), Edit plan's rows (Edit in the name
   cell, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,
-  arrows, the skip link, the way on to Food, Edit plan's controls), and headings and print
+  arrows, the skip link, the arrows between the screens, Edit plan's controls), and headings and print
   attributes. The layouts themselves (filling, folding, the out-of-sight navbar) depend on media
   queries jsdom doesn't apply, so the e2e suite covers them.
 - `src/components/__tests__/Email.spec.ts`: Forgot your password? (offered only when the planner

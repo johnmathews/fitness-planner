@@ -476,8 +476,10 @@ tall or less).
   top edge (a pointer that can hover), the handle button (wherever a coarse pointer is present;
   out of the Tab order), and `focus-within`; it hides on leaving, Escape or a press elsewhere. The
   bar is moved out of view with a transform, never hidden, so its controls stay reachable by Tab.
-- **The way on.** A quiet "Food" button at the foot of the Exercises screen scrolls to Food. It is
-  left out when folded or short.
+- **The arrows between the screens** (K42). A chevron IconButton, "Go to Food", at the foot of the
+  Exercises screen, and one pointing up, "Back to Exercises", 48px from the top of Food, below the
+  bar's strip and handle. Each sprints to the other screen's top with `sprintToScreen`. A short
+  screen leaves them out.
 
 ### 6.7 Print
 
@@ -487,7 +489,7 @@ literal colours the system allows (`src/styles/__tests__/print.spec.ts` holds th
 `tokens.json`): words, boxes and marks keep their light colours, chips are outlined, and `--canvas`,
 `--panel` and `--tile` go transparent. Shadows and transitions are off.
 
-- Anything marked `data-noprint` is hidden: the navbar and its handle, the "Food" button, the sync status,
+- Anything marked `data-noprint` is hidden: the navbar and its handle, the arrows between the screens, the sync status,
   the import prompt, Edit plan's controls and add forms, and a section's hint line if it has one. Dialogs, the
   popover and Banners carry `print:hidden`.
 - A met day's name, check and underline keep their `pen`. A table split across pages repeats its
