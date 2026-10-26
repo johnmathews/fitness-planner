@@ -15,20 +15,21 @@ export const scrimVariants = cva([
 
 /**
  * A modal panel: panel fill, 1px line border (the edge in dark, where there is no shadow),
- * radius-lg, the overlay shadow, space-6 padding (space-4 below 640px). Centred without a
- * transform, 16px from each edge of a phone, and scrolling inside when taller than the screen.
- * It appears without slide, scale or bounce. md is the Dialog's 416px, sm the ConfirmDialog's 400.
+ * radius-lg, the overlay shadow, at the page's size (K55): max(24px, 32u) padding (space-4 below
+ * 640px). Centred without a transform, 16px from each edge of a phone, and scrolling inside when
+ * taller than the screen. It appears without slide, scale or bounce. md is the Dialog's
+ * max(416px, 720u), sm the ConfirmDialog's max(400px, 600u).
  */
 export const dialogPanelVariants = cva(
   [
     'fixed inset-0 z-50 m-auto h-fit max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-y-auto',
-    'rounded-lg border border-line bg-panel p-4 text-ink shadow-overlay sm:p-6 print:hidden',
+    'rounded-lg border border-line bg-panel p-4 text-ink shadow-overlay sm:p-[max(24px,calc(var(--u)*32))] print:hidden',
   ],
   {
     variants: {
       size: {
-        md: 'max-w-104',
-        sm: 'max-w-100',
+        md: 'max-w-[max(26rem,calc(var(--u)*720))]',
+        sm: 'max-w-[max(25rem,calc(var(--u)*600))]',
       },
     },
     defaultVariants: {

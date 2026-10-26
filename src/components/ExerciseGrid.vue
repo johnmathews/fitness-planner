@@ -4,13 +4,14 @@ import { exerciseDetails, usePlannerStore } from '@/stores/planner'
 import type { Exercise, Mark } from '@/lib/storage'
 import type { Tracked } from '@/lib/tracker'
 import { dayMonth } from '@/lib/dates'
-import { ChevronDown } from '@lucide/vue'
+import { ChevronDown, Plus } from '@lucide/vue'
 import { SCREEN, SCREEN_GRID } from '@/lib/screens'
 import { IconButton } from '@/components/ui/icon-button'
 import { sprintToScreen } from '@/composables/screenSprint'
 import { SectionHeader } from '@/components/ui/section-header'
 import TrackerGrid from '@/components/TrackerGrid.vue'
-import AddExerciseForm from '@/components/AddExerciseForm.vue'
+import { Button } from '@/components/ui/button'
+import CopyPlan from '@/components/CopyPlan.vue'
 import EditExerciseDialog from '@/components/EditExerciseDialog.vue'
 
 const store = usePlannerStore()
@@ -28,6 +29,8 @@ function detailsFor(item: Tracked): string[] {
 }
 
 const editing = ref<Exercise | null>(null)
+/** The Add exercise dialog (K54): Edit exercise's dialog with nothing to edit. */
+const adding = ref(false)
 
 function edit(id: string): void {
   editing.value = store.exercises.find((e) => e.id === id) ?? null
@@ -45,12 +48,16 @@ watch(
 // midnight on Sunday), close it rather than save into a week the user didn't open it for.
 watch(
   () => store.weekKey,
-  () => (editing.value = null),
+  () => {
+    editing.value = null
+    adding.value = false
+  },
 )
 </script>
 
 <!-- The Exercises section (SectionHeader, WeekGrid and PlannerScreen cards): its heading, the
-     week, and in Edit plan the add form. On the planner's screens it is
+     week, and in Edit plan CopyPlan in the title line's actions and the Add exercise button under
+     the grid (K54). On the planner's screens it is
      the first screen: the slot's messages and the page's h1 at its top, the arrow to Food at its
      foot. -->
 <template>
@@ -61,7 +68,11 @@ watch(
     data-planner-screen
   >
     <slot />
-    <SectionHeader title="Exercises" heading-id="exercises-heading" :week="store.label" />
+    <SectionHeader title="Exercises" heading-id="exercises-heading" :week="store.label">
+      <template #actions>
+        <CopyPlan v-if="store.configMode" />
+      </template>
+    </SectionHeader>
     <TrackerGrid
       :class="SCREEN_GRID"
       label="Exercise"
@@ -92,7 +103,17 @@ watch(
       @click="sprintToScreen('diet-heading')"
       ><ChevronDown :size="24"
     /></IconButton>
-    <AddExerciseForm v-if="store.configMode" />
+    <!-- Adding opens the same dialog as editing (K54), at the page's control size. -->
+    <Button
+      v-if="store.configMode"
+      class="mt-[calc(var(--u)*24)] h-(--set-control) self-start px-(--set-control-pad) text-(length:--set-label) [&_svg]:size-(--set-icon)"
+      data-noprint
+      data-add
+      data-testid="add-exercise"
+      @click="adding = true"
+      ><Plus :stroke-width="1.5" />Add exercise</Button
+    >
     <EditExerciseDialog v-if="editing" :exercise="editing" @close="editing = null" />
+    <EditExerciseDialog v-if="adding" @close="adding = false" />
   </section>
 </template>

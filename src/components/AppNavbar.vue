@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { computed, ref, toRef } from 'vue'
-import { ChevronLeft, ChevronRight, Maximize, Minimize, Settings } from '@lucide/vue'
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Maximize,
+  Minimize,
+  Pencil,
+  Printer,
+  Settings,
+} from '@lucide/vue'
 import { usePlannerStore } from '@/stores/planner'
 import { weekRange } from '@/lib/dates'
+import { BarAction } from '@/components/ui/bar-action'
 import { BrandMark } from '@/components/ui/brand-mark'
-import { Button } from '@/components/ui/button'
 import { IconButton } from '@/components/ui/icon-button'
-import { Switch } from '@/components/ui/switch'
 import { useBarReveal } from '@/composables/barReveal'
 import { useFullscreen } from '@/composables/fullscreen'
 
 const props = defineProps<{
-  /** On the Settings page the bar holds only the wordmark: the page links back to the week. */
-  page?: 'planner' | 'settings'
   /**
    * On the planner's screens the bar is out of sight until it is wanted (Header card, K25): it
    * lies over the top of the screen, reached by the top edge, the handle or focus.
@@ -56,13 +62,15 @@ function skipToToday(): void {
 </script>
 
 <!--
-  The Header card (brand/design-system/project/components/Header): the wordmark, the week
-  navigation at the centre, then "This week" while another week is on screen, the Edit plan
-  switch, Settings (which opens the Settings page) and Print. On the Settings page the bar holds
-  only the wordmark. Every target is 44px on a phone. Below 640px the planner's bar drops the
-  wordmark and keeps the centred arrows and week and Settings on one row, and "This week" and the
-  switch take a second row at the right (the Settings page keeps the wordmark); the markup stays in the desktop order, which is
-  the tab order.
+  The Header card (brand/design-system/project/components/Header), full width and as big as the
+  week below it (K47): the wordmark, then "This week" while another week is on screen, beside
+  the week navigation at the centre (K50), then the BarActions Edit plan (a toggle, filled while
+  on; K48), Settings (which opens the Settings page), Print and, last, Full screen (K49). The
+  Settings page has no bar (K52): it links back to the week itself. Every size is a `--bar-*`
+  size from main.css, so
+  the bar follows the screen. Folded, the planner's bar drops the wordmark, the week takes the
+  first row (CSS order) and the actions share the second; the markup stays in the desktop order,
+  which is the tab order.
 
   "Skip to today" comes first in the tab order (F15): hidden until it has focus, then shown over
   the wordmark with the focus ring; it puts focus on today's cell, past the Header.
@@ -126,64 +134,83 @@ function skipToToday(): void {
         ><span class="block px-3 py-2">Skip to today</span></a
       >
     </div>
-    <!-- Three columns, the outer two equal, so the week sits at the bar's centre (Header card).
-         On a phone the right-hand group dissolves into the grid (max-sm:contents): Settings stays
-         on the first row and the Switch and "This week" take a second, right-aligned. -->
+    <!-- Three columns, the outer two equal, so the week sits at the bar's centre (Header card),
+         on the page's own margins. Folded, a wrapping row: the week moves first and takes the
+         whole line, and the two groups dissolve so every action shares the second line. -->
     <div
-      class="mx-auto grid min-h-14 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-x-2 py-1 pr-2 pl-4 sm:gap-x-4 sm:px-6 lg:px-8"
+      class="grid grid-cols-[1fr_auto_1fr] items-center gap-x-4 px-(--screen-pad-x) py-(--bar-pad-y) folded:flex folded:flex-wrap folded:gap-x-(--bar-gap) folded:gap-y-1.5 folded:px-3 folded:pt-2 folded:pb-2.5"
     >
-      <!-- On a phone's planner the wordmark is left out (Header card): the week and Settings are
-           what the bar is for. Hidden rather than removed, so the week stays in the middle. -->
-      <div class="justify-self-start" :class="{ 'max-sm:invisible': page !== 'settings' }">
-        <!-- Out of the layout too on a phone's planner, so it can't widen the bar; the empty
-             column still keeps the week in the middle. -->
-        <BrandMark :class="{ 'max-sm:hidden': page !== 'settings' }" />
+      <!-- The wordmark alone at the start, and "This week" at the end of the column, beside the
+           week's arrows (K50). Folded, the planner's bar leaves the wordmark out (Header card):
+           the week and the actions are what the bar is for. -->
+      <div
+        class="flex items-center justify-between gap-(--bar-gap) justify-self-stretch folded:contents"
+      >
+        <BrandMark class="h-(--bar-wordmark) folded:hidden" />
+        <BarAction
+          v-if="otherWeek"
+          label="This week"
+          class="folded:flex-1 folded:basis-0"
+          @click="store.thisWeek"
+          ><Calendar
+        /></BarAction>
       </div>
-      <nav v-if="page !== 'settings'" class="flex items-center" aria-label="Week">
-        <IconButton label="Previous week" @click="store.prevWeek"><ChevronLeft /></IconButton>
+      <nav
+        class="flex items-center folded:order-first folded:basis-full folded:justify-center"
+        aria-label="Week"
+      >
+        <IconButton
+          label="Previous week"
+          class="size-(--bar-arrow-box) [&_svg]:size-(--bar-arrow)"
+          @click="store.prevWeek"
+          ><ChevronLeft
+        /></IconButton>
         <span
-          class="min-w-29 px-2 text-center text-base leading-6 font-semibold whitespace-nowrap tabular-nums"
+          class="min-w-[6.5em] px-2 text-center text-(length:--bar-week) leading-tight font-semibold whitespace-nowrap tabular-nums"
           aria-live="polite"
           data-testid="week-label"
         >
           {{ weekRange(store.monday) }}
         </span>
-        <IconButton label="Next week" @click="store.nextWeek"><ChevronRight /></IconButton>
-      </nav>
-      <div
-        v-if="page !== 'settings'"
-        class="flex items-center gap-4 justify-self-end max-sm:contents"
-      >
-        <div
-          class="flex items-center gap-2 max-sm:col-span-3 max-sm:row-start-2 max-sm:justify-self-end sm:gap-4"
-        >
-          <Button v-if="otherWeek" variant="quiet" size="sm" @click="store.thisWeek">
-            This week
-          </Button>
-          <Switch
-            :model-value="store.configMode"
-            label="Edit plan"
-            short-label="Edit"
-            @update:model-value="store.setConfigMode"
-          />
-          <!-- Full screen (K34): left out where the browser has none, as on an iPhone. -->
-          <IconButton
-            v-if="fullscreen.supported"
-            :label="fullscreen.active.value ? 'Exit full screen' : 'Full screen'"
-            data-testid="fullscreen-button"
-            @click="fullscreen.toggle"
-            ><Minimize v-if="fullscreen.active.value" /><Maximize v-else
-          /></IconButton>
-        </div>
         <IconButton
+          label="Next week"
+          class="size-(--bar-arrow-box) [&_svg]:size-(--bar-arrow)"
+          @click="store.nextWeek"
+          ><ChevronRight
+        /></IconButton>
+      </nav>
+      <!-- The actions, Edit plan first, just left of Settings (K50); folded, they share the
+           second row equally, after "This week". -->
+      <div class="flex items-stretch gap-(--bar-gap) justify-self-end folded:contents">
+        <BarAction
+          label="Edit plan"
+          :pressed="store.configMode"
+          class="folded:flex-1 folded:basis-0"
+          data-testid="edit-plan-button"
+          @click="store.setConfigMode(!store.configMode)"
+          ><Pencil
+        /></BarAction>
+        <BarAction
           label="Settings"
-          class="max-sm:col-start-3 max-sm:row-start-1 max-sm:justify-self-end"
+          class="folded:flex-1 folded:basis-0"
           data-testid="settings-button"
           @click="openSettings"
           ><Settings
-        /></IconButton>
+        /></BarAction>
         <!-- Printing from a phone is rare, and the bar has no room for it there. -->
-        <Button variant="quiet" size="sm" class="max-sm:hidden" @click="print">Print…</Button>
+        <BarAction label="Print…" class="max-sm:hidden folded:flex-1 folded:basis-0" @click="print"
+          ><Printer
+        /></BarAction>
+        <!-- Full screen (K34), last, at the far right (K49): left out where the browser has
+             none, as on an iPhone. -->
+        <BarAction
+          v-if="fullscreen.supported"
+          :label="fullscreen.active.value ? 'Exit full screen' : 'Full screen'"
+          class="folded:flex-1 folded:basis-0"
+          data-testid="fullscreen-button"
+          @click="fullscreen.toggle"
+          ><Minimize v-if="fullscreen.active.value" /><Maximize v-else
+        /></BarAction>
       </div>
     </div>
   </header>

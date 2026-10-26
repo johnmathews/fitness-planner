@@ -122,6 +122,16 @@ describe('diet store', () => {
     expect(d.log['2026-10-19']?.nuts?.[0]).toBe('great')
   })
 
+  it('adds a food with its goal and note from the Add food dialog (K54)', () => {
+    const d = useDietStore()
+    expect(d.addFood({ name: ' ', target: 2 })).toBe(false)
+    expect(d.addFood({ name: ' Beans ', target: 9, notes: ' Any kind ' })).toBe(true)
+    // The goal is held to the Stepper's range, and the note trimmed as on edit.
+    expect(d.foods.at(-1)).toMatchObject({ name: 'Beans', target: 7, notes: 'Any kind' })
+    expect(d.addFood({ name: 'Lentils', notes: '' })).toBe(true)
+    expect(d.foods.at(-1)).toEqual({ id: expect.any(String), name: 'Lentils', target: 3 })
+  })
+
   it('adopts food data wholesale or a week at a time, and clears', () => {
     const d = useDietStore()
     d.adopt({ plans: { '2026-10-19': [{ id: 'z', name: 'Z', target: 1 }] }, log: {} })

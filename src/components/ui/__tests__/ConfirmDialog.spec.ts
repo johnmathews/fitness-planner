@@ -138,7 +138,7 @@ describe('ConfirmDialog', () => {
     ).toBeTruthy()
   })
 
-  it('draws a 400px panel on the 40% scrim', async () => {
+  it('draws a panel at the page’s size, at least 400px, on the 40% scrim (K55)', async () => {
     await mountOpen()
     expect([...alertDialog()!.classList]).toEqual(
       expect.arrayContaining([
@@ -146,7 +146,7 @@ describe('ConfirmDialog', () => {
         'border-line',
         'rounded-lg',
         'shadow-overlay',
-        'max-w-100',
+        'max-w-[max(25rem,calc(var(--u)*600))]',
       ]),
     )
     const scrim = document.querySelector('[data-slot="confirm-dialog-scrim"]')!

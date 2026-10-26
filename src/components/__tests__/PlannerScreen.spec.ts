@@ -51,7 +51,7 @@ describe('the planner’s screens (K24–K27)', () => {
     mountApp()
     expect(document.documentElement.classList.contains('planner-screens')).toBe(true)
     expect(shown()).toBe('false')
-    await wrapper.get('button[role="switch"]').trigger('click')
+    await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
     expect(document.documentElement.classList.contains('planner-screens')).toBe(false)
     expect(bar().attributes('data-shown')).toBeUndefined()
     expect(wrapper.find('[data-slot="bar-handle"]').exists()).toBe(false)
@@ -86,7 +86,7 @@ describe('the planner’s screens (K24–K27)', () => {
     expect(shown()).toBe('false')
     await bar().trigger('pointerenter', finger)
     await strip().trigger('pointerenter', mouse)
-    ;(wrapper.get('button[aria-label="Settings"]').element as HTMLElement).focus()
+    ;(wrapper.get('[data-testid="settings-button"]').element as HTMLElement).focus()
     await bar().trigger('pointerleave', mouse)
     vi.advanceTimersByTime(HIDE_AFTER_MS)
     await flushPromises()
@@ -132,7 +132,7 @@ describe('the planner’s screens (K24–K27)', () => {
   it('hides the bar on Escape, taking focus out of it', async () => {
     mountApp()
     await handle().trigger('click')
-    const settings = wrapper.get('button[aria-label="Settings"]').element as HTMLElement
+    const settings = wrapper.get('[data-testid="settings-button"]').element as HTMLElement
     settings.focus()
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
     expect(shown()).toBe('true')
@@ -150,7 +150,7 @@ describe('the planner’s screens (K24–K27)', () => {
   it('leaves Escape and presses alone in Edit plan', async () => {
     mountApp()
     await handle().trigger('click')
-    await wrapper.get('button[role="switch"]').trigger('click')
+    await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }))
     expect(bar().attributes('data-shown')).toBeUndefined()

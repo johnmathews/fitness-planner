@@ -19,7 +19,7 @@ are in the [brand design](specs/2026-10-24-brand-design.md), and the rulings in
 
 The design system is a claude.ai Design System artifact:
 <https://claude.ai/artifact/9pkE17ugXFGGyBirapyCgH>. It holds the brand book, the tokens in a light
-and a dark theme, 30 components with live previews and guidelines (Basics, Forms, Overlays, Planner,
+and a dark theme, 31 components with live previews and guidelines (Basics, Forms, Overlays, Planner,
 Feedback), the cover and the assets. The artifact is private to its owner until it is shared, so
 other readers work from the source below. Agents designing for Tracker read its README
 first.
@@ -97,16 +97,16 @@ delicate. Source Serif 4 sets the display date, section titles, the wordmark and
 Source Sans 3 sets everything else, numbers included, with tabular figures (K4: no monospace). Both are
 self-hosted from the Fontsource variable packages, because the CSP allows fonts only from `'self'`.
 
-| Class        | Size and weight                     | Use                                      |
-| ------------ | ----------------------------------- | ---------------------------------------- |
-| `display`    | 44/48 serif 600 (36/40 below 640px) | The week heading, once per screen        |
-| `title-1`    | 30/36 serif 600                     | Section titles                           |
-| `title-2`    | 22/28 sans 600                      | Dialog, popover and prompt titles        |
-| `body-large` | 20/28                               | Summary lines                            |
-| `body`       | 18/26                               | Running text, inputs, buttons, row names |
-| `caption`    | 16/22                               | Goals, hints, dates                      |
-| `label`      | 16/22 600                           | Field labels, day names, chips           |
-| `note`       | 18/26 serif italic                  | A person's note                          |
+| Class        | Size and weight                     | Use                                               |
+| ------------ | ----------------------------------- | ------------------------------------------------- |
+| `display`    | 44/48 serif 600 (36/40 below 640px) | The week heading, on paper only                   |
+| `title-1`    | 30/36 serif 600                     | Section titles                                    |
+| `title-2`    | 22/28 sans 600                      | Dialog, popover and prompt titles                 |
+| `body-large` | 20/28                               | Summary lines, row names (600)                    |
+| `body`       | 18/26                               | Running text, inputs, buttons                     |
+| `caption`    | 16/22                               | Goals, hints, dates                               |
+| `label`      | 16/22 600                           | Field labels, day names, chips (18 in a row, K46) |
+| `note`       | 18/26 serif italic                  | A person's note                                   |
 
 Labels are sentence case, never uppercase with letter-spacing.
 

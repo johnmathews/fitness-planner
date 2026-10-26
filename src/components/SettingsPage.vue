@@ -184,99 +184,147 @@ async function confirmSignOut(): Promise<void> {
 </script>
 
 <!--
-  The Settings page (brand/design-system/project/components/SettingsPage), at #/settings: a link
-  back to the week, the heading, then Appearance (Theme, Marks), Planner (Exercises a day, Show
-  weekly totals), Your data and Account, each a section under its own heading with a line rule
-  between them. Settings take effect at once; there is no Save.
+  The Settings page (brand/design-system/project/components/SettingsPage), at #/settings, with no
+  Header (K52): a link back to the week, the heading, then Appearance (Theme, Marks), Planner
+  (Exercises a day), Your data and Account. Full width in rows like the week (K51): each section's
+  heading in the week's name column, its settings beside it, a line rule above each row, controls
+  beside their words (K53). Settings take effect at once; there is no Save.
 -->
 <template>
-  <div class="mx-auto flex max-w-xl flex-col pt-6 pb-16" data-testid="settings-page" data-noprint>
-    <TextLink href="#/" class="inline-flex items-center gap-1 self-start"
-      ><ChevronLeft :size="20" :stroke-width="1.5" aria-hidden="true" />Back to the week</TextLink
+  <div
+    class="flex flex-col pt-[calc(var(--u)*28)] pb-[calc(var(--u)*64)]"
+    data-slot="settings-page"
+    data-testid="settings-page"
+    data-noprint
+  >
+    <TextLink
+      href="#/"
+      class="inline-flex items-center gap-1.5 self-start text-(length:--set-text) [&_svg]:size-(--set-icon)"
+      ><ChevronLeft :stroke-width="1.5" aria-hidden="true" />Back to the week</TextLink
     >
-    <h1 ref="heading" tabindex="-1" class="display mt-4 text-ink focus:outline-none">Settings</h1>
+    <h1
+      ref="heading"
+      tabindex="-1"
+      class="title-1 mt-[calc(var(--u)*12)] mb-[calc(var(--u)*28)] text-(length:--fs-title) leading-tight text-ink focus:outline-none"
+    >
+      Settings
+    </h1>
 
-    <section :aria-labelledby="ids.look" class="mt-8 flex flex-col gap-4">
-      <h2 :id="ids.look" class="title-2 text-ink">Appearance</h2>
-      <SegmentedControl v-model="theme" label="Theme" :options="THEME_OPTIONS" />
-      <RadioCard v-model="markSet" label="Marks" :options="MARK_SET_OPTIONS">
-        <template #picture="{ option }">
-          <span
-            v-for="kind in MARK_KINDS"
-            :key="kind"
-            class="grid size-16 shrink-0 place-items-center"
-            data-testid="mark-set-sample"
-          >
-            <DayMarkDrawing :mark="kind" :set="option.value as MarkSet" />
-          </span>
-        </template>
-      </RadioCard>
+    <section
+      :aria-labelledby="ids.look"
+      class="grid grid-cols-[var(--grid-name-w)_minmax(0,1fr)] items-start border-t border-line py-(--set-sec-y) folded:flex folded:flex-col folded:items-stretch folded:gap-4"
+    >
+      <h2 :id="ids.look" class="title-2 text-(length:--set-h2) leading-tight text-ink">
+        Appearance
+      </h2>
+      <div class="flex min-w-0 flex-col gap-(--set-gap)">
+        <SegmentedControl v-model="theme" label="Theme" :options="THEME_OPTIONS" />
+        <RadioCard v-model="markSet" label="Marks" :options="MARK_SET_OPTIONS">
+          <template #picture="{ option }">
+            <span
+              v-for="kind in MARK_KINDS"
+              :key="kind"
+              class="grid size-(--set-mark) shrink-0 place-items-center [&_svg]:size-[94%]"
+              data-testid="mark-set-sample"
+            >
+              <DayMarkDrawing :mark="kind" :set="option.value as MarkSet" />
+            </span>
+          </template>
+        </RadioCard>
+      </div>
     </section>
 
     <section
       :aria-labelledby="ids.planner"
-      class="mt-8 flex flex-col gap-4 border-t border-line pt-8"
+      class="grid grid-cols-[var(--grid-name-w)_minmax(0,1fr)] items-start border-t border-line py-(--set-sec-y) folded:flex folded:flex-col folded:items-stretch folded:gap-4"
     >
-      <h2 :id="ids.planner" class="title-2 text-ink">Planner</h2>
-      <Stepper
-        v-model="dailyPick"
-        label="Exercises a day"
-        lower-label="Fewer exercises a day"
-        raise-label="More exercises a day"
-        :min="MIN_DAILY_PICK"
-        :max="MAX_DAILY_PICK"
-      />
-    </section>
-
-    <section :aria-labelledby="ids.data" class="mt-8 flex flex-col gap-4 border-t border-line pt-8">
-      <h2 :id="ids.data" class="title-2 text-ink">Your data</h2>
-      <p class="body text-ink-secondary">
-        Export saves everything to a file. Import adds a file’s plans and marks to yours and never
-        deletes anything.
-      </p>
-      <div role="group" :aria-labelledby="ids.data" class="flex flex-wrap gap-3">
-        <Button @click="exportData"><Download :stroke-width="1.5" />Export</Button>
-        <Button @click="fileInput?.click()"><Upload :stroke-width="1.5" />Import…</Button>
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".json,application/json"
-          class="hidden"
-          aria-label="Export file to import"
-          data-testid="import-file"
-          @change="onFile"
+      <h2 :id="ids.planner" class="title-2 text-(length:--set-h2) leading-tight text-ink">
+        Planner
+      </h2>
+      <div class="flex min-w-0 flex-col gap-(--set-gap)">
+        <Stepper
+          v-model="dailyPick"
+          label="Exercises a day"
+          lower-label="Fewer exercises a day"
+          raise-label="More exercises a day"
+          :min="MIN_DAILY_PICK"
+          :max="MAX_DAILY_PICK"
+          class="flex-row items-center gap-4"
         />
       </div>
-      <div v-if="pending" class="flex flex-col gap-2" role="group" aria-label="Confirm import">
-        <p class="body text-ink" data-testid="import-summary">
-          {{ summary.describe(pending) }}
-        </p>
-        <div class="flex gap-3">
-          <Button @click="pending = null">Cancel</Button>
-          <Button variant="primary" :busy="importing" @click="confirmImport(pending)">
-            Import
-          </Button>
+    </section>
+
+    <section
+      :aria-labelledby="ids.data"
+      class="grid grid-cols-[var(--grid-name-w)_minmax(0,1fr)] items-start border-t border-line py-(--set-sec-y) folded:flex folded:flex-col folded:items-stretch folded:gap-4"
+    >
+      <h2 :id="ids.data" class="title-2 text-(length:--set-h2) leading-tight text-ink">
+        Your data
+      </h2>
+      <div class="flex min-w-0 flex-col gap-(--set-gap)">
+        <!-- The text, then its buttons beside it, as the Stepper sits beside its label (K53). -->
+        <div class="flex flex-wrap items-center gap-x-(--set-gap) gap-y-3">
+          <p class="body max-w-[34ch] text-(length:--set-text) leading-normal text-ink-secondary">
+            Export saves everything to a file. Import adds a file’s plans and marks to yours and
+            never deletes anything.
+          </p>
+          <div role="group" :aria-labelledby="ids.data" class="flex flex-wrap gap-3">
+            <Button @click="exportData"><Download :stroke-width="1.5" />Export</Button>
+            <Button @click="fileInput?.click()"><Upload :stroke-width="1.5" />Import…</Button>
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".json,application/json"
+              class="hidden"
+              aria-label="Export file to import"
+              data-testid="import-file"
+              @change="onFile"
+            />
+          </div>
         </div>
+        <div v-if="pending" class="flex flex-col gap-2" role="group" aria-label="Confirm import">
+          <p
+            class="body text-(length:--set-text) leading-normal text-ink"
+            data-testid="import-summary"
+          >
+            {{ summary.describe(pending) }}
+          </p>
+          <div class="flex gap-3">
+            <Button @click="pending = null">Cancel</Button>
+            <Button variant="primary" :busy="importing" @click="confirmImport(pending)">
+              Import
+            </Button>
+          </div>
+        </div>
+        <InlineMessage v-if="notice" :tone="notice.tone" data-testid="import-notice">
+          {{ notice.text }}
+        </InlineMessage>
       </div>
-      <InlineMessage v-if="notice" :tone="notice.tone" data-testid="import-notice">
-        {{ notice.text }}
-      </InlineMessage>
     </section>
 
     <section
       :aria-labelledby="ids.account"
-      class="mt-8 flex flex-col gap-4 border-t border-line pt-8"
+      class="grid grid-cols-[var(--grid-name-w)_minmax(0,1fr)] items-start border-t border-line py-(--set-sec-y) folded:flex folded:flex-col folded:items-stretch folded:gap-4"
     >
-      <h2 :id="ids.account" class="title-2 text-ink">Account</h2>
-      <p class="body min-w-0 break-words text-ink-secondary" data-testid="signed-in-as">
-        Signed in as <span class="text-ink">{{ session.user }}</span>
-      </p>
-      <Button ref="signOutButton" class="self-start" @click="signOut"
-        ><LogOut :stroke-width="1.5" />Sign out</Button
-      >
-      <InlineMessage v-if="signOutProblem" tone="error" data-testid="sign-out-problem">
-        {{ signOutProblem }}
-      </InlineMessage>
+      <h2 :id="ids.account" class="title-2 text-(length:--set-h2) leading-tight text-ink">
+        Account
+      </h2>
+      <div class="flex min-w-0 flex-col gap-(--set-gap)">
+        <div class="flex flex-wrap items-center gap-x-(--set-gap) gap-y-3">
+          <p
+            class="body min-w-0 text-(length:--set-text) leading-normal break-words text-ink-secondary"
+            data-testid="signed-in-as"
+          >
+            Signed in as <span class="font-semibold text-ink">{{ session.user }}</span>
+          </p>
+          <Button ref="signOutButton" @click="signOut"
+            ><LogOut :stroke-width="1.5" />Sign out</Button
+          >
+        </div>
+        <InlineMessage v-if="signOutProblem" tone="error" data-testid="sign-out-problem">
+          {{ signOutProblem }}
+        </InlineMessage>
+      </div>
     </section>
 
     <ConfirmDialog

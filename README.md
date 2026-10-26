@@ -21,10 +21,11 @@
   one. Each food has a weekly goal, set in its Edit dialog. Defaults are Vegetables (7), Fruit (5),
   Fish (2) and Nuts (3).
 - **Normal mode and config mode.** The app opens in normal mode, where you only mark cells. The
-  **Edit plan** switch in the top bar turns on config mode for changing the plan:
-  - add an exercise with a name, optional sets, reps or a time in seconds (a plank), "Per set" or
-    "Each side", and an optional weight in kg (e.g. squats with a 12 kg kettlebell); add a food by
-    name;
+  **Edit plan** button in the top bar turns on config mode for changing the plan:
+  - **Add exercise** and **Add food**, under each grid, open the item's dialog with nothing in it:
+    an exercise takes a name, optional sets, reps or a time in seconds (a plank), "Per set" or
+    "Each side", an optional weight in kg (e.g. squats with a 12 kg kettlebell), a goal and a
+    note; a food a name, a goal and a note;
   - the pencil beside a name opens that item's dialog, where everything about it changes: for an
     exercise its sets, reps or seconds, weight, note and goal ("Times a week"), for a food its
     name, note and goal. A note is markdown; it shows under the item's name, and pressing it opens

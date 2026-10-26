@@ -82,13 +82,24 @@ function onCloseAutoFocus(event: Event): void {
         @close-auto-focus="onCloseAutoFocus"
       >
         <div class="flex items-center justify-between gap-4">
-          <DialogTitle as="h2" class="title-2 text-ink">{{ title }}</DialogTitle>
+          <DialogTitle as="h2" class="title-2 text-(length:--set-h2) leading-tight text-ink">{{
+            title
+          }}</DialogTitle>
           <DialogClose as-child>
-            <IconButton label="Close" class="-mr-2"><X /></IconButton>
+            <IconButton label="Close" class="-mr-2 size-(--edit-ib) [&_svg]:size-(--edit-ib-icon)"
+              ><X
+            /></IconButton>
           </DialogClose>
         </div>
-        <div ref="body" data-slot="dialog-body" class="mt-4 flex flex-col gap-4">
-          <DialogDescription v-if="description" class="body text-ink">
+        <div
+          ref="body"
+          data-slot="dialog-body"
+          class="mt-[max(16px,calc(var(--u)*20))] flex flex-col gap-[max(16px,calc(var(--u)*20))]"
+        >
+          <DialogDescription
+            v-if="description"
+            class="body text-(length:--set-text) leading-normal text-ink"
+          >
             {{ description }}
           </DialogDescription>
           <slot />
@@ -96,7 +107,7 @@ function onCloseAutoFocus(event: Event): void {
         <div
           v-if="slots.actions"
           data-slot="dialog-actions"
-          class="mt-6 flex flex-wrap justify-end gap-3"
+          class="mt-[max(24px,calc(var(--u)*28))] flex flex-wrap justify-end gap-3"
         >
           <slot name="actions" />
         </div>

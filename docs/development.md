@@ -225,7 +225,7 @@ listed in [api.md](api.md) §10):
   tab stop (today, the first day, the last cell focused), arrows, Home and End with and without
   Ctrl, Space and Enter left to the DayMark, Edit plan's
   controls (Enter or F2 in, Escape out, parked when focus leaves), and rows coming and going.
-- `src/components/ui/__tests__/`: one spec per primitive (Banner, BrandMark, Button, Chip,
+- `src/components/ui/__tests__/`: one spec per primitive (BarAction, Banner, BrandMark, Button, Chip,
   ConfirmDialog, DayMark, Dialog, IconButton, InlineMessage, Popover, RadioCard, SectionHeader,
   SegmentedControl, Stepper, Switch, TextArea, TextField, TextLink), each checking its
   roles, accessible names, sizes, states and the role colours its card names. Examples: an
@@ -275,7 +275,7 @@ listed in [api.md](api.md) §10):
 - `src/components/__tests__/App.spec.ts`: the mounted app in jsdom. Covers rendering, the today
   column, stepping a cell through its marks with `aria-pressed` (a food only on and off), the goal stepper and its bounds,
   navigation, confirm-before-remove, print, the visibility and one-minute clock refresh, another
-  tab's writes to the cache, the add form, the Settings page (the hash, focus on arrival and on the way back; no Ink setting, and a saved accent kept as it is), and the
+  tab's writes to the cache, the Add exercise and Add food dialogs, the Settings page (the hash, focus on arrival and on the way back; no Ink setting, and a saved accent kept as it is), and the
   theme: the `dark` class following the OS (with a stubbed `matchMedia`), the theme control and
   its persistence. Also the weight and sets fields, the edit dialog (found by `role="dialog"` on
   `document.body`, where Reka's portal renders it), normal mode hiding every editing control, export (with

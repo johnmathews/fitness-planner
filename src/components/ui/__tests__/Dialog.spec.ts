@@ -175,7 +175,8 @@ describe('Dialog', () => {
         'border-line',
         'rounded-lg',
         'shadow-overlay',
-        'max-w-104',
+        // At the page's size, at least the old 416px (K55).
+        'max-w-[max(26rem,calc(var(--u)*720))]',
         'overflow-y-auto',
       ]),
     )

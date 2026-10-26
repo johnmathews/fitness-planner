@@ -4,6 +4,7 @@
     "IconButton",
     "TextLink",
     "Header",
+    "BarAction",
     "Panel",
     "BrandMark",
     "Cover",

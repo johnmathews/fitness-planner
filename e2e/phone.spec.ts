@@ -59,7 +59,7 @@ test.describe('no sideways scroll at 375px', () => {
   test('the app, the folded week in Edit plan', async ({ page }) => {
     await openApp(page)
     await callUpBar(page)
-    await page.getByRole('switch', { name: /Edit/ }).click()
+    await page.getByRole('button', { name: 'Edit plan', exact: true }).click()
     await settle(page)
     await expectNoSidewaysScroll(page)
   })

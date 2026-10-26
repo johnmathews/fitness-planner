@@ -64,7 +64,7 @@ test.describe('the app passes axe', () => {
       await page.setViewportSize({ width: 1280, height: 900 })
       await openApp(page, { theme })
       await callUpBar(page)
-      await page.getByRole('switch', { name: /Edit/ }).click()
+      await page.getByRole('button', { name: 'Edit plan', exact: true }).click()
       await settle(page)
       await expectNoAxeViolations(page)
     })

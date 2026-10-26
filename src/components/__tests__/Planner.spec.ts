@@ -25,7 +25,7 @@ function mountApp(cache?: SyncState): VueWrapper {
 
 async function mountConfig(cache?: SyncState): Promise<VueWrapper> {
   mountApp(cache)
-  await wrapper.get('button[role="switch"]').trigger('click')
+  await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
   return wrapper
 }
 
@@ -207,7 +207,7 @@ describe('the planner grids (W10)', () => {
 
     it('drops the Remove column outside Edit plan', async () => {
       await mountConfig()
-      await wrapper.get('button[role="switch"]').trigger('click')
+      await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
       expect(ex().findAll('thead th').at(-1)!.text()).toBe('Sun 25')
       expect(ex().find('button[aria-label^="Remove"]').exists()).toBe(false)
     })
@@ -216,7 +216,7 @@ describe('the planner grids (W10)', () => {
       await mountConfig()
       const block = () => ex().findAll('[role="rowheader"]')[0]!.get('div')
       expect(block().classes()).toContain('min-h-11')
-      await wrapper.get('button[role="switch"]').trigger('click')
+      await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
       expect(block().classes()).toContain('min-h-11')
     })
 
@@ -250,12 +250,12 @@ describe('the planner grids (W10)', () => {
       expect(ex().get('button[aria-label="Remove Pull-ups"]').attributes('tabindex')).toBe('-1')
     })
 
-    it('falls back to the previous row, then to the add form, as rows run out', async () => {
+    it('falls back to the previous row, then to the Add button, as rows run out', async () => {
       await mountConfig()
       await removeRow(diet(), 'Nuts', 'Remove')
       expect(focused()).toBe('Remove Fish')
       for (const name of ['Fish', 'Fruit', 'Vegetables']) await removeRow(diet(), name, 'Remove')
-      expect(document.activeElement?.id).toBe('add-food-name')
+      expect(document.activeElement?.getAttribute('data-testid')).toBe('add-food')
     })
   })
 

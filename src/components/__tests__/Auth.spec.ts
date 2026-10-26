@@ -56,7 +56,7 @@ async function settle(): Promise<void> {
 }
 
 async function openSettings(): Promise<void> {
-  await wrapper.get('button[aria-label="Settings"]').trigger('click')
+  await wrapper.get('[data-testid="settings-button"]').trigger('click')
   await settle()
 }
 
