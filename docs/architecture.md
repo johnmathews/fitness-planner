@@ -450,9 +450,13 @@ first grid that has today. Tabbing to it brings the navbar into view on the plan
 class turns on main.css's `full:` variant. With it, each section is a screen (`SCREEN` in
 `src/lib/screens.ts`: `min-h-dvh`, a centred column, and `data-planner-screen`) and its grid takes
 the height left (`SCREEN_GRID`). `useScreenSprint` (`src/composables/screenSprint.ts`) keeps the
-page from resting across two screens: 120ms after a scroll stops, `sprintTarget` sends it on in the
-direction of travel (K38); after a resize or rotation, to the screen that fills more of the window
-(K40). It replaced `scroll-snap-type: y mandatory`, which a mouse wheel couldn't
+page from resting across two screens. A wheel or a fling sprints as soon as the line between two
+screens is a step (4% of the window) inside it, while it is still moving (K45); a finger on the
+screen waits until it lifts; a scrollbar drag or the keyboard 120ms after the scroll stops (K38).
+`sprintTarget` picks the place, in the direction of travel, and `sprintTo` moves there in 260ms,
+eased out, setting the position each frame so a fling's momentum can't carry the page past it. The
+wheel is swallowed until it has been quiet for 180ms after. After a resize or rotation, the page
+settles on the screen that fills more of the window (K40). It replaced `scroll-snap-type: y mandatory`, which a mouse wheel couldn't
 cross from the end of a tall screen. Four custom variants in main.css carry
 the layout, all screen-only so paper keeps the table: `screen:` (the WeekGrid is a CSS grid),
 `full:`, `folded:` (upright under 1000px wide, or under 760px wide) and `short:` (landscape, 540px
