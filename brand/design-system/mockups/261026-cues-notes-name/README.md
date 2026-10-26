@@ -4,7 +4,7 @@
 back up from Food? Where does an item's markdown note sit? How does "Tracker" look as the wordmark
 and the monogram? Does the new snap feel right? The grid, sizes, marks and bar stay as shipped.
 
-**Status:** open
+**Status:** decided (2026-10-26, two rounds)
 
 **Link:** https://claude.ai/artifact/RqqeuoLNNXCyvgSSAyzz1E (private)
 
@@ -50,7 +50,16 @@ still scrolls freely. The try page has the old snap too, for comparison.
 
 ## Decision
 
-Pending.
+John picked on 2026-10-26:
+
+1. **Arrow A**, the bare chevron (K42). In the app the up arrow sits 48px from Food's top, below
+   the bar's strip and touch handle, rather than on the top edge as drawn here.
+2. **Notes B, changed in round 2** (K43): "bring the reps x sets text to be in line with the
+   exercise name. so there are still only TWO lines of text in total (unless wrapping is
+   necessary, in which case 3 rows of text is fine)".
+3. **"Tracker", with no monogram** (K44): "lets not have a monogram because it serves no purpose
+   and is visual clutter".
+4. **The new snap** (K45): "New snap is right".
 
 ## Rounds
 
