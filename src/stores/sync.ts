@@ -42,8 +42,14 @@ export const OUTBOX_PREFIX = 'fitness-planner-outbox-v3:'
  * tab; it could also drop their queued marks. A new format takes new names, so the two never read
  * each other. `src/lib/__tests__/format.spec.ts` fails a format change that keeps the old names.
  */
-export const OLD_CACHE_PREFIXES = ['fitness-planner-cache-v2:', 'fitness-planner-cache-v1:'] as const
-export const OLD_OUTBOX_PREFIXES = ['fitness-planner-outbox-v2:', 'fitness-planner-outbox-v1:'] as const
+export const OLD_CACHE_PREFIXES = [
+  'fitness-planner-cache-v2:',
+  'fitness-planner-cache-v1:',
+] as const
+export const OLD_OUTBOX_PREFIXES = [
+  'fitness-planner-outbox-v2:',
+  'fitness-planner-outbox-v1:',
+] as const
 
 const SECTIONS = ['exercise', 'diet'] as const
 type Section = (typeof SECTIONS)[number]
@@ -535,7 +541,12 @@ export const useSyncStore = defineStore('sync', () => {
 
   /** Delete a user's cache and outbox: signing out on purpose leaves nothing behind. */
   function forget(name: string): void {
-    for (const prefix of [CACHE_PREFIX, OUTBOX_PREFIX, ...OLD_CACHE_PREFIXES, ...OLD_OUTBOX_PREFIXES]) {
+    for (const prefix of [
+      CACHE_PREFIX,
+      OUTBOX_PREFIX,
+      ...OLD_CACHE_PREFIXES,
+      ...OLD_OUTBOX_PREFIXES,
+    ]) {
       removeKey(prefix + name)
     }
   }

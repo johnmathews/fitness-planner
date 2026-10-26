@@ -398,7 +398,10 @@ describe('sync', () => {
 
   it('moves the -v2 cache and outbox, and prefers them to the -v1 ones', async () => {
     const tick = { kind: 'tick', section: 'exercise', week: WEEK, item: 'sq' }
-    const v2 = { ...emptyState(), exercise: { plans: {}, log: { [WEEK]: { sq: ['missed-hatch'] } } } }
+    const v2 = {
+      ...emptyState(),
+      exercise: { plans: {}, log: { [WEEK]: { sq: ['missed-hatch'] } } },
+    }
     const v1 = { ...emptyState(), exercise: { plans: {}, log: { [WEEK]: { sq: [true] } } } }
     localStorage.setItem(V2_CACHE + USER, JSON.stringify(v2))
     localStorage.setItem(V1_CACHE + USER, JSON.stringify(v1))
