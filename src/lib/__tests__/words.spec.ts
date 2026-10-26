@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { countOf, durationText, numberWord } from '../words'
-import { APP_MONOGRAM, APP_NAME } from '../app'
+import { APP_NAME } from '../app'
 
 describe('numberWord', () => {
   it('writes zero to ten as words and larger numbers as figures', () => {
@@ -25,9 +25,8 @@ describe('countOf', () => {
 })
 
 describe('the app name', () => {
-  it('is the working name, with its initials as the monogram', () => {
-    expect(APP_NAME).toBe('Fitness Planner')
-    expect(APP_MONOGRAM).toBe('FP')
+  it('is Tracker (K44)', () => {
+    expect(APP_NAME).toBe('Tracker')
   })
 })
 

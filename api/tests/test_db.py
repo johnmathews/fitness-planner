@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from fitness_planner_api.db import SCHEMA_VERSION, connect, migrate, transaction
+from tracker_api.db import SCHEMA_VERSION, connect, migrate, transaction
 
 
 def test_migrates_a_fresh_database_once(tmp_path: Path) -> None:
@@ -20,8 +20,8 @@ def test_marks_migration_reads_existing_ticks_as_great(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A database at schema 1 keeps its ticks through step 2, and every one of them is `great`."""
-    from fitness_planner_api import db
-    from fitness_planner_api.data import load_tracked
+    from tracker_api import db
+    from tracker_api.data import load_tracked
 
     c = connect(tmp_path / "f.db")
     monkeypatch.setattr(db, "MIGRATIONS", db.MIGRATIONS[:1])
@@ -111,7 +111,7 @@ def test_transaction_commits_or_rolls_back(conn: sqlite3.Connection) -> None:
 def test_a_failed_migration_leaves_the_version(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from fitness_planner_api import db
+    from tracker_api import db
 
     c = connect(tmp_path / "f.db")
     monkeypatch.setattr(db, "MIGRATIONS", ["CREATE TABLE a (x); CREATE TABLE a (x);"])
@@ -167,9 +167,9 @@ class FakeConn:
 
 
 def test_wal_switch_retries_while_locked(monkeypatch: pytest.MonkeyPatch) -> None:
-    from fitness_planner_api import db
+    from tracker_api import db
 
-    monkeypatch.setattr("fitness_planner_api.db.time.sleep", lambda _: None)
+    monkeypatch.setattr("tracker_api.db.time.sleep", lambda _: None)
     fake = FakeConn(failures=3)
     db._use_wal(fake)  # type: ignore[arg-type]
     assert fake.calls == 4

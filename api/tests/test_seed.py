@@ -5,11 +5,11 @@ from datetime import date, datetime
 
 import pytest
 
-from fitness_planner_api import auth, seed
-from fitness_planner_api.cli import main
-from fitness_planner_api.config import Config
-from fitness_planner_api.data import export_file, set_tick
-from fitness_planner_api.validate import parse_export
+from tracker_api import auth, seed
+from tracker_api.cli import main
+from tracker_api.config import Config
+from tracker_api.data import export_file, set_tick
+from tracker_api.validate import parse_export
 
 from .conftest import Clock
 

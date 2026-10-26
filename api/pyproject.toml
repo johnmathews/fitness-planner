@@ -1,7 +1,7 @@
 [project]
-name = "fitness-planner-api"
+name = "tracker-api"
 version = "0.1.0"
-description = "Accounts and sync for the fitness planner"
+description = "Accounts and sync for the tracker"
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "argon2-cffi>=25.1",
@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.scripts]
-fp-admin = "fitness_planner_api.cli:main"
+tracker-admin = "tracker_api.cli:main"
 
 [dependency-groups]
 dev = [
@@ -31,7 +31,7 @@ addopts = "-q --strict-markers"
 filterwarnings = ["error"]
 
 [tool.coverage.run]
-source = ["fitness_planner_api"]
+source = ["tracker_api"]
 branch = true
 
 [tool.coverage.report]
@@ -44,7 +44,7 @@ exclude_also = ['if __name__ == "__main__":']
 strict = true
 python_version = "3.13"
 mypy_path = "src"
-packages = ["fitness_planner_api", "tests"]
+packages = ["tracker_api", "tests"]
 
 [tool.ruff]
 line-length = 100
@@ -57,4 +57,4 @@ ignore = ["S101"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S105", "S106", "ANN401"]
 # Email copy uses typographic apostrophes, as the app's copy does.
-"src/fitness_planner_api/emails.py" = ["RUF001"]
+"src/tracker_api/emails.py" = ["RUF001"]

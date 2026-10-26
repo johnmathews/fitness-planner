@@ -387,9 +387,7 @@ def create_app(config: Config, run_backups: bool = True, mailer: Mailer | None =
     def export(user: User, conn: Conn, response: Response) -> dict[str, Any]:
         file = data.export_file(conn, user.id, config.clock())
         day = file["exportedAt"][:10]
-        response.headers["Content-Disposition"] = (
-            f'attachment; filename="fitness-planner-{day}.json"'
-        )
+        response.headers["Content-Disposition"] = f'attachment; filename="tracker-{day}.json"'
         return file
 
     @app.post("/api/import")
@@ -404,5 +402,5 @@ def create_app(config: Config, run_backups: bool = True, mailer: Mailer | None =
 
 
 def create_app_from_env() -> FastAPI:
-    """The uvicorn entry point: `uvicorn --factory fitness_planner_api.app:create_app_from_env`."""
+    """The uvicorn entry point: `uvicorn --factory tracker_api.app:create_app_from_env`."""
     return create_app(Config.from_env())

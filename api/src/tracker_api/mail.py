@@ -60,7 +60,7 @@ class ResendMailer:
                 "Authorization": f"Bearer {self._api_key}",
                 "Content-Type": "application/json",
                 "Idempotency-Key": message.key,
-                "User-Agent": "fitness-planner-api",
+                "User-Agent": "tracker-api",
             },
         )
         try:

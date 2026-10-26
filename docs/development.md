@@ -25,7 +25,7 @@
 - The API in `api/` uses Python 3.13 with uv, FastAPI, pytest with coverage, ruff and mypy
   (strict). [api.md](api.md) §10 has its commands. Its tests run the same `fixtures/transfer/` cases
   as Vitest, so a validation rule changed in `src/lib/storage.ts` must change in
-  `api/src/fitness_planner_api/validate.py` too, and the reverse.
+  `api/src/tracker_api/validate.py` too, and the reverse.
 
 ## 2. Scripts
 
@@ -137,10 +137,15 @@ clock is fixed to Wednesday 21 October 2026, so every run sees the same week.
   the folded week and Edit plan, and every cell of the folded week stays on screen as the keyboard
   walks it. `callUpBar` in `support.ts` brings the navbar into view before a test presses its
   controls, since on the planner's screens it is out of sight.
+- `notes.spec.ts`: an item's note on one line under the name and chips, and a press opening it
+  whole in a popover whose link opens a new tab, focus moving to the link and back to the cell on
+  Escape (K43). The mocked week (`e2e/support.ts`) has notes on Push-ups and Kettlebell halos, so
+  the axe checks cover the note line too.
 - `screens.spec.ts`: a tall Exercises screen and a tall Food screen (`openApp`'s `moreExercises`
   and `moreFoods`), wheel-scrolled down and back up a notch at a time at 1280×800: the page never
-  rests showing part of both, and it reaches Food (K38); and a rotation (and back, and a phone on
-  its side) never leaves it resting across two screens (K40).
+  rests showing part of both, and it reaches Food (K38); a rotation (and back, and a phone on
+  its side) never leaves it resting across two screens (K40); and a short trackpad fling reaches
+  Food before the fling has ended (K45).
 
 CI (`.github/workflows/ci.yml`) runs three jobs on every pull request and every push to `main`.
 `check` runs lint, format, types, unit tests with coverage, the build, the design gate and
@@ -158,11 +163,18 @@ listed in [api.md](api.md) §10):
   DST change in EU timezones), labels.
 - `src/lib/__tests__/storage.spec.ts`: v2 plan validation and round-trip, migration from the v1
   (prototype) format, log normalisation, sets and weight, diet parsing, settings parsing,
-  skip-unchanged writes, storage that throws.
+  skip-unchanged writes, storage that throws, and `migrateKeyPrefix` moving `fitness-planner-` and
+  `exercise-planner-` keys to `tracker-`, the newer name's copy winning (K44).
 - `src/lib/__tests__/plans.spec.ts`: which week's plan a week shows (own, carried forward, earliest,
   none) and plan copies.
 - `src/composables/__tests__/exerciseForm.spec.ts`: digits-only sets/reps and decimal weight
   cleaning, loading and resetting the shared exercise form.
+- `src/lib/__tests__/markdown.spec.ts`: a note's markdown (K43): emphasis, code, lists and links
+  opening a new tab; raw HTML, script links and images never rendered; headings and rules left as
+  text; and the row's one line, where a link is its text.
+- `src/lib/__tests__/format.spec.ts`: K14 as a test (K41). Each cache key version has a row
+  recording what it stores (the marks, and the fields an exercise and a food keep). It fails when
+  the stored format changes under the same key, and when an older key isn't moved at sign-in.
 - `src/lib/__tests__/transfer.spec.ts`: every case in `fixtures/transfer/` (parsing an export and
   merging one), plus building an export, the merge summary and the download. Add a fixture rather
   than an inline case when the behaviour is part of the export contract: the API's tests
@@ -192,7 +204,7 @@ listed in [api.md](api.md) §10):
   in as alice: the fake API, the remembered session, and an empty or given cache.
 - `src/lib/__tests__/theme.spec.ts`: theme names and how System, Light and Dark resolve.
 - `src/lib/__tests__/words.spec.ts`: small numbers as words (capitalised to open a sentence),
-  singular and plural, and the app name with its monogram.
+  singular and plural, and the app name (Tracker, with no monogram: K44).
 - `src/lib/__tests__/utils.spec.ts`: `cn` (conflicting utilities, role colours kept apart from text
   sizes) and `joinIds`.
 - `src/composables/__tests__/useConfirm.spec.ts`: the question, its verb and Cancel, true and false
@@ -200,9 +212,11 @@ listed in [api.md](api.md) §10):
   question answered false when the component that asked goes away or `dismissConfirm()` runs.
 - `src/composables/__tests__/useMediaQuery.spec.ts`: the media query's match, its updates, the
   listener removed with the scope, and a browser without `matchMedia`.
-- `src/composables/__tests__/screenSprint.spec.ts`: where a scroll at rest goes (`sprintTarget`:
-  nowhere inside a screen, on in the direction of travel across a line, to the larger screen with
-  no direction) and the composable's timing, a resize, reduced motion and switching off (K38, K40).
+- `src/composables/__tests__/screenSprint.spec.ts`: where a scroll goes (`sprintTarget`: nowhere
+  inside a screen, on in the direction of travel across a line, to the larger screen with no
+  direction, and only past a step when given one) and the composable: a moving scroll sprinting at
+  once, a short one after a pause, a finger waiting to lift, the wheel swallowed during and after,
+  the eased `sprintTo`, a resize, reduced motion and switching off (K38, K40, K45).
 - `src/composables/__tests__/fullscreen.spec.ts`: full screen unsupported (an iPhone), entering and
   leaving it, and a refusal leaving the page as it is (K34).
 - `src/styles/__tests__/print.spec.ts`: the print block's literal colours match `tokens.json`'s light
@@ -226,10 +240,11 @@ listed in [api.md](api.md) §10):
   (defaults, carry forward, a week getting its own plan, copying to the next week), config mode,
   the midnight refresh, `adopt`, `adoptWeek` and `clear`, the theme being the only thing stored
   (merged into the settings key), the keys from before accounts never being written, and
-  `savedSettings` (tracked in memory, set by adopting or changing settings, never by the theme).
+  `savedSettings` (tracked in memory, set by adopting or changing settings, never by the theme),
+  and a note saved, kept by an update that leaves it out, and cleared when empty (K43).
 - `src/stores/__tests__/diet.spec.ts`: food toggling in the planner's week, shared week navigation,
   goal clamping, add/remove, carrying and copying food plans, `adopt`, `adoptWeek` and `clear`, the
-  old diet keys never being written.
+  old diet keys never being written, and a food's note saved, kept and cleared (K43).
 - `src/stores/__tests__/sync.spec.ts`: the sync store against the fake API:
   - the cache shown at once, then the server's state; no cache, or a broken one;
   - a first tick creating the week's plan before the tick, and revisions carried forward;
@@ -242,6 +257,8 @@ listed in [api.md](api.md) §10):
   - reads that must not undo local edits, including one the watcher has not seen;
   - other tabs' cache and outbox writes, stop and forget, the old keys never written, `diff` and
     `normaliseState`;
+  - the `-v2` and `-v1` cache and outbox moved at sign-in, the newer winning, and a tab from before
+    the solid and hatch drawings unable to empty a `great-solid` day (K41);
   - `importFile`: queued writes first, then one server import and a read; offline, refused, a
     full account (`quota`), 401, and nobody signed in.
 - `src/lib/__tests__/problems.spec.ts`: the sentence for every sign-in, sign-up, link and sign-out refusal,
@@ -281,17 +298,19 @@ listed in [api.md](api.md) §10):
   today (full-date names with "today", `aria-current`, no band, K36), rows with no goal or total
   (K33), Edit plan's rows (Edit in the name
   cell, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,
-  arrows, the skip link, the way on to Food, Edit plan's controls), and headings and print
-  attributes. The layouts themselves (filling, folding, the out-of-sight navbar) depend on media
+  arrows, the skip link, the arrows between the screens, Edit plan's controls), an item's note on
+  its own line and parked behind its cell (K43), and headings and print attributes. The layouts themselves (filling, folding, the out-of-sight navbar) depend on media
   queries jsdom doesn't apply, so the e2e suite covers them.
+- `src/components/__tests__/TrackerRow.spec.ts`: one row on its own: a note's popover opening with
+  the note rendered and its link opening a new tab, and no note line without a note (K43).
 - `src/components/__tests__/Email.spec.ts`: Forgot your password? (offered only when the planner
   sends email, the same words whatever the answer, a malformed email, one request however often
   it's pressed) and confirming an email (the banner, Send it again, too soon, already confirmed,
   the link while signed in).
 - `src/components/__tests__/PlannerScreen.spec.ts`: the planner's screens in the mounted app (K24–K27):
   the `planner-screens` class and Edit plan's sticky bar, the bar from the top edge (a pointer,
-  not a finger), the handle's press and pull, a press elsewhere and Escape hiding it, and the way
-  on to Food.
+  not a finger), the handle's press and pull, a press elsewhere and Escape hiding it, and the arrows
+  between the screens, named for where they go (K42).
 - `src/components/__tests__/DietSection.spec.ts`: the diet section in the mounted app: default
   foods, ticking (totals checked in the store), shared week navigation, add and remove (after
   a confirmation) and the goal set in the Edit food dialog (in config mode), cross-tab sync.

@@ -333,6 +333,26 @@ describe('updateExercise', () => {
     expect(s.exercises.find((e) => e.id === 'sq')!.name).toBe('Squats')
   })
 
+  it('saves a note, keeps it when an update leaves it out, and clears it when empty (K43)', () => {
+    const s = usePlannerStore()
+    const squats = () => s.exercises.find((e) => e.id === 'sq')
+    s.updateExercise('sq', {
+      name: 'Squats',
+      reps: 15,
+      perSide: false,
+      notes: '  **Slow** down \n',
+    })
+    expect(squats()!.notes).toBe('**Slow** down')
+    s.updateExercise('sq', { name: 'Squats', reps: 12, perSide: false })
+    expect(squats()).toMatchObject({ reps: 12, notes: '**Slow** down' })
+    s.updateExercise('sq', { name: 'Squats', reps: 12, perSide: false, notes: '   ' })
+    expect(squats()).not.toHaveProperty('notes')
+    s.addExercise({ name: 'Swings', reps: 20, perSide: false, notes: 'Hips, not arms' })
+    expect(s.exercises.at(-1)!.notes).toBe('Hips, not arms')
+    s.addExercise({ name: 'Rows', reps: 10, perSide: false, notes: '' })
+    expect(s.exercises.at(-1)).not.toHaveProperty('notes')
+  })
+
   it('stores a weight given when adding', () => {
     const s = usePlannerStore()
     s.addExercise({ name: 'Swings', reps: 20, perSide: false, weight: 16 })

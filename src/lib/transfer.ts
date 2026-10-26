@@ -21,16 +21,23 @@ import {
  * The export file: what Settings → Export downloads and Import… reads. It is also the contract for
  * the API's export and import, which is why the cases live in `fixtures/transfer/`.
  */
-export const EXPORT_FORMAT = 'fitness-planner-export'
-/** Files exported before the app was renamed carry this format; they import as if current. */
-export const OLD_EXPORT_FORMAT = 'exercise-planner-export'
+export const EXPORT_FORMAT = 'tracker-export'
 /**
- * Version 3 files carry a mark per day with its drawing (`great`, `partial-solid`, `missed-hatch`
- * … or null). Version 2 files carry the kinds alone, which read as the zigzag; version 1 files a
- * `true` per done day, which reads as `great`. All three import.
+ * Files exported under the app's earlier names (Fitness Planner, and Exercise Planner before it)
+ * carry these formats; they import as if current.
  */
-export const EXPORT_VERSION = 3
-const READ_VERSIONS: readonly unknown[] = [1, 2, EXPORT_VERSION]
+export const OLD_EXPORT_FORMATS: readonly unknown[] = [
+  'fitness-planner-export',
+  'exercise-planner-export',
+]
+/**
+ * Version 4 files may carry a note on an exercise or a food (K43). Version 3 files carry a mark
+ * per day with its drawing (`great`, `partial-solid`, `missed-hatch` … or null). Version 2 files
+ * carry the kinds alone, which read as the zigzag; version 1 files a `true` per done day, which
+ * reads as `great`. All four import.
+ */
+export const EXPORT_VERSION = 4
+const READ_VERSIONS: readonly unknown[] = [1, 2, 3, EXPORT_VERSION]
 
 export type ExportData = {
   exercise: PlannerData
@@ -84,7 +91,7 @@ export function parseExport(text: string): ParseResult {
   if (parsed === null) return { ok: false, error: 'json' }
   if (
     !isRecord(parsed) ||
-    (parsed.format !== EXPORT_FORMAT && parsed.format !== OLD_EXPORT_FORMAT)
+    (parsed.format !== EXPORT_FORMAT && !OLD_EXPORT_FORMATS.includes(parsed.format))
   ) {
     return { ok: false, error: 'format' }
   }
@@ -156,7 +163,7 @@ export function mergeSettings(
 }
 
 export function exportFilename(now: Date): string {
-  return `fitness-planner-${dateKey(now)}.json`
+  return `tracker-${dateKey(now)}.json`
 }
 
 /** Save the export through a temporary link; the browser names the file `exportFilename(now)`. */

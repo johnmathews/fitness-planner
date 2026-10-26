@@ -15,6 +15,8 @@ export type Exercise = {
   weight?: number
   /** Weekly goal in days, 0–7. */
   target: number
+  /** The owner's note, in markdown (K43); absent when there is none. */
+  notes?: string
 }
 
 export type Food = {
@@ -22,6 +24,8 @@ export type Food = {
   name: string
   /** Weekly goal in days, 0–7. */
   target: number
+  /** The owner's note, in markdown (K43); absent when there is none. */
+  notes?: string
 }
 
 /**
@@ -85,17 +89,17 @@ export type Settings = {
 }
 
 /** Exercise plans per week plus the log: `{ plans, log }`. */
-export const DATA_KEY = 'fitness-planner-v2'
+export const DATA_KEY = 'tracker-v2'
 /** Food plans per week plus the diet log. */
-export const DIET_KEY = 'fitness-planner-diet-v2'
-export const SETTINGS_KEY = 'fitness-planner-settings-v1'
+export const DIET_KEY = 'tracker-diet-v2'
+export const SETTINGS_KEY = 'tracker-settings-v1'
 /**
  * The earlier single-list format (`{ exercises, log }` and `{ foods, log }`; the exercise one is the
  * design prototype's, under its old `exercise-planner-v1` name). Read to migrate when v2 data is
  * missing or unreadable; never written or deleted, apart from `migrateKeyPrefix` moving it.
  */
-export const LEGACY_DATA_KEY = 'fitness-planner-v1'
-export const LEGACY_DIET_KEY = 'fitness-planner-diet-v1'
+export const LEGACY_DATA_KEY = 'tracker-v1'
+export const LEGACY_DIET_KEY = 'tracker-diet-v1'
 
 export const MIN_TARGET = 0
 export const MAX_TARGET = 7
@@ -106,6 +110,8 @@ export const MAX_WEIGHT = 500
 export const MAX_SETS = 20
 export const MAX_DURATION = 3600
 export const NEW_FOOD_TARGET = 3
+/** A note's length, in characters (code points, as Python counts them). */
+export const MAX_NOTES = 500
 
 export const DEFAULT_SETTINGS: Settings = {
   accent: '#30d158',
@@ -162,11 +168,24 @@ export function normaliseWeight(v: unknown): number | undefined {
   return kg > 0 ? Math.min(MAX_WEIGHT, kg) : undefined
 }
 
+/**
+ * A usable note: a string with spaces, tabs and line breaks trimmed from its ends, cut to
+ * MAX_NOTES characters; undefined for anything else or for nothing left. The API's
+ * `normalise_notes` does the same (the shared fixtures hold both to it).
+ */
+export function normaliseNotes(v: unknown): string | undefined {
+  if (typeof v !== 'string') return undefined
+  const trim = (s: string) => s.replace(/^[ \t\n\r]+|[ \t\n\r]+$/g, '')
+  const notes = trim(Array.from(trim(v)).slice(0, MAX_NOTES).join(''))
+  return notes || undefined
+}
+
 export function normaliseExercise(v: unknown): Exercise | null {
   if (!isRecord(v) || typeof v.id !== 'string' || typeof v.name !== 'string') return null
   const weight = normaliseWeight(v.weight)
   const sets = toInt(v.sets, 0)
   const duration = toInt(v.duration, 0)
+  const notes = normaliseNotes(v.notes)
   return {
     id: v.id,
     name: v.name,
@@ -176,15 +195,18 @@ export function normaliseExercise(v: unknown): Exercise | null {
     ...(typeof v.perSide === 'boolean' ? { perSide: v.perSide } : {}),
     ...(weight !== undefined ? { weight } : {}),
     target: clamp(toInt(v.target, NEW_EXERCISE_TARGET), MIN_TARGET, MAX_TARGET),
+    ...(notes ? { notes } : {}),
   }
 }
 
 export function normaliseFood(v: unknown): Food | null {
   if (!isRecord(v) || typeof v.id !== 'string' || typeof v.name !== 'string') return null
+  const notes = normaliseNotes(v.notes)
   return {
     id: v.id,
     name: v.name,
     target: clamp(toInt(v.target, NEW_FOOD_TARGET), MIN_TARGET, MAX_TARGET),
+    ...(notes ? { notes } : {}),
   }
 }
 
@@ -325,27 +347,33 @@ export function removeKey(key: string): void {
   }
 }
 
-/** Every key above began with this before the app was renamed. */
-export const OLD_KEY_PREFIX = 'exercise-planner-'
-export const KEY_PREFIX = 'fitness-planner-'
+/**
+ * Every key above began with one of these under the app's earlier names, newest first: Fitness
+ * Planner until 2026-10-26 (K44), Exercise Planner until 2026-10-24.
+ */
+export const OLD_KEY_PREFIXES = ['fitness-planner-', 'exercise-planner-'] as const
+export const KEY_PREFIX = 'tracker-'
 
 /**
- * Move each `exercise-planner-…` key to the same name under `fitness-planner-…`. It runs once per
- * page load, before the stores read storage. A value already under the new name wins; the old key
- * goes either way. When a copy fails (storage full) the old key stays, so the next load retries.
+ * Move each key under an earlier name to the same name under `tracker-…`, newest name first. It
+ * runs once per page load, before the stores read storage. A value already under the new name
+ * wins, so a newer name's copy beats an older one's; the old key goes either way. When a copy
+ * fails (storage full) the old key stays, so the next load retries.
  */
 export function migrateKeyPrefix(): void {
-  const keys: string[] = []
+  const keys: [key: string, prefix: string][] = []
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key?.startsWith(OLD_KEY_PREFIX)) keys.push(key)
+    for (const prefix of OLD_KEY_PREFIXES) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key?.startsWith(prefix)) keys.push([key, prefix])
+      }
     }
   } catch {
     return // Storage unavailable: nothing to move.
   }
-  for (const key of keys) {
-    const next = KEY_PREFIX + key.slice(OLD_KEY_PREFIX.length)
+  for (const [key, prefix] of keys) {
+    const next = KEY_PREFIX + key.slice(prefix.length)
     try {
       const value = localStorage.getItem(key)
       if (value !== null && localStorage.getItem(next) === null) localStorage.setItem(next, value)

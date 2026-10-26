@@ -1,5 +1,5 @@
-"""`fp-admin`: invites, resets and account switches, run in the API container, and demo data for a
-local stack (docs/api.md §5)."""
+"""`tracker-admin`: invites, resets and account switches, run in the API container, and demo data
+for a local stack (docs/api.md §5)."""
 
 import argparse
 import os
@@ -27,7 +27,7 @@ def _when(ts: int) -> str:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="fp-admin", description=__doc__)
+    parser = argparse.ArgumentParser(prog="tracker-admin", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     for name, text in [
         ("invite", "print a single-use sign-up link for a new account's email (valid 7 days)"),
@@ -63,7 +63,7 @@ def main(
     try:
         config = Config.from_env(env)
     except ValueError as e:
-        print(f"fp-admin: {e}", file=sys.stderr)
+        print(f"tracker-admin: {e}", file=sys.stderr)
         return 1
     if clock is not None:
         config = replace(config, clock=clock)
@@ -72,12 +72,12 @@ def main(
         migrate(conn)
         return _run(args, config, conn)
     except seed.NotLocal as e:
-        print(f"fp-admin: {e}", file=sys.stderr)
+        print(f"tracker-admin: {e}", file=sys.stderr)
         return 1
     except auth.AuthError as e:
         name = getattr(args, "username", "")
         text = f"no user named {name!r}" if e.code == "no-user" else f"{name}: {MESSAGES[e.code]}"
-        print(f"fp-admin: {text}", file=sys.stderr)
+        print(f"tracker-admin: {text}", file=sys.stderr)
         return 1
     finally:
         conn.close()

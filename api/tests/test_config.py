@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from fitness_planner_api.config import Config
+from tracker_api.config import Config
 
 
 def test_reads_the_environment() -> None:
@@ -77,12 +77,12 @@ def test_reads_mail_settings_and_hides_the_key() -> None:
         {
             "PUBLIC_ORIGIN": "https://f.example",
             "RESEND_API_KEY": "re_secret",
-            "MAIL_FROM": "Fitness Planner <planner@updates.f.example>",
+            "MAIL_FROM": "Tracker <planner@updates.f.example>",
             "MAIL_PER_HOUR": "5",
         }
     )
     assert cfg.mail_enabled is True
-    assert cfg.mail_from == "Fitness Planner <planner@updates.f.example>"
+    assert cfg.mail_from == "Tracker <planner@updates.f.example>"
     assert cfg.mail_per_hour == 5
     assert "re_secret" not in repr(cfg)
     bare = {"PUBLIC_ORIGIN": "https://f.example", "RESEND_API_KEY": "k", "MAIL_FROM": "p@f.example"}

@@ -100,6 +100,16 @@ describe('diet store', () => {
     expect(d.foods[2]!.name).toBe('Salmon')
   })
 
+  it("saves a food's note, keeps it when an update leaves it out, and clears it when empty (K43)", () => {
+    const d = useDietStore()
+    d.updateFood('fish', { name: 'Fish', target: 2, notes: ' Oily fish ' })
+    expect(d.foods[2]).toEqual({ id: 'fish', name: 'Fish', target: 2, notes: 'Oily fish' })
+    d.updateFood('fish', { name: 'Fish', target: 3 })
+    expect(d.foods[2]!.notes).toBe('Oily fish')
+    d.updateFood('fish', { name: 'Fish', target: 3, notes: '' })
+    expect(d.foods[2]).not.toHaveProperty('notes')
+  })
+
   it('adds a food with goal 3, ignores an empty name, and removes', () => {
     const d = useDietStore()
     expect(d.addFood('  ')).toBe(false)
@@ -141,13 +151,13 @@ describe('diet store', () => {
 
   it('never reads or writes the diet keys from before accounts', async () => {
     const legacy = JSON.stringify({ foods: [{ id: 'z', name: 'Z', target: 2 }], log: {} })
-    localStorage.setItem('fitness-planner-diet-v1', legacy)
+    localStorage.setItem('tracker-diet-v1', legacy)
     setActivePinia(createPinia())
     const d = useDietStore()
     expect(d.foods).toHaveLength(4)
     d.toggle('veg', 0)
     await nextTick()
-    expect(localStorage.getItem('fitness-planner-diet-v1')).toBe(legacy)
+    expect(localStorage.getItem('tracker-diet-v1')).toBe(legacy)
     expect(stored(DIET_KEY)).toBeNull()
   })
 })

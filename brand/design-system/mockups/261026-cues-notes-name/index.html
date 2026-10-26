@@ -1,0 +1,216 @@
+<meta charset="utf-8">
+<title>Arrows, notes and the Tracker name</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="proto.css">
+<!--
+  A mockup (design-system skill, references/mockups.md). Four questions about the full-screen
+  week: the arrow between the screens, where an item's note sits, the Tracker name, and when the
+  page jumps to the next screen. The screens are live: proto.js draws them (proto.css sizes them
+  from the frame), and try.html shows them full size with a switch for every option.
+-->
+<style>
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .mockup-page {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: var(--space-8, 32px) var(--space-16, 64px);
+    max-width: 1200px; margin: 0 auto; display: grid; gap: var(--space-12, 48px);
+  }
+  .mockup-head { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .mockup-head h1, .option h2, .question h2 { margin: 0; text-wrap: balance; }
+  .mockup-head p, .option p { margin: 0; }
+  .mockup-head ul { margin: 0; padding-left: 1.2em; }
+  .mockup-meta { color: var(--ink-secondary); }
+  .question { display: grid; gap: var(--space-8, 32px); }
+  .question > header { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .question > header p { margin: 0; }
+  .option { display: grid; gap: var(--space-4, 16px); }
+  .option-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2, 8px) var(--space-3, 12px); }
+  .option-tag { color: var(--ink-secondary); }
+  .option[data-recommended] .option-tag::after { content: " · Recommended"; color: var(--ink); }
+  .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-4, 16px); }
+  .pane { min-width: 0; background: var(--canvas); color: var(--ink); border: 1px solid var(--line);
+          border-radius: var(--radius-lg, 10px); padding: var(--space-4, 16px); overflow-x: auto; }
+  .pane-label { color: var(--ink-secondary); margin: 0 0 var(--space-3, 12px); }
+  .measures { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); }
+  .measures li { border: 1px solid var(--line); border-radius: var(--radius-sm, 4px); padding: 2px var(--space-2, 8px); font-variant-numeric: tabular-nums; }
+  .measures li[data-pass="no"] { border-color: currentColor; }
+  .try { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: center; margin: 0; }
+  .try a, .mockup-head a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* A device: the screen at its real size in pixels, scaled down to fit (the script sets the scale). */
+  .device { position: relative; width: 100%; }
+  .device > .fs { position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .device.phone > .fs { border-radius: 28px; border-width: 2px; }
+  .phones { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .phones .device { max-width: 260px; }
+
+  /* Question 3: the name, as stills. */
+  .names { display: grid; gap: var(--space-6, 24px); }
+  .signin { display: grid; justify-items: start; gap: 12px; padding: 24px; max-width: 360px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .signin .wm { height: 32px; width: auto; fill: var(--ink); }
+  .signin h3 { margin: 0; font: 600 24px/32px var(--font-sans); }
+  .signin p { margin: 0; color: var(--ink-secondary); }
+  .barline { display: flex; align-items: center; gap: 16px; padding: 8px 16px; min-height: 56px; background: var(--canvas);
+    border: 1px solid var(--line); border-radius: var(--radius-md); }
+  .barline .wm { height: 20px; width: auto; fill: var(--ink); }
+  .barline .week { margin-inline: auto; font: 600 16px/24px var(--font-sans); }
+  .mono { font: 600 20px/1 var(--font-serif); color: var(--ink); }
+  .icons { display: flex; align-items: end; gap: 16px; }
+  .icon { display: grid; place-items: center; background: var(--ink); color: var(--on-ink); border-radius: var(--radius-md);
+    font-family: var(--font-serif); font-weight: 600; letter-spacing: -0.01em; }
+  .icon.s64 { width: 64px; height: 64px; font-size: 38px; }
+  .icon.s32 { width: 32px; height: 32px; font-size: 19px; border-radius: 6px; }
+  .icon.s16 { width: 16px; height: 16px; font-size: 10px; border-radius: 3px; }
+  #name-b .icon.s64 { font-size: 34px; } #name-b .icon.s32 { font-size: 17px; } #name-b .icon.s16 { font-size: 9px; }
+  .icons figcaption { color: var(--ink-secondary); }
+  figure { margin: 0; display: grid; gap: 6px; justify-items: center; }
+</style>
+
+<main class="mockup-page">
+  <header class="mockup-head">
+    <p class="caption mockup-meta">Mockup · 2026-10-26 · Notebook</p>
+    <h1 class="title-1">Arrows, notes and the Tracker name</h1>
+    <p class="body">The full-screen week. Round 2: questions 1, 3 and 4 are settled, and question 2 shows your change.</p>
+    <ul class="body">
+      <li>Which arrow replaces “Food ⌄” at the foot of Exercises, and points back up at the top of Food?</li>
+      <li>Where does an item’s note sit?</li>
+      <li>How does “Tracker” look as the wordmark and the monogram?</li>
+      <li>Does the new snap feel right on your trackpad and your phone?</li>
+    </ul>
+    <p class="body">Everything else stays as it shipped: the grid, the sizes, the marks and the bar. These marks are the Stamped ticks; your own set draws as before. The screens are live. Scroll them, press an arrow, press a note. <a href="try.html" target="_blank" rel="noopener">Open the full-size version</a> on a desktop or a phone. Its Mockup button, bottom left, switches every option and the theme.</p>
+  </header>
+
+  <!-- ===================== Question 1 ===================== -->
+  <section class="question" aria-labelledby="q1">
+    <header>
+      <h2 class="title-2" id="q1">1. The arrow between the screens (decided: A)</h2>
+      <p class="body">One arrow and no words. It points down at the foot of Exercises and up at the top of Food. A screen reader hears “Go to Food” and “Back to Exercises”. A press jumps to the other screen. The arrow is 24px inside a 44px target, in <code>ink-secondary</code>. Left: Exercises, light. Right: Food, dark.</p>
+    </header>
+
+    <section class="option" id="cue-a" data-recommended aria-labelledby="cue-a-h">
+      <div class="option-head"><h3 class="title-3" id="cue-a-h">A. A bare chevron</h3><span class="label option-tag">Option A</span></div>
+      <p class="body">The chevron from the old button, on its own. The quietest of the three.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · Exercises</p><div class="device" data-w="1440" data-h="900" data-cue="a"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · Food</p><div class="device" data-w="1440" data-h="900" data-cue="a" data-start="food"></div></div>
+      </div>
+    </section>
+
+
+    <ul class="measures caption"><li data-fg="var(--ink-secondary)" data-bg="var(--canvas)" data-min="3">Arrow on the page</li></ul>
+  </section>
+
+  <!-- ===================== Question 2 ===================== -->
+  <section class="question" aria-labelledby="q2">
+    <header>
+      <h2 class="title-2" id="q2">2. Where an item’s note sits (round 2: B, with the chips on the name’s line)</h2>
+      <p class="body">Notes are optional, so most rows have none. You write them in the add and edit dialogs, in markdown. Links open in a new tab. A long note is cut to one line, and pressing it shows the whole note. The notes here are made up: Push-ups has a link, Kettlebell halos is long, and Plank uses italics.</p>
+    </header>
+
+
+    <section class="option" id="notes-b" data-recommended aria-labelledby="notes-b-h">
+      <div class="option-head"><h3 class="title-3" id="notes-b-h">B. The note under the name and chips</h3><span class="label option-tag">Option B</span></div>
+      <p class="body">Your round 2: the chips move up onto the name’s line, and the note takes the line below. A row is two lines of text, or three when the name and chips wrap. A row without a note is one line. Is this what you meant?</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · desktop</p><div class="device" data-w="1440" data-h="900" data-notes="b"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-notes="b"></div></div></div>
+      </div>
+    </section>
+
+    <ul class="measures caption"><li data-fg="var(--ink-secondary)" data-bg="var(--canvas)" data-min="4.5">Note text on the page</li><li data-fg="var(--ink)" data-bg="var(--panel)" data-min="4.5">Popover text</li></ul>
+  </section>
+
+  <!-- ===================== Question 3 ===================== -->
+  <section class="question" aria-labelledby="q3">
+    <header>
+      <h2 class="title-2" id="q3">3. The Tracker name (decided: “Tracker”, no monogram)</h2>
+      <p class="body">The wordmark keeps its rules: Source Serif 4 at 600, outlined, in <code>ink</code>. Only the word changes. The monogram replaces “FP” in the phone’s Settings bar and on the app icon and favicon.</p>
+    </header>
+
+    <section class="option" id="name-a" data-recommended aria-labelledby="name-a-h">
+      <div class="option-head"><h3 class="title-3" id="name-a-h">“Tracker”, and no monogram</h3><span class="label option-tag">Option A</span></div>
+      <p class="body">The wordmark is short enough now to fit the phone’s Settings bar, where “FP” stood, so the monogram goes.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light</p><div class="names" data-name="cap"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark</p><div class="names" data-name="cap"></div></div>
+      </div>
+    </section>
+
+  </section>
+
+  <!-- ===================== Question 4 ===================== -->
+  <section class="question" aria-labelledby="q4">
+    <header>
+      <h2 class="title-2" id="q4">4. The snap (decided: the new snap)</h2>
+      <p class="body">Today the page waits until a scroll has stopped, then jumps. With the new snap, the jump starts as soon as the next screen’s edge comes into view by a step (4% of the window), while your fingers or the trackpad’s momentum are still moving. It takes a quarter of a second and ignores the rest of that flick. On a phone, the jump starts when your finger lifts. A screen with more rows than fit still scrolls normally until its end. Only the full-size page can show the feel. Try both on your trackpad and on your phone:</p>
+      <p class="try body"><a href="try.html#cue-a-notes-b-new" target="_blank" rel="noopener">Try the new snap</a><a href="try.html#cue-a-notes-b-old" target="_blank" rel="noopener">Try today’s snap</a></p>
+    </header>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · the new snap, live (scroll inside it)</p><div class="device" data-w="1440" data-h="900"></div></div>
+    </div>
+  </section>
+</main>
+
+<script src="marks.js"></script>
+<script src="wordmarks.js"></script>
+<script src="proto.js"></script>
+<script>
+  // Each .device gets a live screen at its real pixel size, scaled to the space it has.
+  for (const device of document.querySelectorAll('.device')) {
+    const w = Number(device.dataset.w), h = Number(device.dataset.h)
+    const screen = document.createElement('div')
+    screen.style.width = w + 'px'
+    screen.style.height = h + 'px'
+    device.append(screen)
+    const fit = () => {
+      const s = Math.min(1, device.clientWidth / w)
+      screen.style.transform = `scale(${s})`
+      device.style.height = Math.ceil(h * s) + 'px'
+    }
+    new ResizeObserver(fit).observe(device)
+    fit()
+    TR.mount(screen, { cue: device.dataset.cue, notes: device.dataset.notes, sprint: device.dataset.sprint, start: device.dataset.start })
+  }
+
+  // Question 3: the sign-in card, the bar and the icons, for each name.
+  for (const box of document.querySelectorAll('.names')) {
+    const wm = TR_WORDMARKS[box.dataset.name]
+    const svg = (cls) => `<svg class="wm ${cls}" viewBox="${wm.viewBox}" role="img" aria-label="${box.dataset.name === 'cap' ? 'Tracker' : 'tracker'}"><path d="${wm.d}"/></svg>`
+    box.innerHTML = `
+      <div class="signin">${svg('')}<h3>Sign in</h3><p class="body">Sign in to see your plans and log on any device.</p></div>
+      <div class="barline">${svg('')}<span class="week">19–25 October</span></div>
+      <div class="barline" style="max-width: 390px">${svg('')}<span class="week">Settings</span></div>`
+  }
+
+  // Measures: for each <li data-fg data-bg data-min>, the WCAG contrast of the two colours in each theme.
+  (() => {
+    const rgb = (value, scope, theme) => {
+      const probe = document.createElement('span')
+      probe.dataset.theme = theme
+      probe.style.color = value
+      scope.append(probe)
+      const parts = getComputedStyle(probe).color.match(/[\d.]+/g).map(Number)
+      probe.remove()
+      return parts.slice(0, 3)
+    }
+    const lum = ([r, g, b]) => [r, g, b]
+      .map((c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 })
+      .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0)
+    const ratio = (a, b) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05) }
+    for (const li of document.querySelectorAll('.measures li[data-fg]')) {
+      const scope = li.closest('.option') || li.closest('.question') || document.body
+      const min = Number(li.dataset.min || 0)
+      const results = ['light', 'dark'].map((theme) => {
+        const r = ratio(rgb(li.dataset.fg, scope, theme), rgb(li.dataset.bg, scope, theme))
+        return { theme, r, ok: !min || r >= min }
+      })
+      li.dataset.pass = results.every((x) => x.ok) ? 'yes' : 'no'
+      li.append(`: ${results.map((x) => `${x.theme} ${x.r.toFixed(1)}:1${x.ok ? '' : ' (below ' + min + ':1)'}`).join(', ')}`)
+    }
+  })()
+</script>

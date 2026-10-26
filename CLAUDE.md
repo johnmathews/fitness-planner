@@ -1,4 +1,4 @@
-# Fitness Planner
+# Tracker
 
 UI work follows the Notebook design system in `brand/design-system/` (see
 [docs/brand.md](docs/brand.md)): use the design-system skill, build from the system's tokens and
@@ -14,6 +14,6 @@ from another checkout serves the wrong code. The API runs from `api/` with
 `PUBLIC_ORIGIN=http://localhost:5173 COOKIE_SECURE=false DATA_DIR=./.data` (port 8000), and the
 web app runs with `npm run dev` (port 5173). [README](README.md) §2 has the full commands. Start
 each in the background. The local data lives in `api/.data` and holds John's account: never
-delete or reset it. Run `uv run fp-admin seed-demo` from `api/`, with the same environment, when
+delete or reset it. Run `uv run tracker-admin seed-demo` from `api/`, with the same environment, when
 the current week has no marks; it only adds what is missing. Then give John the URL and say what
 to try, before any commit or push.

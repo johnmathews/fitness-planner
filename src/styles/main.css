@@ -75,7 +75,6 @@
   --fs-day: max(16px, calc(var(--u) * 20));
   --fs-total: max(18px, calc(var(--u) * 24));
   --fs-figure: max(18px, calc(var(--u) * 26));
-  --fs-way-on: max(16px, calc(var(--u) * 18));
   --fs-stat: max(22px, calc(var(--u) * 28));
   --fs-stat-words: max(20px, calc(var(--u) * 22));
   /* A folded row of boxes: a share of the screen's height, so a tall phone spreads the week. */
@@ -127,6 +126,54 @@
 @layer components {
   .note {
     font-style: italic;
+  }
+
+  /* An item's note (WeekGrid card, K43), rendered from markdown: inside the italic, emphasis
+     stands upright; a link in the row's line is its underlined text, and a real link in the
+     popover. */
+  .note-line em,
+  .note-body em {
+    font-style: normal;
+  }
+  .note-line strong,
+  .note-body strong {
+    font-weight: 600;
+  }
+  .note-line .note-link,
+  .note-body a {
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  .note-line code,
+  .note-body code {
+    font-style: normal;
+    font-size: 0.9em;
+    background: var(--tile);
+    border-radius: var(--radius-sm);
+    padding: 0 0.25em;
+  }
+  .note-body {
+    font-size: 18px;
+    line-height: 26px;
+    overflow-wrap: anywhere;
+  }
+  .note-body > * + * {
+    margin-top: 0.5em;
+  }
+  .note-body ul,
+  .note-body ol {
+    padding-left: 1.25em;
+  }
+  .note-body ul {
+    list-style: disc;
+  }
+  .note-body ol {
+    list-style: decimal;
+  }
+  .note-body blockquote {
+    border-left: 2px solid var(--line);
+    padding-left: 0.75em;
   }
 
   @media (width < 40rem) {

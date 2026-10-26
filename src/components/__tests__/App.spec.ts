@@ -248,7 +248,7 @@ describe('App', () => {
     expect(rows[3]!.findAll('[data-testid="mark-set-sample"]')).toHaveLength(3)
     expect(rows[3]!.find('button').exists()).toBe(false)
     await rows[3]!.trigger('click')
-    expect(JSON.parse(localStorage.getItem('fitness-planner-settings-v1')!)).toMatchObject({
+    expect(JSON.parse(localStorage.getItem('tracker-settings-v1')!)).toMatchObject({
       markSet: 'faces',
     })
     await backToWeek()
@@ -557,13 +557,11 @@ describe('export and import', () => {
     await openSettings()
     await button('Export').trigger('click')
     expect(click).toHaveBeenCalledOnce()
-    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe(
-      'fitness-planner-2026-10-23.json',
-    )
+    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe('tracker-2026-10-23.json')
     const file = JSON.parse(await blob!.text())
     expect(file).toMatchObject({
-      format: 'fitness-planner-export',
-      version: 3,
+      format: 'tracker-export',
+      version: 4,
       settings: { accent: '#30d158', dailyPick: 3 },
     })
     expect(file.settings).not.toHaveProperty('theme')
@@ -701,7 +699,7 @@ describe('export and import', () => {
     expect(wrapper.find('[data-testid="import-summary"]').exists()).toBe(false)
     await backToWeek()
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('false')
-    expect(localStorage.getItem('fitness-planner-v2')).toBeNull()
+    expect(localStorage.getItem('tracker-v2')).toBeNull()
   })
 
   it('says so when the file adds nothing', async () => {
@@ -716,10 +714,10 @@ describe('export and import', () => {
 
   it.each([
     ['not JSON', new File(['{oops'], 'x.json'), 'That file isn’t valid JSON.'],
-    ['another format', jsonFile({ plans: {} }), 'That file isn’t a Fitness Planner export.'],
+    ['another format', jsonFile({ plans: {} }), 'That file isn’t a Tracker export.'],
     [
       'a newer version',
-      jsonFile({ format: 'fitness-planner-export', version: 4 }),
+      jsonFile({ format: 'fitness-planner-export', version: 5 }),
       'That export comes from a newer version of the app.',
     ],
   ])('rejects %s with an inline error and changes nothing', async (_, file, message) => {
@@ -764,9 +762,9 @@ describe('export and import with the sample data', () => {
   const sample = readFixture<Record<string, unknown>>('sample/export.json')
 
   type Tracked = { plans: object; log: object }
-  const exercise = storage['fitness-planner-v2'] as Tracked
-  const diet = storage['fitness-planner-diet-v2'] as Tracked
-  const { accent, dailyPick } = storage['fitness-planner-settings-v1'] as {
+  const exercise = storage['tracker-v2'] as Tracked
+  const diet = storage['tracker-diet-v2'] as Tracked
+  const { accent, dailyPick } = storage['tracker-settings-v1'] as {
     accent: string
     dailyPick: number
   }
@@ -844,7 +842,7 @@ describe('export and import with the sample data', () => {
     expect({ plans: server.diet.plans, log: server.diet.log }).toMatchObject(diet)
     expect(server.settings).toEqual({ accent, dailyPick })
     // The theme is per device, so it never left this browser.
-    expect(localStorage.getItem('fitness-planner-settings-v1')).toBeNull()
+    expect(localStorage.getItem('tracker-settings-v1')).toBeNull()
   })
 })
 
@@ -900,7 +898,7 @@ describe('theme', () => {
     await themeButton('Dark').trigger('click')
     expect(isDarkClass()).toBe(true)
     expect(themeButton('Dark').attributes('aria-pressed')).toBe('true')
-    expect(JSON.parse(localStorage.getItem('fitness-planner-settings-v1')!).theme).toBe('dark')
+    expect(JSON.parse(localStorage.getItem('tracker-settings-v1')!).theme).toBe('dark')
 
     await themeButton('Light').trigger('click')
     expect(isDarkClass()).toBe(false)
@@ -1030,10 +1028,12 @@ describe('exercise weight', () => {
     await edit.get('#edit-exercise-name').setValue('Halos')
     await edit.get('input[data-field="reps"]').setValue('1x0')
     await toggle('Per set').trigger('click')
+    await edit.get('#edit-exercise-notes').setValue('**Ribs down.**')
     await edit.get('form').trigger('submit')
     await flushPromises()
     expect(detail('Halos')).toBe('10 reps a set')
     expect(exTotal(-1)).toBe('0 of 3')
+    expect(usePlannerStore().exercises.at(-1)!.notes).toBe('**Ribs down.**')
   })
 
   it('closes on Escape and on Close without saving, returning focus to its Edit button', async () => {
@@ -1117,14 +1117,16 @@ describe('the Edit food dialog', () => {
       .findAll('input')
       .map((i) => edit.get(`label[for="${i.attributes('id')}"]`).text())
     expect(labels).toEqual(['Name', 'Times a week'])
+    expect(edit.get('label[for="edit-food-notes"]').text()).toBe('Note')
     expect(document.activeElement).toBe(edit.get('#edit-food-name').element)
     await edit.get('#edit-food-name').setValue('Salmon')
+    await edit.get('#edit-food-notes').setValue('Oily fish')
     await edit.get('button[aria-label="More times a week"]').trigger('click')
     await edit.get('form').trigger('submit')
     await flushPromises()
     expect(dialog()).toBeNull()
     expect(rowCells('Salmon')[0]!.attributes('aria-pressed')).toBe('true')
-    expect(useDietStore().foods[2]).toMatchObject({ name: 'Salmon', target: 3 })
+    expect(useDietStore().foods[2]).toMatchObject({ name: 'Salmon', target: 3, notes: 'Oily fish' })
   })
 
   it('keeps the dialog open on an empty name, and discards changes on Cancel', async () => {

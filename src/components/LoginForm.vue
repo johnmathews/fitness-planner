@@ -23,7 +23,7 @@ const intro = computed(() =>
 const wrong = computed(() => problem.value?.code === 'invalid')
 const describedBy = computed(() => (problem.value ? 'login-problem' : undefined))
 
-// "Forgot your password?" only where the planner sends email; otherwise a reset is fp-admin's.
+// "Forgot your password?" only where the planner sends email; otherwise a reset is tracker-admin's.
 onMounted(() => void session.loadOptions())
 
 async function submit(): Promise<void> {

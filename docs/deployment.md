@@ -17,12 +17,12 @@ The image is multi-architecture (`linux/amd64`, `linux/arm64`). Only the runtime
 per target, and it holds nothing but `COPY` steps, so no QEMU emulation is needed.
 
 ```bash
-docker build -t fitness-planner .        # host architecture, loaded locally
-docker run -p 8080:8080 fitness-planner
+docker build -t tracker .        # host architecture, loaded locally
+docker run -p 8080:8080 tracker
 ```
 
 To check both platforms build, run
-`docker buildx build --platform linux/amd64,linux/arm64 -t fitness-planner .`. A multi-platform
+`docker buildx build --platform linux/amd64,linux/arm64 -t tracker .`. A multi-platform
 result stays in the build cache unless the builder supports loading it (Docker Desktop with the
 containerd image store) or `--push` sends it to a registry.
 
@@ -30,7 +30,7 @@ containerd image store) or `--push` sends it to a registry.
 runs on the build machine's platform and has uv install the locked dependencies as wheels for the
 target (`x86_64-` or `aarch64-manylinux_2_28`). Every dependency ships binary wheels for both,
 so nothing compiles. The runtime stage is `python:3.13-slim`, running as uid 10001 with `/data`
-as its volume and uvicorn on port **8000**. `fp-admin` is on the `PATH`, and the `HEALTHCHECK`
+as its volume and uvicorn on port **8000**. `tracker-admin` is on the `PATH`, and the `HEALTHCHECK`
 calls `/api/healthz` with Python's `urllib` (the slim image has no curl).
 
 **Memory.** Measured on the API image on 2026-10-24 by reading the container's
@@ -49,7 +49,7 @@ container's 64m would be killed by the first login.
 `docker compose up --build` runs both images locally: the app on `http://localhost:8083` and the API
 on `http://localhost:8000`, with the API's data in the `api-data` volume. Create a first account at
 `http://localhost:8083/#/signup`, or mint an invite with
-`docker compose exec fitness-api fp-admin invite <email>`.
+`docker compose exec fitness-api tracker-admin invite <email>`.
 
 Sign-up is open by default: anyone who can reach the app can create an account until `MAX_USERS`
 (default 50) exist. Set `MAX_USERS: '0'` on the API to keep it to invites ([api.md](api.md) §4 and
@@ -96,14 +96,15 @@ multi-arch build before `main` publishes it; `compose` builds for the runner's o
 image must answer `/api/healthz`, and the arm64 image, run under QEMU, must import its native
 modules. The `build` job builds without pushing and holds only `contents: read`. The `publish` job
 is the only one granted `packages: write`. It logs in to `ghcr.io` with `GITHUB_TOKEN` and pushes
-`ghcr.io/johnmathews/fitness-planner` and `ghcr.io/johnmathews/fitness-planner-api`, each tagged
+`ghcr.io/johnmathews/tracker` and `ghcr.io/johnmathews/tracker-api`, each tagged
 `latest` and `sha-<short sha>`. `publish` runs on `workflow_run` after the `CI` workflow succeeds
 on a push to `main`, and checks out, tags and labels exactly the commit CI passed
 (`workflow_run.head_sha`; `github.sha` would be the default branch's newest commit). The home server auto-deploys `latest` (What's Up Docker), so a red
 commit must never publish. Every checkout sets `persist-credentials: false`. Before
 2026-10-24 the project was called exercise-planner and published `exercise-planner` and
-`exercise-planner-api`. Those images still exist but no longer update, so a host must pull the new
-names.
+`exercise-planner-api`; until 2026-10-26 it was fitness-planner and published `fitness-planner` and
+`fitness-planner-api` (K44). Those images still exist but no longer update, so a host's compose
+file must pull `tracker` and `tracker-api`, or it silently stops getting deploys.
 
 ## 4. Data and hosting
 
@@ -124,7 +125,7 @@ on:
    and `send.fitness`. Wait until Resend says the domain is verified.
 3. Create an API key with **sending access**, limited to that domain, and keep it in the
    home-server vault; the compose template passes it to `fitness-api` with
-   `MAIL_FROM=Fitness Planner <planner@fitness.itsa-pizza.com>`.
+   `MAIL_FROM=Tracker <planner@fitness.itsa-pizza.com>`.
 4. Redeploy the API. `GET /api/auth/options` then answers `{"mail": true}`, and the sign-in screen
    shows "Forgot your password?".
 
@@ -139,7 +140,7 @@ in production.
 `scripts/compose-smoke.sh` builds and starts both images with `docker-compose.yml` and checks the
 whole path through nginx:
 
-- a user redeems an `fp-admin` invite, writes a tick and reads it back;
+- a user redeems a `tracker-admin` invite, writes a tick and reads it back;
 - a write from a foreign `Origin` gets 403;
 - with the API stopped, `/api/` answers 502 or 504 within seconds while nginx still serves the app.
 

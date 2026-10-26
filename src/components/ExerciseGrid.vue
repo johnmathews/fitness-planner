@@ -6,7 +6,8 @@ import type { Tracked } from '@/lib/tracker'
 import { dayMonth } from '@/lib/dates'
 import { ChevronDown } from '@lucide/vue'
 import { SCREEN, SCREEN_GRID } from '@/lib/screens'
-import { Button } from '@/components/ui/button'
+import { IconButton } from '@/components/ui/icon-button'
+import { sprintToScreen } from '@/composables/screenSprint'
 import { SectionHeader } from '@/components/ui/section-header'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import AddExerciseForm from '@/components/AddExerciseForm.vue'
@@ -27,14 +28,6 @@ function detailsFor(item: Tracked): string[] {
 }
 
 const editing = ref<Exercise | null>(null)
-
-/** The way on (PlannerScreen card): to the Food screen, smoothly unless motion is reduced. */
-function toFood(): void {
-  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  document
-    .querySelector('[aria-labelledby="diet-heading"]')
-    ?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
-}
 
 function edit(id: string): void {
   editing.value = store.exercises.find((e) => e.id === id) ?? null
@@ -58,7 +51,7 @@ watch(
 
 <!-- The Exercises section (SectionHeader, WeekGrid and PlannerScreen cards): its heading, the
      week, and in Edit plan the add form. On the planner's screens it is
-     the first screen: the slot's messages and the page's h1 at its top, the way on to Food at its
+     the first screen: the slot's messages and the page's h1 at its top, the arrow to Food at its
      foot. -->
 <template>
   <section
@@ -90,14 +83,15 @@ watch(
         <span class="title-1 text-[24px] leading-7 text-ink">Exercises</span>
       </template>
     </TrackerGrid>
-    <Button
-      variant="quiet"
-      class="hidden self-center text-(length:--fs-way-on) text-ink-secondary hover:text-ink full:mt-[calc(var(--u)*10)] full:inline-flex folded:hidden short:hidden"
+    <!-- The way on (PlannerScreen card, K42): an arrow, no words, sprinting to the Food screen. -->
+    <IconButton
+      label="Go to Food"
+      class="hidden self-center text-ink-secondary hover:text-ink full:mt-[calc(var(--u)*10)] full:inline-flex short:hidden"
       data-noprint
       data-testid="to-food"
-      @click="toFood"
-      >Food<ChevronDown :stroke-width="1.5"
-    /></Button>
+      @click="sprintToScreen('diet-heading')"
+      ><ChevronDown :size="24"
+    /></IconButton>
     <AddExerciseForm v-if="store.configMode" />
     <EditExerciseDialog v-if="editing" :exercise="editing" @close="editing = null" />
   </section>

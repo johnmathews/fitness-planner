@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick, ref } from 'vue'
 import { mount } from '@vue/test-utils'
-import { REST_MS, sprintTarget, useScreenSprint } from '@/composables/screenSprint'
+import {
+  QUIET_MS,
+  REST_MS,
+  SPRINT_MS,
+  sprintTarget,
+  sprintTo,
+  useScreenSprint,
+} from '@/composables/screenSprint'
 
 describe('sprintTarget (K38)', () => {
   // Two screens: Exercises 0–1300 (taller than the 800px window), Food from 1300.
@@ -31,15 +38,28 @@ describe('sprintTarget (K38)', () => {
     expect(sprintTarget(500.5, 800, starts, 1)).toBeNull()
     expect(sprintTarget(1299.5, 800, starts, 1)).toBeNull()
   })
+
+  it('counts a line only once it is a step inside the window, when given one (K45)', () => {
+    expect(sprintTarget(520, 800, starts, 1, 32)).toBeNull()
+    expect(sprintTarget(540, 800, starts, 1, 32)).toBe(1300)
+    expect(sprintTarget(1280, 800, starts, -1, 32)).toBeNull()
+    expect(sprintTarget(1260, 800, starts, -1, 32)).toBe(500)
+  })
 })
 
 describe('useScreenSprint', () => {
   let scrollTo: ReturnType<typeof vi.fn<(options: ScrollToOptions) => void>>
 
-  /** Puts the window at `y` and lets the scroll come to rest. */
+  /** Puts the window at `y`, as a scroll would. */
   function scrollToY(y: number): void {
     Object.defineProperty(window, 'scrollY', { configurable: true, value: y })
     window.dispatchEvent(new Event('scroll'))
+  }
+
+  /** Where the page is after every frame of a sprint has run. */
+  function landed(): number | undefined {
+    vi.advanceTimersByTime(SPRINT_MS + 50)
+    return scrollTo.mock.lastCall?.[0].top
   }
 
   function screens(): void {
@@ -51,8 +71,9 @@ describe('useScreenSprint', () => {
     food!.getBoundingClientRect = () => ({ top: 1300 - window.scrollY }) as DOMRect
   }
 
+  const mounted: { unmount(): void }[] = []
   function holder(enabled = ref(true)) {
-    return mount(
+    const wrapper = mount(
       defineComponent({
         setup() {
           useScreenSprint(enabled)
@@ -60,33 +81,121 @@ describe('useScreenSprint', () => {
         },
       }),
     )
+    mounted.push(wrapper)
+    return wrapper
+  }
+
+  function wheel(): WheelEvent {
+    const event = new WheelEvent('wheel', { deltaY: 10, cancelable: true })
+    window.dispatchEvent(event)
+    return event
   }
 
   beforeEach(() => {
-    vi.useFakeTimers()
+    vi.useFakeTimers({
+      toFake: [
+        'setTimeout',
+        'clearTimeout',
+        'requestAnimationFrame',
+        'cancelAnimationFrame',
+        'performance',
+      ],
+    })
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
-    scrollTo = vi.fn<(options: ScrollToOptions) => void>()
+    // The page follows each frame of a sprint, as the browser would.
+    scrollTo = vi.fn<(options: ScrollToOptions) => void>((o) => {
+      Object.defineProperty(window, 'scrollY', { configurable: true, value: o.top })
+    })
     window.scrollTo = scrollTo as unknown as typeof window.scrollTo
     screens()
   })
 
   afterEach(() => {
+    // A test that failed before unmounting leaves its listeners; take them down here.
+    for (const wrapper of mounted.splice(0)) wrapper.unmount()
     vi.useRealTimers()
     vi.unstubAllGlobals()
     document.body.innerHTML = ''
   })
 
-  it('sprints down to Food once a scroll comes to rest across the line, smoothly', () => {
+  it('sprints to Food as soon as a wheel brings it a step into the window (K45)', () => {
     const wrapper = holder()
+    wheel()
     scrollToY(300)
-    vi.advanceTimersByTime(REST_MS)
+    scrollToY(520) // Food's top is 20px in: less than a step (32px of 800)
     expect(scrollTo).not.toHaveBeenCalled()
+    scrollToY(540)
+    expect(landed()).toBe(1300)
+    wrapper.unmount()
+  })
+
+  it('leaves a scrollbar drag or the keyboard to sprint at rest, not mid-scroll', () => {
+    const wrapper = holder()
+    scrollToY(600) // no wheel came: a scrollbar drag or a key
+    expect(scrollTo).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(REST_MS)
+    expect(landed()).toBe(1300)
+    wrapper.unmount()
+  })
+
+  it("sprints at once in a fling's momentum after the finger lifts", () => {
+    const wrapper = holder()
+    window.dispatchEvent(new Event('touchstart'))
+    window.dispatchEvent(new Event('touchend'))
     scrollToY(600)
+    // Under way before the rest timer could have fired: the fling started it.
+    vi.advanceTimersByTime(REST_MS - 20)
+    expect(scrollTo).toHaveBeenCalled()
+    expect(landed()).toBe(1300)
+    wrapper.unmount()
+  })
+
+  it('sprints after a pause when the scroll stops short of a step', () => {
+    const wrapper = holder()
+    scrollToY(520)
     vi.advanceTimersByTime(REST_MS - 1)
     expect(scrollTo).not.toHaveBeenCalled()
-    vi.advanceTimersByTime(1)
-    expect(scrollTo).toHaveBeenCalledWith({ top: 1300, behavior: 'smooth' })
+    expect(landed()).toBe(1300)
+    wrapper.unmount()
+  })
+
+  it('waits for a finger to lift, then sprints', () => {
+    const wrapper = holder()
+    window.dispatchEvent(new Event('touchstart'))
+    scrollToY(700)
+    vi.advanceTimersByTime(REST_MS + SPRINT_MS)
+    expect(scrollTo).not.toHaveBeenCalled()
+    window.dispatchEvent(new Event('touchend'))
+    expect(landed()).toBe(1300)
+    wrapper.unmount()
+  })
+
+  it('swallows the wheel during a sprint and until it is quiet after', () => {
+    const wrapper = holder()
+    expect(wheel().defaultPrevented).toBe(false)
+    scrollToY(600)
+    expect(wheel().defaultPrevented).toBe(true)
+    landed()
+    expect(wheel().defaultPrevented).toBe(true) // the fling's momentum, still arriving
+    vi.advanceTimersByTime(QUIET_MS)
+    expect(wheel().defaultPrevented).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('holds a finger still while a sprint runs', () => {
+    const wrapper = holder()
+    const move = () => {
+      const event = new Event('touchmove', { cancelable: true })
+      window.dispatchEvent(event)
+      return event
+    }
+    expect(move().defaultPrevented).toBe(false)
+    wheel()
+    scrollToY(600)
+    expect(move().defaultPrevented).toBe(true)
+    landed()
+    expect(move().defaultPrevented).toBe(false)
     wrapper.unmount()
   })
 
@@ -99,10 +208,9 @@ describe('useScreenSprint', () => {
     )
     const wrapper = holder()
     scrollToY(1300)
-    vi.advanceTimersByTime(REST_MS)
-    scrollToY(1300)
+    wheel()
     scrollToY(1100)
-    vi.advanceTimersByTime(REST_MS)
+    expect(scrollTo).toHaveBeenCalledTimes(1)
     expect(scrollTo).toHaveBeenLastCalledWith({ top: 500, behavior: 'auto' })
     wrapper.unmount()
   })
@@ -115,20 +223,32 @@ describe('useScreenSprint', () => {
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 600 })
     window.dispatchEvent(new Event('resize'))
     vi.advanceTimersByTime(REST_MS)
-    expect(scrollTo).toHaveBeenLastCalledWith({ top: 500, behavior: 'smooth' })
+    expect(landed()).toBe(500)
     wrapper.unmount()
+  })
+
+  it('moves to a place in one eased sprint, then calls back', () => {
+    const done = vi.fn<() => void>()
+    sprintTo(1300, done)
+    vi.advanceTimersByTime(SPRINT_MS / 2)
+    const halfway = window.scrollY
+    expect(halfway).toBeGreaterThan(1300 * 0.75) // eased out: most of the way by half time
+    expect(done).not.toHaveBeenCalled()
+    expect(landed()).toBe(1300)
+    expect(done).toHaveBeenCalledOnce()
   })
 
   it('does nothing while switched off, and stops a pending sprint when it is', async () => {
     const enabled = ref(true)
     const wrapper = holder(enabled)
-    scrollToY(600)
+    scrollToY(520)
     enabled.value = false
     await nextTick()
     vi.advanceTimersByTime(REST_MS)
     scrollToY(700)
     vi.advanceTimersByTime(REST_MS)
     expect(scrollTo).not.toHaveBeenCalled()
+    expect(wheel().defaultPrevented).toBe(false)
     enabled.value = true
     await nextTick()
     wrapper.unmount()

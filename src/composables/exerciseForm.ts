@@ -44,6 +44,7 @@ export function useExerciseForm() {
   const perSide = ref(false)
   const measure = ref<Measure>('reps')
   const target = ref(NEW_EXERCISE_TARGET)
+  const notes = ref('')
   /** The amount field's label. */
   const amountLabel = computed(() => (measure.value === 'time' ? 'Seconds' : 'Reps'))
   /** The SegmentedControl's v-model is a string; anything but "time" counts reps. */
@@ -73,6 +74,7 @@ export function useExerciseForm() {
       perSide: perSide.value,
       weight: parseFloat(weight.value) || undefined,
       target: target.value,
+      notes: notes.value,
     }
   }
 
@@ -85,6 +87,7 @@ export function useExerciseForm() {
     weight.value = e?.weight ? String(e.weight) : ''
     perSide.value = e?.perSide ?? false
     target.value = e?.target ?? NEW_EXERCISE_TARGET
+    notes.value = e?.notes ?? ''
   }
 
   return {
@@ -97,6 +100,7 @@ export function useExerciseForm() {
     measureChoice,
     amountLabel,
     target,
+    notes,
     onSetsInput,
     onRepsInput,
     onWeightInput,

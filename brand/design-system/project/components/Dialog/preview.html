@@ -62,6 +62,11 @@
   .stepper button:hover { background: var(--tile); }
   .stepper button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .value { display: flex; align-items: center; justify-content: center; min-width: 48px; padding: 0 var(--space-1); font: 600 17px/24px var(--font-sans); font-variant-numeric: tabular-nums; }
+  /* The Note field (K43): the TextArea card's box. */
+  .area { box-sizing: border-box; display: block; width: 100%; min-height: 104px; padding: 10px var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--panel); color: var(--ink); font: 400 16px/24px var(--font-sans); resize: vertical; }
+  .area:hover { border-color: var(--ink); }
+  .area:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .hint .count { display: block; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -113,6 +118,11 @@
       <div class="field">
         <label class="label" for="f-weight">Weight in kg</label>
         <input id="f-weight" class="weight" value="8" inputmode="decimal" placeholder="Bodyweight">
+      </div>
+      <div class="field">
+        <label class="label" for="f-note">Note</label>
+        <textarea id="f-note" class="area" aria-describedby="f-note-hint" maxlength="500">**Ribs down.** Change direction each set.</textarea>
+        <p class="caption hint" id="f-note-hint">Markdown works: **bold**, *italic*, links. <span class="count">41 of 500 characters</span></p>
       </div>
       <div class="field">
         <span class="label" id="f-target">Times a week</span>

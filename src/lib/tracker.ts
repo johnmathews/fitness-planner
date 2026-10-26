@@ -10,7 +10,7 @@ import {
 } from '@/lib/storage'
 
 /** Anything tracked as a tick per day against a weekly goal: exercises and foods. */
-export type Tracked = { id: string; name: string; target: number }
+export type Tracked = { id: string; name: string; target: number; notes?: string }
 
 /** One week of a log: item id → its days Mon–Sun. */
 export type WeekLog = Record<string, Days>

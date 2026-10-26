@@ -73,3 +73,34 @@ for (const [name, opts] of [
     expect(down.ends.has('food-start'), stops.join('\n')).toBe(true)
   })
 }
+
+test('a fling sprints to Food while it is still moving, not after (K45)', async ({ page }) => {
+  await openApp(page)
+  await page.mouse.move(640, 400)
+  // The page notes when Food's top reaches the top of the window.
+  await page.evaluate(() => {
+    const w = window as unknown as { arrivedAt: number | null }
+    w.arrivedAt = null
+    const food = document.querySelector('[aria-labelledby="diet-heading"]')!
+    const watch = () => {
+      if (Math.abs(food.getBoundingClientRect().top) <= 1) w.arrivedAt = performance.now()
+      else requestAnimationFrame(watch)
+    }
+    requestAnimationFrame(watch)
+  })
+  // A trackpad fling: a wheel step every 16 ms for a second, the momentum dying away.
+  for (let i = 0; i < 60; i++) {
+    await page.mouse.wheel(0, Math.max(3, 12 - Math.floor(i / 6)))
+    await page.waitForTimeout(16)
+  }
+  const endedAt = await page.evaluate(() => performance.now())
+  await page.waitForTimeout(700)
+  const arrivedAt = await page.evaluate(
+    () => (window as unknown as { arrivedAt: number | null }).arrivedAt,
+  )
+  expect(arrivedAt, 'the page never reached Food').not.toBeNull()
+  expect(
+    arrivedAt!,
+    `reached Food ${Math.round(arrivedAt! - endedAt)} ms after the fling ended`,
+  ).toBeLessThan(endedAt)
+})

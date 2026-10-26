@@ -74,8 +74,7 @@ export const SECTIONS: readonly StyleGuideSection[] = [
   {
     id: 'sg-brand-mark',
     title: 'BrandMark',
-    summary:
-      'The product’s name as a mark: the “Fitness Planner” wordmark in Source Serif 4 600, and an “FP” monogram for small spaces.',
+    summary: 'The product’s name as a mark: the “Tracker” wordmark in Source Serif 4 600.',
     component: BrandMarkSection,
   },
   {

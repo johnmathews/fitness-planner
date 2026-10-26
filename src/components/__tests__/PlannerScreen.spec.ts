@@ -156,13 +156,7 @@ describe('the planner’s screens (K24–K27)', () => {
     expect(bar().attributes('data-shown')).toBeUndefined()
   })
 
-  it('scrolls to the Food screen from the way on, smoothly unless motion is reduced', async () => {
-    mountApp()
-    const scroll = vi.fn<(options?: ScrollIntoViewOptions) => void>()
-    const food = document.querySelector<HTMLElement>('[aria-labelledby="diet-heading"]')!
-    food.scrollIntoView = scroll
-    await wrapper.get('[data-testid="to-food"]').trigger('click')
-    expect(scroll).toHaveBeenLastCalledWith({ behavior: 'smooth', block: 'start' })
+  it('sprints between the screens from the arrows, named for where they go (K42)', async () => {
     vi.stubGlobal(
       'matchMedia',
       vi.fn<(q: string) => MediaQueryList>(
@@ -174,8 +168,24 @@ describe('the planner’s screens (K24–K27)', () => {
           }) as unknown as MediaQueryList,
       ),
     )
-    await wrapper.get('[data-testid="to-food"]').trigger('click')
-    expect(scroll).toHaveBeenLastCalledWith({ behavior: 'auto', block: 'start' })
+    mountApp()
+    const scrollTo = vi.fn<(options: ScrollToOptions) => void>()
+    window.scrollTo = scrollTo as unknown as typeof window.scrollTo
+    const food = document.querySelector<HTMLElement>('[aria-labelledby="diet-heading"]')!
+    food.getBoundingClientRect = () => ({ top: 800 }) as DOMRect
+    const down = wrapper.get('[data-testid="to-food"]')
+    expect(down.attributes('aria-label')).toBe('Go to Food')
+    expect(down.text()).toBe('')
+    await down.trigger('click')
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 800, behavior: 'auto' })
+    const exercises = document.querySelector<HTMLElement>('[aria-labelledby="exercises-heading"]')!
+    exercises.getBoundingClientRect = () => ({ top: -800 }) as DOMRect
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 800 })
+    const up = wrapper.get('[data-testid="to-exercises"]')
+    expect(up.attributes('aria-label')).toBe('Back to Exercises')
+    await up.trigger('click')
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: 'auto' })
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
     vi.unstubAllGlobals()
   })
 })

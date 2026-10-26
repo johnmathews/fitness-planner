@@ -14,11 +14,11 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from fitness_planner_api import auth, emails
-from fitness_planner_api.app import create_app
-from fitness_planner_api.config import Config
-from fitness_planner_api.db import connect
-from fitness_planner_api.mail import MailError, Message, ResendMailer, send_quietly
+from tracker_api import auth, emails
+from tracker_api.app import create_app
+from tracker_api.config import Config
+from tracker_api.db import connect
+from tracker_api.mail import MailError, Message, ResendMailer, send_quietly
 
 from .conftest import ORIGIN, Clock, RecordingMailer
 
@@ -65,7 +65,7 @@ def test_resend_request_shape() -> None:
         seen.append((request, timeout))
         return FakeResponse(b'{"id": "abc"}')
 
-    ResendMailer("re_secret", "Fitness Planner <p@example.com>", opener).send(message())
+    ResendMailer("re_secret", "Tracker <p@example.com>", opener).send(message())
     ((request, timeout),) = seen
     assert request.full_url == "https://api.resend.com/emails"
     assert request.get_method() == "POST"
@@ -75,7 +75,7 @@ def test_resend_request_shape() -> None:
     assert headers["content-type"] == "application/json"
     assert headers["idempotency-key"] == "k1"
     assert json.loads(request.data) == {  # type: ignore[arg-type]
-        "from": "Fitness Planner <p@example.com>",
+        "from": "Tracker <p@example.com>",
         "to": ["sam@example.com"],
         "subject": "Subject",
         "html": "<p>Hi</p>",
@@ -135,7 +135,7 @@ def test_duration_in_words(seconds: int, words: str) -> None:
 
 def test_confirm_email() -> None:
     e = emails.confirm("https://fitness.example", "tok", 7 * DAY)
-    assert e.subject == "Confirm your email for Fitness Planner"
+    assert e.subject == "Confirm your email for Tracker"
     assert 'href="https://fitness.example/#/confirm/tok"' in e.html
     assert "https://fitness.example/#/confirm/tok" in e.text
     assert "seven days" in e.html and "seven days" in e.text
@@ -144,7 +144,7 @@ def test_confirm_email() -> None:
 
 def test_reset_email_escapes_the_address() -> None:
     e = emails.reset("https://fitness.example", "a<b>@example.com", "tok", HOUR)
-    assert e.subject == "Reset your Fitness Planner password"
+    assert e.subject == "Reset your Tracker password"
     assert "a&lt;b&gt;@example.com" in e.html and "a<b>" not in e.html
     assert "a<b>@example.com" in e.text
     assert "#/reset/tok" in e.text and "one hour" in e.text
@@ -164,7 +164,7 @@ def test_emails_follow_the_email_rules(kind: str) -> None:
 
 def test_the_design_system_card_is_current() -> None:
     assert CARD.read_text(encoding="utf-8") == emails.card(), (
-        "Regenerate it: uv run python -m fitness_planner_api.emails " + str(CARD)
+        "Regenerate it: uv run python -m tracker_api.emails " + str(CARD)
     )
 
 
@@ -197,7 +197,7 @@ def test_signup_sends_a_confirmation_and_the_link_confirms(
     }
     (sent,) = mailer.sent
     assert (sent.to, sent.kind) == ("sam@example.com", "confirm")
-    assert sent.subject == "Confirm your email for Fitness Planner"
+    assert sent.subject == "Confirm your email for Tracker"
     token = token_in(sent, "confirm")
     r = mail_client.post("/api/auth/confirm", json={"token": token})
     assert (r.status_code, r.json()) == (200, {"username": "sam@example.com", "confirmed": True})
@@ -412,7 +412,7 @@ def test_a_new_reset_request_leaves_earlier_links_working(
     mail_client: TestClient, mailer: RecordingMailer, mail_config: Config, clock: Clock
 ) -> None:
     """Anyone can ask for a reset for any address; that must not cancel a link already sent,
-    nor one `fp-admin` handed over."""
+    nor one `tracker-admin` handed over."""
     sign_up(mail_client)
     conn = connect(mail_config.db_path)
     admin = auth.mint_link(conn, mail_config, "reset", "sam@example.com")

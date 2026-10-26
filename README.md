@@ -1,4 +1,4 @@
-# Fitness Planner
+# Tracker
 
 > Purpose
 >
@@ -26,8 +26,9 @@
     "Each side", and an optional weight in kg (e.g. squats with a 12 kg kettlebell); add a food by
     name;
   - the pencil beside a name opens that item's dialog, where everything about it changes: for an
-    exercise its sets, reps or seconds, weight and goal ("Times a week"), for a food its name and
-    goal; the bin at the end of a row removes the item after a confirmation (its marks stay
+    exercise its sets, reps or seconds, weight, note and goal ("Times a week"), for a food its
+    name, note and goal. A note is markdown; it shows under the item's name, and pressing it opens
+    the whole note with its links; the bin at the end of a row removes the item after a confirmation (its marks stay
     stored). New items start with a goal of 3.
 - **Weekly plans.** Each week has its own plan, so reps, sets, weights and goals can change from week
   to week. A week you haven't changed carries over the latest earlier week's plan; it gets its own
@@ -37,7 +38,8 @@
   sheet in the light theme's colours on white paper.
 - **One screen per section.** The week fills the screen, and the bar stays out of sight until the
   pointer reaches the top edge (or the handle at the top centre is pressed). Scrolling brings Food,
-  which takes the screen in turn. Held upright, a phone or an iPad folds the week: each row's name
+  which takes the screen in turn: a flick jumps straight to it. An arrow at the foot of Exercises
+  and the top of Food leads to the other. Held upright, a phone or an iPad folds the week: each row's name
   above its seven boxes. A day that reaches the exercises-a-day target turns green.
 - **Settings** is a page of its own. It sets the theme (System, Light or Dark), how marks are drawn
   (Squiggles, Ticks, Stamped ticks, Faces or Stamped faces), and the exercises-per-day target (1–8),
@@ -65,8 +67,8 @@ Prerequisites: Node `22.18+` or `24.12+`, and **npm 11**. Node 24.12+ ships npm 
 upgrade npm first, because the bundled npm 10.9 crashes while resolving this project's dependencies.
 
 ```bash
-git clone https://github.com/johnmathews/fitness-planner.git
-cd fitness-planner
+git clone https://github.com/johnmathews/tracker.git
+cd tracker
 npm install -g npm@11      # Node 22 only; or run: npx -y npm@11 ci
 npm ci
 npm run dev                # http://localhost:5173
@@ -79,15 +81,15 @@ with `PUBLIC_ORIGIN` set to the dev server's origin. Then create an account at
 ```bash
 cd api && uv sync
 export PUBLIC_ORIGIN=http://localhost:5173 COOKIE_SECURE=false DATA_DIR=./.data
-uv run fp-admin invite you@example.com          # prints http://localhost:5173/#/invite/…
-uv run uvicorn --factory fitness_planner_api.app:create_app_from_env --port 8000
+uv run tracker-admin invite you@example.com          # prints http://localhost:5173/#/invite/…
+uv run uvicorn --factory tracker_api.app:create_app_from_env --port 8000
 ```
 
 For an account that already has data, seed the demo instead (same shell, any time; a second run
 adds nothing):
 
 ```bash
-uv run fp-admin seed-demo                       # demo@example.com, password demo-password
+uv run tracker-admin seed-demo                       # demo@example.com, password demo-password
 ```
 
 It runs only against a local stack, and never overwrites a mark. The database lives in
@@ -124,10 +126,10 @@ Two containers: the app (static files on nginx, port **8080**) and the API (port
 nginx forwarding `/api/` to the API so the browser sees one origin. CI publishes both as
 multi-architecture images (`linux/amd64` and `linux/arm64`) to GHCR once CI passes on a push to `main`:
 
-| Image                                     | Tags                        |
-| ----------------------------------------- | --------------------------- |
-| `ghcr.io/johnmathews/fitness-planner`     | `latest`, `sha-<short sha>` |
-| `ghcr.io/johnmathews/fitness-planner-api` | `latest`, `sha-<short sha>` |
+| Image                             | Tags                        |
+| --------------------------------- | --------------------------- |
+| `ghcr.io/johnmathews/tracker`     | `latest`, `sha-<short sha>` |
+| `ghcr.io/johnmathews/tracker-api` | `latest`, `sha-<short sha>` |
 
 Run them with Docker Compose. The API service must be named `fitness-api`, since that is the
 host `nginx.conf` forwards to:
@@ -135,18 +137,18 @@ host `nginx.conf` forwards to:
 ```yaml
 services:
   web:
-    image: ghcr.io/johnmathews/fitness-planner:latest
+    image: ghcr.io/johnmathews/tracker:latest
     ports:
       - '8080:8080'
     restart: unless-stopped
   fitness-api:
-    image: ghcr.io/johnmathews/fitness-planner-api:latest
+    image: ghcr.io/johnmathews/tracker-api:latest
     environment:
       PUBLIC_ORIGIN: https://fitness.example.com # the address people open
       MAX_USERS: '50' # sign-up closes at this many accounts; '0' = invites only
       # Optional: email for confirming addresses and resetting passwords (docs/api.md §4.1)
       # RESEND_API_KEY: re_...
-      # MAIL_FROM: Fitness Planner <planner@fitness.example.com>
+      # MAIL_FROM: Tracker <planner@fitness.example.com>
     volumes:
       - ./fitness-data:/data # owned by uid 10001
     mem_limit: 160m
@@ -165,7 +167,7 @@ prints:
 
 ```bash
 docker compose up -d
-docker compose exec fitness-api fp-admin invite <email>
+docker compose exec fitness-api tracker-admin invite <email>
 ```
 
 Sign-up is open by default: anyone who can reach the address can create an account until 50
@@ -179,7 +181,7 @@ Serve it over HTTPS: the session cookie is `Secure`. For a plain-http trial, set
 end to end.
 
 [docs/deployment.md](docs/deployment.md) covers the images, nginx and CI, and
-[docs/api.md](docs/api.md) the API, accounts, backups and `fp-admin`.
+[docs/api.md](docs/api.md) the API, accounts, backups and `tracker-admin`.
 
 ## 4. Documentation
 

@@ -1,7 +1,7 @@
-"""`fp-admin seed-demo`: a demo account with three weeks of plausible marks, for a local stack only
-(docs/api.md §5). It goes through the same parser and merge as Settings → Import, so it adds a
-week's plan only where the account has none and fills only empty days: a second run changes
-nothing, and nothing the person marked by hand is ever overwritten."""
+"""`tracker-admin seed-demo`: a demo account with three weeks of plausible marks, for a local stack
+only (docs/api.md §5). It goes through the same parser and merge as Settings → Import, so it
+adds a week's plan only where the account has none and fills only empty days: a second run
+changes nothing, and nothing the person marked by hand is ever overwritten."""
 
 import json
 import sqlite3

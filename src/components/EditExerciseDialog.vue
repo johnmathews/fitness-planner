@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import { usePlannerStore } from '@/stores/planner'
-import { MAX_TARGET, MIN_TARGET, type Exercise } from '@/lib/storage'
+import { MAX_NOTES, MAX_TARGET, MIN_TARGET, type Exercise } from '@/lib/storage'
 import { MEASURE_OPTIONS, useExerciseForm } from '@/composables/exerciseForm'
 import PerSideToggle from '@/components/PerSideToggle.vue'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Stepper } from '@/components/ui/stepper'
+import { TextArea } from '@/components/ui/text-area'
 import { TextField } from '@/components/ui/text-field'
 
 const props = defineProps<{ exercise: Exercise }>()
 const emit = defineEmits<{ close: [] }>()
 
 const store = usePlannerStore()
+/** The Dialog card's hint under Note (K43). */
+const NOTE_HINT = 'Markdown works: **bold**, *italic*, links.'
 const form = useExerciseForm()
-const { name, sets, reps, weight, perSide, measure, measureChoice, amountLabel, target } = form
+const { name, sets, reps, weight, perSide, measure, measureChoice, amountLabel, target, notes } =
+  form
 form.load(props.exercise)
 
 function save(): void {
@@ -68,6 +72,15 @@ function save(): void {
         placeholder="Bodyweight"
         class="w-44"
         @input="form.onWeightInput"
+      />
+      <TextArea
+        id="edit-exercise-notes"
+        v-model="notes"
+        label="Note"
+        :hint="NOTE_HINT"
+        :max-length="MAX_NOTES"
+        :maxlength="MAX_NOTES"
+        rows="3"
       />
       <Stepper
         id="edit-exercise-target"

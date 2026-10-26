@@ -51,6 +51,50 @@ describe('the planner grids (W10)', () => {
     vi.restoreAllMocks()
   })
 
+  describe('notes on an item (K43)', () => {
+    function withNotes(): SyncState {
+      const state = emptyState()
+      state.exercise.plans = {
+        [WEEK]: [
+          {
+            id: 'pu',
+            name: 'Push-ups',
+            reps: 10,
+            target: 4,
+            notes: 'Slow **down**.\n[Form video](https://example.com/push-ups)',
+          },
+          { id: 'sq', name: 'Squats', sets: 3, reps: 15, target: 3 },
+          { id: 'kh', name: 'Halos', reps: 8, target: 2, notes: '<script>alert(1)</script>' },
+        ],
+      }
+      state.diet.plans = { [WEEK]: [{ id: 'fr', name: 'Fruit', target: 5, notes: 'Not juice' }] }
+      return state
+    }
+    const row = (name: string) =>
+      wrapper
+        .findAll('tr[role="row"]')
+        .find((r) => r.findAll('[data-testid="item-name"]').some((n) => n.text() === name))!
+
+    it('shows a note on one line under the name and chips, and none where there is none', () => {
+      mountApp(withNotes())
+      const note = row('Push-ups').get('[data-testid="item-note"]')
+      expect(note.element.tagName).toBe('BUTTON')
+      expect(note.html()).toContain(
+        'Slow <strong>down</strong>. <span class="note-link">Form video</span>',
+      )
+      expect(note.find('a').exists()).toBe(false)
+      expect(row('Squats').find('[data-testid="item-note"]').exists()).toBe(false)
+      expect(row('Halos').get('[data-testid="item-note"]').text()).toBe('<script>alert(1)</script>')
+      expect(row('Halos').find('script').exists()).toBe(false)
+      expect(row('Fruit').get('[data-testid="item-note"]').text()).toBe('Not juice')
+    })
+
+    it('keeps the grid one tab stop: the note waits behind its cell', () => {
+      mountApp(withNotes())
+      expect(row('Push-ups').get('[data-testid="item-note"]').attributes('tabindex')).toBe('-1')
+    })
+  })
+
   describe('a day that meets the daily pick (K30)', () => {
     /** Monday with `n` exercises marked, against the default pick of three. */
     function mondayWith(n: number): SyncState {
@@ -247,7 +291,7 @@ describe('the planner grids (W10)', () => {
       }
     })
 
-    it('stops on the skip link, the Header, then each grid once, with the way on between', () => {
+    it('stops on the skip link, the Header, then each grid once, with the arrows between', () => {
       mountApp()
       expect(tabStops().map(name)).toEqual([
         'Skip to today',
@@ -257,8 +301,9 @@ describe('the planner grids (W10)', () => {
         'Settings',
         'Print…',
         'Push-ups, Friday 23 October, today',
-        // The PlannerScreen's way on to the Food screen (K25); the handle is for a finger only.
-        'Food',
+        // The PlannerScreen's arrows between the screens (K42); the handle is for a finger only.
+        'Go to Food',
+        'Back to Exercises',
         'Vegetables, Friday 23 October, today',
       ])
     })
