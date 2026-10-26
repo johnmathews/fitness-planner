@@ -102,8 +102,9 @@ on a push to `main`, and checks out, tags and labels exactly the commit CI passe
 (`workflow_run.head_sha`; `github.sha` would be the default branch's newest commit). The home server auto-deploys `latest` (What's Up Docker), so a red
 commit must never publish. Every checkout sets `persist-credentials: false`. Before
 2026-10-24 the project was called exercise-planner and published `exercise-planner` and
-`exercise-planner-api`. Those images still exist but no longer update, so a host must pull the new
-names.
+`exercise-planner-api`; until 2026-10-26 it was fitness-planner and published `fitness-planner` and
+`fitness-planner-api` (K44). Those images still exist but no longer update, so a host's compose
+file must pull `tracker` and `tracker-api`, or it silently stops getting deploys.
 
 ## 4. Data and hosting
 
@@ -139,7 +140,7 @@ in production.
 `scripts/compose-smoke.sh` builds and starts both images with `docker-compose.yml` and checks the
 whole path through nginx:
 
-- a user redeems an `tracker-admin` invite, writes a tick and reads it back;
+- a user redeems a `tracker-admin` invite, writes a tick and reads it back;
 - a write from a foreign `Origin` gets 403;
 - with the API stopped, `/api/` answers 502 or 504 within seconds while nginx still serves the app.
 

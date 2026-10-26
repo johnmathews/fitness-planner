@@ -18,7 +18,8 @@ regression test fails on `-v2` and passes on `-v3`. K14 was prose, so `format.sp
 records what each key version stores and fails when that changes under the same key. Adding a
 drawing without a bump turned it red.
 
-John's own check (reload every tab, press four times) was still to come at handover.
+John then reloaded every tab and pressed an empty box four times: "Yes, solid square". Status:
+confirmed (W7).
 
 ## Decided on a mockup
 
@@ -45,6 +46,38 @@ steady 1.2 s scroll it settled on Food at about 270 ms.
 - **Rename (K44).** Every name moved, data included: `migrateKeyPrefix` now takes a list of old
   prefixes, so a browser's keys were moved in place on the first reload and the session stayed
   signed in. Both images build, and `tracker-admin` runs in the API image.
+
+## Caught in the wrap-up
+
+A fresh code reviewer and a fresh docs auditor read the branch before the PR.
+
+- **The sprint's first frame could run backwards.** A sprint begun in a scroll handler can get a
+  frame time just before its start, so the eased position went negative for one frame. That is up
+  to about 70px the wrong way. Status: strongly supported (reasoned from the frame timing rules,
+  not seen on screen). The progress is now clamped at 0.
+- **A scrollbar drag or the keyboard sprinted early.** The trigger couldn't tell them from a
+  wheel, so a drag fought the sprint. Status: confirmed by reading the code against K45's wording.
+  A scroll now sprints at once only within 150 ms of a wheel event or 1.2 s of a finger lifting
+  (a fling's momentum). A new unit test holds a wheel-less scroll to the rest timer.
+- **Coverage.** The suite's floors (100% lines and functions) failed on the new code. The gaps
+  were the note popover's body, the touch lock and the dialogs' Note boxes. New tests cover them,
+  including `TrackerRow.spec.ts`. That file mounts a row on its own, where jsdom does open the
+  popover.
+- **Docs.** 13 findings: the import's version range and old formats, the chips' new place, the
+  component tree, the deployment note that `fitness-planner` images stop updating, the README's
+  notes and arrows, and the test list. All fixed.
+
+## What is deliberately not done
+
+- **No note box in the add forms.** They stay one-line quick adds, and a note goes on through Edit.
+- **A link can't be followed from the row.** The row's note line is one button, and a link can't
+  sit inside one, so a link takes two presses.
+- **A plan saved from a tab on old code would drop notes.** The reviewer flagged that a tab still
+  running pre-notes code can save a plan without its notes. The `-v3` key keeps that tab out of
+  the cache, but not out of the API. The window ends when old tabs are reloaded; it wasn't worth
+  versioning the API's plan writes.
+- **The domain, the `fitness-api` service and `fitness.db` keep their names.** They belong to the
+  home-server deployment.
 
 ## Left for after the merge
 

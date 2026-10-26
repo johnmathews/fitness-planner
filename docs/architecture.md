@@ -62,16 +62,18 @@ App.vue                 picks the screen (a link, planner, sign-up, reset or sig
 ├── ExerciseGrid.vue    the Exercises section: SectionHeader (the title and the week)
 │   ├── TrackerGrid.vue a <table> (WeekGrid card): day names, one TrackerRow per item, and
 │   │   │               the days that met the daily pick
-│   │   └── TrackerRow.vue  name and chips; 7 × DayMark; in config
+│   │   └── TrackerRow.vue  name and chips on one line, the note under them
+│   │                       (a button opening a Popover, K43); 7 × DayMark; in config
 │   │                       mode the edit IconButton after the name, and the remove
 │   │                       IconButton in a last cell of its own
 │   ├── AddExerciseForm.vue config mode only: name, sets, Measure (Reps or Time), reps or
 │   │                       seconds, PerSideToggle, weight (kg)
-│   └── EditExerciseDialog.vue  Dialog: the add form's fields, then Times a week (the goal)
-└── DietSection.vue     the Food section: SectionHeader (the title and the week), kept with its grid
+│   └── EditExerciseDialog.vue  Dialog: the add form's fields, Note, then Times a week (the goal)
+└── DietSection.vue     the Food section: SectionHeader (the title and the week), kept with its grid;
+                        on the screens, the "Back to Exercises" arrow (K42)
     ├── TrackerGrid.vue wired to diet: no chips
     ├── AddFoodForm.vue config mode only: name, Add food
-    └── EditFoodDialog.vue  Dialog: Name, then Times a week (the goal)
+    └── EditFoodDialog.vue  Dialog: Name, Note, then Times a week (the goal)
 ```
 
 ## 2. Weekly plans
@@ -96,16 +98,16 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 
 `usePlannerStore` is a setup store.
 
-| State                 | Kept by                                    | Notes                                                                              |
-| --------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `plans`               | the sync store: server and per-user cache  | week → `{ id, name, sets?, reps, duration?, perSide?, weight?, target, notes? }[]` |
-| `log`                 | the sync store: server and per-user cache  | week Monday `YYYY-MM-DD` → exercise id → seven marks (`Days`, below)               |
-| `accent`, `dailyPick` | the sync store: server and per-user cache  | defaults `#30d158` and `3`. The accent is kept but draws nothing (K13)             |
-| `theme`               | `tracker-settings-v1` (the device) | `system` (default), `light` or `dark`                                              |
-| `markSet`             | `tracker-settings-v1` (the device) | `squiggles` (default), `ticks`, `stamped-ticks`, `faces`, `stamped-faces`          |
-| `configMode`          | no                                         | `false` (normal mode) on every load                                                |
-| `weekOffset`          | no                                         | `0` is the current week                                                            |
-| `now`                 | no                                         | a ref so "today" can move; see §5                                                  |
+| State                 | Kept by                                   | Notes                                                                              |
+| --------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| `plans`               | the sync store: server and per-user cache | week → `{ id, name, sets?, reps, duration?, perSide?, weight?, target, notes? }[]` |
+| `log`                 | the sync store: server and per-user cache | week Monday `YYYY-MM-DD` → exercise id → seven marks (`Days`, below)               |
+| `accent`, `dailyPick` | the sync store: server and per-user cache | defaults `#30d158` and `3`. The accent is kept but draws nothing (K13)             |
+| `theme`               | `tracker-settings-v1` (the device)        | `system` (default), `light` or `dark`                                              |
+| `markSet`             | `tracker-settings-v1` (the device)        | `squiggles` (default), `ticks`, `stamped-ticks`, `faces`, `stamped-faces`          |
+| `configMode`          | no                                        | `false` (normal mode) on every load                                                |
+| `weekOffset`          | no                                        | `0` is the current week                                                            |
+| `now`                 | no                                        | a ref so "today" can move; see §5                                                  |
 
 The stores start empty (showing the defaults) and never write the user's data themselves. The sync
 store fills them with `adopt` and saves their changes (§7).
@@ -125,13 +127,13 @@ An exercise counts reps or time, never both: a duration stores reps as 0. Then `
 `prevWeek`, `nextWeek`, `thisWeek`, `refreshNow`, `changeDailyPick` (clamps 1–8),
 `setTheme`, `savedSettings` (the accent and daily pick, or null while the user has none of their own), `adopt`
 (replace the data and settings wholesale), `adoptWeek` (replace one week's plan) and `clear` (forget
-the user on sign-out, keeping the theme). The module also exports `exerciseDetails`, which gives the chips under a name:
+the user on sign-out, keeping the theme). The module also exports `exerciseDetails`, which gives the chips after a name, on its line (K43):
 "3 × 12" or "3 × 8 each side" (or "10 reps a set" and "8 each side" without sets, "3 sets" without
 reps), "3 × 45 s" or "1 min 30 s each side" for a timed exercise (`durationText` in
 `src/lib/words.ts`), then "16 kg" when weighted, and no chip at all for none of these (the Chip
 card's words).
 
-`useDietStore` holds `plans` of foods (`{ id, name, target }`) and its own `log`, kept by the sync
+`useDietStore` holds `plans` of foods (`{ id, name, target, notes? }`) and its own `log`, kept by the sync
 store like the planner's. It reads `planner.weekKey`, so week navigation moves both
 sections. It derives `foods`, `dayCounts`, `grandTotal`, `goalsMet` and `nextWeekHasPlan`, and
 offers `isEaten`, `totalFor`, `toggle`, `changeTarget` (0–7), `addFood` (goal 3, `false` for an
@@ -146,8 +148,8 @@ with storage blocked or full the app keeps working in memory.
 
 ## 4. Storage format and validation
 
-| Key                                                    | Holds                                                                           | Written |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------- | ------- |
+| Key                                            | Holds                                                                           | Written |
+| ---------------------------------------------- | ------------------------------------------------------------------------------- | ------- |
 | `tracker-session-v1`                           | `{ user }`: the last signed-in user                                             | yes     |
 | `tracker-cache-v3:<user>`                      | the user's state as `GET /api/state` returns it, with `revs`                    | yes     |
 | `tracker-outbox-v3:<user>`                     | writes not yet sent (§7)                                                        | yes     |
@@ -242,10 +244,10 @@ load as `system`, and before the mark set existed as `squiggles`.
 
 The theme is not exported, because it belongs to the device rather than the person. Import… reads a
 file through `parseExport` (`src/lib/transfer.ts`), which rejects anything that is not JSON, has
-another `format`, or has a `version` other than 2 or 1 (a version 1 file's `true` days read as
-`"great"`, K12). Files exported before the rename carry
-`"format": "exercise-planner-export"` and import the same way (`OLD_EXPORT_FORMAT`, in both
-languages). It validates the rest with the same normalisers
+another `format`, or has a `version` other than 1 to 4 (a version 1 file's `true` days read as
+`"great"`, K12; version 4 added notes, K43). Files exported under the earlier names carry
+`"format": "fitness-planner-export"` or `"exercise-planner-export"` and import the same way
+(`OLD_EXPORT_FORMATS`, in both languages). It validates the rest with the same normalisers
 as storage, so a hand-edited file loads the way a hand-edited `localStorage` value would. Missing
 `settings`, or settings that are not an object, mean "no settings".
 
@@ -461,7 +463,7 @@ class turns on main.css's `full:` variant. With it, each section is a screen (`S
 `src/lib/screens.ts`: `min-h-dvh`, a centred column, and `data-planner-screen`) and its grid takes
 the height left (`SCREEN_GRID`). `useScreenSprint` (`src/composables/screenSprint.ts`) keeps the
 page from resting across two screens. A wheel or a fling sprints as soon as the line between two
-screens is a step (4% of the window) inside it, while it is still moving (K45); a finger on the
+screens is a step (4% of the window, at least 16px) inside it, while it is still moving (K45); a finger on the
 screen waits until it lifts; a scrollbar drag or the keyboard 120ms after the scroll stops (K38).
 `sprintTarget` picks the place, in the direction of travel, and `sprintTo` moves there in 260ms,
 eased out, setting the position each frame so a fling's momentum can't carry the page past it. The

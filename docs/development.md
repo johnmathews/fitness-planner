@@ -163,7 +163,8 @@ listed in [api.md](api.md) §10):
   DST change in EU timezones), labels.
 - `src/lib/__tests__/storage.spec.ts`: v2 plan validation and round-trip, migration from the v1
   (prototype) format, log normalisation, sets and weight, diet parsing, settings parsing,
-  skip-unchanged writes, storage that throws.
+  skip-unchanged writes, storage that throws, and `migrateKeyPrefix` moving `fitness-planner-` and
+  `exercise-planner-` keys to `tracker-`, the newer name's copy winning (K44).
 - `src/lib/__tests__/plans.spec.ts`: which week's plan a week shows (own, carried forward, earliest,
   none) and plan copies.
 - `src/composables/__tests__/exerciseForm.spec.ts`: digits-only sets/reps and decimal weight
@@ -239,10 +240,11 @@ listed in [api.md](api.md) §10):
   (defaults, carry forward, a week getting its own plan, copying to the next week), config mode,
   the midnight refresh, `adopt`, `adoptWeek` and `clear`, the theme being the only thing stored
   (merged into the settings key), the keys from before accounts never being written, and
-  `savedSettings` (tracked in memory, set by adopting or changing settings, never by the theme).
+  `savedSettings` (tracked in memory, set by adopting or changing settings, never by the theme),
+  and a note saved, kept by an update that leaves it out, and cleared when empty (K43).
 - `src/stores/__tests__/diet.spec.ts`: food toggling in the planner's week, shared week navigation,
   goal clamping, add/remove, carrying and copying food plans, `adopt`, `adoptWeek` and `clear`, the
-  old diet keys never being written.
+  old diet keys never being written, and a food's note saved, kept and cleared (K43).
 - `src/stores/__tests__/sync.spec.ts`: the sync store against the fake API:
   - the cache shown at once, then the server's state; no cache, or a broken one;
   - a first tick creating the week's plan before the tick, and revisions carried forward;
@@ -255,6 +257,8 @@ listed in [api.md](api.md) §10):
   - reads that must not undo local edits, including one the watcher has not seen;
   - other tabs' cache and outbox writes, stop and forget, the old keys never written, `diff` and
     `normaliseState`;
+  - the `-v2` and `-v1` cache and outbox moved at sign-in, the newer winning, and a tab from before
+    the solid and hatch drawings unable to empty a `great-solid` day (K41);
   - `importFile`: queued writes first, then one server import and a read; offline, refused, a
     full account (`quota`), 401, and nobody signed in.
 - `src/lib/__tests__/problems.spec.ts`: the sentence for every sign-in, sign-up, link and sign-out refusal,
@@ -294,17 +298,19 @@ listed in [api.md](api.md) §10):
   today (full-date names with "today", `aria-current`, no band, K36), rows with no goal or total
   (K33), Edit plan's rows (Edit in the name
   cell, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,
-  arrows, the skip link, the arrows between the screens, Edit plan's controls), and headings and print
-  attributes. The layouts themselves (filling, folding, the out-of-sight navbar) depend on media
+  arrows, the skip link, the arrows between the screens, Edit plan's controls), an item's note on
+  its own line and parked behind its cell (K43), and headings and print attributes. The layouts themselves (filling, folding, the out-of-sight navbar) depend on media
   queries jsdom doesn't apply, so the e2e suite covers them.
+- `src/components/__tests__/TrackerRow.spec.ts`: one row on its own: a note's popover opening with
+  the note rendered and its link opening a new tab, and no note line without a note (K43).
 - `src/components/__tests__/Email.spec.ts`: Forgot your password? (offered only when the planner
   sends email, the same words whatever the answer, a malformed email, one request however often
   it's pressed) and confirming an email (the banner, Send it again, too soon, already confirmed,
   the link while signed in).
 - `src/components/__tests__/PlannerScreen.spec.ts`: the planner's screens in the mounted app (K24–K27):
   the `planner-screens` class and Edit plan's sticky bar, the bar from the top edge (a pointer,
-  not a finger), the handle's press and pull, a press elsewhere and Escape hiding it, and the way
-  on to Food.
+  not a finger), the handle's press and pull, a press elsewhere and Escape hiding it, and the arrows
+  between the screens, named for where they go (K42).
 - `src/components/__tests__/DietSection.spec.ts`: the diet section in the mounted app: default
   foods, ticking (totals checked in the store), shared week navigation, add and remove (after
   a confirmation) and the goal set in the Edit food dialog (in config mode), cross-tab sync.

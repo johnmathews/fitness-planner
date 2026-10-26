@@ -24,8 +24,8 @@ scoped by `user_id`, and no endpoint reads another user's data.
 | `data.py`     | reading and writing plans, ticks and settings; import, export; the quota (`usage`)               |
 | `app.py`      | the HTTP layer: routes, the write checks, error mapping                                          |
 | `backup.py`   | the daily `VACUUM INTO` copy                                                                     |
-| `cli.py`      | `tracker-admin`                                                                                       |
-| `seed.py`     | `tracker-admin seed-demo`: a demo account and three weeks of marks, on a local stack only             |
+| `cli.py`      | `tracker-admin`                                                                                  |
+| `seed.py`     | `tracker-admin seed-demo`: a demo account and three weeks of marks, on a local stack only        |
 
 ## 2. Data model
 
@@ -211,7 +211,7 @@ resets are `tracker-admin`'s, as before.
   account has that email, it is disabled, or a limit was reached, so the reply tells nobody
   which addresses have accounts. A new request leaves earlier links working, so a stranger asking
   for resets for someone's address cannot cancel the link that person was just sent. Using a mailed reset also confirms the address, since only its
-  owner could have opened it; an `tracker-admin` reset does not.
+  owner could have opened it; a `tracker-admin` reset does not.
 - **Limits.** Per account and kind, one email a minute and five a day; across the whole API,
   `MAIL_PER_HOUR` (30, at least 1) emails of any kind in any rolling hour, which keeps a flood of resets from
   spending the Resend quota. Each send is logged in `mail_log` under the write lock before the

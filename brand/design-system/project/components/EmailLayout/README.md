@@ -15,5 +15,5 @@ The one layout every email from Tracker uses: the name, a panel with a heading, 
 
 ## You provide
 
-- Generated, not hand-written: `api/src/tracker_api/emails.py` builds both emails and writes this preview (`uv run python -m fitness_planner_api.emails <this file>`, from `api/`). A test fails when the preview here differs from what the code sends, so change the code and regenerate; never edit the preview by hand.
+- Generated, not hand-written: `api/src/tracker_api/emails.py` builds both emails and writes this preview (`uv run python -m tracker_api.emails <this file>`, from `api/`). A test fails when the preview here differs from what the code sends, so change the code and regenerate; never edit the preview by hand.
 - The heading, the sentences, the button's label (a verb phrase: "Confirm email", "Choose a new password"), the link, how long it works, and the small print. Plain text: the layout escapes it.

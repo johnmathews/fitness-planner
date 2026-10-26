@@ -26,8 +26,9 @@
     "Each side", and an optional weight in kg (e.g. squats with a 12 kg kettlebell); add a food by
     name;
   - the pencil beside a name opens that item's dialog, where everything about it changes: for an
-    exercise its sets, reps or seconds, weight and goal ("Times a week"), for a food its name and
-    goal; the bin at the end of a row removes the item after a confirmation (its marks stay
+    exercise its sets, reps or seconds, weight, note and goal ("Times a week"), for a food its
+    name, note and goal. A note is markdown; it shows under the item's name, and pressing it opens
+    the whole note with its links; the bin at the end of a row removes the item after a confirmation (its marks stay
     stored). New items start with a goal of 3.
 - **Weekly plans.** Each week has its own plan, so reps, sets, weights and goals can change from week
   to week. A week you haven't changed carries over the latest earlier week's plan; it gets its own
@@ -37,7 +38,8 @@
   sheet in the light theme's colours on white paper.
 - **One screen per section.** The week fills the screen, and the bar stays out of sight until the
   pointer reaches the top edge (or the handle at the top centre is pressed). Scrolling brings Food,
-  which takes the screen in turn. Held upright, a phone or an iPad folds the week: each row's name
+  which takes the screen in turn: a flick jumps straight to it. An arrow at the foot of Exercises
+  and the top of Food leads to the other. Held upright, a phone or an iPad folds the week: each row's name
   above its seven boxes. A day that reaches the exercises-a-day target turns green.
 - **Settings** is a page of its own. It sets the theme (System, Light or Dark), how marks are drawn
   (Squiggles, Ticks, Stamped ticks, Faces or Stamped faces), and the exercises-per-day target (1–8),
@@ -124,8 +126,8 @@ Two containers: the app (static files on nginx, port **8080**) and the API (port
 nginx forwarding `/api/` to the API so the browser sees one origin. CI publishes both as
 multi-architecture images (`linux/amd64` and `linux/arm64`) to GHCR once CI passes on a push to `main`:
 
-| Image                                     | Tags                        |
-| ----------------------------------------- | --------------------------- |
+| Image                             | Tags                        |
+| --------------------------------- | --------------------------- |
 | `ghcr.io/johnmathews/tracker`     | `latest`, `sha-<short sha>` |
 | `ghcr.io/johnmathews/tracker-api` | `latest`, `sha-<short sha>` |
 
