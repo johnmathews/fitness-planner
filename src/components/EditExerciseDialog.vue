@@ -10,7 +10,10 @@ import { Stepper } from '@/components/ui/stepper'
 import { TextArea } from '@/components/ui/text-area'
 import { TextField } from '@/components/ui/text-field'
 
-const props = defineProps<{ exercise: Exercise }>()
+const props = defineProps<{
+  /** The exercise to edit; left out, the dialog adds a new one (K54). */
+  exercise?: Exercise
+}>()
 const emit = defineEmits<{ close: [] }>()
 
 const store = usePlannerStore()
@@ -20,61 +23,93 @@ const form = useExerciseForm()
 const { name, sets, reps, weight, perSide, measure, measureChoice, amountLabel, target, notes } =
   form
 form.load(props.exercise)
+/** Add or edit: the title, the fields' ids and the primary action follow. */
+const adding = !props.exercise
+const id = adding ? 'add-exercise' : 'edit-exercise'
 
 function save(): void {
-  if (store.updateExercise(props.exercise.id, form.value())) emit('close')
+  const ok = props.exercise
+    ? store.updateExercise(props.exercise.id, form.value())
+    : store.addExercise(form.value())
+  if (ok) emit('close')
 }
 </script>
 
-<!-- Open for as long as it is mounted: Escape, Close, Cancel and a good Save all ask the list to
-     drop it, and the Dialog returns focus to the Edit button that opened it. The actions sit
-     outside the form in the Dialog's own row, so Save names the form. -->
+<!-- Edit exercise, or Add exercise when no exercise is given (K54). Open for as long as it is
+     mounted: Escape, Close, Cancel and a good Save (or Add exercise) all ask the list to drop it,
+     and the Dialog returns focus to the button that opened it. The actions sit outside the form
+     in the Dialog's own row, so the primary action names the form. -->
 <template>
-  <Dialog :open="true" title="Edit exercise" @update:open="emit('close')">
-    <form id="edit-exercise-form" class="flex flex-col gap-4" @submit.prevent="save">
+  <Dialog
+    :open="true"
+    :title="adding ? 'Add exercise' : 'Edit exercise'"
+    @update:open="emit('close')"
+  >
+    <!-- Rows at the page's size (K55): the amount, then how it counts, the weight and the goal,
+         then the note last, so the form fits a 1920×1200 screen. -->
+    <form
+      :id="`${id}-form`"
+      class="flex flex-col gap-[max(16px,calc(var(--u)*20))]"
+      @submit.prevent="save"
+    >
       <TextField
-        id="edit-exercise-name"
+        :id="`${id}-name`"
         v-model="name"
         label="Name"
         required
         pattern=".*\S.*"
         title="Enter a name"
       />
-      <div class="flex flex-wrap items-start gap-4">
+      <div
+        class="flex flex-wrap items-start gap-x-[max(16px,calc(var(--u)*24))] gap-y-[max(16px,calc(var(--u)*20))]"
+      >
         <TextField
-          id="edit-exercise-sets"
+          :id="`${id}-sets`"
           :model-value="sets"
           label="Sets"
           maxlength="2"
           inputmode="numeric"
           data-field="sets"
-          class="w-20"
+          class="w-[max(5rem,calc(var(--u)*96))]"
           @input="form.onSetsInput"
         />
         <SegmentedControl v-model="measureChoice" label="Measure" :options="MEASURE_OPTIONS" />
         <TextField
-          id="edit-exercise-reps"
+          :id="`${id}-reps`"
           :model-value="reps"
           :label="amountLabel"
           inputmode="numeric"
           maxlength="4"
           data-field="reps"
-          class="w-20"
+          class="w-[max(5rem,calc(var(--u)*96))]"
           @input="form.onRepsInput"
         />
-        <PerSideToggle v-model="perSide" :timed="measure === 'time'" />
       </div>
-      <TextField
-        id="edit-exercise-weight"
-        :model-value="weight"
-        label="Weight in kg"
-        inputmode="decimal"
-        placeholder="Bodyweight"
-        class="w-44"
-        @input="form.onWeightInput"
-      />
+      <div
+        class="flex flex-wrap items-start gap-x-[max(16px,calc(var(--u)*24))] gap-y-[max(16px,calc(var(--u)*20))]"
+      >
+        <PerSideToggle v-model="perSide" :timed="measure === 'time'" />
+        <TextField
+          :id="`${id}-weight`"
+          :model-value="weight"
+          label="Weight in kg"
+          inputmode="decimal"
+          placeholder="Bodyweight"
+          class="w-[max(11rem,calc(var(--u)*170))]"
+          @input="form.onWeightInput"
+        />
+        <Stepper
+          :id="`${id}-target`"
+          v-model="target"
+          label="Times a week"
+          lower-label="Fewer times a week"
+          raise-label="More times a week"
+          :min="MIN_TARGET"
+          :max="MAX_TARGET"
+        />
+      </div>
       <TextArea
-        id="edit-exercise-notes"
+        :id="`${id}-notes`"
         v-model="notes"
         label="Note"
         :hint="NOTE_HINT"
@@ -82,19 +117,12 @@ function save(): void {
         :maxlength="MAX_NOTES"
         rows="3"
       />
-      <Stepper
-        id="edit-exercise-target"
-        v-model="target"
-        label="Times a week"
-        lower-label="Fewer times a week"
-        raise-label="More times a week"
-        :min="MIN_TARGET"
-        :max="MAX_TARGET"
-      />
     </form>
     <template #actions>
       <Button @click="emit('close')">Cancel</Button>
-      <Button type="submit" form="edit-exercise-form" variant="primary">Save</Button>
+      <Button type="submit" :form="`${id}-form`" variant="primary">{{
+        adding ? 'Add exercise' : 'Save'
+      }}</Button>
     </template>
   </Dialog>
 </template>

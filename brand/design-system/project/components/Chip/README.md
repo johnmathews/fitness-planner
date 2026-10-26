@@ -2,7 +2,7 @@ A small quiet tag under an exercise name that says how much: sets × reps or tim
 
 ## Use
 
-- `label` type (16/22, 600) in `ink-secondary` on a `tile` fill, `radius-sm`, `space-2` side padding, no border. Chips sit `space-2` apart and wrap; they never truncate.
+- `label` type (16/22, 600) in `ink-secondary` on a `tile` fill, `radius-sm`, `space-2` side padding, no border. Chips sit `space-2` apart and wrap; they never truncate. In a WeekGrid row a chip is one size up, at 18, and grows with the screen (K46).
 - One chip for the count, one for the weight. Write them from the exercise's fields:
 
   | Fields | Chip |
@@ -18,7 +18,7 @@ A small quiet tag under an exercise name that says how much: sets × reps or tim
   | nothing | no chip (not a dash) |
 
 - Use the multiplication sign "×" with spaces, never "x" or "*". Figures, not words: chips are data.
-- In WeekGrid the chips sit on the line under the name. Folded, they share the name's line.
+- In WeekGrid the chips share the name's line, wrapping beneath it when they don't fit; the note takes the line below (K43).
 - Never the `pen` colour, never a colour per exercise type, never clickable. A chip is information, not a filter or a button.
 - **Print:** the fill drops and a 1px rule outlines the chip, so it survives black-and-white printing.
 

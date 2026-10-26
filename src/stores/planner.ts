@@ -54,10 +54,9 @@ export type NewExercise = {
   duration?: number
   perSide: boolean
   weight?: number
-  /** The weekly goal; the add form leaves it out and gets NEW_EXERCISE_TARGET. */
+  /** The weekly goal; left out, an added exercise gets NEW_EXERCISE_TARGET. */
   target?: number
-  /** The note in markdown; empty clears it. The add form leaves it out; an update without it keeps
-   * the note the exercise has. */
+  /** The note in markdown; empty clears it. An update without it keeps the exercise's note. */
   notes?: string
 }
 
@@ -111,8 +110,8 @@ export const usePlannerStore = defineStore('planner', () => {
   const currentWeekKey = computed(() => dateKey(mondayOf(now.value, 0)))
 
   // Plans, the log, accent and daily pick are the signed-in user's: the sync store fills them
-  // through `adopt` and saves them. Only the theme, whether the weekly totals show and the mark
-  // set belong to the device, and are stored here. The accent no longer draws anything, since the marks' pens
+  // through `adopt` and saves them. Only the theme and the mark set belong to the device, and are
+  // stored here. The accent no longer draws anything, since the marks' pens
   // are fixed (DayMark card); it is kept as it was saved, so the server and exports still agree.
   // Nothing in the app changes it now.
   const plans = ref<Plans<Exercise>>({})

@@ -2,14 +2,14 @@ Settings as a page of its own, at `#/settings`: a link back to the week, the hea
 
 ## Use
 
-- **Opening it:** the settings IconButton in the Header (Lucide `settings`, label "Settings") goes to the page. On the page the Header holds only the wordmark; the week navigation, the Edit plan Switch, Settings and Print belong to the week.
-- **Layout:** one column at most 576px wide, centred under the Header, `space-6` above it. First a TextLink with a 20px `chevron-left`, "Back to the week", then the page's one `<h1>` "Settings" in `display`, `space-4` below the link. Sections follow `space-8` apart; each after the first opens with a 1px `line` rule and `space-8` above its heading. A section's heading is an `<h2>` in `title-2`, sentence case; its contents are `space-4` apart.
+- **Opening it:** the Settings BarAction in the Header (Lucide `settings`, named "Settings") goes to the page. The page has no Header (K52): a bar holding only the wordmark said nothing, so the page starts with its own link back to the week.
+- **Layout, like the week (K51):** full width on the page's own 48u margins, every size from the PlannerScreen's `u` (main.css's `--set-*` sizes). First a TextLink, "Back to the week", at 19u with a 26u `chevron-left`, then the page's one `<h1>` "Settings" in the `title-1` serif at the section titles' 40u. Each section is a row: its `<h2>` heading at 27u, weight 600, sentence case, in a 320u left column (the week's name column), its settings to the right, 28u apart; a 1px `line` rule opens every row, with 32u above and below. Labels, text and buttons are 19u; controls are 60u tall with 26u icons. A control sits beside the words it belongs to, using the width (K53): the Stepper beside "Exercises a day", Export and Import… beside the data line (held to 34ch), Sign out beside "Signed in as"; they wrap under the words when the row is too narrow. The controls keep their own cards' shapes, tokens and behaviour at the page's size. **Folded**, the heading sits over its settings in one column, at the system's sizes on `n` (headings 22n, text 18n, labels 16n, controls 48px).
 - **Contents, in order** (from `SettingsPage.vue`):
-  1. **Appearance:** Theme, a SegmentedControl, System | Light | Dark, drawn exactly as its card. Then **Marks**, a RadioCard with a row per mark set: Squiggles (the default), Ticks, Stamped ticks, Faces, Stamped faces, each row showing its set's great, partly done and couldn't do it marks as DayMark drawings (K20). Both are this device's. The `pen` colours are fixed, so there is no ink to choose.
-  2. **Planner:** Exercises a day, a Stepper from 1 to 8 with its label beside it: the daily pick, which turns a day green once its exercises reach it (K30).
+  1. **Appearance:** Theme, a SegmentedControl, System | Light | Dark, drawn exactly as its card. Then **Marks**, a RadioCard with an option per mark set: Squiggles (the default), Ticks, Stamped ticks, Faces, Stamped faces, each showing its set's great, partly done and couldn't do it marks as DayMark drawings (K20), 60u each. The options are tiles, three to a row, the dot and name over the marks; folded, one to a row with the marks (44n) beside the name. Both are this device's. The `pen` colours are fixed, so there is no ink to choose.
+  2. **Planner:** Exercises a day, a Stepper from 1 to 8 with its label beside it on the left: the daily pick, which turns a day green once its exercises reach it (K30).
   3. **Your data:** one line in `body` `ink-secondary` saying what each does ("Export saves everything to a file. Import adds a file's plans and marks to yours and never deletes anything."), then secondary buttons "Export" (`download`) and "Import…" (`upload`), at their own width. Import's summary and its own Cancel then Import (secondary first, primary last) appear beneath.
   4. **Account:** "Signed in as alex" in `body` (the name in `ink`), then a secondary "Sign out" (`log-out`). Sign out with unsynced changes asks first with a ConfirmDialog.
-- Every button is md (44px). Settings take effect at once; there is no Save.
+- Every button is the page's control height (60u, 48px folded). Settings take effect at once; there is no Save.
 - Outcomes (import done, import failed, sign-out failed) appear as an InlineMessage at the end of the section that caused them.
 - Room to grow: a new setting goes in the section it belongs to, or a new section, never in the Header.
 - Doesn't print.
@@ -27,9 +27,9 @@ Settings as a page of its own, at `#/settings`: a link back to the week, the hea
 
 - A real page: the hash changes, so the browser's Back works, and a `#/settings` address opens it directly.
 - One `<h1>`, then an `<h2>` per section; each section is a `<section>` labelled by its heading, and the data buttons are a `group` labelled by theirs.
-- Theme, Marks, the Stepper and the Switch keep their own cards' keyboard and naming rules: "Fewer exercises a day" and "More exercises a day".
+- Theme, Marks and the Stepper keep their own cards' keyboard and naming rules: "Fewer exercises a day" and "More exercises a day".
 - After the sign-out question closes without signing out, focus returns to Sign out.
 
 ## You provide
 
-The current theme, mark set, daily pick and totals setting with their change handlers; the export and import handlers; the signed-in name and the sign-out handler; the address of the week for the link back.
+The current theme, mark set and daily pick with their change handlers; the export and import handlers; the signed-in name and the sign-out handler; the address of the week for the link back.

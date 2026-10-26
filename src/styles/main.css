@@ -65,23 +65,58 @@
   --screen-pad-x: calc(var(--u) * 48);
   --screen-pad-top: calc(var(--u) * 28);
   --screen-pad-bottom: calc(var(--u) * 20);
-  --grid-name-w: calc(var(--u) * 280);
+  --grid-name-w: calc(var(--u) * 320);
   --grid-row-min: 76px;
   --grid-row-max: 76px;
   --fs-title: max(30px, calc(var(--u) * 40));
   --fs-week: max(16px, calc(var(--u) * 20));
-  --fs-name: max(18px, calc(var(--u) * 24));
-  --fs-chip: max(16px, calc(var(--u) * 17));
+  --fs-name: max(20px, calc(var(--u) * 27));
+  --fs-chip: max(18px, calc(var(--u) * 19));
   --fs-day: max(16px, calc(var(--u) * 20));
   --fs-total: max(18px, calc(var(--u) * 24));
   --fs-figure: max(18px, calc(var(--u) * 26));
   --fs-stat: max(22px, calc(var(--u) * 28));
   --fs-stat-words: max(20px, calc(var(--u) * 22));
+  /* The Header and its BarActions (K47): as big as the week below them, on the page's margins. */
+  --bar-pad-y: calc(var(--u) * 14);
+  --bar-wordmark: max(26px, calc(var(--u) * 32));
+  --bar-week: max(20px, calc(var(--u) * 26));
+  --bar-arrow: max(28px, calc(var(--u) * 32));
+  --bar-arrow-box: max(48px, calc(var(--u) * 60));
+  --bar-gap: calc(var(--u) * 8);
+  --bar-icon: max(26px, calc(var(--u) * 32));
+  --bar-name: max(16px, calc(var(--u) * 17));
+  --bar-tile-min: max(76px, calc(var(--u) * 96));
+  --bar-tile-gap: calc(var(--u) * 6);
+  --bar-tile-pad-x: calc(var(--u) * 12);
+  --bar-tile-pad-y: calc(var(--u) * 10);
+  /* The Settings page at the week's size (K51): headings like the row names, the rest at 19u. */
+  --set-h2: max(22px, calc(var(--u) * 27));
+  --set-label: max(16px, calc(var(--u) * 19));
+  --set-text: max(18px, calc(var(--u) * 19));
+  --set-control: max(44px, calc(var(--u) * 60));
+  --set-control-pad: calc(var(--u) * 22);
+  --set-icon: max(20px, calc(var(--u) * 26));
+  --set-mark: max(48px, calc(var(--u) * 60));
+  --set-gap: calc(var(--u) * 28);
+  --set-sec-y: calc(var(--u) * 32);
+  /* Edit plan's row buttons (K54): edit after the name, remove in a column of its own. */
+  --edit-ib: max(44px, calc(var(--u) * 52));
+  --edit-ib-icon: max(20px, calc(var(--u) * 28));
+  --grid-edit-w: calc(var(--edit-ib) + 8px);
+  --grid-remove-w: max(56px, calc(var(--u) * 72));
   /* A folded row of boxes: a share of the screen's height, so a tall phone spreads the week. */
   --grid-box-h: clamp(48px, min(19vw, 7.5dvh), 110px);
 }
 
 @media screen {
+  /* Edit plan's page scrolls, so its rows are a fixed 100u rather than a share of the window
+     (K54); the planner's screens override both below. */
+  :root {
+    --grid-row-min: max(76px, calc(var(--u) * 100));
+    --grid-row-max: max(76px, calc(var(--u) * 100));
+  }
+
   /* Rows share the screen's height, at least 56px each; the grid stops at 1.25 × a day's width a
      row (TrackerGrid's max-height), so a tall screen centres the week. */
   :root.planner-screens {
@@ -103,13 +138,32 @@
     --screen-pad-top: calc(var(--n) * 34);
     --screen-pad-bottom: 12px;
     --fs-title: calc(var(--n) * 30);
-    --fs-name: calc(var(--n) * 18);
-    --fs-chip: calc(var(--n) * 16);
+    --fs-name: calc(var(--n) * 20);
+    --fs-chip: calc(var(--n) * 18);
     --fs-day: calc(var(--n) * 16);
     --fs-total: calc(var(--n) * 18);
     --fs-figure: calc(var(--n) * 20);
     --fs-stat: calc(var(--n) * 20);
     --fs-stat-words: calc(var(--n) * 18);
+    --bar-week: calc(var(--n) * 20);
+    --bar-arrow: calc(var(--n) * 26);
+    --bar-arrow-box: calc(var(--n) * 48);
+    --bar-gap: 6px;
+    --bar-icon: calc(var(--n) * 26);
+    --bar-name: calc(var(--n) * 16);
+    --bar-tile-min: 0px;
+    --bar-tile-gap: 4px;
+    --bar-tile-pad-x: 4px;
+    --bar-tile-pad-y: 8px;
+    --set-h2: calc(var(--n) * 22);
+    --set-label: calc(var(--n) * 16);
+    --set-text: calc(var(--n) * 18);
+    --set-control: 48px;
+    --set-control-pad: 16px;
+    --set-icon: 22px;
+    --set-mark: calc(var(--n) * 44);
+    --set-gap: 20px;
+    --set-sec-y: 24px;
   }
 }
 
@@ -119,6 +173,164 @@
 
 .dark {
   color-scheme: dark;
+}
+
+/*
+ * The Settings page and the dialogs at the week's size (SettingsPage card, K51; Dialog card,
+ * K55). Their controls keep their cards' shapes and colours and take the page's `--set-*` sizes
+ * here, outside the layers, so the sizes win over the primitives' fixed utilities there only.
+ */
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='text-field']
+  > label,
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='text-area']
+  > label {
+  font-size: var(--set-label);
+  line-height: 1.3;
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='text-field-input'] {
+  height: var(--set-control);
+  padding-inline: calc(var(--set-control) * 0.25);
+  font-size: var(--set-text);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='text-field']
+  > p,
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='text-area']
+  > p {
+  font-size: max(16px, calc(var(--u) * 16));
+  line-height: 1.35;
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='text-area-input'] {
+  min-height: calc(var(--set-control) * 1.4);
+  padding: calc(var(--set-control) * 0.18) calc(var(--set-control) * 0.25);
+  font-size: var(--set-text);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='segmented-control-label'],
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='radio-card-label'],
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='stepper-label'] {
+  font-size: var(--set-label);
+  line-height: 1.3;
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='segmented-control']
+  button {
+  height: calc(var(--set-control) - 2px);
+  padding-inline: var(--set-control-pad);
+  font-size: var(--set-label);
+  line-height: 1.3;
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='stepper']
+  > div {
+  height: var(--set-control);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='stepper-lower'],
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='stepper-raise'] {
+  width: var(--set-control);
+  height: var(--set-control);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='stepper']
+  svg,
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='button']
+  svg {
+  width: var(--set-icon);
+  height: var(--set-icon);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='stepper']
+  input {
+  width: calc(var(--set-control) * 1.1);
+  height: var(--set-control);
+  font-size: calc(var(--set-label) * 1.25);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='button'] {
+  height: var(--set-control);
+  padding-inline: var(--set-control-pad);
+  gap: calc(var(--set-icon) * 0.4);
+  font-size: var(--set-label);
+}
+/* The mark sets as tiles, three to a row: the dot and the name, the marks under them. */
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='radio-card']
+  [role='radiogroup'] {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(var(--u) * 12);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='radio-card-option'] {
+  flex-wrap: wrap;
+  row-gap: calc(var(--u) * 12);
+  column-gap: calc(var(--u) * 14);
+  padding: calc(var(--u) * 12) calc(var(--u) * 16);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='radio-card-option'][aria-checked='true'] {
+  padding: calc(var(--u) * 12 - 1px) calc(var(--u) * 16 - 1px);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='radio-card-name'] {
+  font-size: var(--set-text);
+  line-height: 1.3;
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='radio-card-option'][aria-checked='true']
+  [data-slot='radio-card-name'] {
+  font-weight: 600;
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='radio-card-dot'] {
+  width: calc(var(--set-icon) * 0.9);
+  height: calc(var(--set-icon) * 0.9);
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='radio-card-dot']
+  > * {
+  width: 50%;
+  height: 50%;
+}
+:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+  [data-slot='radio-card-picture'] {
+  width: 100%;
+  gap: calc(var(--u) * 10);
+  padding-left: calc(var(--set-icon) * 0.9 + var(--u) * 14);
+}
+/* Folded: one set to a row, its marks beside its name. */
+@media screen and (orientation: portrait) and (width < 1000px), screen and (width < 760px) {
+  :is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+    [data-slot='radio-card']
+    [role='radiogroup'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  :is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+    [data-slot='radio-card-option'] {
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 10px 14px;
+  }
+  :is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+    [data-slot='radio-card-option'][aria-checked='true'] {
+    padding: 9px 13px;
+  }
+  :is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
+    [data-slot='radio-card-picture'] {
+    width: auto;
+    gap: 6px;
+    padding-left: 0;
+  }
 }
 
 /* Type-style details tokens.css does not emit: the note is italic, the display smaller on phones.
@@ -289,8 +501,8 @@
     color-scheme: light;
     /* The planner's sizes at their fixed values: paper doesn't follow the screen. */
     --fs-title: 30px;
-    --fs-name: 18px;
-    --fs-chip: 16px;
+    --fs-name: 20px;
+    --fs-chip: 18px;
     --fs-day: 16px;
     --fs-total: 20px;
     --fs-figure: 20px;

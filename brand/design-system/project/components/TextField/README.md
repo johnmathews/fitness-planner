@@ -2,6 +2,7 @@ A single-line input with its label always visible above it, an optional hint bel
 
 ## Use
 
+- On the Settings page and in dialogs a TextField takes the page's `--set-*` size instead, 60u tall (48px folded), its type at 19u (K51, K55).
 - Field: 44px tall, `panel` fill, 1px `control-border`, `radius-sm`, `body` text in `ink`, padding `space-3`. Numbers (sets, reps, weight) add `tabular-nums` and the right `inputmode`.
 - Label: `label` style in `ink`, `space-1` above the field. Always visible; a placeholder never stands in for it. The label names the thing and its unit only ("Weight in kg"); fields are not marked optional or required. When an empty field means something, its placeholder says what, in `ink-secondary`: "Bodyweight" in an empty Weight in kg. A placeholder is never an example value ("e.g. 12"). A hint below says what the label can't: "At least 10 characters." under a new password.
 - Hint: `caption` in `ink-secondary`, `space-1` below, tied with `aria-describedby` ("At least 10 characters.").

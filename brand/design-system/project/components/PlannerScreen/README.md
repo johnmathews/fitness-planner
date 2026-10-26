@@ -9,7 +9,7 @@ The planner's layout: Exercises and Food each fill the screen, the page sprints 
 - **The bar** is the Header, out of sight (Header, Out of sight): the top-edge strip for a pointer, the handle for a finger, focus for the keyboard.
 - **Messages** (Banner: sync, confirm your email, import) sit at the top of the Exercises screen, above its SectionHeader, and push the week down while they show.
 - **Every screen size gets this layout.** A desktop, an iPad on its side and a phone on its side get the wide grid; a screen held upright under 1000px wide, or any screen under 760px wide, gets the folded one (K26). There is no separate phone view.
-- **Not in Edit plan or Settings** (K27): there the page scrolls freely, nothing sprints, the bar stays in view, the sections are as tall as their content, and the week's `<h1>` shows in `display` above them.
+- **Not in Edit plan or Settings** (K27): there the page scrolls freely, nothing sprints and the sections are as tall as their content. Edit plan keeps the bar in view; Settings has none (K52). The week's `<h1>` is hidden on screen there too, each section titled with the week beside it (K54), and shows in `display` only on paper.
 - **Print** is unchanged: no sprinting, no bar, the WeekGrid as a table on paper.
 
 ## States

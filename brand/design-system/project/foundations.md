@@ -25,13 +25,13 @@ The type is set for the gym, not the desk: big enough to read at arm's length fr
 
 | Style | Size | Use |
 | --- | --- | --- |
-| `display` | 44/48 serif 600 (36/40 below 640px) | The week's date above the sections in Edit plan; visually hidden on the planner's screens |
+| `display` | 44/48 serif 600 (36/40 below 640px) | The week's date, on paper only (visually hidden on screen, K54) |
 | `title-1` | 30/36 serif 600 | Section titles |
 | `title-2` | 22/28 sans 600 | Dialog titles |
-| `body-large` | 20/28 | Larger running text |
-| `body` | 18/26 | Running text, inputs, buttons, row names |
+| `body-large` | 20/28 | Larger running text, row names (600) |
+| `body` | 18/26 | Running text, inputs, buttons |
 | `caption` | 16/22 | Goals, hints, dates in `ink-secondary` |
-| `label` | 16/22 600 | Field labels, day names ("Mon"), chips. Sentence case. |
+| `label` | 16/22 600 | Field labels, day names ("Mon"), chips (a WeekGrid row's at 18, K46). Sentence case. |
 | `note` | 18/26 serif italic | A person's note |
 
 ## The marks

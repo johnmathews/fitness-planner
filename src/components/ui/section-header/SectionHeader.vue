@@ -3,8 +3,8 @@ defineProps<{
   /** "Exercises", "Food": sentence case, no icon. */
   title: string
   /**
-   * The week, as the Header writes it ("19–25 October"), beside the title on the planner's
-   * screens, where the bar is out of sight (K25). Folded, and outside those screens, it is left out.
+   * The week, as the Header writes it ("19–25 October"), beside the title on screen: the page's
+   * h1 is visually hidden there (K25, K54). Folded, and on paper, it is left out.
    */
   week?: string
   /** One optional line of plain instructions; small numbers as words. It doesn't print. */
@@ -25,14 +25,14 @@ defineProps<{
 <template>
   <header
     data-slot="section-header"
-    class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 pb-6 print:break-after-avoid print:pb-3 full:pb-[calc(var(--u)*20)] folded:pb-3 short:sr-only"
+    class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 pb-6 print:break-after-avoid print:pb-3 screen:items-center screen:pb-[calc(var(--u)*20)] folded:pb-3 short:sr-only"
   >
     <div class="flex min-w-0 flex-col gap-1">
       <!-- The week repeats the page's h1, which a screen reader already has, so it is hidden from one. -->
       <div class="flex items-baseline gap-x-[calc(var(--u)*16)]">
         <h2
           :id="headingId"
-          class="title-1 text-ink full:text-(length:--fs-title) full:leading-tight"
+          class="title-1 text-ink screen:text-(length:--fs-title) screen:leading-tight"
         >
           {{ title }}
         </h2>
@@ -40,7 +40,7 @@ defineProps<{
           v-if="week"
           aria-hidden="true"
           data-slot="section-week"
-          class="hidden text-(length:--fs-week) text-ink-secondary full:inline folded:hidden"
+          class="hidden text-(length:--fs-week) text-ink-secondary screen:inline folded:hidden"
           >{{ week }}</span
         >
       </div>
@@ -48,5 +48,7 @@ defineProps<{
         {{ hint }}
       </p>
     </div>
+    <!-- The section's actions, at the right of the title line (Edit plan's Copy plan, K54). -->
+    <slot name="actions" />
   </header>
 </template>

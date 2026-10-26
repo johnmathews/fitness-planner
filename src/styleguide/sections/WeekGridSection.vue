@@ -4,7 +4,8 @@ import type { Day } from '@/stores/planner'
 import { DAY_NAMES, addDays, dateKey, fullDate } from '@/lib/dates'
 import { EXERCISE_CYCLE, cycleDay, type Tracked } from '@/lib/tracker'
 import type { Log, Mark } from '@/lib/storage'
-import { Switch } from '@/components/ui/switch'
+import { Pencil } from '@lucide/vue'
+import { BarAction } from '@/components/ui/bar-action'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import ExampleGroup from '../parts/ExampleGroup.vue'
 import StateExample from '../parts/StateExample.vue'
@@ -67,11 +68,13 @@ function remove(id: string): void {
 }
 </script>
 
-<!-- The card's grid, drawn by the app's own TrackerGrid: today's band, the totals and Edit plan. A press steps a mark; nothing is saved. -->
+<!-- The card's grid, drawn by the app's own TrackerGrid, and Edit plan as the Header's toggle (K48). A press steps a mark; nothing is saved. -->
 <template>
   <ExampleGroup>
     <StateExample state="On screen. Today is Thursday." class="w-full">
-      <Switch v-model="editing" label="Edit plan" />
+      <BarAction label="Edit plan" :pressed="editing" @click="editing = !editing"
+        ><Pencil
+      /></BarAction>
       <div id="sg-week-grid-screen" class="w-full">
         <TrackerGrid
           label="Exercise"

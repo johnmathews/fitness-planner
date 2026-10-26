@@ -1,4 +1,4 @@
-The app bar: the wordmark on the left, the week navigation at the centre, and the settings button on the right. On the planner's screens it keeps out of sight until it is wanted.
+The app bar: the wordmark on the left, the week navigation at the centre, and the actions on the right, as big and bold as the week below it. On the planner's screens it keeps out of sight until it is wanted.
 
 ## Out of sight (K25)
 
@@ -6,26 +6,24 @@ The app bar: the wordmark on the left, the week navigation at the centre, and th
 - **A pointer brings it** at the top edge: an invisible 14px strip along the top of the screen. It hides 500ms after the pointer leaves the bar.
 - **A finger brings it** with the handle: a 40 × 5px pill in `control-border` at the top centre, in an 88 × 44px button named "Show controls". A press shows the bar, and so does pulling the handle down. A press anywhere outside the bar hides it. The handle shows wherever a coarse pointer is present (`any-pointer: coarse`), so an iPad with a trackpad has both.
 - **The keyboard brings it** by focus: the bar shows while focus is inside it, so Tab from the top of the page reaches "Skip to today" and the bar's controls in view. Escape hides it.
-- **Edit plan and the SettingsPage keep it in view** (K27), sticky at the top as before: the controls are the point there.
+- **Edit plan keeps it in view** (K27), sticky at the top as before: the controls are the point there. The SettingsPage has no bar (K52).
 
 ## Use
 
-- `canvas` background with a 1px `line` rule below; no shadow, no blur. At least 56px tall; padding `space-6` at the sides on desktop, `space-4` and `space-2` on the phone.
-- **Wordmark:** the BrandMark outline SVG, 20px tall, `fill: var(--ink)` so it follows the theme. Below 640px the planner's bar leaves it out (see Phone); the Settings page's bar keeps it at every width (there is no monogram, K44).
-- **Layout:** three columns, `1fr auto 1fr`, so the week navigation sits at the centre of the bar whatever the two sides hold: the wordmark at the start of the first, the controls at the end of the third.
-- **Week navigation:** a `nav` labelled "Week" holding two quiet IconButtons, "Previous week" (`chevron-left`) and "Next week" (`chevron-right`), around the week label ("19–25 October") in `body` size at weight 600, `tabular-nums`, with a fixed minimum width so the arrows never jump. The label is `aria-live="polite"`, so a change of week is announced.
-- **This week:** a quiet Button in the right-hand controls, sm (36px) on desktop, md (44px) below 640px, shown only while another week is on screen.
-- **Full screen** (K34): a quiet IconButton (`maximize`, named "Full screen"; `minimize` and "Exit full screen" while full screen) after the "Edit plan" Switch, which puts the whole page in the browser's full screen. Esc leaves it too. Where the browser has no full screen for a page, as on an iPhone, the button is left out. On a phone it sits in the second row with the Switch.
-- **Settings:** a quiet IconButton (`settings`) that opens the SettingsPage. The "Edit plan" Switch, when present, sits before it on desktop. On the SettingsPage the bar holds only the wordmark.
-- The bar holds no heading. The page's `<h1>` is the week date, visually hidden on the planner's screens (each SectionHeader shows the week beside its title) and set in `display` above the sections in Edit plan; the week label in the bar is plain text.
+- **Full width and as big as the week (K47).** The bar spans the window on the page's own margins (the PlannerScreen's 48u at the sides, 14u above and below), so the wordmark sits over the section's title and the last action over Sunday. Every size follows the screen through the PlannerScreen's `u`: about 108px tall at 1280×800 and 163px at 1920×1200. It can be that big because on the planner's screens it is out of sight until wanted.
+- `canvas` background with a 1px `line` rule below; no blur.
+- **Wordmark:** the BrandMark outline SVG, max(26px, 32u) tall, `fill: var(--ink)` so it follows the theme. Folded, the bar leaves it out (see Folded); there is no monogram (K44).
+- **Layout:** three columns, `1fr auto 1fr`, so the week navigation sits at the centre of the bar whatever the two sides hold: the wordmark alone at the start of the first ("This week", when shown, at its end beside the week's arrows), the actions at the end of the third.
+- **Week navigation:** a `nav` labelled "Week": "Previous week" (`chevron-left`) and "Next week" (`chevron-right`), each a max(28px, 32u) icon in a max(48px, 60u) quiet square, around the week label ("19–25 October") at max(20px, 26u), weight 600, `tabular-nums`, with a minimum width so the arrows never jump. The label is `aria-live="polite"`, so a change of week is announced.
+- **Actions:** BarActions, a Lucide icon over its name. "This week" (`calendar`, shown only while another week is on screen) sits just left of the week's arrows, since it is a way back to this week; with it among the other actions the group grew too wide and pushed the week off centre (K50). At the right, 8u apart: "Edit plan" (`pencil`, a toggle that is filled while on; K48), "Settings" (`settings`, opens the SettingsPage), "Print…" (`printer`; left out below 640px wide) and, last, "Full screen" (K34, K49; `maximize`, or `minimize` and "Exit full screen" while full screen; left out where the browser has none, as on an iPhone). The markup follows that order, which is the tab order. The SettingsPage has no bar (K52).
+- The bar holds no heading. The page's `<h1>` is the week date, visually hidden on screen (each SectionHeader shows the week beside its title; K54) and set in `display` on paper; the week label in the bar is plain text.
 - Never `pen` in the bar. Nothing in it prints.
 
 ## States
 
-- Buttons follow IconButton and Button: `tile` on hover and while open, a 2px `focus` outline at 2px offset.
-- Phone (below 640px), on the planner (shown): the wordmark is left out, `visibility: hidden` so it keeps its grid column and the week stays at the centre. The first row is the centred arrows and label with Settings at the right; "This week" (when shown) and the "Edit plan" Switch, its visible label shortened to "Edit", take a second row, right-aligned. The week and Settings are what a phone's bar is for.
-- Phone, on the SettingsPage: the bar has nothing else, so it keeps the wordmark.
-- Every target is 44px on a phone. Nothing scrolls sideways down to 320px.
+- The arrows and BarActions take `tile` on hover and a 2px `focus` outline at 2px offset; Edit plan, while on, takes the `ink` fill (BarAction).
+- **Folded** (held upright under 1000px wide, or any screen under 760px wide), on the planner: the wordmark is left out. The week takes the first row, centred, at 20n between 26n arrows in 48n squares; the actions share the second row equally ("This week" first when shown), each a 26n icon over its 16n name. The week moves up by CSS order, so the tab order ("This week", then the week) differs from the picture there. The week and the actions are what a phone's bar is for.
+- Every target is at least 44px. Nothing scrolls sideways down to 320px.
 
 ## You provide
 

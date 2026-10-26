@@ -29,7 +29,7 @@ system's cards ([brand.md](brand.md)). `TrackerGrid` and `TrackerRow` (on the `D
 and `IconButton` primitives) take props, emit events, and serve both sections.
 `TrackerGrid` runs the grid's keyboard model (`useGridNav`, §6.5). `TrackerRow` asks the
 `ConfirmDialog` (through `useConfirm`, §6.4) before emitting `remove`, and names where focus goes
-once the row has gone. `ExerciseGrid` and `DietSection` wire them to their store. `AddExerciseForm` and `EditExerciseDialog` share their field
+once the row has gone. `ExerciseGrid` and `DietSection` wire them to their store. `EditExerciseDialog` (which also adds an exercise when given none, K54) takes its field
 state and input cleaning through `useExerciseForm` (`src/composables/exerciseForm.ts`) and the
 `PerSideToggle` segmented control. `src/lib/problems.ts` turns a sign-in, sign-up, link or
 sign-out refusal into a sentence for the forms; `src/composables/importSummary.ts` says what an import would add,
@@ -46,34 +46,36 @@ App.vue                 picks the screen (a link, planner, sign-up, reset or sig
 ├── LoginForm.vue       email and password; explains refusals; notes an ended
 │                       session; links to #/signup, and to #/forgot where the API sends email
 │   (all five inside AuthCard.vue: a centred Panel with the BrandMark)
-├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
-│                       the Edit plan Switch, Full screen (useFullscreen, where the browser has
-│                       one), Settings (to the Settings page) and Print…; on the planner's screens
-│                       out of sight until wanted (useBarReveal, §6.6)
+├── AppNavbar.vue       the Header card: Skip to today, BrandMark, This week beside ‹ › and the
+│                       week, then the BarActions Edit plan (a toggle), Settings (to the
+│                       Settings page), Print… and Full screen (useFullscreen, where the browser
+│                       has one); full width, sized by main.css's --bar-* (K47, K49, K50); on
+│                       the planner's screens out of sight until wanted (useBarReveal, §6.6)
 ├── SettingsPage.vue    the SettingsPage card, at #/settings: Back to the week, then Appearance
 │                       (Theme, Marks), Planner (Exercises a day), Your data
 │                       (Export and Import…, see §4) and Account (who is signed in, Sign out)
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── EmailStatus.vue     "Confirm your email." Banner, with Send it again, until it is confirmed
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
-├── WeekHeader.vue      the page's h1, the week ("19–25 October"), visually hidden on the planner's
-│                       screens (each SectionHeader shows the week); in config mode "Copy plan to
-│                       next week" and a note when the plan is carried over
-├── ExerciseGrid.vue    the Exercises section: SectionHeader (the title and the week)
+├── WeekHeader.vue      the page's h1, the week ("19–25 October"), visually hidden on screen (each
+│                       SectionHeader shows the week); set in display on paper
+├── ExerciseGrid.vue    the Exercises section: SectionHeader (the title and the week; in config
+│   │                   mode CopyPlan.vue at its right: "Copy plan to next week" and a note when
+│   │                   the plan is carried over)
 │   ├── TrackerGrid.vue a <table> (WeekGrid card): day names, one TrackerRow per item, and
 │   │   │               the days that met the daily pick
 │   │   └── TrackerRow.vue  name and chips on one line, the note under them
 │   │                       (a button opening a Popover, K43); 7 × DayMark; in config
 │   │                       mode the edit IconButton after the name, and the remove
 │   │                       IconButton in a last cell of its own
-│   ├── AddExerciseForm.vue config mode only: name, sets, Measure (Reps or Time), reps or
-│   │                       seconds, PerSideToggle, weight (kg)
-│   └── EditExerciseDialog.vue  Dialog: the add form's fields, Note, then Times a week (the goal)
+│   └── EditExerciseDialog.vue  Dialog: Name; sets, Measure (Reps or Time), reps or seconds;
+│                           PerSideToggle, weight (kg), Times a week (the goal); then Note (K55);
+│                           Edit exercise, or Add exercise from the button under the grid (K54)
 └── DietSection.vue     the Food section: SectionHeader (the title and the week), kept with its grid;
                         on the screens, the "Back to Exercises" arrow (K42)
     ├── TrackerGrid.vue wired to diet: no chips
-    ├── AddFoodForm.vue config mode only: name, Add food
-    └── EditFoodDialog.vue  Dialog: Name, Note, then Times a week (the goal)
+    └── EditFoodDialog.vue  Dialog: Name, Times a week (the goal), then Note; Edit food, or
+                            Add food from the button under the grid (K54)
 ```
 
 ## 2. Weekly plans
@@ -83,8 +85,8 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 
 - **Carry forward.** A week without a plan of its own shows the plan of the latest earlier week that
   has one (`planSource` in `src/lib/plans.ts`); weeks before the first plan show the earliest one,
-  and with no plans at all the stores show the defaults. In config mode the header says which week
-  the plan comes from, naming the exercise and food sources separately when they differ.
+  and with no plans at all the stores show the defaults. In config mode CopyPlan's caption, on the
+  Exercises title line, says which week the plan comes from, naming the exercise and food sources separately when they differ.
 - **A week gets its own plan when it first changes**, ticks included: the store copies what the week
   shows into `plans[week]` and edits that copy (`own()`). Until then, an unplanned week follows its
   source, so changing this week's plan also changes the weeks ahead that haven't been touched.
@@ -136,9 +138,10 @@ card's words).
 `useDietStore` holds `plans` of foods (`{ id, name, target, notes? }`) and its own `log`, kept by the sync
 store like the planner's. It reads `planner.weekKey`, so week navigation moves both
 sections. It derives `foods`, `dayCounts`, `grandTotal`, `goalsMet` and `nextWeekHasPlan`, and
-offers `isEaten`, `totalFor`, `toggle`, `changeTarget` (0–7), `addFood` (goal 3, `false` for an
-empty name), `updateFood` (name and goal from the Edit food dialog, `false` for an empty name or a
-food not in the week), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
+offers `isEaten`, `totalFor`, `toggle`, `changeTarget` (0–7), `addFood` (a name, or a name with
+its goal and note from the Add food dialog; goal 3 when none is given, `false` for an empty name),
+`updateFood` (name, goal and note from the Edit food dialog, `false` for an empty name or a food
+not in the week), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
 like exercise goals (met once the count reaches a non-zero goal); foods have no daily target.
 
 The planner writes only the theme and `markSet`, each merged into whatever
@@ -286,8 +289,10 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **One screen per section, not a window.** The handoff drew the app as a macOS window (traffic
   lights, a framed window on a backdrop). The app fills the browser instead: Exercises and Food are
   a screen each, the page sprints between them, and the navbar keeps out of sight until it is
-  wanted (K24, K25; §6.6). Edit plan and Settings are ordinary pages with a sticky navbar and a
-  centred content column (K27). The navbar keeps the week controls, Settings and Print….
+  wanted (K24, K25; §6.6). Edit plan is an ordinary page with a sticky navbar (K27), full
+  width at the week's sizes with rows a fixed 100u (K54). Settings has no navbar (K52) and is full
+  width in rows like the week (K51). The navbar keeps the week controls, This week, Edit plan,
+  Settings, Print… and Full screen.
 - **Light and dark themes.** The handoff is dark-only. Settings offers System (the default, which
   follows `prefers-color-scheme` live), Light and Dark. `App.vue` toggles a `dark` class on
   `<html>`; `public/theme-init.js` applies the saved choice before first paint so a dark preference
@@ -296,21 +301,23 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **Settings page.** The handoff calls accent and daily pick user settings but shows no UI for
   them. Settings started as a popover and became a page of its own (`SettingsPage.vue`, at
   `#/settings`) so it has room to grow. App reads the hash (as it does for invite and reset links)
-  and shows the page in place of the week; the Header then holds only the wordmark. Arriving moves
+  and shows the page in place of the week, without the Header (K52). Arriving moves
   focus to the page's heading, and coming back to the week puts it on the Settings button. Signing
   out there drops the hash, so the next sign-in opens on the week. The marks' pens are fixed, so
   there is no Ink setting (K10). The theme and per-side choices are SegmentedControls: `aria-pressed` buttons in a
   `role="group"`. Marks is a RadioCard (a `radiogroup` of `role="radio"` rows), each row showing
   its set's three marks with `DayMarkDrawing`, the mark without its button (K20).
 - **Config mode and normal mode.** Normal mode, the default on every load, only marks cells. The
-  "Edit plan" Switch in the navbar (a `role="switch"` button) turns on config mode, which shows the
-  edit and remove IconButtons, the add forms and "Copy plan to next week". An item is changed only
-  in its dialog (Edit exercise, Edit food), so rows have no Stepper; the remove button ends each
+  "Edit plan" BarAction in the navbar (a toggle button with `aria-pressed`, filled while on; K48)
+  turns on config mode, which shows the
+  edit and remove IconButtons, an "Add exercise" and an "Add food" button under the grids, and
+  "Copy plan to next week" on the Exercises title line. An item is added and changed only in its
+  dialog (Add or Edit exercise, Add or Edit food; K54), so rows have no Stepper; the remove button ends each
   row, in a "Remove" column after the days. The mode is not saved, so the
   app always opens ready for ticking.
 - **Exercises and foods are editable.** The handoff had no way to change an item after adding it.
   An Edit IconButton (`pencil`) on each exercise row opens `EditExerciseDialog` (and on each food
-  row `EditFoodDialog`: name and Times a week), on the Dialog primitive (Reka UI),
+  row `EditFoodDialog`: name, Times a week and Note), on the Dialog primitive (Reka UI),
   which traps focus, closes on Escape and returns focus to the button. Sets and
   weight can be left empty (an empty weight shows a grey "Bodyweight" placeholder; no field is
   marked optional), weight in kg; the sets/reps chip and the weight chip are separate so they
@@ -336,11 +343,11 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   before. The sections have no weekly figure (K31), Settings no totals switch (K32), and the grids no Week
   column (K33). The Header has a Full screen button where the browser supports one (K34).
 - **Print is the light theme on white paper, from either theme** (§6.7).
-- **Narrow screens.** Below 640px the navbar drops Print…, shortens the switch's visible label to
-  "Edit" (its accessible name stays "Edit plan"), and wraps "This week" and the switch to a second
-  row at the right, leaving the centred arrows and week and Settings on the first; the planner's bar
-  leaves the wordmark out there, and the Settings page's bar keeps it at every width (no monogram, K44). Settings is a gear IconButton named "Settings" at every
-  width. The markup keeps the desktop order, which is the tab order. Held upright under 1000px wide,
+- **Narrow screens.** Folded (held upright under 1000px wide, or under 760px wide), the navbar
+  puts the week across its first row (by CSS order) and shares its second row equally among the
+  BarActions, This week first when shown; the
+  bar leaves the wordmark out there (no monogram, K44). Below 640px it drops Print…. The markup keeps the desktop order, which is the
+  tab order. Held upright under 1000px wide,
   or on any screen under 760px wide, the grids fold (K26): each row's name line spans the seven
   days above its boxes, so nothing scrolls sideways down to 320px. A phone opens on the week, like
   every other screen. This supersedes the phone's Today list and the sticky name column (K5).
@@ -374,7 +381,11 @@ have no `<style>` blocks. Everything global is in `src/styles/main.css`.
   before first paint, and `App.vue` keeps it in step afterwards.
 - **Type.** The type-style classes (`display`, `title-1`, `title-2`, `body-large`, `body`,
   `caption`, `label`, `note`) come from `tokens.css`. `main.css` adds the note's italic and the
-  smaller `display` below 640px, in the same layer, so a utility beside a type class wins. Numbers use `tabular-nums`. The fonts are the Fontsource variable
+  smaller `display` below 640px, in the same layer, so a utility beside a type class wins. One
+  block is unlayered on purpose: the Settings page's and the dialogs' page sizes (K51, K55),
+  scoped to `:is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])`
+  and keyed on the primitives' `data-slot` names, so it beats their fixed utilities there and
+  nowhere else. Numbers use `tabular-nums`. The fonts are the Fontsource variable
   packages, imported in `src/main.ts` so Vite bundles them under `/assets/` (the CSP allows only
   `'self'`), with the latin files preloaded in `index.html`.
 - **Shape, focus and scroll.** `rounded-sm`, `rounded-md` and `rounded-lg` follow the radius tokens,
@@ -409,13 +420,13 @@ an `index.ts`. They are shadcn-vue (K1): owned source on Reka UI, added with the
 to the tokens and the cards. `cn` (`src/lib/utils.ts`) merges a consumer's classes over a
 component's own.
 
-| Group    | Primitives                                                                                                                            |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Basics   | Button (primary, secondary and quiet, 44px tall, `sm` 36px from 640px up), IconButton (44px, a required `label`), TextLink, BrandMark |
-| Forms    | TextField, TextArea, SegmentedControl, Switch, Stepper                                                                                |
-| Overlays | Dialog, ConfirmDialog with ConfirmHost, Popover                                                                                       |
-| Planner  | DayMark, Chip, SectionHeader                                                                                                          |
-| Feedback | InlineMessage, Banner                                                                                                                 |
+| Group    | Primitives                                                                                                                                                                   |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Basics   | Button (primary, secondary and quiet, 44px tall, `sm` 36px from 640px up), IconButton (44px, a required `label`), TextLink, BrandMark, BarAction (the Header's actions, K47) |
+| Forms    | TextField, TextArea, SegmentedControl, Switch, Stepper, RadioCard                                                                                                            |
+| Overlays | Dialog, ConfirmDialog with ConfirmHost, Popover                                                                                                                              |
+| Planner  | DayMark, Chip, SectionHeader                                                                                                                                                 |
+| Feedback | InlineMessage, Banner                                                                                                                                                        |
 
 The other cards are composed in the screens: Header in `AppNavbar.vue`, Panel in `AuthCard.vue`
 and `ImportPrompt.vue`, WeekGrid in `TrackerGrid.vue` and `TrackerRow.vue`, PlannerScreen in
@@ -429,7 +440,7 @@ the properties they animate, so the focus ring never fades in.
 true for the verb, false for Cancel or Escape. One `<ConfirmHost />`, mounted once in `App.vue`,
 shows the open question in a ConfirmDialog (Reka's AlertDialog). A newer question answers an older
 one false. `returnFocus` names where focus goes on closing when the control that asked has gone, as
-after a removal. Removing a row (`TrackerRow`) and copying over next week's plan (`WeekHeader`) ask
+after a removal. Removing a row (`TrackerRow`) and copying over next week's plan (`CopyPlan`) ask
 this way. Sign out uses a ConfirmDialog of its own on the Settings page, because it shows the
 unsynced count, a busy state and an error.
 
@@ -477,7 +488,12 @@ tall or less).
 - **Sizes follow the screen.** `--u` in main.css is 1 at 1280×800, clamped between 0.75 and 1.6.
   The named sizes (`--fs-name`, `--grid-name-w`, `--screen-pad-x`, …) derive from it, and folded
   they switch to `--n` (1 on a phone, up to 1.4). Components set `text-(length:--fs-name)` beside a
-  type class, so the class keeps the font and weight and the size follows the screen.
+  type class, so the class keeps the font and weight and the size follows the screen. The other
+  families: `--bar-*` sizes the Header and its BarActions (K47); `--set-*` the Settings page's and
+  the dialogs' type and controls (K51, K55); `--edit-ib`, `--edit-ib-icon`, `--grid-edit-w` and
+  `--grid-remove-w` Edit plan's row buttons and their columns (K54). Outside the planner's screens
+  (Edit plan) `--grid-row-min` and `--grid-row-max` are a fixed max(76px, 100u), since that page
+  scrolls rather than filling the window.
 - **The grid.** `TrackerGrid` makes the table `display: grid` with its row groups and rows
   `display: contents`, so the cells place themselves and gridNav still walks `table.rows`. Rows
   share the height (`minmax(--grid-row-min, 1fr)`), and a `max-height` stops them at 1.25 × a day's
@@ -502,7 +518,7 @@ literal colours the system allows (`src/styles/__tests__/print.spec.ts` holds th
 `--panel` and `--tile` go transparent. Shadows and transitions are off.
 
 - Anything marked `data-noprint` is hidden: the navbar and its handle, the arrows between the screens, the sync status,
-  the import prompt, Edit plan's controls and add forms, and a section's hint line if it has one. Dialogs, the
+  the import prompt, Edit plan's controls and Add buttons, and a section's hint line if it has one. Dialogs, the
   popover and Banners carry `print:hidden`.
 - A met day's name, check and underline keep their `pen`. A table split across pages repeats its
   header.

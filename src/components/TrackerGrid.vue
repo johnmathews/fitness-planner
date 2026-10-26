@@ -41,12 +41,13 @@ defineSlots<{
 
 /**
  * The column template on screen (WeekGrid card): the names and the seven days, and in Edit plan
- * the names widened by the edit button and its gap, and a 56px Remove column (no Week column, K33).
+ * the names widened by the edit button and its gap, and a Remove column (no Week column, K33),
+ * both from main.css's sizes (K54).
  * Folded there are only the seven days. On paper the colgroup's widths apply instead.
  */
 const columns = computed(() =>
   props.configMode
-    ? 'screen:grid-cols-[calc(var(--grid-name-w)+52px)_repeat(7,minmax(0,1fr))_56px]'
+    ? 'screen:grid-cols-[calc(var(--grid-name-w)+var(--grid-edit-w))_repeat(7,minmax(0,1fr))_var(--grid-remove-w)]'
     : 'screen:grid-cols-[var(--grid-name-w)_repeat(7,minmax(0,1fr))]',
 )
 // One tab stop for the whole grid, on today's DayMark in the first row (see gridNav for the keys
@@ -72,8 +73,8 @@ useGridNav(table, {
   Nothing scrolls sideways. On paper it is a
   table again, at the colgroup's widths and DayMark's fixed size.
 
-  Edit plan widens the name column by exactly the edit button it gains and adds a 56px Remove
-  column after the days, so each row keeps its height (F25).
+  Edit plan widens the name column by exactly the edit button it gains and adds a Remove column
+  after the days, so each row keeps its height (F25); its rows are a fixed 100u (K54).
 
   Keyboard (F15): the WAI-ARIA grid, one tab stop per grid (useGridNav). A day cell's focus is its
   DayMark, the cell's one widget; the names take focus themselves and

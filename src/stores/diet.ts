@@ -67,11 +67,25 @@ export const useDietStore = defineStore('diet', () => {
     if (f) f.target = clamp(f.target + delta, MIN_TARGET, MAX_TARGET)
   }
 
-  /** Returns false (and adds nothing) when the trimmed name is empty. */
-  function addFood(rawName: string): boolean {
+  /**
+   * Adds a food this week: a name alone, or with its goal and note (the Add food dialog, K54).
+   * Returns false (and adds nothing) when the trimmed name is empty.
+   */
+  function addFood(input: string | { name: string; target?: number; notes?: string }): boolean {
+    const {
+      name: rawName,
+      target,
+      notes: rawNotes,
+    } = typeof input === 'string' ? { name: input } : input
     const name = rawName.trim()
     if (!name) return false
-    own().push({ id: tracker.newId(), name, target: NEW_FOOD_TARGET })
+    const notes = normaliseNotes(rawNotes)
+    own().push({
+      id: tracker.newId(),
+      name,
+      target: clamp(target ?? NEW_FOOD_TARGET, MIN_TARGET, MAX_TARGET),
+      ...(notes ? { notes } : {}),
+    })
     return true
   }
 

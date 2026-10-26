@@ -68,14 +68,14 @@ const row = ref<HTMLTableRowElement | null>(null)
 
 /**
  * Where focus can go once this row is gone: the next row's Remove button, else the previous
- * row's, else the first field of the section's add form. Found before asking, while it's there.
+ * row's, else the section's Add button (K54). Found before asking, while it's there.
  */
 function neighbours(): HTMLElement[] {
   const tr = row.value!
   const removeIn = (el: Element | null) =>
     el?.querySelector<HTMLElement>('[data-action="remove"]') ?? null
-  const form = tr.closest('section')?.querySelector<HTMLElement>('form input') ?? null
-  return [removeIn(tr.nextElementSibling), removeIn(tr.previousElementSibling), form].filter(
+  const add = tr.closest('section')?.querySelector<HTMLElement>('[data-add]') ?? null
+  return [removeIn(tr.nextElementSibling), removeIn(tr.previousElementSibling), add].filter(
     (el): el is HTMLElement => el !== null,
   )
 }
@@ -103,7 +103,7 @@ async function remove(event: MouseEvent): Promise<void> {
 </script>
 
 <!--
-  One row of the WeekGrid card: the name in body 600, then the chips, and a DayMark per day. No
+  One row of the WeekGrid card: the name in body-large 600, then the chips, and a DayMark per day. No
   week total (K33): the goal shows only in the item's dialog. In Edit plan the edit IconButton follows
   the name (its dialog edits everything, goal included) and the remove IconButton ends the row in a
   cell of its own. The edit button's negative margin keeps the name line's height, and the header
@@ -139,7 +139,7 @@ async function remove(event: MouseEvent): Promise<void> {
               <IconButton
                 v-if="configMode && editable"
                 :label="`Edit ${item.name}`"
-                class="-my-2.5 shrink-0"
+                class="-my-[calc(var(--edit-ib)/4)] size-(--edit-ib) shrink-0 [&_svg]:size-(--edit-ib-icon)"
                 data-noprint
                 @click="emit('edit')"
               >
@@ -210,7 +210,12 @@ async function remove(event: MouseEvent): Promise<void> {
       :class="CELL.rule"
       data-noprint
     >
-      <IconButton :label="`Remove ${item.name}`" data-action="remove" @click="remove">
+      <IconButton
+        :label="`Remove ${item.name}`"
+        class="size-(--edit-ib) [&_svg]:size-(--edit-ib-icon)"
+        data-action="remove"
+        @click="remove"
+      >
         <Trash2 />
       </IconButton>
     </td>

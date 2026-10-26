@@ -5,12 +5,12 @@ import { useDietStore } from '@/stores/diet'
 import { dayMonth } from '@/lib/dates'
 import type { Food, Mark } from '@/lib/storage'
 import { SCREEN, SCREEN_GRID } from '@/lib/screens'
-import { ChevronUp } from '@lucide/vue'
+import { ChevronUp, Plus } from '@lucide/vue'
 import { SectionHeader } from '@/components/ui/section-header'
 import { IconButton } from '@/components/ui/icon-button'
 import { sprintToScreen } from '@/composables/screenSprint'
 import TrackerGrid from '@/components/TrackerGrid.vue'
-import AddFoodForm from '@/components/AddFoodForm.vue'
+import { Button } from '@/components/ui/button'
 import EditFoodDialog from '@/components/EditFoodDialog.vue'
 
 const planner = usePlannerStore()
@@ -21,6 +21,8 @@ function marksFor(id: string): (Mark | null)[] {
 }
 
 const editing = ref<Food | null>(null)
+/** The Add food dialog (K54): Edit food's dialog with nothing to edit. */
+const adding = ref(false)
 
 function edit(id: string): void {
   editing.value = diet.foods.find((f) => f.id === id) ?? null
@@ -36,20 +38,23 @@ watch(
 )
 watch(
   () => planner.weekKey,
-  () => (editing.value = null),
+  () => {
+    editing.value = null
+    adding.value = false
+  },
 )
 </script>
 
 <!--
-  The Food section: the same WeekGrid without chips (foods have no
-  daily pick), under its own SectionHeader. In Edit plan a
-  line rule and space-8 set it apart from Exercises. On paper the heading and the grid stay on
-  one page (F20): the header avoids a break after it, and the pair avoids a break inside. On the
-  planner's screens it is the second screen, with nothing ruling it off.
+  The Food section: the same WeekGrid without chips (foods have no daily pick), under its own
+  SectionHeader, and in Edit plan the Add food button under the grid (K54). On screen 56u of space
+  sets it apart from Exercises, with no rule. On paper the heading and the grid stay on one page
+  (F20): the header avoids a break after it, and the pair avoids a break inside. On the planner's
+  screens it is the second screen, with nothing ruling it off.
 -->
 <template>
   <section
-    class="relative mt-8 border-t border-line pt-8 print:mt-4 print:border-0 print:pt-4 full:mt-0 full:border-0"
+    class="relative mt-8 border-t border-line pt-8 print:mt-4 print:border-0 print:pt-4 screen:mt-[calc(var(--u)*56)] screen:border-0 screen:pt-0 full:mt-0 full:border-0"
     :class="SCREEN"
     data-planner-screen
     aria-labelledby="diet-heading"
@@ -89,7 +94,17 @@ watch(
         </template>
       </TrackerGrid>
     </div>
-    <AddFoodForm v-if="planner.configMode" />
+    <!-- Adding opens the same dialog as editing (K54), at the page's control size. -->
+    <Button
+      v-if="planner.configMode"
+      class="mt-[calc(var(--u)*24)] h-(--set-control) self-start px-(--set-control-pad) text-(length:--set-label) [&_svg]:size-(--set-icon)"
+      data-noprint
+      data-add
+      data-testid="add-food"
+      @click="adding = true"
+      ><Plus :stroke-width="1.5" />Add food</Button
+    >
     <EditFoodDialog v-if="editing" :food="editing" @close="editing = null" />
+    <EditFoodDialog v-if="adding" @close="adding = false" />
   </section>
 </template>

@@ -3,6 +3,7 @@ import ColourSection from './sections/ColourSection.vue'
 import TypeSection from './sections/TypeSection.vue'
 import ButtonSection from './sections/ButtonSection.vue'
 import IconButtonSection from './sections/IconButtonSection.vue'
+import BarActionSection from './sections/BarActionSection.vue'
 import BrandMarkSection from './sections/BrandMarkSection.vue'
 import TextLinkSection from './sections/TextLinkSection.vue'
 import TextFieldSection from './sections/TextFieldSection.vue'
@@ -70,6 +71,13 @@ export const SECTIONS: readonly StyleGuideSection[] = [
     summary:
       'A 44px square button that shows one Lucide icon and carries its meaning in an accessible label.',
     component: IconButtonSection,
+  },
+  {
+    id: 'sg-bar-action',
+    title: 'BarAction',
+    summary:
+      'A tile in the Header for one of its actions: a Lucide icon with its name under it, as big as the week below it.',
+    component: BarActionSection,
   },
   {
     id: 'sg-brand-mark',

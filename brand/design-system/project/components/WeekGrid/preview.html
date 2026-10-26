@@ -25,18 +25,20 @@
   /* Rows: hairline rules between them. */
   tbody tr { border-bottom: 1px solid var(--line); }
   th[scope="row"] { text-align: left; padding: var(--space-2) var(--space-3) var(--space-2) 0; vertical-align: middle; }
-  .name { display: block; font-size: 18px; line-height: 26px; font-weight: 600; }
+  .name { display: block; font-size: 20px; line-height: 28px; font-weight: 600; }
   .meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
   /* K43: the name and its chips share a line; the note takes the next, cut to one line. */
   .nl { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
   .nl .name { display: inline; }
   .note-line { display: block; max-width: 100%; margin-top: 2px; padding: 0; border: 0; background: none; text-align: left; cursor: pointer;
-    font-family: var(--font-serif); font-style: italic; font-size: 16px; line-height: 22px; color: var(--ink-secondary);
+    font-family: var(--font-serif); font-style: italic; font-size: 18px; line-height: 26px; color: var(--ink-secondary);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .note-line strong { font-weight: 600; } .note-line em { font-style: normal; }
   .note-line .note-link { text-decoration: underline; text-underline-offset: 2px; }
   .goal { color: var(--ink-secondary); }
+  /* A row's chips sit one size above the Chip card's label, at 18/26 (K46). */
   .chip { background: var(--tile); color: var(--ink-secondary); border-radius: var(--radius-sm); padding: 0 var(--space-2); white-space: nowrap; }
+  .nl .chip { font-size: 18px; line-height: 26px; }
 
   /* A day that meets the daily pick (K30, K39): the name in pen with a check, and a hand-drawn
      marker stroke under the column, one of three in turn. */

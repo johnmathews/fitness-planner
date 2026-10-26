@@ -25,7 +25,7 @@ function mountApp(): VueWrapper {
 /** Mount with config mode on, where the plan-editing controls are. */
 async function mountConfig(): Promise<VueWrapper> {
   mountApp()
-  await wrapper.get('button[role="switch"]').trigger('click')
+  await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
   return wrapper
 }
 
@@ -35,6 +35,13 @@ function diet() {
 
 function cells(name: string) {
   return diet().findAll(`button[aria-label^="${name},"]`)
+}
+
+/** Opens the Add food dialog from the button under the grid (K54); Reka renders it on document.body. */
+async function openAddFood(): Promise<HTMLElement> {
+  await wrapper.get('[data-testid="add-food"]').trigger('click')
+  await flushPromises()
+  return document.querySelector<HTMLElement>('[role="dialog"]')!
 }
 
 describe('DietSection', () => {
@@ -88,10 +95,15 @@ describe('DietSection', () => {
 
   it('adds a food, syncs it, and removes one after confirmation', async () => {
     await mountConfig()
-    await wrapper.get('#add-food-name').setValue('Beans')
-    await wrapper.get('#add-food-name').trigger('submit')
+    const add = await openAddFood()
+    expect(add.querySelector('h2')!.textContent).toBe('Add food')
+    add.querySelector<HTMLInputElement>('#add-food-name')!.value = 'Beans'
+    add.querySelector('#add-food-name')!.dispatchEvent(new Event('input'))
+    add.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }))
+    await flushPromises()
+    expect(document.querySelector('[role="dialog"]')).toBeNull()
     expect(diet().findAll('[data-testid="item-name"]').at(-1)!.text()).toBe('Beans')
-    expect((wrapper.get('#add-food-name').element as HTMLInputElement).value).toBe('')
+    expect(useDietStore().foods.at(-1)!.target).toBe(3)
     await flushPromises()
     const plan = api.accounts.get(USER)!.plans.diet['2026-10-19']!.items as { name: string }[]
     expect(plan.at(-1)!.name).toBe('Beans')
@@ -108,8 +120,12 @@ describe('DietSection', () => {
 
   it('ignores an empty food name', async () => {
     await mountConfig()
-    await wrapper.get('#add-food-name').setValue('   ')
-    await wrapper.get('#add-food-name').trigger('submit')
+    const add = await openAddFood()
+    add.querySelector<HTMLInputElement>('#add-food-name')!.value = '   '
+    add.querySelector('#add-food-name')!.dispatchEvent(new Event('input'))
+    add.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }))
+    await flushPromises()
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull()
     expect(cells('Vegetables')).toHaveLength(7)
     // The header row and the four foods; foods have no Picked row (WeekGrid card).
     expect(diet().findAll('[role="row"]')).toHaveLength(5)

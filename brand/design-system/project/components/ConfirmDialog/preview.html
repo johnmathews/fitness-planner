@@ -15,11 +15,13 @@
   .scrim { position: absolute; inset: 0; background: var(--scrim); opacity: .4; }
   .stage .confirm { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); }
 
-  .confirm { width: min(400px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-overlay); padding: var(--space-6); }
-  .confirm h2 { margin: 0; }
+  .confirm { width: min(600px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-overlay); padding: 32px; }
+  /* At u = 1 (a 1280×800 screen), K55: in the app the sizes follow the screen. */
+  .confirm h2 { margin: 0; font-size: 27px; line-height: 34px; }
+  .confirm p { font-size: 19px; line-height: 28px; }
   .confirm p { margin: var(--space-2) 0 0; }
   .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-6); }
-  .btn { height: 44px; padding: 0 var(--space-4); border-radius: var(--radius-md); font: inherit; font-weight: 600; cursor: pointer; }
+  .btn { height: 60px; padding: 0 22px; border-radius: var(--radius-md); font: inherit; font-size: 19px; font-weight: 600; cursor: pointer; }
   .btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--control-border); }
   .btn.secondary:hover { background: var(--tile); }
   .btn.primary { background: var(--ink); color: var(--on-ink); border: 1px solid var(--ink); }

@@ -1,0 +1,193 @@
+<title>A bigger bar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="proto.css">
+<!--
+  A mockup (design-system skill, references/mockups.md). Two questions about the bar over the
+  planner: how its actions look (icons over their names, or beside them), and how Edit plan shows.
+  The screens are live: proto.js draws them and the bar (proto.css sizes them from the frame, and
+  holds the candidates at its foot); icons.js holds the Lucide icons and the wordmark. try.html
+  shows them full size with a switch for every option.
+-->
+<style>
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .mockup-page {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: var(--space-8, 32px) var(--space-16, 64px);
+    max-width: 1200px; margin: 0 auto; display: grid; gap: var(--space-12, 48px);
+  }
+  .mockup-head { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .mockup-head h1, .option h2 { margin: 0; text-wrap: balance; }
+  .mockup-head p, .option p { margin: 0; }
+  .mockup-meta { color: var(--ink-secondary); }
+  .option { display: grid; gap: var(--space-4, 16px); }
+  .option-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2, 8px) var(--space-3, 12px); }
+  .option-tag { color: var(--ink-secondary); }
+  .option[data-recommended] .option-tag::after { content: " · Recommended"; color: var(--ink); }
+  /* The same stage in light and in dark, side by side; stacked on a phone. Each pane is a
+     data-theme subtree, so the system's own tokens switch inside it. */
+  .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-4, 16px); }
+  .pane { min-width: 0; background: var(--canvas); color: var(--ink); border: 1px solid var(--line);
+          border-radius: var(--radius-lg, 10px); padding: var(--space-4, 16px); overflow-x: auto; }
+  .pane-label { color: var(--ink-secondary); margin: 0 0 var(--space-3, 12px); }
+  .measures { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); }
+  .measures li { border: 1px solid var(--line); border-radius: var(--radius-sm, 4px); padding: 2px var(--space-2, 8px); font-variant-numeric: tabular-nums; }
+  .measures li[data-pass="no"] { border-color: currentColor; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .try { margin: 0; }
+  .try a, .mockup-head a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+  .question { display: grid; gap: var(--space-8, 32px); }
+  .question > header { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .question > header h2, .question > header p { margin: 0; }
+  .notes { margin: 0; padding-left: 1.2em; display: grid; gap: var(--space-1, 4px); }
+
+  /* A device: the screen at its real size in pixels, scaled down to fit (the script sets the scale). */
+  .device { position: relative; width: 100%; }
+  .device > .fs { position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .device.phone > .fs { border-radius: 28px; border-width: 2px; }
+  .phones { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .phones .device { max-width: 260px; }
+</style>
+
+<main class="mockup-page">
+  <header class="mockup-head">
+    <p class="caption mockup-meta">Mockup · 2026-10-26 · Tracker</p>
+    <h1 class="title-1">A bigger bar</h1>
+    <p class="body">The week is bold and big; the bar over it is small and thin. The bar stays out of sight until the top edge, the handle or the keyboard brings it (K25), so it can be as big as the page. Every option here spans the full width, on the page's own margins: the wordmark sits over “Exercises” and the last action over Sunday. The week, its arrows and the wordmark grow too. The rows below the bar stay as built.</p>
+    <ul class="notes body">
+      <li>The bar scales with the screen like the week does: about 108px tall at 1280×800, and 163px on a screen your size (1920×1200), against 56px now.</li>
+      <li>Icons stay Lucide outlines at the system's 1.5 stroke; at 32px and up that draws a 2px line or more, so they read as solid.</li>
+      <li>In Edit plan and on Settings the bar stays in view, as now (K27), so it takes that much of the page there.</li>
+      <li>No new colours: Edit plan pressed uses the selected segment's ink fill, never the pen.</li>
+    </ul>
+    <p class="body"><strong>Round 3:</strong> question 3, where Edit plan sits, is open, at the top. Questions 1 and 2 are settled; their frames show round 2, with Full screen last at the far right and Edit plan beside the wordmark.</p>
+    <p class="try body"><a href="try.html#a-tile">Try it full size</a>. Move the pointer to the top edge, or press the handle on a phone. The switch at the bottom left changes the options and the theme.</p>
+  </header>
+
+  <section class="question" aria-labelledby="q3-h">
+    <header>
+      <h2 class="title-1" id="q3-h">3. Where Edit plan sits (decided: A)</h2>
+      <p class="body">Round 3. Beside the wordmark, Edit plan reads as part of the name. Three places for it, everything else as built. Each is shown in another week, so “This week” is there too.</p>
+    </header>
+
+    <section class="option" id="pos-right" data-recommended aria-labelledby="pos-right-h">
+      <div class="option-head"><h2 class="title-2" id="pos-right-h">A. With the other actions, just left of Settings</h2><span class="label option-tag">Option A</span></div>
+      <p class="body">One group of actions on the right, and the wordmark alone on the left. “This week” moves beside the week’s arrows: it is a way back to this week, and with it on the right the group grew too wide and pushed the week off centre. Recommended: every button sits with its kind, and the name stays a name. On a phone the order is “This week”, Edit plan, Settings.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200</p><div class="device" data-w="1920" data-h="1200" data-bar="a" data-shown="1" data-other-week="1" data-edit-pos="right"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, Edit plan on</p><div class="device" data-w="1280" data-h="800" data-bar="a" data-shown="1" data-other-week="1" data-edit-on="1" data-edit-pos="right"></div></div>
+      </div>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · phone</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-bar="a" data-shown="1" data-other-week="1" data-edit-pos="right"></div></div></div>
+      </div>
+      <p class="try body"><a href="try.html#a-tile-right-other">Try A full size</a></p>
+    </section>
+
+    <section class="option" id="pos-mid" aria-labelledby="pos-mid-h">
+      <div class="option-head"><h2 class="title-2" id="pos-mid-h">B. Halfway between the wordmark and the week</h2><span class="label option-tag">Option B</span></div>
+      <p class="body">Edit plan on its own, at the centre of the space the wordmark leaves. It stands apart as the one mode in the bar, but it floats with nothing beside it.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200</p><div class="device" data-w="1920" data-h="1200" data-bar="a" data-shown="1" data-other-week="1" data-edit-pos="mid"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, Edit plan on</p><div class="device" data-w="1280" data-h="800" data-bar="a" data-shown="1" data-other-week="1" data-edit-on="1" data-edit-pos="mid"></div></div>
+      </div>
+      <p class="try body"><a href="try.html#a-tile-mid-other">Try B full size</a></p>
+    </section>
+
+    <section class="option" id="pos-start" aria-labelledby="pos-start-h">
+      <div class="option-head"><h2 class="title-2" id="pos-start-h">C. Beside the wordmark, as built</h2><span class="label option-tag">Option C</span></div>
+      <p class="body">Round 2, for comparison.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200</p><div class="device" data-w="1920" data-h="1200" data-bar="a" data-shown="1" data-other-week="1" data-edit-pos="start"></div></div>
+      </div>
+    </section>
+  </section>
+
+  <section class="question" aria-labelledby="q1-h">
+    <header>
+      <h2 class="title-1" id="q1-h">1. The actions (decided: A)</h2>
+      <p class="body">Edit plan beside the wordmark; then “This week” (shown only in another week), Settings, Print and Full screen at the right.</p>
+    </header>
+
+    <section class="option" id="now" aria-labelledby="now-h">
+      <div class="option-head"><h2 class="title-2" id="now-h">Now, as shipped</h2><span class="label option-tag">For comparison</span></div>
+      <p class="body">56px tall, centred in 1152px, 20px icons, a 16px week.</p>
+      <div class="panes"><div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200</p><div class="device" data-w="1920" data-h="1200" data-bar="now" data-shown="1"></div></div></div>
+    </section>
+
+    <section class="option" id="a" data-recommended aria-labelledby="a-h">
+      <div class="option-head"><h2 class="title-2" id="a-h">A. Icons over their names</h2><span class="label option-tag">Option A</span></div>
+      <p class="body">Each action is a tile: a 32u icon with its name under it in label type (17u, 600). The week label at 26u, like the section's figures, between 32u arrows. A tile is at least 96u wide, so short names don't make thin targets. The dark pane shows another week (“This week” appears) with Edit plan on.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200</p><div class="device" data-w="1920" data-h="1200" data-bar="a" data-shown="1"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, another week, Edit plan on</p><div class="device" data-w="1280" data-h="800" data-bar="a" data-shown="1" data-other-week="1" data-edit-on="1"></div></div>
+      </div>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · phone</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-bar="a" data-shown="1"></div></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone, another week, Edit plan on</p><div class="phones"><div class="device phone" data-w="390" data-h="844" data-bar="a" data-shown="1" data-other-week="1" data-edit-on="1"></div></div></div>
+      </div>
+      <p class="body">On a phone the wordmark stays out, as now. The week takes the first row and the actions share the second evenly; Full screen and Print stay off, as now.</p>
+      <p class="try body"><a href="try.html#a-tile">Try A full size</a></p>
+    </section>
+
+    <section class="option" id="b" aria-labelledby="b-h">
+      <div class="option-head"><h2 class="title-2" id="b-h">B. Icons beside their names</h2><span class="label option-tag">Option B</span></div>
+      <p class="body">The same actions in a row: a 28u icon, then its name at 19u, 600. A little shorter (133px at 1920×1200) and wider. On a phone it stacks like A, since a row of five names doesn't fit.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200</p><div class="device" data-w="1920" data-h="1200" data-bar="b" data-shown="1"></div></div>
+        <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, another week, Edit plan on</p><div class="device" data-w="1280" data-h="800" data-bar="b" data-shown="1" data-other-week="1" data-edit-on="1"></div></div>
+      </div>
+      <p class="try body"><a href="try.html#b-tile">Try B full size</a></p>
+    </section>
+  </section>
+
+  <section class="question" aria-labelledby="q2-h">
+    <header>
+      <h2 class="title-1" id="q2-h">2. Edit plan (decided: A)</h2>
+      <p class="body">Today it's a switch. With an icon over each name it could be a pencil tile too. Shown in A's bar, off on the left and on on the right.</p>
+    </header>
+
+    <section class="option" id="tile" data-recommended aria-labelledby="tile-h">
+      <div class="option-head"><h2 class="title-2" id="tile-h">A. A pencil tile, filled when on</h2><span class="label option-tag">Option A</span></div>
+      <p class="body">Like its neighbours; on, it takes the ink fill of a selected segment, and a screen reader hears it as a pressed button. Recommended: one shape for every action, and the fill is the clearest “on” in the bar.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · off</p><div class="device" data-w="1280" data-h="800" data-bar="a" data-edit="tile" data-shown="1"></div></div>
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · on</p><div class="device" data-w="1280" data-h="800" data-bar="a" data-edit="tile" data-shown="1" data-edit-on="1"></div></div>
+      </div>
+    </section>
+
+    <section class="option" id="switch" aria-labelledby="switch-h">
+      <div class="option-head"><h2 class="title-2" id="switch-h">B. A switch over its name</h2><span class="label option-tag">Option B</span></div>
+      <p class="body">The Switch, drawn at the icon's size, in the icon's place. It says “on or off” before it's pressed, at the cost of one tile that looks unlike the rest.</p>
+      <div class="panes">
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · off</p><div class="device" data-w="1280" data-h="800" data-bar="a" data-edit="switch" data-shown="1"></div></div>
+        <div class="pane" data-theme="light"><p class="label pane-label">Light · on</p><div class="device" data-w="1280" data-h="800" data-bar="a" data-edit="switch" data-shown="1" data-edit-on="1"></div></div>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script src="marks.js"></script>
+<script src="icons.js"></script>
+<script src="proto.js"></script>
+<script>
+  // Each .device gets a live screen at its real pixel size, scaled to the space it has.
+  for (const device of document.querySelectorAll('.device')) {
+    const w = Number(device.dataset.w), h = Number(device.dataset.h)
+    const screen = document.createElement('div')
+    screen.style.width = w + 'px'
+    screen.style.height = h + 'px'
+    device.append(screen)
+    const fit = () => {
+      const s = Math.min(1, device.clientWidth / w)
+      screen.style.transform = `scale(${s})`
+      device.style.height = Math.ceil(h * s) + 'px'
+    }
+    new ResizeObserver(fit).observe(device)
+    fit()
+    const d = device.dataset
+    TR.mount(screen, { bar: d.bar, edit: d.edit, shown: !!d.shown, editOn: !!d.editOn, otherWeek: !!d.otherWeek, editPos: d.editPos || 'start' })
+  }
+</script>

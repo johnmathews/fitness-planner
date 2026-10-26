@@ -1,0 +1,120 @@
+<title>A Settings page like the week</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="settings.css">
+<!--
+  A mockup (design-system skill, references/mockups.md). One question: how the Settings page takes
+  the week's language (full width, big, scaled with the screen). The page is live: settings.js
+  draws it and settings.css sizes it from the frame, with the candidates at its top; marks.js holds
+  the SettingsPage card's mark pictures and icons.js the Lucide icons and the wordmark. try.html
+  shows it full size with a switch for the layout and the theme.
+-->
+<style>
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .mockup-page {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: var(--space-8, 32px) var(--space-16, 64px);
+    max-width: 1200px; margin: 0 auto; display: grid; gap: var(--space-12, 48px);
+  }
+  .mockup-head { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .mockup-head h1, .option h2 { margin: 0; text-wrap: balance; }
+  .mockup-head p, .option p { margin: 0; }
+  .mockup-meta { color: var(--ink-secondary); }
+  .option { display: grid; gap: var(--space-4, 16px); }
+  .option-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2, 8px) var(--space-3, 12px); }
+  .option-tag { color: var(--ink-secondary); }
+  .option[data-recommended] .option-tag::after { content: " · Recommended"; color: var(--ink); }
+  /* The same stage in light and in dark, side by side; stacked on a phone. Each pane is a
+     data-theme subtree, so the system's own tokens switch inside it. */
+  .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-4, 16px); }
+  .pane { min-width: 0; background: var(--canvas); color: var(--ink); border: 1px solid var(--line);
+          border-radius: var(--radius-lg, 10px); padding: var(--space-4, 16px); overflow-x: auto; }
+  .pane-label { color: var(--ink-secondary); margin: 0 0 var(--space-3, 12px); }
+  .measures { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); }
+  .measures li { border: 1px solid var(--line); border-radius: var(--radius-sm, 4px); padding: 2px var(--space-2, 8px); font-variant-numeric: tabular-nums; }
+  .measures li[data-pass="no"] { border-color: currentColor; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .try { margin: 0; }
+  .try a, .mockup-head a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+  .question { display: grid; gap: var(--space-8, 32px); }
+  .question > header { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .question > header h2, .question > header p { margin: 0; }
+  .notes { margin: 0; padding-left: 1.2em; display: grid; gap: var(--space-1, 4px); }
+
+  /* A device: the screen at its real size in pixels, scaled down to fit (the script sets the scale). */
+  .device { position: relative; width: 100%; }
+  .device > .sp { position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .device.phone > .fs { border-radius: 28px; border-width: 2px; }
+  .phones { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .phones .device { max-width: 260px; }
+</style>
+
+<main class="mockup-page">
+  <header class="mockup-head">
+    <p class="caption mockup-meta">Mockup · 2026-10-26 · Tracker</p>
+    <h1 class="title-1">A Settings page like the week</h1>
+    <p class="body">Settings is a narrow 576px column at the system's small fixed sizes, under a bar and above a week that are now full width and big. Both options take the week's language: the page's own 48u margins, everything sized from the screen through <code>u</code>, the title in the serif at 40u like “Exercises”, headings at 27u like the row names, labels and text at 19u, controls 60u tall, and marks 60u. They differ in how the page uses the width.</p>
+    <ul class="notes body">
+      <li>Same contents, order and copy as now; nothing new to set.</li>
+      <li>The controls keep their cards' shapes and colours, drawn at the page's size; nothing new to measure for contrast.</li>
+      <li>On a phone both fold to one column at the system's sizes, as now.</li>
+    </ul>
+    <p class="body"><strong>Round 2 (decided: A).</strong> From your notes: no bar on the Settings page, so everything moves up, and the data and account buttons sit beside their text, as the counter does.</p>
+    <p class="try body"><a href="try.html#a">Try it full size</a>. The switch at the bottom left changes the layout and the theme.</p>
+  </header>
+
+  <section class="option" id="now" aria-labelledby="now-h">
+    <div class="option-head"><h2 class="title-2" id="now-h">Now, as shipped</h2><span class="label option-tag">For comparison</span></div>
+    <p class="body">One 576px column, centred, 16px text and 44px controls, under the new bar.</p>
+    <div class="panes"><div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, the whole page</p><div class="device" data-w="1920" data-h="1600" data-layout="now"></div></div></div>
+  </section>
+
+  <section class="option" id="a" data-recommended aria-labelledby="a-h">
+    <div class="option-head"><h2 class="title-2" id="a-h">A. Rows like the week</h2><span class="label option-tag">Option A</span></div>
+    <p class="body">Full width. Each section is a row: its heading in a left column as wide as the week's names (320u), its settings to the right, hairlines between the rows like the grid's. The mark sets become tiles, three to a row, each name over its marks. Recommended: the page reads like the week, and the width is used, not left empty.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, the whole page</p><div class="device" data-w="1920" data-h="1600" data-layout="a"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, the whole page</p><div class="device" data-w="1280" data-h="1100" data-layout="a"></div></div>
+    </div>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · phone</p><div class="phones"><div class="device phone" data-w="390" data-h="1500" data-layout="a"></div></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · phone</p><div class="phones"><div class="device phone" data-w="390" data-h="1500" data-layout="a"></div></div></div>
+    </div>
+    <p class="try body"><a href="try.html#a">Try A full size</a></p>
+  </section>
+
+  <section class="option" id="b" aria-labelledby="b-h">
+    <div class="option-head"><h2 class="title-2" id="b-h">B. One wider column</h2><span class="label option-tag">Option B</span></div>
+    <p class="body">The page as now, but at the same big sizes and 880u wide, centred: headings over their settings, the mark sets as rows. A smaller change; on a wide screen the sides stay empty. On a phone B looks like A.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, the whole page</p><div class="device" data-w="1920" data-h="1600" data-layout="b"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, the whole page</p><div class="device" data-w="1280" data-h="1100" data-layout="b"></div></div>
+    </div>
+    <p class="try body"><a href="try.html#b">Try B full size</a></p>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script src="marks.js"></script>
+<script src="settings.js"></script>
+<script>
+  // Each .device gets a live page at its real pixel size, scaled to the space it has.
+  for (const device of document.querySelectorAll('.device')) {
+    const w = Number(device.dataset.w), h = Number(device.dataset.h)
+    const screen = document.createElement('div')
+    screen.style.width = w + 'px'
+    screen.style.height = h + 'px'
+    device.append(screen)
+    const fit = () => {
+      const s = Math.min(1, device.clientWidth / w)
+      screen.style.transform = `scale(${s})`
+      device.style.height = Math.ceil(h * s) + 'px'
+    }
+    new ResizeObserver(fit).observe(device)
+    fit()
+    SP.mount(screen, { layout: device.dataset.layout })
+  }
+</script>

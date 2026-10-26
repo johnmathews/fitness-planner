@@ -78,13 +78,18 @@ function onCloseAutoFocus(event: Event): void {
         :class="dialogPanelVariants({ size: 'sm' })"
         @close-auto-focus="onCloseAutoFocus"
       >
-        <AlertDialogTitle as="h2" class="title-2 text-ink">{{ title }}</AlertDialogTitle>
-        <AlertDialogDescription class="body mt-2 text-ink">{{ message }}</AlertDialogDescription>
+        <AlertDialogTitle as="h2" class="title-2 text-(length:--set-h2) leading-tight text-ink">{{
+          title
+        }}</AlertDialogTitle>
+        <AlertDialogDescription
+          class="body mt-[max(8px,calc(var(--u)*16))] text-(length:--set-text) leading-normal text-ink"
+          >{{ message }}</AlertDialogDescription
+        >
         <p v-if="error" role="alert" class="caption mt-4 flex items-start gap-1 text-error-ink">
           <CircleAlert :size="16" :stroke-width="1.5" class="mt-0.5 shrink-0" />
           <span>{{ error }}</span>
         </p>
-        <div class="mt-6 flex flex-wrap justify-end gap-3">
+        <div class="mt-[max(24px,calc(var(--u)*28))] flex flex-wrap justify-end gap-3">
           <AlertDialogCancel as-child>
             <Button variant="secondary">{{ cancelLabel }}</Button>
           </AlertDialogCancel>

@@ -201,9 +201,16 @@ onBeforeUnmount(() => {
     @leave="closeLink"
   />
   <template v-else-if="session.status === 'signed-in'">
-    <AppNavbar :page="page" :overlay="screens" />
+    <!-- The Settings page has no bar: it links back to the week itself (K52). -->
+    <AppNavbar v-if="page !== 'settings'" :overlay="screens" />
+    <!-- Settings and Edit plan are full width on the page's margins, like the week (K51, K54). -->
     <main
-      class="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 print:max-w-none print:p-0 full:max-w-none full:p-0"
+      class="print:max-w-none print:p-0 full:max-w-none full:p-0"
+      :class="
+        page === 'settings' || store.configMode
+          ? 'px-(--screen-pad-x) pb-[calc(var(--u)*64)]'
+          : 'mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8'
+      "
     >
       <template v-if="page === 'settings'">
         <SyncStatus />

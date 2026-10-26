@@ -1,0 +1,118 @@
+<title>Edit plan like the week</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="edit.css">
+<!--
+  A mockup (design-system skill, references/mockups.md). The Edit plan page in the week's
+  language, and one question: how an exercise or a food is added. The page is live: edit.js draws
+  it and edit.css sizes it from the frame; marks.js and icons.js hold the app's drawings and the
+  Lucide icons. try.html shows it full size with a switch for the layout and the theme.
+-->
+<style>
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .mockup-page {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: var(--space-8, 32px) var(--space-16, 64px);
+    max-width: 1200px; margin: 0 auto; display: grid; gap: var(--space-12, 48px);
+  }
+  .mockup-head { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .mockup-head h1, .option h2 { margin: 0; text-wrap: balance; }
+  .mockup-head p, .option p { margin: 0; }
+  .mockup-meta { color: var(--ink-secondary); }
+  .option { display: grid; gap: var(--space-4, 16px); }
+  .option-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2, 8px) var(--space-3, 12px); }
+  .option-tag { color: var(--ink-secondary); }
+  .option[data-recommended] .option-tag::after { content: " · Recommended"; color: var(--ink); }
+  /* The same stage in light and in dark, side by side; stacked on a phone. Each pane is a
+     data-theme subtree, so the system's own tokens switch inside it. */
+  .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-4, 16px); }
+  .pane { min-width: 0; background: var(--canvas); color: var(--ink); border: 1px solid var(--line);
+          border-radius: var(--radius-lg, 10px); padding: var(--space-4, 16px); overflow-x: auto; }
+  .pane-label { color: var(--ink-secondary); margin: 0 0 var(--space-3, 12px); }
+  .measures { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); }
+  .measures li { border: 1px solid var(--line); border-radius: var(--radius-sm, 4px); padding: 2px var(--space-2, 8px); font-variant-numeric: tabular-nums; }
+  .measures li[data-pass="no"] { border-color: currentColor; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .try { margin: 0; }
+  .try a, .mockup-head a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+  .question { display: grid; gap: var(--space-8, 32px); }
+  .question > header { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .question > header h2, .question > header p { margin: 0; }
+  .notes { margin: 0; padding-left: 1.2em; display: grid; gap: var(--space-1, 4px); }
+
+  /* A device: the screen at its real size in pixels, scaled down to fit (the script sets the scale). */
+  .device { position: relative; width: 100%; }
+  .device > .ep { position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .device.phone > .fs { border-radius: 28px; border-width: 2px; }
+  .phones { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .phones .device { max-width: 260px; }
+</style>
+
+<main class="mockup-page">
+  <header class="mockup-head">
+    <p class="caption mockup-meta">Mockup · 2026-10-26 · Tracker</p>
+    <h1 class="title-1">Edit plan like the week</h1>
+    <p class="body">Edit plan is still a 1152px column at the system's small sizes. Both options give it the week's language, as the Settings page now has:</p>
+    <ul class="notes body">
+      <li>Full width on the page's 48u margins, every size from <code>u</code>.</li>
+      <li>Each section titled like its screen: “Exercises” in the 40u serif with the week beside it. The page's own heading stays for a screen reader, as on the planner.</li>
+      <li>Rows at the week's sizes (names 27u, chips and notes 19u, 20u day names) and a fixed 100u tall, since the page scrolls rather than filling the window.</li>
+      <li>Edit and remove at 52u with 28u icons, and “Copy plan to next week” as a 60u button on the Exercises title line.</li>
+      <li>On a phone the week folds as on the planner, with edit and remove on the name's line.</li>
+    </ul>
+    <p class="body">The question is how a new exercise or food is added. <strong>Decided: B</strong>, a button that opens a dialog (K54).</p>
+    <p class="try body"><a href="try.html#a">Try it full size</a>. The switch at the bottom left changes the layout and the theme.</p>
+  </header>
+
+  <section class="option" id="now" aria-labelledby="now-h">
+    <div class="option-head"><h2 class="title-2" id="now-h">Now, as shipped</h2><span class="label option-tag">For comparison</span></div>
+    <p class="body">A 1152px column, centred, the week as the page's heading, 36px controls.</p>
+    <div class="panes"><div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, the whole page</p><div class="device" data-w="1920" data-h="1500" data-layout="now"></div></div></div>
+  </section>
+
+  <section class="option" id="a" data-recommended aria-labelledby="a-h">
+    <div class="option-head"><h2 class="title-2" id="a-h">A. The add form under each grid, at the page's size</h2><span class="label option-tag">Option A</span></div>
+    <p class="body">As now, a row of fields under the grid, each 60u tall with its 19u label, ending in a primary “Add exercise”. The fields wrap onto a second line where the screen is too narrow for them all. Recommended: adding several exercises stays one field after another, with no dialog to open each time.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, the whole page</p><div class="device" data-w="1920" data-h="1600" data-layout="a"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, the whole page</p><div class="device" data-w="1280" data-h="1300" data-layout="a"></div></div>
+    </div>
+    <div class="panes"><div class="pane" data-theme="light"><p class="label pane-label">Light · phone</p><div class="phones"><div class="device phone" data-w="390" data-h="2000" data-layout="a"></div></div></div></div>
+    <p class="try body"><a href="try.html#a">Try A full size</a></p>
+  </section>
+
+  <section class="option" id="b" aria-labelledby="b-h">
+    <div class="option-head"><h2 class="title-2" id="b-h">B. An “Add exercise” button that opens a dialog</h2><span class="label option-tag">Option B</span></div>
+    <p class="body">Under each grid, one 60u button. It opens a dialog with the same fields, as editing an exercise already does. The page is calmer, but each new exercise takes a dialog.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200, the whole page</p><div class="device" data-w="1920" data-h="1500" data-layout="b"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, the dialog open</p><div class="device" data-w="1280" data-h="800" data-layout="b" data-dialog="1"></div></div>
+    </div>
+    <p class="try body"><a href="try.html#b">Try B full size</a></p>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script src="marks.js"></script>
+<script src="edit.js"></script>
+<script>
+  // Each .device gets a live page at its real pixel size, scaled to the space it has.
+  for (const device of document.querySelectorAll('.device')) {
+    const w = Number(device.dataset.w), h = Number(device.dataset.h)
+    const screen = document.createElement('div')
+    screen.style.width = w + 'px'
+    screen.style.height = h + 'px'
+    device.append(screen)
+    const fit = () => {
+      const s = Math.min(1, device.clientWidth / w)
+      screen.style.transform = `scale(${s})`
+      device.style.height = Math.ceil(h * s) + 'px'
+    }
+    new ResizeObserver(fit).observe(device)
+    fit()
+    EP.mount(screen, { layout: device.dataset.layout, dialog: !!device.dataset.dialog })
+  }
+</script>

@@ -33,7 +33,7 @@ export const MEASURE_OPTIONS = [
 ]
 
 /**
- * State and input handling shared by the add-exercise form and the edit dialog. `reps` holds the
+ * State and input handling for the exercise's dialog, adding or editing (K54). `reps` holds the
  * amount field's digits whichever the measure: reps per set, or seconds per set when timed.
  */
 export function useExerciseForm() {
