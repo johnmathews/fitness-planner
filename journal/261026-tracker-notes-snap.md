@@ -81,9 +81,11 @@ A fresh code reviewer and a fresh docs auditor read the branch before the PR.
 
 ## Left for after the merge
 
-- `gh repo rename tracker`, when John says so.
+- Done after the merge (#46): `gh repo rename tracker`; the images published as
+  `ghcr.io/johnmathews/tracker` and `tracker-api`; and the design system republished (version 38):
+  the two `tracker-wordmark-*.svg` uploads, and 21 cards and pages that were up to six releases
+  behind. Before publishing, each live file was compared with every version of it in git history:
+  none had been edited on the page.
 - The home-server compose template moves to `ghcr.io/johnmathews/tracker` and `tracker-api`, and
   `MAIL_FROM` to "Tracker". Until then the server runs the last `fitness-planner` build.
-- Republish the design system: upload the two `tracker-wordmark-*.svg` files, and its asset
-  records in `design-system.json` take the new upload ids.
 - Optionally, move `~/projects/fitness-planner` to `~/projects/tracker`.
