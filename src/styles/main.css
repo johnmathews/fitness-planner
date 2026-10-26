@@ -22,7 +22,8 @@
  *
  * - `screen:` any screen: the WeekGrid is a CSS grid that fills its cells (a table on paper).
  * - `full:` the planner's screens: App puts `.planner-screens` on <html> outside Edit plan and
- *   Settings, and each section fills the screen while the scroll snaps between them.
+ *   Settings, and each section fills the screen; useScreenSprint keeps the page from resting
+ *   across two (K38).
  * - `folded:` held upright under 1000px wide, or any screen under 760px wide: the week folds,
  *   each row's name line above its seven boxes (K26).
  * - `short:` the planner's screens, landscape and 540px tall or less (a phone on its side): the

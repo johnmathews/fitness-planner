@@ -6,7 +6,7 @@ The heading over a WeekGrid: the section's name in serif, the week beside it, an
 - **The week** follows the title on its baseline, 16u after it, in `ink-secondary` at max(16px, 20u): "19–25 October", as the Header writes it. It is how the week shows while the bar is out of sight. Folded (a screen held upright) it is left out, since the line has no room; the bar has the week.
 - An optional hint beneath in `caption` `ink-secondary`, one line, plain instructions. Small numbers as words. The hint doesn't print. Neither section uses one: the user asked for both to go (journal 261024, 261025).
 - 20u between the header and its grid. Each section is a PlannerScreen of its own, so nothing rules them apart.
-- No figure (K31): the sections' weekly totals ("15 of 15 this week", "0 of 4 goals met") were removed by the owner's choice. Each row's total says how its week is going. No subtitle counts, no badges, no "This week's progress" eyebrow.
+- No figure (K31): the sections' weekly totals ("15 of 15 this week", "0 of 4 goals met") were removed by the owner's choice. The marks, and the days that turn green, say how the week is going. No subtitle counts, no badges, no "This week's progress" eyebrow.
 
 ## States
 

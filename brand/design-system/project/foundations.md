@@ -9,7 +9,7 @@ Four project roles each mean exactly one thing:
 | `pen` | Great: a day's fill, the year strip's dots, and a day that met the daily pick (its name, check and foot line) | Links, buttons, decoration |
 | `pen-partial` | Partly done: a day's fill | Over the pick, warnings |
 | `pen-missed` | Tried and couldn't: a day's fill | Errors |
-| `caution-ink` | Over the daily pick, always with words ("one extra") | Errors |
+| `caution-ink` | A caution, always with words; nothing on the planner uses it since the Picked row went (K28) | Errors |
 
 **The three pens** are fixed, like the green, yellow and red markers by a whiteboard; nobody picks them. The pen is what tells the three kinds apart on screen (K15); the accessible name says "partly done" or "couldn't do it". `pen` reaches 4.5:1 as text on `canvas` and `panel`, and `pen` and `pen-missed` reach 3:1 as a mark on `canvas`, `panel` and `tile`, in both themes. `pen-partial` is a sunny yellow by the owner's choice (K18): 1.5–1.9:1 on the light grounds, held to 1.5:1 by the gate, and above 7:1 in dark. The box drawn over every mark keeps it findable. In dark the pens are vivid, a grass green, a sunflower yellow and a tomato red (K22).
 
@@ -25,24 +25,24 @@ The type is set for the gym, not the desk: big enough to read at arm's length fr
 
 | Style | Size | Use |
 | --- | --- | --- |
-| `display` | 44/48 serif 600 (36/40 below 640px) | The week's date, once per screen |
+| `display` | 44/48 serif 600 (36/40 below 640px) | The week's date above the sections in Edit plan; visually hidden on the planner's screens |
 | `title-1` | 30/36 serif 600 | Section titles |
 | `title-2` | 22/28 sans 600 | Dialog titles |
-| `body-large` | 20/28 | The summary line under a section title |
+| `body-large` | 20/28 | Larger running text |
 | `body` | 18/26 | Running text, inputs, buttons, row names |
 | `caption` | 16/22 | Goals, hints, dates in `ink-secondary` |
-| `label` | 16/22 600 | Field labels, day initials, chips. Sentence case. |
+| `label` | 16/22 600 | Field labels, day names ("Mon"), chips. Sentence case. |
 | `note` | 18/26 serif italic | A person's note |
 
 ## The marks
 
-- **Empty:** the box, drawn by hand in `control-border`, about 45px across, centred in a 76px cell.
+- **Empty:** the box, drawn by hand in `control-border`. On screen it fills 86% of its cell, up to 128px (K24); on paper it is about 45px across in a 76px cell.
 - **Great, partial, missed:** the box filled in `pen`, `pen-partial` or `pen-missed` with one of three marker drawings traced from the owner's own ink (an open zigzag, a solid fill, a dense hatch). The box is drawn over the fill. The ink runs a little past the box, as a quick hand does, and every kind counts towards the week.
 - **A press** chooses both, drawing first (K17): an exercise's day goes great, partial and missed in the zigzag, then in the solid, then in the hatch, then back to empty; a food goes great in each drawing, then empty. The drawing is saved with the day.
 - **Mark sets:** Settings' **Marks** chooses how a marked day is drawn on this device (K20): the squiggles above, **Ticks** (a tick, a circle, a cross), **Faces** (happy, so-so, sad), or either **Stamped**, the box coloured in solid with the symbol in paper. Ticks and faces are a marker stroke in the pen, the box drawn over it. A set changes only the look; in a tick or face set a press steps great, partial, missed, then empty (K21).
 - **Today:** "today" in the accessible name; nothing on screen (K36).
 - **Note:** a small `ink-secondary` mark in the cell's top-right corner; "has a note" in the accessible name.
-- **Over the pick:** the day's count in `caution-ink`, underlined, with "one extra" beneath.
+- **A day that meets the daily pick:** its name in `pen` with a check, and a hand-drawn `pen` underline below its column (K30, K39).
 
 ## Shape and depth
 

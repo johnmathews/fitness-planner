@@ -19,7 +19,7 @@ are in the [brand design](specs/2026-10-24-brand-design.md), and the rulings in
 
 The design system is a claude.ai Design System artifact:
 <https://claude.ai/artifact/9pkE17ugXFGGyBirapyCgH>. It holds the brand book, the tokens in a light
-and a dark theme, 28 components with live previews and guidelines (Basics, Forms, Overlays, Planner,
+and a dark theme, 30 components with live previews and guidelines (Basics, Forms, Overlays, Planner,
 Feedback), the cover and the assets. The artifact is private to its owner until it is shared, so
 other readers work from the source below. Agents designing for Fitness Planner read its README
 first.
@@ -54,14 +54,14 @@ Four project roles each mean one thing, and nothing else may use them:
 
 | Role          | Means                                                                      | Never                      |
 | ------------- | -------------------------------------------------------------------------- | -------------------------- |
-| `pen`         | Great: a day's mark, and a total or figure whose goal is met               | Links, buttons, decoration |
+| `pen`         | Great: a day's mark, and a day that met the daily pick (name, check, line) | Links, buttons, decoration |
 | `pen-partial` | Partly done: a day's mark                                                  | Over the pick, warnings    |
 | `pen-missed`  | Tried and couldn't: a day's mark                                           | Errors                     |
-| `caution-ink` | Over the daily pick, always with words and an underline ("4", "one extra") | Errors                     |
+| `caution-ink` | A caution, always with words; nothing on the planner uses it (K28)         | Errors                     |
 
 The primary action is `ink`, not a brand colour (K8): one colour for "act", the pens for "done".
-Outside the day's mark, no meaning rests on colour alone: a met total adds a check, today adds
-"today" to the name, and over the pick adds words. The day's mark is the one exception, by the
+Outside the day's mark, no meaning rests on colour alone: a met day adds a check and an underline,
+and today adds "today" to the name. The day's mark is the one exception, by the
 owner's choice (K15): its pen alone tells great, partial and missed apart on screen, and the
 accessible name says "partly done" or "couldn't do it".
 
@@ -76,7 +76,7 @@ K15, K18). The pens are fixed: there is no Ink setting any more.
 | `pen-partial` | Partial: the box filled | `#f2b300` | `#ffc21a` |
 | `pen-missed`  | Missed: the box filled  | `#c0392b` | `#ff5c4d` |
 
-`pen` reaches 4.5:1 as text on `canvas` and `panel` (a met total), and `pen` and `pen-missed` reach
+`pen` reaches 4.5:1 as text on `canvas` and `panel` (a met day's name), and `pen` and `pen-missed` reach
 3:1 as a mark on `canvas`, `panel` and `tile` in both themes; the gate measures every
 pair. `pen-partial` is a sunny marker yellow by the owner's choice (K18): 1.5–1.9:1 on the light
 grounds, below the 3:1 a mark should reach, and above 7:1 in dark. The dark pens are vivid, a grass
@@ -126,7 +126,7 @@ marker ink traced from a photo (K17): an open zigzag, a solid fill and a dense h
 carries no meaning; the person chooses it by pressing, and it is saved with the day. A press steps
 an exercise's day drawing first: great, partial and missed in the zigzag, then in the solid, then in
 the hatch, then back to empty. A food has one kind, so it steps through great in each drawing, then
-empty. The box is drawn over the fill, and the ink runs a little past the box, as a quick hand does. Every mark counts towards the week, the Picked row and the Today summary.
+empty. The box is drawn over the fill, and the ink runs a little past the box, as a quick hand does. Every mark counts towards the week and the day's count against the daily pick.
 
 **Mark sets** (K20, K21). Settings' **Marks** chooses how marked days are drawn on this device:
 Squiggles (the drawings above, the default), Ticks (a tick, a circle, a cross), Stamped ticks,

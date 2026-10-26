@@ -104,15 +104,6 @@
 .fs .mark .sym { stroke: var(--canvas); }
 @media (prefers-reduced-motion: no-preference) { .fs .mark .bx, .fs .mark .ink { transition: stroke 120ms, fill 120ms; } }
 
-/* The Picked row. */
-.fs .pk { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: calc(var(--u) * 14) 2px; }
-.fs .pk .fig { font-size: max(18px, calc(var(--u) * 24)); line-height: 1.3; font-weight: 600; }
-.fs .pk .fig.under { color: var(--ink-secondary); font-weight: 400; }
-.fs .pk .fig.over { color: var(--caution-ink); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
-.fs .pk .extra { font-size: 16px; line-height: 22px; color: var(--caution-ink); }
-.fs .pk.lbl { align-items: flex-start; padding-left: 0; }
-.fs .pk.lbl .n { font-size: var(--candidate-name); line-height: 1.25; }
-.fs .pk.lbl .g { font-size: var(--candidate-chip); color: var(--ink-secondary); }
 
 /* A short screen (a phone on its side): the title sits in the grid's corner. */
 .fs .corner h2 { margin: 0; font: 600 var(--candidate-title) / 1.1 var(--font-serif); }
@@ -191,11 +182,6 @@
 .fs .ngrid .line .tot .fig { font-size: calc(var(--n) * 18); }
 /* A row of boxes takes a share of the screen's height, so a tall phone spreads the week instead of leaving the foot empty. */
 .fs .ngrid .d { height: clamp(48px, min(19cqw, 7.5cqh), 110px); border-bottom: 1px solid var(--line); }
-.fs .ngrid .pk { padding: 6px 0 4px; }
-.fs .ngrid .pk .fig { font-size: calc(var(--n) * 18); }
-.fs .ngrid .pk .extra { font-size: 14px; line-height: 18px; }
-.fs .ngrid .pkl { grid-column: 1 / -1; display: flex; gap: 8px; align-items: baseline; padding-top: calc(var(--n) * 12); }
-.fs .ngrid .pkl .n { font-size: calc(var(--n) * 18); } .fs .ngrid .pkl .g { color: var(--ink-secondary); font-size: calc(var(--n) * 16); }
 
 /* P1: today, full screen. One row per exercise, its mark at the right, sized to fill the screen. */
 .fs .band { margin: 0 -16px 8px; padding: 14px 16px; background: var(--tile); }
@@ -218,9 +204,6 @@
   .fs .corner h2 { font-size: 26px; }
   .fs .corner .wk { display: none; }
   .fs .hd { padding: 4px 0; }
-  .fs .pk { padding: 4px 2px; }
-  .fs .pk .extra { display: none; }
-  .fs .pk.lbl .g { display: none; }
   .fs .cue { display: none; }
 }
 

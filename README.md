@@ -14,12 +14,12 @@
   zigzag, then a solid fill, then a hatch, and back to empty: the colour says how it went, and the
   marker drawing is yours to choose. **Marks** in Settings swaps the squiggles for ticks (a tick, a
   circle, a cross) or faces (happy, so-so, sad), drawn in marker or stamped on a coloured box; a
-  press then steps green, yellow, red and back to empty. The **Week** column counts every marked day against a
-  weekly goal of 0–7 days, and turns green with a check once a non-zero goal is met. The **Picked** row counts each day's exercises against the
-  daily pick and says so in words when a day goes over ("one extra").
-- **Food.** Below the exercises, foods work the same way, with one kind of mark: mark each day you ate one, and its Week
-  column counts days against a goal. The section header shows how many food goals are met. Defaults
-  are Vegetables (7), Fruit (5), Fish (2) and Nuts (3).
+  press then steps green, yellow, red and back to empty. Each exercise has a weekly goal of 0–7 days, set
+  in its Edit dialog. A day whose marked exercises reach the daily pick (exercises a day) turns green: its
+  name and a check in the header, and a hand-drawn green underline under its column.
+- **Food.** The screen after the exercises works the same way, with one kind of mark: mark each day you ate
+  one. Each food has a weekly goal, set in its Edit dialog. Defaults are Vegetables (7), Fruit (5),
+  Fish (2) and Nuts (3).
 - **Normal mode and config mode.** The app opens in normal mode, where you only mark cells. The
   **Edit plan** switch in the top bar turns on config mode for changing the plan:
   - add an exercise with a name, optional sets, reps or a time in seconds (a plank), "Per set" or

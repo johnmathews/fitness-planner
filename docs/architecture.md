@@ -18,7 +18,11 @@ the same thing, a mark per day against a weekly goal, through the pure helpers i
 small counts as words: `numberWord` ("two", or "Two" to open a sentence, figures from 11 up) and
 `countOf` ("one change", "two changes"). `src/lib/plans.ts` decides which week's plan a week
 shows; `src/lib/dates.ts` holds the week maths (Monday of a week, `YYYY-MM-DD` keys and back,
-labels, `DAY_NAMES`); `src/lib/theme.ts` holds the theme names and `isDark`.
+labels, `DAY_NAMES`); `src/lib/theme.ts` holds the theme names and `isDark`. The planner's screens
+(§6.6) use `src/lib/screens.ts` (a section's screen classes), `useScreenSprint`
+(`src/composables/screenSprint.ts`, never resting across two screens), `useBarReveal`
+(`src/composables/barReveal.ts`, the navbar out of sight) and `useFullscreen`
+(`src/composables/fullscreen.ts`, the browser's full screen).
 
 Every screen is built from the primitives in `src/components/ui/` (§6.3), which follow the design
 system's cards ([brand.md](brand.md)). `TrackerGrid` and `TrackerRow` (on the `DayMark`, `Chip`
@@ -43,15 +47,17 @@ App.vue                 picks the screen (a link, planner, sign-up, reset or sig
 │                       session; links to #/signup, and to #/forgot where the API sends email
 │   (all five inside AuthCard.vue: a centred Panel with the BrandMark)
 ├── AppNavbar.vue       the Header card: Skip to today, BrandMark, ‹ › and the week, This week,
-│                       the Edit plan Switch, Settings (to the Settings page) and Print…; on the
-│                       planner's screens out of sight until wanted (useBarReveal, §6.6)
+│                       the Edit plan Switch, Full screen (useFullscreen, where the browser has
+│                       one), Settings (to the Settings page) and Print…; on the planner's screens
+│                       out of sight until wanted (useBarReveal, §6.6)
 ├── SettingsPage.vue    the SettingsPage card, at #/settings: Back to the week, then Appearance
 │                       (Theme, Marks), Planner (Exercises a day), Your data
 │                       (Export and Import…, see §4) and Account (who is signed in, Sign out)
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── EmailStatus.vue     "Confirm your email." Banner, with Send it again, until it is confirmed
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
-├── WeekHeader.vue      the page's h1, the week ("19–25 October"); in config mode "Copy plan to
+├── WeekHeader.vue      the page's h1, the week ("19–25 October"), visually hidden on the planner's
+│                       screens (each SectionHeader shows the week); in config mode "Copy plan to
 │                       next week" and a note when the plan is carried over
 ├── ExerciseGrid.vue    the Exercises section: SectionHeader (the title and the week)
 │   ├── TrackerGrid.vue a <table> (WeekGrid card): day names, one TrackerRow per item, and
@@ -62,7 +68,7 @@ App.vue                 picks the screen (a link, planner, sign-up, reset or sig
 │   ├── AddExerciseForm.vue config mode only: name, sets, Measure (Reps or Time), reps or
 │   │                       seconds, PerSideToggle, weight (kg)
 │   └── EditExerciseDialog.vue  Dialog: the add form's fields, then Times a week (the goal)
-└── DietSection.vue     the Food section: SectionHeader ("2 of 4 goals met"), kept with its grid
+└── DietSection.vue     the Food section: SectionHeader (the title and the week), kept with its grid
     ├── TrackerGrid.vue wired to diet: no chips
     ├── AddFoodForm.vue config mode only: name, Add food
     └── EditFoodDialog.vue  Dialog: Name, then Times a week (the goal)
@@ -307,14 +313,14 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **No Picked row, no dates in the header** (K28, K29): the grids show each day by its name alone,
   and nothing counts a day against the daily pick. A day that reaches it turns green instead
   (K30): `ExerciseGrid` passes `metDays` to the grid, which draws the name in `pen` with a check
-  and a bold `pen` line along the foot of the column (K35). The daily pick is stored, synced and exported (`dailyPick`) as
+  and a hand-drawn `pen` underline below the column (`MET_UNDERLINES`, K39). The daily pick is stored, synced and exported (`dailyPick`) as
   before. The sections have no weekly figure (K31), Settings no totals switch (K32), and the grids no Week
   column (K33). The Header has a Full screen button where the browser supports one (K34).
 - **Print is the light theme on white paper, from either theme** (§6.7).
 - **Narrow screens.** Below 640px the navbar drops Print…, shortens the switch's visible label to
   "Edit" (its accessible name stays "Edit plan"), and wraps "This week" and the switch to a second
-  row at the right, leaving the centred arrows and week and Settings on the first; below 480px the
-  wordmark becomes the "FP" monogram. Settings is a gear IconButton named "Settings" at every
+  row at the right, leaving the centred arrows and week and Settings on the first; the planner's bar
+  leaves the wordmark out there, and the Settings page's bar shows the "FP" monogram below 480px. Settings is a gear IconButton named "Settings" at every
   width. The markup keeps the desktop order, which is the tab order. Held upright under 1000px wide,
   or on any screen under 760px wide, the grids fold (K26): each row's name line spans the seven
   days above its boxes, so nothing scrolls sideways down to 320px. A phone opens on the week, like
@@ -421,7 +427,7 @@ Each grid is one tab stop, following the WAI-ARIA grid pattern with a roving tab
 - **The stop** starts on today's DayMark in the first row (`[aria-current="date"]`), else the first
   day, else the first cell, and then stays on the last cell focused. A `MutationObserver` keeps
   exactly one stop as rows come and go.
-- **Keys.** Arrows move cell by cell over the names, days, totals and the Picked row, and never
+- **Keys.** Arrows move cell by cell over the names and days, and never
   wrap. Home and End go along the row, Ctrl+Home and Ctrl+End to the grid's ends. Space and Enter
   belong to the DayMark. An `aria-hidden` cell is skipped.
 - **Edit plan.** The controls in a cell (Edit in the name cell, Remove in the
@@ -452,8 +458,8 @@ tall or less).
   `display: contents`, so the cells place themselves and gridNav still walks `table.rows`. Rows
   share the height (`minmax(--grid-row-min, 1fr)`), and a `max-height` stops them at 1.25 × a day's
   width. Each day cell is a size container that `DayMark fill` fills (86%, up to 128px). Folded,
-  each `TrackerRow` sets `--line-row` and `--box-row`, the two grid lines it takes, and the name line
-  draws today's band with `today-band-line` from `--today`.
+  each `TrackerRow` sets `--line-row` and `--box-row`, the two grid lines it takes. There is no
+  band for today (K36).
 - **The navbar.** `useBarReveal` (`src/composables/barReveal.ts`) shows it from a 14px strip at the
   top edge (a pointer that can hover), the handle button (wherever a coarse pointer is present;
   out of the Tab order), and `focus-within`; it hides on leaving, Escape or a press elsewhere. The
@@ -469,12 +475,11 @@ literal colours the system allows (`src/styles/__tests__/print.spec.ts` holds th
 `tokens.json`): words, boxes and marks keep their light colours, chips are outlined, and `--canvas`,
 `--panel` and `--tile` go transparent. Shadows and transitions are off.
 
-- Anything marked `data-noprint` is hidden: the navbar, the phone's view switch, the sync status,
+- Anything marked `data-noprint` is hidden: the navbar and its handle, the "Food" button, the sync status,
   the import prompt, Edit plan's controls and add forms, and a section's hint line if it has one. Dialogs, the
   popover and Banners carry `print:hidden`.
-- "One extra" keeps its underline and words. The Picked row's `<tfoot>` prints as an ordinary row
-  group, so a table split across pages repeats its header but prints the Picked row once, at the
-  end.
+- A met day's name, check and underline keep their `pen`. A table split across pages repeats its
+  header.
 - The Food section's heading stays with its grid (`print:break-inside-avoid`), and a section header never ends
   a page (`print:break-after-avoid`).
 

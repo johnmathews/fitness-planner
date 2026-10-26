@@ -8,7 +8,7 @@ This document shows each part of the Fitness Planner web app in light and dark. 
 
 Fitness Planner should feel like a well-made notebook kept for years: plain, dependable and calm, with today and this week in one bold, obvious place and everything older quiet and dense.
 
-Fitness Planner is a weekly plan for exercise and diet: one row per exercise or food, one mark per day, and a total that says how the week is going. A personal trainer could recommend it and use it with a client. It is (almost) as simple as a paper star chart, and it never pretends to be more than the record of someone showing up.
+Fitness Planner is a weekly plan for exercise and diet: one row per exercise or food, one mark per day, and a day that turns green once it reaches the daily pick. A personal trainer could recommend it and use it with a client. It is (almost) as simple as a paper star chart, and it never pretends to be more than the record of someone showing up.
 
 ## The feeling
 
@@ -21,7 +21,7 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 
 | Layer | Where | How it behaves |
 | --- | --- | --- |
-| 1. Now | The Exercises and Food screens, each filling the screen, and today's band | One obvious thing to do. The week fills the screen, the bar keeps out of sight, 44px targets. |
+| 1. Now | The Exercises and Food screens, each filling the screen | One obvious thing to do. The week fills the screen, the bar keeps out of sight, 44px targets. |
 | 2. Record | The year strip, notes, search | Quiet and dense: `caption` type, `ink-secondary`, small marks. |
 
 ## How to use this system
@@ -35,6 +35,6 @@ Fitness Planner is a weekly plan for exercise and diet: one row per exercise or 
 
 - Fake paper texture, handwriting fonts, leather, binding or any skeuomorphism.
 - Confetti, streak flames, badges, points, motivational slogans, exclamation marks.
-- The `pen` colours on anything but their marks (and `pen` on a met total).
+- The `pen` colours on anything but their marks (and `pen` on a met day's name, check and underline).
 - `pen-missed` standing in for `error-ink`: a missed day is a record, never an error.
 - Uppercase letter-spaced labels, monospace numbers, gradients, glows, emoji.
