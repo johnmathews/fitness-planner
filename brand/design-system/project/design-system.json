@@ -197,9 +197,9 @@
   ],
   "lastChange": {
     "by": "John Mathews",
-    "at": "2026-10-26T08:08:11Z",
+    "at": "2026-10-26T22:58:13Z",
     "via": "Claude Code",
-    "note": "Renamed to Tracker (K44): the wordmark, no monogram; item notes in WeekGrid and Dialog (K43); arrows in PlannerScreen (K42)."
+    "note": "Everything at the week's size (K46-K55): bigger row names; the bar full width with the new BarAction; Settings in rows with no bar; Edit plan with Add buttons and dialogs; dialogs at the page's size."
   },
   "layout": "files",
   "libraries": [],
