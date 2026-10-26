@@ -1028,10 +1028,12 @@ describe('exercise weight', () => {
     await edit.get('#edit-exercise-name').setValue('Halos')
     await edit.get('input[data-field="reps"]').setValue('1x0')
     await toggle('Per set').trigger('click')
+    await edit.get('#edit-exercise-notes').setValue('**Ribs down.**')
     await edit.get('form').trigger('submit')
     await flushPromises()
     expect(detail('Halos')).toBe('10 reps a set')
     expect(exTotal(-1)).toBe('0 of 3')
+    expect(usePlannerStore().exercises.at(-1)!.notes).toBe('**Ribs down.**')
   })
 
   it('closes on Escape and on Close without saving, returning focus to its Edit button', async () => {
@@ -1115,14 +1117,16 @@ describe('the Edit food dialog', () => {
       .findAll('input')
       .map((i) => edit.get(`label[for="${i.attributes('id')}"]`).text())
     expect(labels).toEqual(['Name', 'Times a week'])
+    expect(edit.get('label[for="edit-food-notes"]').text()).toBe('Note')
     expect(document.activeElement).toBe(edit.get('#edit-food-name').element)
     await edit.get('#edit-food-name').setValue('Salmon')
+    await edit.get('#edit-food-notes').setValue('Oily fish')
     await edit.get('button[aria-label="More times a week"]').trigger('click')
     await edit.get('form').trigger('submit')
     await flushPromises()
     expect(dialog()).toBeNull()
     expect(rowCells('Salmon')[0]!.attributes('aria-pressed')).toBe('true')
-    expect(useDietStore().foods[2]).toMatchObject({ name: 'Salmon', target: 3 })
+    expect(useDietStore().foods[2]).toMatchObject({ name: 'Salmon', target: 3, notes: 'Oily fish' })
   })
 
   it('keeps the dialog open on an empty name, and discards changes on Cancel', async () => {
