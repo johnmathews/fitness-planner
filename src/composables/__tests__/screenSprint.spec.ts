@@ -119,12 +119,34 @@ describe('useScreenSprint', () => {
     document.body.innerHTML = ''
   })
 
-  it('sprints to Food as soon as a moving scroll brings it a step into the window (K45)', () => {
+  it('sprints to Food as soon as a wheel brings it a step into the window (K45)', () => {
     const wrapper = holder()
+    wheel()
     scrollToY(300)
     scrollToY(520) // Food's top is 20px in: less than a step (32px of 800)
     expect(scrollTo).not.toHaveBeenCalled()
     scrollToY(540)
+    expect(landed()).toBe(1300)
+    wrapper.unmount()
+  })
+
+  it('leaves a scrollbar drag or the keyboard to sprint at rest, not mid-scroll', () => {
+    const wrapper = holder()
+    scrollToY(600) // no wheel came: a scrollbar drag or a key
+    expect(scrollTo).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(REST_MS)
+    expect(landed()).toBe(1300)
+    wrapper.unmount()
+  })
+
+  it("sprints at once in a fling's momentum after the finger lifts", () => {
+    const wrapper = holder()
+    window.dispatchEvent(new Event('touchstart'))
+    window.dispatchEvent(new Event('touchend'))
+    scrollToY(600)
+    // Under way before the rest timer could have fired: the fling started it.
+    vi.advanceTimersByTime(REST_MS - 20)
+    expect(scrollTo).toHaveBeenCalled()
     expect(landed()).toBe(1300)
     wrapper.unmount()
   })
@@ -161,6 +183,22 @@ describe('useScreenSprint', () => {
     wrapper.unmount()
   })
 
+  it('holds a finger still while a sprint runs', () => {
+    const wrapper = holder()
+    const move = () => {
+      const event = new Event('touchmove', { cancelable: true })
+      window.dispatchEvent(event)
+      return event
+    }
+    expect(move().defaultPrevented).toBe(false)
+    wheel()
+    scrollToY(600)
+    expect(move().defaultPrevented).toBe(true)
+    landed()
+    expect(move().defaultPrevented).toBe(false)
+    wrapper.unmount()
+  })
+
   it('sprints back up to the end of Exercises, at once when motion is reduced', () => {
     vi.stubGlobal(
       'matchMedia',
@@ -170,6 +208,7 @@ describe('useScreenSprint', () => {
     )
     const wrapper = holder()
     scrollToY(1300)
+    wheel()
     scrollToY(1100)
     expect(scrollTo).toHaveBeenCalledTimes(1)
     expect(scrollTo).toHaveBeenLastCalledWith({ top: 500, behavior: 'auto' })

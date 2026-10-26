@@ -9,6 +9,12 @@ export const MIN_STEP_PX = 16
 export const SPRINT_MS = 260
 /** How long the wheel must be quiet after a sprint before it scrolls the page again. */
 export const QUIET_MS = 180
+/**
+ * How long after a wheel event, or after a finger lifts, a scroll counts as a wheel's or a fling's
+ * and may sprint at once. A fling's momentum runs on after the finger lifts.
+ */
+export const WHEEL_MS = 150
+export const FLING_MS = 1200
 
 /**
  * Where a scroll should go (PlannerScreen card, K38, K45). `top` is the scroll position, `height`
@@ -60,7 +66,9 @@ export function sprintTo(top: number, done?: () => void): void {
     done?.()
   }
   const step = (now: number) => {
-    const k = Math.min(1, (now - start) / SPRINT_MS)
+    // A frame's time can fall just before `start` (the first frame of a sprint begun in a scroll
+    // handler), which would ease the page backwards for that frame.
+    const k = Math.min(1, Math.max(0, (now - start) / SPRINT_MS))
     window.scrollTo({ top: from + (top - from) * (1 - (1 - k) ** 3), behavior: 'auto' })
     if (k < 1) frame = requestAnimationFrame(step)
     else landing?.()
@@ -101,6 +109,9 @@ export function useScreenSprint(enabled: Ref<boolean>) {
   let timer: ReturnType<typeof setTimeout> | undefined
   let quietUntil = 0
   let finger = false
+  /** When the last wheel event came, and when a finger last lifted. */
+  let wheelAt = -Infinity
+  let liftAt = -Infinity
 
   function starts(): number[] {
     const screens = [...document.querySelectorAll<HTMLElement>('[data-planner-screen]')]
@@ -129,7 +140,10 @@ export function useScreenSprint(enabled: Ref<boolean>) {
     if (now !== last) direction = now > last ? 1 : -1
     last = now
     clearTimeout(timer)
-    if (!finger && go(Math.max(MIN_STEP_PX, window.innerHeight * STEP_SHARE))) return
+    // A wheel or a fling sprints at once; a scrollbar drag or the keyboard waits for rest (K45).
+    const t = performance.now()
+    const moving = t - wheelAt < WHEEL_MS || (!finger && t - liftAt < FLING_MS)
+    if (moving && go(Math.max(MIN_STEP_PX, window.innerHeight * STEP_SHARE))) return
     timer = setTimeout(settle, REST_MS)
   }
 
@@ -144,6 +158,7 @@ export function useScreenSprint(enabled: Ref<boolean>) {
   function onWheel(event: WheelEvent): void {
     if (!enabled.value) return
     const now = performance.now()
+    wheelAt = now
     if (sprinting() || now < quietUntil) {
       event.preventDefault()
       quietUntil = now + QUIET_MS
@@ -158,6 +173,7 @@ export function useScreenSprint(enabled: Ref<boolean>) {
   }
   function onTouchEnd(): void {
     finger = false
+    liftAt = performance.now()
     onScroll()
   }
 
