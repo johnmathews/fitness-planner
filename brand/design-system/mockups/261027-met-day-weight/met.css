@@ -1,0 +1,80 @@
+/*
+  The Exercises section in normal mode, as a prototype. One frame (.md) is one screen, sized from
+  its own box like the planner: u is 1 on a 1280×800 screen (0.75 to 1.6), n is 1 on a phone. The
+  week's sizes are the app's (K46, K47); a met day's look is the question, its values --candidate-*.
+*/
+.md { position: relative; overflow: hidden; box-sizing: border-box; container: md / size;
+  background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+.md *, .md *::before, .md *::after { box-sizing: border-box; }
+.md .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.md-scroll { position: absolute; inset: 0; overflow-y: auto;
+  --u: clamp(0.75px, min(calc(100cqw / 1280), calc(100cqh / 800)), 1.6px);
+  --n: clamp(1px, calc(100cqw / 600), 1.4px);
+  --pad: calc(var(--u) * 48);
+  --title: max(30px, calc(var(--u) * 40)); --wk: max(16px, calc(var(--u) * 20));
+  --name: max(20px, calc(var(--u) * 27)); --chip: max(18px, calc(var(--u) * 19)); --day: max(16px, calc(var(--u) * 20));
+  --row: max(76px, calc(var(--u) * 100));
+  --name-col: calc(var(--u) * 320);
+  /* As built: a 16px check of 1.5 stroke, and a stroke max(18px, 24u) tall under the column. */
+  --check: 16px; --check-stroke: 1.5;
+  --line-h: max(18px, calc(var(--u) * 24)); --line-drop: -10px;
+}
+/* B (picked in round 1): no stroke under the column. One pen line under the day's name and its
+   check together, and the check bigger and heavier. Round 2 asks the day names' size: 24u or 27u
+   (the rows' names). The check is 1.15em of the name, so it grows with it. */
+.md[data-option^="b"] .md-scroll { --check: calc(var(--day) * 1.15); --check-stroke: 2.5; }
+.md[data-option="b24"] .md-scroll { --day: var(--candidate-day-24); }
+.md[data-option="b27"] .md-scroll { --day: var(--candidate-day-27); }
+.md[data-option^="b"] .met-line { display: none; }
+.md[data-option^="b"] .hd[data-met] .met { border-bottom: var(--candidate-ul) solid var(--pen); padding-bottom: var(--candidate-ul-gap); }
+
+.md-scroll { --candidate-day-24: max(18px, calc(var(--u) * 24)); --candidate-day-27: max(20px, calc(var(--u) * 27));
+  --candidate-ul: max(2px, calc(var(--u) * 3)); --candidate-ul-gap: max(2px, calc(var(--u) * 3)); }
+
+.md-page { padding: calc(var(--u) * 28) var(--pad) calc(var(--u) * 64); }
+.md-head { display: flex; align-items: baseline; gap: calc(var(--u) * 16); padding-bottom: calc(var(--u) * 20); }
+.md-head h2 { margin: 0; font: 600 var(--title) / 1.15 var(--font-serif); }
+.md-head .wk { font: 400 var(--wk) / 1.3 var(--font-sans); color: var(--ink-secondary); }
+.md .grid { display: grid; grid-template-columns: var(--name-col) repeat(7, minmax(0, 1fr)); }
+.md .grid > * { min-width: 0; }
+.md .hd { display: flex; align-items: center; justify-content: center; gap: 4px; padding: calc(var(--u) * 12) 0; border-bottom: 1px solid var(--ink); font-weight: 600; font-size: var(--day); line-height: 1.3; }
+.md .hd[data-met] { color: var(--pen); }
+.md .met { display: inline-flex; align-items: center; gap: 4px; }
+.md .met-check { width: var(--check); height: var(--check); stroke-width: var(--check-stroke); flex: none; }
+.md .nm, .md .d { min-height: var(--row); border-bottom: 1px solid var(--line); }
+.md .nm { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding-right: 6px; }
+.md .nl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.md .nl .n { font-size: var(--name); line-height: 1.25; font-weight: 600; }
+.md .chip { font-size: var(--chip); line-height: 1.35; font-weight: 600; background: var(--tile); color: var(--ink-secondary); border-radius: var(--radius-sm); padding: 0 8px; white-space: nowrap; }
+.md .note { font: italic 400 var(--chip) / 1.35 var(--font-serif); color: var(--ink-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md .note a { color: inherit; text-underline-offset: 2px; }
+.md .d { position: relative; display: grid; place-items: center; }
+.md .mark { display: grid; place-items: center; width: calc(var(--row) * 0.86); height: calc(var(--row) * 0.86); max-width: 100%; }
+.md .mark svg { width: 94%; height: 94%; overflow: visible; }
+.md .mark .bx { stroke: var(--control-border); }
+.md .mark[data-mark="great"] .ink { fill: var(--pen); }
+.md .mark[data-mark="partial"] .ink { fill: var(--pen-partial); }
+.md .mark[data-mark="missed"] .ink { fill: var(--pen-missed); }
+.md .mark .sym { stroke: var(--canvas); }
+/* The stroke under a met column, as TrackerRow draws it: 88% wide, filled pen, below the last box. */
+.md .met-line { position: absolute; left: 6%; width: 88%; bottom: var(--line-drop); height: var(--line-h); overflow: visible; fill: var(--pen); pointer-events: none; }
+
+/* Folded: the week folds as on the planner, each row's name above its seven boxes. */
+@container md ((orientation: portrait) and (width < 1000px)) or (width < 760px) {
+  .md-scroll { --pad: 16px; --u: 1px; --title: calc(var(--n) * 30); --name: calc(var(--n) * 20); --chip: calc(var(--n) * 18); --day: calc(var(--n) * 16);
+    --line-h: 12px; --line-drop: -6px; }
+  /* Folded, seven names share a phone's width: 16n now, 18n or 20n proposed. */
+  .md[data-option="b24"] .md-scroll { --day: calc(var(--n) * 18); }
+  .md[data-option="b27"] .md-scroll { --day: calc(var(--n) * 20); }
+  /* A column is about 51px there, too narrow for a name and its check: the check stays off and
+     the green, underlined name says it alone (a screen reader still hears "daily goal met"). */
+  .md[data-option^="b"] .met-check { display: none; }
+  .md-head .wk { display: none; }
+  .md .grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .md .hd.corner { display: none; }
+  .md .hd { padding: 6px 0; gap: 2px; }
+  .md .nm { grid-column: 1 / -1; min-height: 0; border: 0; padding: 10px 0 2px; }
+  .md .note { flex-basis: 100%; }
+  .md .d { min-height: 0; height: 52px; }
+  .md .mark { width: 44px; height: 44px; }
+}

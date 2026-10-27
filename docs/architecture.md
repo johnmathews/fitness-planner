@@ -52,16 +52,15 @@ App.vue                 picks the screen (a link, planner, sign-up, reset or sig
 │                       has one); full width, sized by main.css's --bar-* (K47, K49, K50); on
 │                       the planner's screens out of sight until wanted (useBarReveal, §6.6)
 ├── SettingsPage.vue    the SettingsPage card, at #/settings: Back to the week, then Appearance
-│                       (Theme, Marks), Planner (Exercises a day), Your data
-│                       (Export and Import…, see §4) and Account (who is signed in, Sign out)
+│                       (Marks, then Theme, K59), Your data (Export and Import…, see §4) and
+│                       Account (who is signed in, Sign out)
 ├── SyncStatus.vue      loading, offline and conflict Banners above the planner
 ├── EmailStatus.vue     "Confirm your email." Banner, with Send it again, until it is confirmed
 ├── ImportPrompt.vue    this browser's log from before accounts, offered once (§7)
 ├── WeekHeader.vue      the page's h1, the week ("19–25 October"), visually hidden on screen (each
 │                       SectionHeader shows the week); set in display on paper
 ├── ExerciseGrid.vue    the Exercises section: SectionHeader (the title and the week; in config
-│   │                   mode CopyPlan.vue at its right: "Copy plan to next week" and a note when
-│   │                   the plan is carried over)
+│   │                   mode the title alone, with the Exercises a day Stepper centred on its line, K62)
 │   ├── TrackerGrid.vue a <table> (WeekGrid card): day names, one TrackerRow per item, and
 │   │   │               the days that met the daily pick
 │   │   └── TrackerRow.vue  name and chips on one line, the note under them
@@ -71,8 +70,10 @@ App.vue                 picks the screen (a link, planner, sign-up, reset or sig
 │   └── EditExerciseDialog.vue  Dialog: Name; sets, Measure (Reps or Time), reps or seconds;
 │                           PerSideToggle, weight (kg), Times a week (the goal); then Note (K55);
 │                           Edit exercise, or Add exercise from the button under the grid (K54)
-└── DietSection.vue     the Food section: SectionHeader (the title and the week), kept with its grid;
-                        on the screens, the "Back to Exercises" arrow (K42)
+└── DietSection.vue     the Food section: SectionHeader (the title and the week; in config mode
+                        the title alone, with the Foods a day Stepper centred on its line, K62), kept
+                        with its grid, whose days that met foods a day turn green (K57); on the
+                        screens, the "Back to Exercises" arrow (K42)
     ├── TrackerGrid.vue wired to diet: no chips
     └── EditFoodDialog.vue  Dialog: Name, Times a week (the goal), then Note; Edit food, or
                             Add food from the button under the grid (K54)
@@ -85,13 +86,12 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 
 - **Carry forward.** A week without a plan of its own shows the plan of the latest earlier week that
   has one (`planSource` in `src/lib/plans.ts`); weeks before the first plan show the earliest one,
-  and with no plans at all the stores show the defaults. In config mode CopyPlan's caption, on the
-  Exercises title line, says which week the plan comes from, naming the exercise and food sources separately when they differ.
+  and with no plans at all the stores show the defaults.
 - **A week gets its own plan when it first changes**, ticks included: the store copies what the week
   shows into `plans[week]` and edits that copy (`own()`). Until then, an unplanned week follows its
   source, so changing this week's plan also changes the weeks ahead that haven't been touched.
-- **Copy plan to next week** (config mode) copies the visible week's exercises and foods into the
-  next week, replacing its plan after a confirmation if it had one, then shows that week.
+- There is no "Copy plan to next week" any more (K58): carry-forward already gives an untouched
+  week the latest plan, and a week with its own plan changes by editing it.
 - Items keep their ids when copied, so a week's ticks stay attached to the same exercise or food.
   Removing an item from one week leaves weeks with their own plan alone; its ticks stay in the log,
   uncounted.
@@ -100,24 +100,23 @@ foods (with goals). Ticks live in a separate **log**, keyed by week and item id.
 
 `usePlannerStore` is a setup store.
 
-| State                 | Kept by                                   | Notes                                                                              |
-| --------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
-| `plans`               | the sync store: server and per-user cache | week → `{ id, name, sets?, reps, duration?, perSide?, weight?, target, notes? }[]` |
-| `log`                 | the sync store: server and per-user cache | week Monday `YYYY-MM-DD` → exercise id → seven marks (`Days`, below)               |
-| `accent`, `dailyPick` | the sync store: server and per-user cache | defaults `#30d158` and `3`. The accent is kept but draws nothing (K13)             |
-| `theme`               | `tracker-settings-v1` (the device)        | `system` (default), `light` or `dark`                                              |
-| `markSet`             | `tracker-settings-v1` (the device)        | `squiggles` (default), `ticks`, `stamped-ticks`, `faces`, `stamped-faces`          |
-| `configMode`          | no                                        | `false` (normal mode) on every load                                                |
-| `weekOffset`          | no                                        | `0` is the current week                                                            |
-| `now`                 | no                                        | a ref so "today" can move; see §5                                                  |
+| State                             | Kept by                                   | Notes                                                                              |
+| --------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| `plans`                           | the sync store: server and per-user cache | week → `{ id, name, sets?, reps, duration?, perSide?, weight?, target, notes? }[]` |
+| `log`                             | the sync store: server and per-user cache | week Monday `YYYY-MM-DD` → exercise id → seven marks (`Days`, below)               |
+| `accent`, `dailyPick`, `foodPick` | the sync store: server and per-user cache | defaults `#30d158`, `3` and `2`. The accent is kept but draws nothing (K13)        |
+| `theme`                           | `tracker-settings-v1` (the device)        | `system` (default), `light` or `dark`                                              |
+| `markSet`                         | `tracker-settings-v1` (the device)        | `squiggles` (default), `ticks`, `stamped-ticks`, `faces`, `stamped-faces`          |
+| `configMode`                      | no                                        | `false` (normal mode) on every load                                                |
+| `weekOffset`                      | no                                        | `0` is the current week                                                            |
+| `now`                             | no                                        | a ref so "today" can move; see §5                                                  |
 
 The stores start empty (showing the defaults) and never write the user's data themselves. The sync
 store fills them with `adopt` and saves their changes (§7).
 
-**Derived:** `monday`, `weekKey`, `currentWeekKey`, `nextWeekKey`, `label`, `days` (`name` "Thu",
+**Derived:** `monday`, `weekKey`, `currentWeekKey`, `label`, `days` (`name` "Thu",
 `date` "22", `full` "Thursday 22 October" for the DayMarks' names, `key`, `isToday`, and
-`isFuture` for days still to come), `exercises` (the visible week's plan, see §2), `carriedFrom`
-(the source week, or null when the week has its own plan), `nextWeekHasPlan`, `dayCounts`,
+`isFuture` for days still to come), `exercises` (the visible week's plan, see §2), `dayCounts`,
 `grandTotal`, and the helpers `isDone(id, day)` and `totalFor(id)`. Totals count only the week's
 exercises, so a removed exercise's history stays in `log` without inflating the numbers.
 
@@ -125,9 +124,10 @@ exercises, so a removed exercise's history stays in `log` without inflating the 
 `addExercise` (returns `false` for an empty name; new exercises get goal 3 unless the input
 names one), `updateExercise` (replaces name, sets, reps or duration, per-side, weight and, when
 given, the goal, keeping the id and history; `false` for an empty name or an id not in the week).
-An exercise counts reps or time, never both: a duration stores reps as 0. Then `removeExercise`, `copyToNextWeek`, `setConfigMode`,
-`prevWeek`, `nextWeek`, `thisWeek`, `refreshNow`, `changeDailyPick` (clamps 1–8),
-`setTheme`, `savedSettings` (the accent and daily pick, or null while the user has none of their own), `adopt`
+An exercise counts reps or time, never both: a duration stores reps as 0. Then `removeExercise`, `setConfigMode`,
+`prevWeek`, `nextWeek`, `thisWeek`, `refreshNow`, `changeDailyPick` and `changeFoodPick` (each
+clamps 1–8), `setTheme`, `savedSettings` (the accent and both daily picks, or null while the user
+has none of their own), `adopt`
 (replace the data and settings wholesale), `adoptWeek` (replace one week's plan) and `clear` (forget
 the user on sign-out, keeping the theme). The module also exports `exerciseDetails`, which gives the chips after a name, on its line (K43):
 "3 × 12" or "3 × 8 each side" (or "10 reps a set" and "8 each side" without sets, "3 sets" without
@@ -137,12 +137,13 @@ card's words).
 
 `useDietStore` holds `plans` of foods (`{ id, name, target, notes? }`) and its own `log`, kept by the sync
 store like the planner's. It reads `planner.weekKey`, so week navigation moves both
-sections. It derives `foods`, `dayCounts`, `grandTotal`, `goalsMet` and `nextWeekHasPlan`, and
+sections. It derives `foods`, `dayCounts`, `grandTotal` and `goalsMet`, and
 offers `isEaten`, `totalFor`, `toggle`, `changeTarget` (0–7), `addFood` (a name, or a name with
 its goal and note from the Add food dialog; goal 3 when none is given, `false` for an empty name),
 `updateFood` (name, goal and note from the Edit food dialog, `false` for an empty name or a food
-not in the week), `removeFood`, `copyToNextWeek`, `adopt`, `adoptWeek` and `clear`. Food goals work
-like exercise goals (met once the count reaches a non-zero goal); foods have no daily target.
+not in the week), `removeFood`, `adopt`, `adoptWeek` and `clear`. Food goals work
+like exercise goals (met once the count reaches a non-zero goal). The daily target, foods a day,
+is the planner store's `foodPick`, with the other settings (K57).
 
 The planner writes only the theme and `markSet`, each merged into whatever
 `tracker-settings-v1` already holds.
@@ -241,7 +242,7 @@ load as `system`, and before the mark set existed as `squiggles`.
   "exportedAt": "2026-10-24T09:30:00.000Z",
   "exercise": { "plans": {}, "log": {} },
   "diet": { "plans": {}, "log": {} },
-  "settings": { "accent": "#30d158", "dailyPick": 3 }
+  "settings": { "accent": "#30d158", "dailyPick": 3, "foodPick": 2 }
 }
 ```
 
@@ -311,7 +312,9 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
   "Edit plan" BarAction in the navbar (a toggle button with `aria-pressed`, filled while on; K48)
   turns on config mode, which shows the
   edit and remove IconButtons, an "Add exercise" and an "Add food" button under the grids, and
-  "Copy plan to next week" on the Exercises title line. An item is added and changed only in its
+  the daily targets centred on each title line, under the bar's week: a Stepper at max(44px, 40u)
+  reading "4 per day", its label ("Exercises a day", "Foods a day") for a screen reader only
+  (K56, K62, K63). The week beside the titles is left out there. An item is added and changed only in its
   dialog (Add or Edit exercise, Add or Edit food; K54), so rows have no Stepper; the remove button ends each
   row, in a "Remove" column after the days. The mode is not saved, so the
   app always opens ready for ticking.
@@ -338,9 +341,10 @@ import and export as well: the API's tests (`api/tests/test_parity.py`) run the 
 - **Food is the screen after the exercises**, sharing the week navigation and the print sheet.
 - **No Picked row, no dates in the header** (K28, K29): the grids show each day by its name alone,
   and nothing counts a day against the daily pick. A day that reaches it turns green instead
-  (K30): `ExerciseGrid` passes `metDays` to the grid, which draws the name in `pen` with a check
-  and a hand-drawn `pen` underline below the column (`MET_UNDERLINES`, K39). The daily pick is stored, synced and exported (`dailyPick`) as
-  before. The sections have no weekly figure (K31), Settings no totals switch (K32), and the grids no Week
+  (K30): `ExerciseGrid` passes `metDays` to the grid, which draws the day's name in `pen`,
+  underlined (K60). The day names are max(20px, 27u), the rows' name size. `DietSection` does
+  the same against foods a day (K57). Both picks are stored, synced and exported (`dailyPick`,
+  `foodPick`). The sections have no weekly figure (K31), Settings no totals switch (K32), and the grids no Week
   column (K33). The Header has a Full screen button where the browser supports one (K34).
 - **Print is the light theme on white paper, from either theme** (§6.7).
 - **Narrow screens.** Folded (held upright under 1000px wide, or under 760px wide), the navbar
@@ -440,13 +444,12 @@ the properties they animate, so the focus ring never fades in.
 true for the verb, false for Cancel or Escape. One `<ConfirmHost />`, mounted once in `App.vue`,
 shows the open question in a ConfirmDialog (Reka's AlertDialog). A newer question answers an older
 one false. `returnFocus` names where focus goes on closing when the control that asked has gone, as
-after a removal. Removing a row (`TrackerRow`) and copying over next week's plan (`CopyPlan`) ask
-this way. Sign out uses a ConfirmDialog of its own on the Settings page, because it shows the
+after a removal. Removing a row (`TrackerRow`) asks this way. Sign out uses a ConfirmDialog of its own on the Settings page, because it shows the
 unsynced count, a busy state and an error.
 
 A question never outlives what it asked about. It is answered false when the component that asked
 goes away, and `App.vue` closes any open question (`dismissConfirm()`) when the signed-in user
-changes, as when another tab signs in as someone else. Remove and Replace also note the week before
+changes, as when another tab signs in as someone else. Remove also notes the week before
 asking and do nothing if the week changed while the question was open (past midnight on Sunday).
 
 ### 6.5 Keyboard in the grids
@@ -520,7 +523,7 @@ literal colours the system allows (`src/styles/__tests__/print.spec.ts` holds th
 - Anything marked `data-noprint` is hidden: the navbar and its handle, the arrows between the screens, the sync status,
   the import prompt, Edit plan's controls and Add buttons, and a section's hint line if it has one. Dialogs, the
   popover and Banners carry `print:hidden`.
-- A met day's name, check and underline keep their `pen`. A table split across pages repeats its
+- A met day's name keeps its `pen` and its underline (K60). A table split across pages repeats its
   header.
 - The Food section's heading stays with its grid (`print:break-inside-avoid`), and a section header never ends
   a page (`print:break-after-avoid`).

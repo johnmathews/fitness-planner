@@ -31,7 +31,7 @@ def test_marks_migration_reads_existing_ticks_as_great(
     c.execute("INSERT INTO ticks VALUES (1, 'exercise', '2026-10-19', 'sq', 0)")
     monkeypatch.undo()
     db.migrate(c)
-    assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 4
+    assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 5
     rows = [
         tuple(r)
         for r in c.execute("SELECT item_id, days, partial, missed, solid, hatch FROM ticks")
@@ -58,7 +58,7 @@ def test_deleting_a_user_cascades_to_their_rows(conn: sqlite3.Connection) -> Non
     conn.execute(
         "INSERT INTO users (id, username, password_hash, created_at) VALUES (1, 'a', 'h', 0)"
     )
-    conn.execute("INSERT INTO settings VALUES (1, '#30d158', 3)")
+    conn.execute("INSERT INTO settings VALUES (1, '#30d158', 3, 2)")
     conn.execute("INSERT INTO plans VALUES (1, 'exercise', '2026-10-19', '[]', 1)")
     conn.execute("INSERT INTO ticks VALUES (1, 'diet', '2026-10-19', 'veg', 5, 0, 0, 0, 0)")
     conn.execute("INSERT INTO sessions VALUES ('t', 1, 0, 0, 0)")

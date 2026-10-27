@@ -25,7 +25,7 @@ defineProps<{
 <template>
   <header
     data-slot="section-header"
-    class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 pb-6 print:break-after-avoid print:pb-3 screen:items-center screen:pb-[calc(var(--u)*20)] folded:pb-3 short:sr-only"
+    class="flex flex-wrap items-baseline gap-x-[max(24px,calc(var(--u)*28))] gap-y-3 pb-6 print:break-after-avoid print:pb-3 screen:grid screen:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] screen:items-center screen:pb-[calc(var(--u)*20)] folded:flex folded:pb-3 short:sr-only"
   >
     <div class="flex min-w-0 flex-col gap-1">
       <!-- The week repeats the page's h1, which a screen reader already has, so it is hidden from one. -->
@@ -48,7 +48,9 @@ defineProps<{
         {{ hint }}
       </p>
     </div>
-    <!-- The section's actions, at the right of the title line (Edit plan's Copy plan, K54). -->
+    <!-- The section's actions, centred on the title line (Edit plan's daily target, K62): the line
+         is three columns on screen, like the Header's, so they sit under the bar's week. Folded
+         they follow the title, wrapping under it when the line is too narrow. -->
     <slot name="actions" />
   </header>
 </template>

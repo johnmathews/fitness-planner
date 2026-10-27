@@ -280,8 +280,8 @@ listed in [api.md](api.md) §10):
   its persistence. Also the weight and sets fields, the edit dialog (found by `role="dialog"` on
   `document.body`, where Reka's portal renders it), normal mode hiding every editing control, export (with
   `URL.createObjectURL` stubbed) and import through the file input (summary, confirm, cancel,
-  errors), copying the plan to
-  the next week (with and without the replace confirmation), and the carried-over note. Tests that
+  errors), Edit plan's daily targets (centred on each title line, reading "per day", 1–8,
+  synced), and no Copy plan button (K58). Tests that
   edit the plan mount with `mountConfig()`, which turns config mode on. Queries that would also
   match the diet grid scope to `[data-testid="exercise-grid"]`; the rest rely on exercise-only
   labels or on the exercise form coming first in the DOM. Every mount is signed in as alice through
@@ -294,7 +294,7 @@ listed in [api.md](api.md) §10):
   status messages and triggers (loading, offline with and without a copy, retry, the conflict
   notice, focus, visibility and the minute tick).
 - `src/components/__tests__/Planner.spec.ts`: the planner on the design system's marks, in the
-  mounted app: a day that meets the daily pick (its name, check, words and underline, K30, K39),
+  mounted app: a day that meets the daily pick (its name in pen, underlined, and its words, K30, K60),
   today (full-date names with "today", `aria-current`, no band, K36), rows with no goal or total
   (K33), Edit plan's rows (Edit in the name
   cell, Remove in its own last column, stable row height, focus after a removal), the keyboard (one tab stop per grid,

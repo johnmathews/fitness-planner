@@ -35,6 +35,6 @@ Tracker is a weekly plan for exercise and diet: one row per exercise or food, on
 
 - Fake paper texture, handwriting fonts, leather, binding or any skeuomorphism.
 - Confetti, streak flames, badges, points, motivational slogans, exclamation marks.
-- The `pen` colours on anything but their marks (and `pen` on a met day's name, check and underline).
+- The `pen` colours on anything but their marks (and `pen` on a met day's underlined name, K60).
 - `pen-missed` standing in for `error-ink`: a missed day is a record, never an error.
 - Uppercase letter-spaced labels, monospace numbers, gradients, glows, emoji.

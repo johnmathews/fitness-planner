@@ -108,20 +108,22 @@ describe('the planner grids (W10)', () => {
       return state
     }
 
-    it('turns the day green with a check once its marks reach the pick, and says so', () => {
+    it('turns the day green and underlines it once its marks reach the pick, and says so', () => {
       mountApp(mondayWith(3))
       const monday = ex().findAll('[data-testid="day-head"]')[0]!
       expect(monday.attributes('data-met')).toBe('true')
-      expect(monday.find('[data-slot="met-mark"]').exists()).toBe(true)
       expect(monday.text()).toContain('daily goal met')
+      // The name alone carries it (K60): in pen, underlined, with no check and no column stroke.
+      const name = monday.get('span:not(.sr-only)')
+      expect(name.text()).toBe('Mon')
+      expect(name.classes()).toEqual(expect.arrayContaining(['text-pen', 'underline']))
+      expect(monday.find('svg').exists()).toBe(false)
+      expect(ex().find('tbody svg[data-slot="met-underline"]').exists()).toBe(false)
       // The rest of the week, and the Food grid, stay as they are.
-      expect(ex().findAll('[data-testid="day-head"]')[1]!.attributes('data-met')).toBeUndefined()
+      const tuesday = ex().findAll('[data-testid="day-head"]')[1]!
+      expect(tuesday.attributes('data-met')).toBeUndefined()
+      expect(tuesday.get('span:not(.sr-only)').classes()).not.toContain('underline')
       expect(diet().find('[data-testid="day-head"][data-met]').exists()).toBe(false)
-      // The hand-drawn underline (K39) sits under Monday's column, below the last row only.
-      const lines = ex().findAll('[data-slot="met-underline"]')
-      expect(lines).toHaveLength(1)
-      expect(lines[0]!.element.closest('tr')).toBe(ex().findAll('tbody tr').at(-1)!.element)
-      expect(diet().find('[data-slot="met-underline"]').exists()).toBe(false)
     })
 
     it('stays plain below the pick, and turns when a press reaches it', async () => {

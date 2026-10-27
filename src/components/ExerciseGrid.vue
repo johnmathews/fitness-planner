@@ -11,13 +11,19 @@ import { sprintToScreen } from '@/composables/screenSprint'
 import { SectionHeader } from '@/components/ui/section-header'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import { Button } from '@/components/ui/button'
-import CopyPlan from '@/components/CopyPlan.vue'
+import { Stepper } from '@/components/ui/stepper'
+import { MAX_DAILY_PICK, MIN_DAILY_PICK } from '@/lib/storage'
 import EditExerciseDialog from '@/components/EditExerciseDialog.vue'
 
 const store = usePlannerStore()
 
-/** The days whose marked exercises reach the daily pick (K30): their column turns green. */
+/** The days whose marked exercises reach the daily pick (K30): their names turn green, underlined (K60). */
 const metDays = computed(() => store.dayCounts.map((n) => n >= store.dailyPick))
+/** Exercises a day, set on the title line in Edit plan (K56). */
+const dailyPick = computed({
+  get: () => store.dailyPick,
+  set: (value: number) => store.changeDailyPick(value - store.dailyPick),
+})
 
 function marksFor(id: string): (Mark | null)[] {
   return store.days.map((_, i) => store.markOf(id, i))
@@ -55,9 +61,9 @@ watch(
 )
 </script>
 
-<!-- The Exercises section (SectionHeader, WeekGrid and PlannerScreen cards): its heading, the
-     week, and in Edit plan CopyPlan in the title line's actions and the Add exercise button under
-     the grid (K54). On the planner's screens it is
+<!-- The Exercises section (SectionHeader, WeekGrid and PlannerScreen cards): its heading and the
+     week; in Edit plan the heading alone with Exercises a day centred on its line, reading "3 per day" (K56, K62, K63), and
+     the Add exercise button under the grid (K54). On the planner's screens it is
      the first screen: the slot's messages and the page's h1 at its top, the arrow to Food at its
      foot. -->
 <template>
@@ -68,9 +74,27 @@ watch(
     data-planner-screen
   >
     <slot />
-    <SectionHeader title="Exercises" heading-id="exercises-heading" :week="store.label">
-      <template #actions>
-        <CopyPlan v-if="store.configMode" />
+    <SectionHeader
+      title="Exercises"
+      heading-id="exercises-heading"
+      :week="store.configMode ? undefined : store.label"
+    >
+      <template v-if="store.configMode" #actions>
+        <!-- Centred on the title line (K62), the Stepper alone, reading "− 3 per day +" (K63): its
+             label, "Exercises a day", is for a screen reader. -->
+        <div data-slot="day-target" data-noprint>
+          <Stepper
+            v-model="dailyPick"
+            label="Exercises a day"
+            lower-label="Fewer exercises a day"
+            raise-label="More exercises a day"
+            :min="MIN_DAILY_PICK"
+            :max="MAX_DAILY_PICK"
+            hide-label
+            suffix="per day"
+            data-testid="exercises-a-day"
+          />
+        </div>
       </template>
     </SectionHeader>
     <TrackerGrid

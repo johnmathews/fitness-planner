@@ -7,14 +7,7 @@ import { useSessionStore } from '@/stores/session'
 import { useSyncStore } from '@/stores/sync'
 import { describeProblem } from '@/lib/problems'
 import { useImportSummary } from '@/composables/importSummary'
-import {
-  MARK_KINDS,
-  MARK_SETS,
-  MAX_DAILY_PICK,
-  MIN_DAILY_PICK,
-  isMarkSet,
-  type MarkSet,
-} from '@/lib/storage'
+import { MARK_KINDS, MARK_SETS, isMarkSet, type MarkSet } from '@/lib/storage'
 import { THEMES, type Theme } from '@/lib/theme'
 import { countOf } from '@/lib/words'
 import { APP_NAME } from '@/lib/app'
@@ -31,7 +24,6 @@ import { DayMarkDrawing } from '@/components/ui/day-mark'
 import { InlineMessage } from '@/components/ui/inline-message'
 import { RadioCard } from '@/components/ui/radio-card'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import { Stepper } from '@/components/ui/stepper'
 import { TextLink } from '@/components/ui/text-link'
 
 const THEME_NAMES: Record<Theme, string> = { system: 'System', light: 'Light', dark: 'Dark' }
@@ -66,7 +58,7 @@ const session = useSessionStore()
 const sync = useSyncStore()
 const heading = useTemplateRef<HTMLHeadingElement>('heading')
 const signOutButton = useTemplateRef<InstanceType<typeof Button>>('signOutButton')
-const ids = { look: useId(), planner: useId(), data: useId(), account: useId() }
+const ids = { look: useId(), data: useId(), account: useId() }
 
 // Arriving here moves focus to the page's heading, so a screen reader starts at the top.
 onMounted(() => heading.value!.focus())
@@ -89,17 +81,13 @@ const markSet = computed({
     if (isMarkSet(value)) store.markSet = value
   },
 })
-const dailyPick = computed({
-  get: () => store.dailyPick,
-  set: (value: number) => store.changeDailyPick(value - store.dailyPick),
-})
 
 function exportData(): void {
   downloadExport(
     buildExport({
       exercise: { plans: store.plans, log: store.log },
       diet: { plans: diet.plans, log: diet.log },
-      settings: { accent: store.accent, dailyPick: store.dailyPick },
+      settings: { accent: store.accent, dailyPick: store.dailyPick, foodPick: store.foodPick },
     }),
   )
 }
@@ -185,8 +173,8 @@ async function confirmSignOut(): Promise<void> {
 
 <!--
   The Settings page (brand/design-system/project/components/SettingsPage), at #/settings, with no
-  Header (K52): a link back to the week, the heading, then Appearance (Theme, Marks), Planner
-  (Exercises a day), Your data and Account. Full width in rows like the week (K51): each section's
+  Header (K52): a link back to the week, the heading, then Appearance (Marks, then Theme, K59),
+  Your data and Account. The daily targets are set in Edit plan (K56). Full width in rows like the week (K51): each section's
   heading in the week's name column, its settings beside it, a line rule above each row, controls
   beside their words (K53). Settings take effect at once; there is no Save.
 -->
@@ -218,7 +206,6 @@ async function confirmSignOut(): Promise<void> {
         Appearance
       </h2>
       <div class="flex min-w-0 flex-col gap-(--set-gap)">
-        <SegmentedControl v-model="theme" label="Theme" :options="THEME_OPTIONS" />
         <RadioCard v-model="markSet" label="Marks" :options="MARK_SET_OPTIONS">
           <template #picture="{ option }">
             <span
@@ -231,26 +218,7 @@ async function confirmSignOut(): Promise<void> {
             </span>
           </template>
         </RadioCard>
-      </div>
-    </section>
-
-    <section
-      :aria-labelledby="ids.planner"
-      class="grid grid-cols-[var(--grid-name-w)_minmax(0,1fr)] items-start border-t border-line py-(--set-sec-y) folded:flex folded:flex-col folded:items-stretch folded:gap-4"
-    >
-      <h2 :id="ids.planner" class="title-2 text-(length:--set-h2) leading-tight text-ink">
-        Planner
-      </h2>
-      <div class="flex min-w-0 flex-col gap-(--set-gap)">
-        <Stepper
-          v-model="dailyPick"
-          label="Exercises a day"
-          lower-label="Fewer exercises a day"
-          raise-label="More exercises a day"
-          :min="MIN_DAILY_PICK"
-          :max="MAX_DAILY_PICK"
-          class="flex-row items-center gap-4"
-        />
+        <SegmentedControl v-model="theme" label="Theme" :options="THEME_OPTIONS" />
       </div>
     </section>
 
@@ -262,7 +230,7 @@ async function confirmSignOut(): Promise<void> {
         Your data
       </h2>
       <div class="flex min-w-0 flex-col gap-(--set-gap)">
-        <!-- The text, then its buttons beside it, as the Stepper sits beside its label (K53). -->
+        <!-- The text, then its buttons beside it, as Sign out sits beside "Signed in as" (K53). -->
         <div class="flex flex-wrap items-center gap-x-(--set-gap) gap-y-3">
           <p class="body max-w-[34ch] text-(length:--set-text) leading-normal text-ink-secondary">
             Export saves everything to a file. Import adds a file’s plans and marks to yours and

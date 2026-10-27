@@ -17,7 +17,7 @@ import type { Mark, MarkSet } from '@/lib/storage'
 import type { Tracked } from '@/lib/tracker'
 import { useConfirm } from '@/composables/useConfirm'
 import { Chip } from '@/components/ui/chip'
-import { DayMark, MET_UNDERLINES } from '@/components/ui/day-mark'
+import { DayMark } from '@/components/ui/day-mark'
 import { IconButton } from '@/components/ui/icon-button'
 import { Popover } from '@/components/ui/popover'
 import { renderNote, renderNoteLine } from '@/lib/markdown'
@@ -39,13 +39,6 @@ const props = defineProps<{
   marks: (Mark | null)[]
   /** How the marks are drawn: the device's mark set. The squiggles when not given. */
   markSet?: MarkSet
-  /**
-   * Exercises only: the days that reach the daily pick. On the grid's last row their cells draw a
-   * hand-drawn green underline below the column (K39).
-   */
-  metDays?: boolean[]
-  /** The grid's last row, which carries the met days' lines. */
-  last?: boolean
 }>()
 const emit = defineEmits<{
   toggle: [day: number]
@@ -180,7 +173,7 @@ async function remove(event: MouseEvent): Promise<void> {
       :key="d.key"
       role="gridcell"
       class="p-0 align-middle screen:[container-type:size] folded:row-(--box-row) folded:h-(--grid-box-h)"
-      :class="[CELL.rule, { relative: last && metDays?.[i] }]"
+      :class="CELL.rule"
     >
       <DayMark
         :name="item.name"
@@ -191,17 +184,6 @@ async function remove(event: MouseEvent): Promise<void> {
         fill
         @toggle="emit('toggle', i)"
       />
-      <!-- A met day's underline (K39): a green marker stroke under the column, below the last box. -->
-      <svg
-        v-if="last && metDays?.[i]"
-        data-slot="met-underline"
-        aria-hidden="true"
-        viewBox="0 0 100 16"
-        preserveAspectRatio="none"
-        class="pointer-events-none absolute -bottom-2.5 left-[6%] h-[max(18px,calc(var(--u)*24))] w-[88%] overflow-visible fill-pen folded:-bottom-1.5 folded:h-3"
-      >
-        <path :d="MET_UNDERLINES[i % MET_UNDERLINES.length]" />
-      </svg>
     </td>
     <td
       v-if="configMode"

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import { DOMWrapper, flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
@@ -6,7 +7,7 @@ import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import { SESSION_KEY } from '@/stores/session'
 import { CACHE_PREFIX, type SyncState } from '@/stores/sync'
-import { DRAWINGS, MARKS, markDrawing, markKind } from '@/lib/storage'
+import { DRAWINGS, MARKS, markDrawing, markKind, type PortableSettings } from '@/lib/storage'
 import { readFixture } from '@/lib/__tests__/fixtures'
 import type { FakeApi } from '@/lib/__tests__/fakeApi'
 import { USER, cached, emptyState, signedIn } from '@/lib/__tests__/signedIn'
@@ -105,15 +106,21 @@ async function openSettings(): Promise<void> {
 /** The Settings page (#/settings). */
 const PANEL = '[data-testid="settings-page"]'
 
-/** Saves settings on Settings without changing them: one more exercise a day, then one fewer. */
+/**
+ * Saves settings without changing them, as one more exercise a day and then one fewer in Edit plan
+ * would. Through the store, so a page that is open (Settings, with an import waiting) stays open.
+ */
 async function saveSettings(): Promise<void> {
-  await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
-  await wrapper.get('button[aria-label="Fewer exercises a day"]').trigger('click')
+  // A tick apart, as two presses are: the sync store sees the change, not just its net result.
+  usePlannerStore().changeDailyPick(1)
+  await nextTick()
+  usePlannerStore().changeDailyPick(-1)
+  await nextTick()
 }
 
-/** The daily pick as the Settings Stepper shows it. */
-function dailyPick(): string | undefined {
-  return wrapper.get(PANEL).get('[role="spinbutton"]').attributes('aria-valuenow')
+/** A daily target as Edit plan's Stepper on its section's title line shows it (K56). */
+function target(testid: 'exercises-a-day' | 'foods-a-day'): string | undefined {
+  return wrapper.get(`[data-testid="${testid}"] [role="spinbutton"]`).attributes('aria-valuenow')
 }
 
 /** Press an exercise's Edit button and return its dialog, once Reka has opened it. */
@@ -133,22 +140,6 @@ async function openAdd(kind: 'exercise' | 'food' = 'exercise'): Promise<DOMWrapp
 /** Submits the open dialog's form, as its primary button would, and lets it close. */
 async function submit(d: DOMWrapper<HTMLElement>): Promise<void> {
   await d.get('form').trigger('submit')
-  await flushPromises()
-}
-
-/** Changes this week's food plan: one more Fish a week, saved from its dialog. */
-async function raiseFish(): Promise<void> {
-  const edit = await openEdit('Fish')
-  await edit.get('button[aria-label="More times a week"]').trigger('click')
-  await edit.get('form').trigger('submit')
-  await flushPromises()
-}
-
-/** Changes this week's exercise plan: one more Squats a week, saved from its dialog. */
-async function raiseSquats(): Promise<void> {
-  const edit = await openEdit('Squats')
-  await edit.get('button[aria-label="More times a week"]').trigger('click')
-  await edit.get('form').trigger('submit')
   await flushPromises()
 }
 
@@ -450,7 +441,7 @@ describe('the Settings page', () => {
   })
   afterEach(() => wrapper?.unmount())
 
-  it('opens as a page, changes the daily pick live, and goes back to the week', async () => {
+  it('opens as a page and goes back to the week', async () => {
     mountApp()
     expect(wrapper.find(PANEL).exists()).toBe(false)
     await openSettings()
@@ -463,7 +454,15 @@ describe('the Settings page', () => {
         .get(PANEL)
         .findAll('h2')
         .map((h) => h.text()),
-    ).toEqual(['Appearance', 'Planner', 'Your data', 'Account'])
+    ).toEqual(['Appearance', 'Your data', 'Account'])
+    // Marks, then Theme (K59); the daily targets are set in Edit plan (K56).
+    expect(
+      wrapper
+        .get(PANEL)
+        .findAll('[data-slot="radio-card-label"], [data-slot="segmented-control-label"]')
+        .map((l) => l.text()),
+    ).toEqual(['Marks', 'Theme'])
+    expect(wrapper.get(PANEL).find('[data-slot="stepper"]').exists()).toBe(false)
     // The week is off screen, and the bar holds only the wordmark.
     expect(wrapper.find('[data-testid="exercise-grid"]').exists()).toBe(false)
     expect(wrapper.find('nav[aria-label="Week"]').exists()).toBe(false)
@@ -471,9 +470,6 @@ describe('the Settings page', () => {
     // The marks' pens are fixed, so there is no ink to choose.
     expect(wrapper.get(PANEL).find('[role="radiogroup"][aria-label="Ink"]').exists()).toBe(false)
     expect(wrapper.get(PANEL).text()).not.toContain('Ink')
-
-    await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
-    expect(dailyPick()).toBe('4')
 
     expect(wrapper.get(PANEL).get('a[href="#/"]').text()).toBe('Back to the week')
     await backToWeek()
@@ -488,24 +484,8 @@ describe('the Settings page', () => {
     expect(wrapper.get(PANEL).get('h1').text()).toBe('Settings')
   })
 
-  it('disables the daily-pick buttons at the 1–8 bounds', async () => {
-    mountApp()
-    await openSettings()
-    const fewer = wrapper.get('button[aria-label="Fewer exercises a day"]')
-    await fewer.trigger('click')
-    await fewer.trigger('click')
-    expect(fewer.attributes('aria-disabled')).toBe('true')
-    await fewer.trigger('click')
-    expect(dailyPick()).toBe('1')
-    expect(usePlannerStore().dailyPick).toBe(1)
-    const more = wrapper.get('button[aria-label="More exercises a day"]')
-    for (let i = 0; i < 8; i++) await more.trigger('click')
-    expect(more.attributes('aria-disabled')).toBe('true')
-    expect(dailyPick()).toBe('8')
-  })
-
   /** Mount with these settings saved on the server as well as cached, so loading keeps them. */
-  function mountWithSettings(settings: { accent: string; dailyPick: number }): void {
+  function mountWithSettings(settings: PortableSettings): void {
     api = signedIn({ ...emptyState(), settings })
     api.accounts.get(USER)!.settings = settings
     const pinia = createPinia()
@@ -514,12 +494,16 @@ describe('the Settings page', () => {
   }
 
   it('keeps a saved accent as it is, though nothing shows it any more', async () => {
-    mountWithSettings({ accent: '#ff9f0a', dailyPick: 3 })
-    await openSettings()
+    mountWithSettings({ accent: '#ff9f0a', dailyPick: 3, foodPick: 2 })
+    await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
     await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
     await settle()
     expect(usePlannerStore().accent).toBe('#ff9f0a')
-    expect(api.accounts.get(USER)!.settings).toEqual({ accent: '#ff9f0a', dailyPick: 4 })
+    expect(api.accounts.get(USER)!.settings).toEqual({
+      accent: '#ff9f0a',
+      dailyPick: 4,
+      foodPick: 2,
+    })
     expect(document.documentElement.style.getPropertyValue('--user-pen-light')).toBe('')
   })
 })
@@ -551,7 +535,7 @@ describe('export and import', () => {
       plans: { '2026-10-19': [{ id: 'eggs', name: 'Eggs', target: 2 }] },
       log: { '2026-10-19': { eggs: [false, false, true, false, false, false, false] } },
     },
-    settings: { accent: '#bf5af2', dailyPick: 2 },
+    settings: { accent: '#bf5af2', dailyPick: 2, foodPick: 4 },
   }
 
   function button(name: string) {
@@ -590,7 +574,7 @@ describe('export and import', () => {
     expect(file).toMatchObject({
       format: 'tracker-export',
       version: 4,
-      settings: { accent: '#30d158', dailyPick: 3 },
+      settings: { accent: '#30d158', dailyPick: 3, foodPick: 2 },
     })
     expect(file.settings).not.toHaveProperty('theme')
     expect(file.exercise.log['2026-10-19'].sq).toEqual([
@@ -645,12 +629,15 @@ describe('export and import', () => {
     await openSettings()
     await choose(jsonFile(EXPORT))
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds three weekly plans and three marked days, plus the number of exercises a day. Existing plans and marks stay as they are.',
+      'Adds three weekly plans and three marked days, plus the exercises and foods a day. Existing plans and marks stay as they are.',
     )
     await button('Import').trigger('click')
     await flushPromises()
     expect(usePlannerStore().accent).toBe(EXPORT.settings.accent)
-    expect(dailyPick()).toBe('2')
+    await backToWeek()
+    await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
+    expect(target('exercises-a-day')).toBe('2')
+    expect(target('foods-a-day')).toBe('4')
   })
 
   it('uses the singular for one plan and one tick', async () => {
@@ -677,9 +664,9 @@ describe('export and import', () => {
     mountApp()
     await openSettings()
     await choose(jsonFile(EXPORT))
-    expect(wrapper.get('[data-testid="import-summary"]').text()).toContain('plus the number')
+    expect(wrapper.get('[data-testid="import-summary"]').text()).toContain('plus the exercises')
     await saveSettings()
-    expect(wrapper.get('[data-testid="import-summary"]').text()).not.toContain('plus the number')
+    expect(wrapper.get('[data-testid="import-summary"]').text()).not.toContain('plus the exercises')
     await button('Import').trigger('click')
     await flushPromises()
     expect(usePlannerStore().dailyPick).toBe(3)
@@ -792,17 +779,14 @@ describe('export and import with the sample data', () => {
   type Tracked = { plans: object; log: object }
   const exercise = storage['tracker-v2'] as Tracked
   const diet = storage['tracker-diet-v2'] as Tracked
-  const { accent, dailyPick } = storage['tracker-settings-v1'] as {
-    accent: string
-    dailyPick: number
-  }
+  const { accent, dailyPick, foodPick } = storage['tracker-settings-v1'] as PortableSettings
 
   /** The sample as alice's cache: the same data, as the sync store keeps it. */
   function sampleCache(): SyncState {
     return {
       exercise: { ...exercise, revs: {} },
       diet: { ...diet, revs: {} },
-      settings: { accent, dailyPick },
+      settings: { accent, dailyPick, foodPick },
     } as SyncState
   }
 
@@ -855,7 +839,7 @@ describe('export and import with the sample data', () => {
     await input.trigger('change')
     await flushPromises()
     expect(wrapper.get('[data-testid="import-summary"]').text()).toBe(
-      'Adds six weekly plans and 102 marked days, plus the number of exercises a day. Existing plans and marks stay as they are.',
+      'Adds six weekly plans and 102 marked days, plus the exercises and foods a day. Existing plans and marks stay as they are.',
     )
     await button('Import').trigger('click')
     await flushPromises()
@@ -863,12 +847,12 @@ describe('export and import with the sample data', () => {
     const { revs: _d, ...cachedDiet } = cached().diet
     expect(cachedExercise).toEqual(exercise)
     expect(cachedDiet).toEqual(diet)
-    expect(cached().settings).toEqual({ accent, dailyPick })
+    expect(cached().settings).toEqual({ accent, dailyPick, foodPick })
     // Every plan and tick reached the server too.
     const server = api.state(USER) as SyncState
     expect({ plans: server.exercise.plans, log: server.exercise.log }).toEqual(exercise)
     expect({ plans: server.diet.plans, log: server.diet.log }).toMatchObject(diet)
-    expect(server.settings).toEqual({ accent, dailyPick })
+    expect(server.settings).toEqual({ accent, dailyPick, foodPick })
     // The theme is per device, so it never left this browser.
     expect(localStorage.getItem('tracker-settings-v1')).toBeNull()
   })
@@ -1241,6 +1225,8 @@ describe('config mode and weekly plans', () => {
     expect(wrapper.find('[data-testid="add-exercise"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="add-food"]').exists()).toBe(false)
     expect(button('Copy plan to next week')).toBeUndefined()
+    expect(wrapper.find('[data-testid="exercises-a-day"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="foods-a-day"]').exists()).toBe(false)
 
     await rowCells('Squats')[0]!.trigger('click')
     expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('true')
@@ -1252,80 +1238,64 @@ describe('config mode and weekly plans', () => {
     expect(wrapper.find('[data-testid="add-food"]').exists()).toBe(true)
   })
 
-  it('copies the plan to next week and shows it', async () => {
-    await mountConfig()
-    const edit = await openEdit('Squats')
-    await edit.get('input[data-field="sets"]').setValue('3')
-    await edit.get('#edit-exercise-weight').setValue('12')
-    await edit.get('form').trigger('submit')
-    await flushPromises()
-    expect(chips('Squats')).toBe('3 × 15 · 12 kg')
-
-    await button('Copy plan to next week')!.trigger('click')
-    await settle()
-    expect(confirmation()).toBeNull()
-    expect(wrapper.find('h1').text()).toBe('26 Oct – 1 Nov')
-    expect(chips('Squats')).toBe('3 × 15 · 12 kg')
-    expect(wrapper.find('[data-testid="carried-from"]').exists()).toBe(false)
-  })
-
-  it('asks before replacing a week that has its own plan', async () => {
-    await mountConfig()
-    await wrapper.get('button[aria-label="Next week"]').trigger('click')
-    await rowCells('Squats')[0]!.trigger('click')
-    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
-    await button('Copy plan to next week')!.trigger('click')
-    await settle()
-    expect(confirmation()!.get('h2').text()).toBe('Replace next week’s plan?')
-    expect(confirmation()!.text()).toContain(
-      'The week of 26 October already has its own plan. Copying replaces it with this week’s exercises and foods.',
+  it('sets the daily targets on the title lines, without the week beside them (K56)', async () => {
+    mountApp()
+    const weeks = () => wrapper.findAll('[data-slot="section-week"]').map((w) => w.text())
+    expect(weeks()).toEqual(['19–25 October', '19–25 October'])
+    await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
+    expect(weeks()).toEqual([])
+    expect(button('Copy plan to next week')).toBeUndefined()
+    const header = (id: string) => wrapper.get(`#${id}`).element.closest('header')!
+    expect(
+      header('exercises-heading').querySelector('[data-testid="exercises-a-day"]'),
+    ).not.toBeNull()
+    expect(header('diet-heading').querySelector('[data-testid="foods-a-day"]')).not.toBeNull()
+    expect([target('exercises-a-day'), target('foods-a-day')]).toEqual(['3', '2'])
+    // Centred on the title line (K62): the Stepper alone, reading "2 per day" (K63), its label
+    // kept for a screen reader. On screen the line is three columns like the Header's.
+    const foods = wrapper.get('[data-testid="foods-a-day"]')
+    expect(foods.get('label').text()).toBe('Foods a day')
+    expect(foods.get('label').classes()).toContain('sr-only')
+    expect(foods.get('[data-slot="stepper-suffix"]').text()).toBe('per day')
+    expect(header('diet-heading').className).toContain(
+      'screen:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]',
     )
-    await answer('Cancel')
-    expect(wrapper.find('h1').text()).toBe('19–25 October')
-    expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('false')
+    expect(header('diet-heading').className).toContain('folded:flex')
+  })
 
-    await button('Copy plan to next week')!.trigger('click')
+  it('keeps each daily target to 1–8 and saves it', async () => {
+    await mountConfig()
+    const fewer = wrapper.get('button[aria-label="Fewer exercises a day"]')
+    for (let i = 0; i < 3; i++) await fewer.trigger('click')
+    expect(fewer.attributes('aria-disabled')).toBe('true')
+    expect(target('exercises-a-day')).toBe('1')
+    const more = wrapper.get('button[aria-label="More foods a day"]')
+    for (let i = 0; i < 8; i++) await more.trigger('click')
+    expect(more.attributes('aria-disabled')).toBe('true')
+    expect(target('foods-a-day')).toBe('8')
     await settle()
-    await answer('Replace')
-    expect(wrapper.find('h1').text()).toBe('26 Oct – 1 Nov')
-    // The copy replaced next week's own plan; its tick stays in the log.
-    expect(rowCells('Squats')[0]!.attributes('aria-pressed')).toBe('true')
+    expect(api.accounts.get(USER)!.settings).toEqual({
+      accent: '#30d158',
+      dailyPick: 1,
+      foodPick: 8,
+    })
   })
 
-  it('says when a week’s plan is carried over from an earlier week', async () => {
+  it('turns a food day green when its marks reach foods a day (K57)', async () => {
     await mountConfig()
-    await raiseSquats()
-    await wrapper.get('button[aria-label="Next week"]').trigger('click')
-    expect(wrapper.get('[data-testid="carried-from"]').text()).toContain('the week of 19 October')
-    await raiseSquats()
-    expect(wrapper.find('[data-testid="carried-from"]').exists()).toBe(false)
+    const monday = () =>
+      wrapper.get('[data-testid="diet-grid"]').findAll('[data-testid="day-head"]')[0]!
+    await rowCells('Vegetables')[0]!.trigger('click')
+    expect(monday().attributes('data-met')).toBeUndefined()
+    await rowCells('Fruit')[0]!.trigger('click')
+    expect(monday().attributes('data-met')).toBe('true')
+    await wrapper.get('button[aria-label="More foods a day"]').trigger('click')
+    expect(monday().attributes('data-met')).toBeUndefined()
   })
-
-  it('names exercise and food sources separately once they differ', async () => {
-    await mountConfig()
-    await raiseSquats()
-    await raiseFish()
-    await wrapper.get('button[aria-label="Next week"]').trigger('click')
-    expect(wrapper.get('[data-testid="carried-from"]').text()).toBe(
-      'Uses the plan from the week of 19 October until you change this week.',
-    )
-    await rowCells('Squats')[0]!.trigger('click')
-    expect(wrapper.get('[data-testid="carried-from"]').text()).toBe(
-      'Uses the plan for foods from the week of 19 October until you change them this week.',
-    )
-  })
-
-  /** Next week gets a plan of its own (a tick), so copying asks before replacing it. */
-  async function giveNextWeekAPlan(): Promise<void> {
-    await wrapper.get('button[aria-label="Next week"]').trigger('click')
-    await rowCells('Squats')[0]!.trigger('click')
-    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
-  }
 
   it('closes an open question when another tab signs in as someone else', async () => {
     await mountConfig()
-    await giveNextWeekAPlan()
-    await button('Copy plan to next week')!.trigger('click')
+    await wrapper.get('button[aria-label="Remove Squats"]').trigger('click')
     await settle()
     expect(confirmation()).not.toBeNull()
 
@@ -1343,20 +1313,6 @@ describe('config mode and weekly plans', () => {
     expect(wrapper.find('h1').text()).toBe('19–25 October')
   })
 
-  it('does not replace a plan if the week changed while it asked', async () => {
-    await mountConfig()
-    await giveNextWeekAPlan()
-    await button('Copy plan to next week')!.trigger('click')
-    await settle()
-    // Midnight on Sunday: the question named the week of 26 October, which is now this week.
-    vi.setSystemTime(new Date(2026, 9, 26, 0, 5))
-    usePlannerStore().refreshNow()
-    await flushPromises()
-    await answer('Replace')
-    expect(wrapper.find('h1').text()).toBe('26 Oct – 1 Nov')
-    expect(usePlannerStore().plans['2026-11-02']).toBeUndefined()
-  })
-
   it('does not remove a row if the week changed while it asked', async () => {
     await mountConfig()
     await wrapper.get('button[aria-label="Remove Squats"]').trigger('click')
@@ -1367,21 +1323,6 @@ describe('config mode and weekly plans', () => {
     await answer('Remove')
     expect(wrapper.find('h1').text()).toBe('26 Oct – 1 Nov')
     expect(rowCells('Squats')).toHaveLength(7)
-  })
-
-  it('adds the year to where a plan comes from once the year turns', async () => {
-    vi.setSystemTime(new Date(2026, 11, 30, 18, 0))
-    await mountConfig()
-    await wrapper.get('button[aria-label="Previous week"]').trigger('click')
-    await raiseSquats()
-    await wrapper.get('button[aria-label="Next week"]').trigger('click')
-    expect(wrapper.get('[data-testid="carried-from"]').text()).toContain('the week of 21 December')
-    vi.setSystemTime(new Date(2027, 0, 1, 0, 5))
-    usePlannerStore().refreshNow()
-    await flushPromises()
-    expect(wrapper.get('[data-testid="carried-from"]').text()).toContain(
-      'the week of 21 December 2026',
-    )
   })
 
   it('closes the edit dialog if the week changes under it', async () => {

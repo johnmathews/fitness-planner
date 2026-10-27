@@ -74,7 +74,7 @@ describe('Button', () => {
     const clicks: Event[] = []
     const wrapper = mount(Button, {
       attrs: { disabled: true, onClick: (e: Event) => clicks.push(e) },
-      slots: { default: 'Copy plan to next week' },
+      slots: { default: 'Import…' },
     })
     const button = wrapper.get('button')
     expect(button.attributes('disabled')).toBeDefined()

@@ -598,10 +598,12 @@ describe('signing out', () => {
     mountApp()
     await flushPromises()
     api.offline = true
-    await openSettings()
+    // One change that can't reach the server: a daily target, set in Edit plan (K56).
+    await wrapper.get('[data-testid="edit-plan-button"]').trigger('click')
     await wrapper.get('button[aria-label="More exercises a day"]').trigger('click')
     await flushPromises()
     api.offline = false
+    await openSettings()
     await button('Sign out').trigger('click')
     await settle()
     expect(confirmation()!.text()).toContain(

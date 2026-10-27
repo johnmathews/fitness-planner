@@ -185,17 +185,17 @@ describe('planner store', () => {
         plans: { '2026-10-19': plan },
         log: { '2026-10-19': { a: ['great', null, null, null, null, null, null] } },
       },
-      { accent: '#ff9f0a', dailyPick: 5 },
+      { accent: '#ff9f0a', dailyPick: 5, foodPick: 4 },
     )
     expect(s.exercises).toEqual(plan)
     expect(s.grandTotal).toBe(1)
-    expect([s.accent, s.dailyPick]).toEqual(['#ff9f0a', 5])
-    expect(s.savedSettings()).toEqual({ accent: '#ff9f0a', dailyPick: 5 })
+    expect([s.accent, s.dailyPick, s.foodPick]).toEqual(['#ff9f0a', 5, 4])
+    expect(s.savedSettings()).toEqual({ accent: '#ff9f0a', dailyPick: 5, foodPick: 4 })
     s.adoptWeek('2026-10-19', [])
     expect(s.exercises).toEqual([])
     s.adopt({ plans: {}, log: {} }, null)
     expect(s.exercises).toHaveLength(5)
-    expect([s.accent, s.dailyPick]).toEqual(['#30d158', 3])
+    expect([s.accent, s.dailyPick, s.foodPick]).toEqual(['#30d158', 3, 2])
     expect(s.savedSettings()).toBeNull()
   })
 
@@ -203,12 +203,14 @@ describe('planner store', () => {
     const s = usePlannerStore()
     s.toggle('pu', 0)
     s.changeDailyPick(1)
+    s.changeFoodPick(1)
     s.setConfigMode(true)
     s.nextWeek()
     s.setTheme('dark')
     s.clear()
     expect(s.grandTotal).toBe(0)
     expect(s.dailyPick).toBe(3)
+    expect(s.foodPick).toBe(2)
     expect(s.savedSettings()).toBeNull()
     expect(s.configMode).toBe(false)
     expect(s.weekOffset).toBe(0)
@@ -220,11 +222,21 @@ describe('planner store', () => {
     expect(s.savedSettings()).toBeNull()
     s.changeDailyPick(1)
     // The accent is kept as stored; nothing in the app changes it now.
-    expect(s.savedSettings()).toEqual({ accent: '#30d158', dailyPick: 4 })
+    expect(s.savedSettings()).toEqual({ accent: '#30d158', dailyPick: 4, foodPick: 2 })
     for (let i = 0; i < 10; i++) s.changeDailyPick(1)
     expect(s.dailyPick).toBe(8)
     for (let i = 0; i < 10; i++) s.changeDailyPick(-1)
     expect(s.dailyPick).toBe(1)
+  })
+
+  it('clamps foods a day to 1–8, and a change counts as saved settings', () => {
+    const s = usePlannerStore()
+    s.changeFoodPick(1)
+    expect(s.savedSettings()).toEqual({ accent: '#30d158', dailyPick: 3, foodPick: 3 })
+    for (let i = 0; i < 10; i++) s.changeFoodPick(1)
+    expect(s.foodPick).toBe(8)
+    for (let i = 0; i < 10; i++) s.changeFoodPick(-1)
+    expect(s.foodPick).toBe(1)
   })
 
   it('stores only the theme, merged into the device’s settings key', async () => {
@@ -376,7 +388,6 @@ describe('weekly plans', () => {
   it('shows the defaults until something changes, then plans only the changed week', () => {
     const s = usePlannerStore()
     expect(names(s)).toHaveLength(5)
-    expect(s.carriedFrom).toBeNull()
     expect(s.plans).toEqual({})
     s.changeTarget('pu', 1)
     expect(Object.keys(s.plans)).toEqual(['2026-10-19'])
@@ -387,7 +398,6 @@ describe('weekly plans', () => {
     s.addExercise({ name: 'Swings', reps: 20, perSide: false, weight: 16 })
     s.nextWeek()
     s.nextWeek()
-    expect(s.carriedFrom).toBe('2026-10-19')
     expect(names(s)).toContain('Swings')
     expect(s.plans).not.toHaveProperty('2026-11-02')
   })
@@ -403,7 +413,7 @@ describe('weekly plans', () => {
 
     // A tick gives the week its own plan, so edits to the earlier week no longer reach it.
     s.toggle('sq', 0)
-    expect(s.carriedFrom).toBeNull()
+    expect(s.plans).toHaveProperty('2026-10-26')
     s.prevWeek()
     s.updateExercise('sq', { name: 'Squats', reps: 15, perSide: false, weight: 16 })
     s.nextWeek()
@@ -422,32 +432,6 @@ describe('weekly plans', () => {
     expect(names(s)).toContain('Push-ups')
     expect(names(s)).not.toContain('Swings')
     expect(s.exercises.find((e) => e.id === 'sq')!.target).toBe(4)
-  })
-
-  it('copies the week to the next one, replacing what was there', () => {
-    const s = usePlannerStore()
-    s.updateExercise('sq', { name: 'Squats', sets: 3, reps: 15, perSide: false, weight: 12 })
-    expect(s.nextWeekHasPlan).toBe(false)
-    s.nextWeek()
-    s.removeExercise('pu')
-    s.prevWeek()
-    expect(s.nextWeekHasPlan).toBe(true)
-    s.copyToNextWeek()
-    expect(s.plans['2026-10-26']).toEqual(s.plans['2026-10-19'])
-    expect(s.plans['2026-10-26']![0]).not.toBe(s.plans['2026-10-19']![0])
-    s.nextWeek()
-    expect(names(s)).toContain('Push-ups')
-    expect(s.exercises.find((e) => e.id === 'sq')).toMatchObject({ sets: 3, weight: 12 })
-  })
-
-  it('keeps ticks attached when a plan is copied, since ids carry over', () => {
-    const s = usePlannerStore()
-    s.nextWeek()
-    s.toggle('pu', 2)
-    s.prevWeek()
-    s.copyToNextWeek()
-    s.nextWeek()
-    expect(s.totalFor('pu')).toBe(1)
   })
 
   it('starts in normal mode and toggles config mode without saving it', async () => {
@@ -507,13 +491,13 @@ describe('savedSettings', () => {
     const s = usePlannerStore()
     expect(s.savedSettings()).toBeNull()
     s.changeDailyPick(1)
-    expect(s.savedSettings()).toEqual({ accent: '#30d158', dailyPick: 4 })
+    expect(s.savedSettings()).toEqual({ accent: '#30d158', dailyPick: 4, foodPick: 2 })
   })
 
   it('treats adopted settings as saved, and none adopted as unsaved', () => {
     const s = usePlannerStore()
-    s.adopt({ plans: {}, log: {} }, { accent: '#ff9f0a', dailyPick: 2 })
-    expect(s.savedSettings()).toEqual({ accent: '#ff9f0a', dailyPick: 2 })
+    s.adopt({ plans: {}, log: {} }, { accent: '#ff9f0a', dailyPick: 2, foodPick: 5 })
+    expect(s.savedSettings()).toEqual({ accent: '#ff9f0a', dailyPick: 2, foodPick: 5 })
     s.adopt({ plans: {}, log: {} }, null)
     expect(s.savedSettings()).toBeNull()
   })

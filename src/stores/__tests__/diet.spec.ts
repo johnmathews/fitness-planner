@@ -144,7 +144,7 @@ describe('diet store', () => {
     expect(d.grandTotal).toBe(0)
   })
 
-  it('carries food plans forward and copies them to the next week', () => {
+  it('carries food plans forward, and a week changed itself keeps its own', () => {
     const d = useDietStore()
     const p = usePlannerStore()
     d.addFood('Beans')
@@ -152,11 +152,9 @@ describe('diet store', () => {
     expect(d.foods.map((f) => f.name)).toContain('Beans')
     d.removeFood('fish')
     p.prevWeek()
-    expect(d.nextWeekHasPlan).toBe(true)
     expect(d.foods.map((f) => f.id)).toContain('fish')
-    d.copyToNextWeek()
     p.nextWeek()
-    expect(d.foods.map((f) => f.id)).toContain('fish')
+    expect(d.foods.map((f) => f.id)).not.toContain('fish')
   })
 
   it('never reads or writes the diet keys from before accounts', async () => {

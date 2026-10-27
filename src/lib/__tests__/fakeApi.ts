@@ -10,7 +10,7 @@ import { mergeSummary, parseExport } from '@/lib/transfer'
 
 type Section = 'exercise' | 'diet'
 type Plan = { items: unknown[]; rev: number }
-type Settings = { accent: string; dailyPick: number }
+type Settings = { accent: string; dailyPick: number; foodPick: number }
 
 export type Account = {
   password: string
@@ -244,7 +244,12 @@ export class FakeApi {
     if (method === 'GET' && path === '/state') return Response.json(this.state(user!))
     if (method === 'POST' && path === '/import') return this.import(a, body)
     if (method === 'PUT' && path === '/settings') {
-      a.settings = { accent: String(body.accent), dailyPick: Number(body.dailyPick) }
+      a.settings = {
+        accent: String(body.accent),
+        dailyPick: Number(body.dailyPick),
+        // As the API: a client that sends none keeps the saved one (K57).
+        foodPick: Number(body.foodPick ?? a.settings?.foodPick ?? 2),
+      }
       return Response.json(a.settings)
     }
     let m = path.match(/^\/plans\/(exercise|diet)\/(\d{4}-\d{2}-\d{2})$/)

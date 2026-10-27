@@ -72,7 +72,7 @@
   --fs-week: max(16px, calc(var(--u) * 20));
   --fs-name: max(20px, calc(var(--u) * 27));
   --fs-chip: max(18px, calc(var(--u) * 19));
-  --fs-day: max(16px, calc(var(--u) * 20));
+  --fs-day: max(20px, calc(var(--u) * 27));
   --fs-total: max(18px, calc(var(--u) * 24));
   --fs-figure: max(18px, calc(var(--u) * 26));
   --fs-stat: max(22px, calc(var(--u) * 28));
@@ -140,7 +140,7 @@
     --fs-title: calc(var(--n) * 30);
     --fs-name: calc(var(--n) * 20);
     --fs-chip: calc(var(--n) * 18);
-    --fs-day: calc(var(--n) * 16);
+    --fs-day: calc(var(--n) * 20);
     --fs-total: calc(var(--n) * 18);
     --fs-figure: calc(var(--n) * 20);
     --fs-stat: calc(var(--n) * 20);
@@ -261,6 +261,40 @@
   padding-inline: var(--set-control-pad);
   gap: calc(var(--set-icon) * 0.4);
   font-size: var(--set-label);
+}
+/*
+ * Edit plan's daily targets, centred on the title lines (K62) and reading "4 per day" (K63). Two
+ * thirds of the page's 60u controls, max(44px, 40u): 44px on a laptop and a phone, 60px at
+ * 1920×1200.
+ */
+[data-slot='day-target'] {
+  --target-control: max(44px, calc(var(--u) * 40));
+}
+[data-slot='day-target'] [data-slot='stepper'] > div {
+  height: var(--target-control);
+}
+[data-slot='day-target'] :is([data-slot='stepper-lower'], [data-slot='stepper-raise']) {
+  width: var(--target-control);
+  height: var(--target-control);
+}
+[data-slot='day-target'] [data-slot='stepper'] svg {
+  width: max(20px, calc(var(--u) * 20));
+  height: max(20px, calc(var(--u) * 20));
+}
+[data-slot='day-target'] [data-slot='stepper'] input {
+  width: calc(var(--target-control) * 1.1);
+  height: var(--target-control);
+  font-size: max(17px, calc(var(--u) * 17));
+}
+/* The value with its words after it, "4 per day" (K63): the figure right-aligned against them. */
+[data-slot='day-target'] [data-slot='stepper'] > [data-suffix] input {
+  /* At least 24px wide, the smallest target WCAG 2.2 allows (axe's target-size). */
+  width: max(28px, 1.6em);
+  padding-inline: 0;
+}
+[data-slot='day-target'] [data-slot='stepper-suffix'] {
+  font-size: max(17px, calc(var(--u) * 17));
+  padding-inline: 0.25em 0.5em;
 }
 /* The mark sets as tiles, three to a row: the dot and the name, the marks under them. */
 :is([data-slot='settings-page'], [data-slot='dialog'], [data-slot='confirm-dialog'])
@@ -503,7 +537,7 @@
     --fs-title: 30px;
     --fs-name: 20px;
     --fs-chip: 18px;
-    --fs-day: 16px;
+    --fs-day: 20px;
     --fs-total: 20px;
     --fs-figure: 20px;
     --fs-stat: 22px;

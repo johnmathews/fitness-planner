@@ -1,4 +1,4 @@
-<!-- @dsCard group="Forms" height=250 subtitle="Minus, value, plus: 44px buttons and a tabular figure" -->
+<!-- @dsCard group="Forms" height=250 subtitle="Minus, value, plus: 44px buttons and a tabular figure, with an optional suffix" -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -20,6 +20,9 @@
   .stepper button[aria-disabled="true"] svg { opacity: .4; }
   .value { display: flex; align-items: center; justify-content: center; min-width: 48px; padding: 0 var(--space-1); font: 600 17px/24px var(--font-sans); font-variant-numeric: tabular-nums; }
   .stepper.is-disabled { opacity: .4; }
+  .value.has-suffix { min-width: 0; justify-content: flex-end; padding: 0; }
+  .suffix { display: flex; align-items: center; padding: 0 var(--space-2) 0 var(--space-1); font: 600 17px/24px var(--font-sans); color: var(--ink); white-space: nowrap; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .stepper.is-disabled button { cursor: not-allowed; }
   @media (prefers-reduced-motion: no-preference) {
     .stepper button { transition: background-color 120ms ease-out; }
@@ -54,6 +57,13 @@
       <div class="stepper" role="group" aria-labelledby="s4">
         <button type="button" aria-label="Fewer exercises a day" aria-disabled="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
         <output class="value" aria-live="polite">1</output>
+        <button type="button" aria-label="More exercises a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+      </div></div></div>
+  <div class="cell"><p class="caption state">With a suffix, label hidden (Edit plan, K63)</p>
+    <div class="field"><span class="vh" id="s6">Exercises a day</span>
+      <div class="stepper" role="group" aria-labelledby="s6">
+        <button type="button" aria-label="Fewer exercises a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+        <output class="value has-suffix" aria-live="polite">4</output><span class="suffix" aria-hidden="true">per day</span>
         <button type="button" aria-label="More exercises a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
       </div></div></div>
   <div class="cell"><p class="caption state">Disabled</p>

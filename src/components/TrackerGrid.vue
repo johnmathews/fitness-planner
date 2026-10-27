@@ -4,7 +4,6 @@ import type { Mark, MarkSet } from '@/lib/storage'
 import type { Tracked } from '@/lib/tracker'
 import { useGridNav } from '@/composables/gridNav'
 import { computed, ref } from 'vue'
-import { Check } from '@lucide/vue'
 import TrackerRow from '@/components/TrackerRow.vue'
 
 const props = defineProps<{
@@ -22,8 +21,8 @@ const props = defineProps<{
   editable?: boolean
   configMode: boolean
   /**
-   * Exercises only: which days reach the daily pick (K30). A met day's name turns pen with a
-   * check, and a green marker stroke underlines its column (K39).
+   * Which days reach the section's daily pick (K30, K57). A met day's name turns pen and is
+   * underlined (K60).
    */
   metDays?: boolean[]
 }>()
@@ -119,17 +118,16 @@ useGridNav(table, {
           :data-met="metDays?.[i] ? 'true' : undefined"
           data-testid="day-head"
         >
+          <!-- A met day: the name in pen, underlined (K60). -->
           <span
-            class="label inline-flex items-center justify-center gap-1 text-(length:--fs-day) leading-tight"
-            :class="metDays?.[i] ? 'text-pen' : 'text-ink'"
-            >{{ d.name
-            }}<Check
-              v-if="metDays?.[i]"
-              data-slot="met-mark"
-              :size="16"
-              :stroke-width="1.5"
-              class="shrink-0 text-pen"
-          /></span>
+            class="label text-(length:--fs-day) leading-tight"
+            :class="
+              metDays?.[i]
+                ? 'text-pen underline decoration-[max(2px,calc(var(--u)*3))] underline-offset-[0.22em]'
+                : 'text-ink'
+            "
+            >{{ d.name }}</span
+          >
           <!-- The day's name alone on screen (the owner's call, K29); the date stays for a screen
                reader, and the DayMarks' names carry the full date. -->
           <span class="sr-only">{{ ' ' + d.date }}</span>
@@ -159,8 +157,6 @@ useGridNav(table, {
         :config-mode="configMode"
         :days="days"
         :marks="marksFor(it.id)"
-        :met-days="metDays"
-        :last="i === items.length - 1"
         :mark-set="markSet"
         @toggle="$emit('toggle', it.id, $event)"
         @remove="$emit('remove', it.id)"

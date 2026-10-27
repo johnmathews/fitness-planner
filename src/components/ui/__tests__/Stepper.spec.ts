@@ -194,6 +194,25 @@ describe('Stepper', () => {
     )
   })
 
+  it('shows a suffix after the value, inside the outline, for the eye only (K63)', () => {
+    const wrapper = mountStepper({ modelValue: 4, suffix: 'per day', hideLabel: true })
+    const { group, spin } = parts(wrapper)
+    const suffix = wrapper.get('[data-slot="stepper-suffix"]')
+    expect(suffix.text()).toBe('per day')
+    expect(suffix.attributes('aria-hidden')).toBe('true')
+    expect(suffix.element.previousElementSibling).toBe(spin.element)
+    expect(group.attributes('data-suffix')).toBe('')
+    // The spinbutton keeps its name and plain value; the words add nothing to either.
+    expect(spin.attributes('aria-valuenow')).toBe('4')
+    expect(wrapper.get('label').text()).toBe('Exercises a day')
+  })
+
+  it('has no suffix unless given one', () => {
+    const wrapper = mountStepper({ modelValue: 3 })
+    expect(wrapper.find('[data-slot="stepper-suffix"]').exists()).toBe(false)
+    expect(parts(wrapper).group.attributes('data-suffix')).toBeUndefined()
+  })
+
   it('uses a consumer id for the spinbutton and puts a consumer class on the wrapper', () => {
     const wrapper = mountStepper({ modelValue: 3, id: 'daily-pick', class: 'mt-4' })
     expect(parts(wrapper).spin.attributes('id')).toBe('daily-pick')

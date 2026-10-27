@@ -547,19 +547,42 @@ def test_the_quota_is_per_user(client: TestClient, config: Config) -> None:
 def test_settings_are_normalised(client: TestClient, config: Config) -> None:
     sign_up(client, config)
     assert client.put(
-        "/api/settings", json={"accent": "red", "dailyPick": 20, "theme": "dark"}
+        "/api/settings", json={"accent": "red", "dailyPick": 20, "foodPick": 0, "theme": "dark"}
     ).json() == {
         "accent": "#30d158",
         "dailyPick": 8,
+        "foodPick": 1,
     }
-    assert client.get("/api/state").json()["settings"] == {"accent": "#30d158", "dailyPick": 8}
+    assert client.get("/api/state").json()["settings"] == {
+        "accent": "#30d158",
+        "dailyPick": 8,
+        "foodPick": 1,
+    }
+
+
+def test_settings_without_a_food_pick_keep_the_saved_one(
+    client: TestClient, config: Config
+) -> None:
+    """A tab still running the app from before foods a day (K57) sends no foodPick."""
+    sign_up(client, config)
+    assert client.put("/api/settings", json={"accent": "#bf5af2", "dailyPick": 4}).json() == {
+        "accent": "#bf5af2",
+        "dailyPick": 4,
+        "foodPick": 2,
+    }
+    client.put("/api/settings", json={"accent": "#bf5af2", "dailyPick": 4, "foodPick": 6})
+    assert client.put("/api/settings", json={"accent": "#bf5af2", "dailyPick": 3}).json() == {
+        "accent": "#bf5af2",
+        "dailyPick": 3,
+        "foodPick": 6,
+    }
 
 
 def test_users_cannot_see_or_change_each_others_data(client: TestClient, config: Config) -> None:
     sign_up(client, config, "alice@example.com")
     client.put(f"/api/plans/exercise/{WEEK}", json={"items": [PUSHUPS], "rev": 0})
     client.put(f"/api/ticks/exercise/{WEEK}/pu/0", json={"mark": "partial"})
-    client.put("/api/settings", json={"accent": "#0a84ff", "dailyPick": 5})
+    client.put("/api/settings", json={"accent": "#0a84ff", "dailyPick": 5, "foodPick": 4})
     with other_client(config) as bob:
         sign_up(bob, config, "bob@example.com")
         empty: dict[str, dict[str, Any]] = {"plans": {}, "log": {}, "revs": {}}
@@ -583,7 +606,7 @@ def test_users_cannot_see_or_change_each_others_data(client: TestClient, config:
     assert alice["exercise"]["plans"] == {WEEK: [PUSHUPS]}
     assert alice["exercise"]["log"] == {WEEK: {"pu": ["partial"] + [None] * 6}}
     assert alice["diet"] == {"plans": {}, "log": {}, "revs": {}}
-    assert alice["settings"] == {"accent": "#0a84ff", "dailyPick": 5}
+    assert alice["settings"] == {"accent": "#0a84ff", "dailyPick": 5, "foodPick": 4}
 
 
 # --- import and export --------------------------------------------------------------------------
@@ -634,7 +657,7 @@ def test_import_merges_without_deleting(client: TestClient, config: Config) -> N
     assert state["exercise"]["revs"] == {"2026-10-12": 1, WEEK: 1}
     # A version 1 file's true day reads as great; the day already marked keeps its mark.
     assert state["exercise"]["log"][WEEK]["pu"][:2] == ["missed", "great"]
-    assert state["settings"] == {"accent": "#ff9f0a", "dailyPick": 2}
+    assert state["settings"] == {"accent": "#ff9f0a", "dailyPick": 2, "foodPick": 2}
 
 
 @pytest.mark.parametrize(

@@ -31,13 +31,10 @@ describe('SectionHeader', () => {
     const wrapper = header()
     expect(wrapper.element.tagName).toBe('HEADER')
     expect(wrapper.classes()).toEqual(
-      expect.arrayContaining([
-        'flex-wrap',
-        'items-baseline',
-        'justify-between',
-        'print:break-after-avoid',
-      ]),
+      expect.arrayContaining(['flex-wrap', 'items-baseline', 'print:break-after-avoid']),
     )
+    // Actions follow the title rather than being pushed to the far end (K61).
+    expect(wrapper.classes()).not.toContain('justify-between')
     const week = wrapper.get('[data-slot="section-week"]')
     expect(week.text()).toBe('19–25 October')
     expect(week.attributes('aria-hidden')).toBe('true')

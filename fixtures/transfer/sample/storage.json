@@ -127,5 +127,5 @@
       }
     }
   },
-  "tracker-settings-v1": { "accent": "#0a84ff", "dailyPick": 4, "theme": "dark" }
+  "tracker-settings-v1": { "accent": "#0a84ff", "dailyPick": 4, "foodPick": 3, "theme": "dark" }
 }

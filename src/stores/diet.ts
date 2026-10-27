@@ -32,9 +32,6 @@ export const useDietStore = defineStore('diet', () => {
     planWeek.value ? plans.value[planWeek.value]! : defaultFoods(),
   )
 
-  /** The week this one's foods come from, or null when it has its own food plan. */
-  const carriedFrom = computed(() => (planWeek.value === planner.weekKey ? null : planWeek.value))
-
   /** The visible week's own plan, copied from what it shows on its first change. */
   function own(): Food[] {
     return (plans.value[planner.weekKey] ??= copyPlan(foods.value))
@@ -117,13 +114,6 @@ export const useDietStore = defineStore('diet', () => {
     plans.value[planner.weekKey] = own().filter((f) => f.id !== id)
   }
 
-  const nextWeekHasPlan = computed(() => planner.nextWeekKey in plans.value)
-
-  /** Gives the next week a copy of this week's foods, replacing any plan it had. */
-  function copyToNextWeek(): void {
-    plans.value[planner.nextWeekKey] = copyPlan(foods.value)
-  }
-
   /** Replace the user's food data wholesale: from the cache, the server, or another tab. */
   function adopt(data: DietData): void {
     plans.value = data.plans
@@ -142,7 +132,6 @@ export const useDietStore = defineStore('diet', () => {
   return {
     plans,
     foods,
-    carriedFrom,
     log,
     dayCounts,
     grandTotal,
@@ -155,8 +144,6 @@ export const useDietStore = defineStore('diet', () => {
     addFood,
     updateFood,
     removeFood,
-    nextWeekHasPlan,
-    copyToNextWeek,
     adopt,
     adoptWeek,
     clear,

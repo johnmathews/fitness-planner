@@ -20,17 +20,6 @@ const CASES: readonly { id: string; state: string; trigger: string; ask: Confirm
     },
   },
   {
-    id: 'sg-confirm-dialog-replace-open',
-    state: 'Copying onto a week with its own plan',
-    trigger: 'Copy plan to next week',
-    ask: {
-      title: "Replace next week's plan?",
-      message:
-        "The week of 26 October already has its own plan. Copying replaces it with this week's exercises and foods.",
-      confirmLabel: 'Replace',
-    },
-  },
-  {
     id: 'sg-confirm-dialog-sign-out-open',
     state: 'Signing out with changes not yet synced',
     trigger: 'Sign out',

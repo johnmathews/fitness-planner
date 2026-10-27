@@ -27,7 +27,7 @@
         "log": {}
       },
       "diet": { "plans": {}, "log": {} },
-      "settings": { "accent": "#0A84FF", "dailyPick": 5 }
+      "settings": { "accent": "#0A84FF", "dailyPick": 5, "foodPick": 2 }
     }
   }
 }

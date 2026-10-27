@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { usePlannerStore } from '@/stores/planner'
 import { useDietStore } from '@/stores/diet'
 import { dayMonth } from '@/lib/dates'
-import type { Food, Mark } from '@/lib/storage'
+import { MAX_DAILY_PICK, MIN_DAILY_PICK, type Food, type Mark } from '@/lib/storage'
 import { SCREEN, SCREEN_GRID } from '@/lib/screens'
 import { ChevronUp, Plus } from '@lucide/vue'
 import { SectionHeader } from '@/components/ui/section-header'
@@ -11,10 +11,19 @@ import { IconButton } from '@/components/ui/icon-button'
 import { sprintToScreen } from '@/composables/screenSprint'
 import TrackerGrid from '@/components/TrackerGrid.vue'
 import { Button } from '@/components/ui/button'
+import { Stepper } from '@/components/ui/stepper'
 import EditFoodDialog from '@/components/EditFoodDialog.vue'
 
 const planner = usePlannerStore()
 const diet = useDietStore()
+
+/** The days whose marked foods reach foods a day (K57): their names turn green, underlined, as exercises'. */
+const metDays = computed(() => diet.dayCounts.map((n) => n >= planner.foodPick))
+/** Foods a day, set on the title line in Edit plan (K56). */
+const foodPick = computed({
+  get: () => planner.foodPick,
+  set: (value: number) => planner.changeFoodPick(value - planner.foodPick),
+})
 
 function marksFor(id: string): (Mark | null)[] {
   return planner.days.map((_, i) => diet.markOf(id, i))
@@ -47,7 +56,8 @@ watch(
 
 <!--
   The Food section: the same WeekGrid without chips (foods have no daily pick), under its own
-  SectionHeader, and in Edit plan the Add food button under the grid (K54). On screen 56u of space
+  SectionHeader, and in Edit plan Foods a day centred on the title line, reading "2 per day" (K56, K62, K63) and the Add food
+  button under the grid (K54). On screen 56u of space
   sets it apart from Exercises, with no rule. On paper the heading and the grid stay on one page
   (F20): the header avoids a break after it, and the pair avoids a break inside. On the planner's
   screens it is the second screen, with nothing ruling it off.
@@ -73,7 +83,29 @@ watch(
       class="print:break-inside-avoid full:flex full:min-h-0 full:flex-1 full:flex-col folded:flex-none"
       data-print-keep
     >
-      <SectionHeader title="Food" heading-id="diet-heading" :week="planner.label" />
+      <SectionHeader
+        title="Food"
+        heading-id="diet-heading"
+        :week="planner.configMode ? undefined : planner.label"
+      >
+        <template v-if="planner.configMode" #actions>
+          <!-- Centred on the title line (K62), the Stepper alone, reading "− 3 per day +" (K63): its
+             label, "Foods a day", is for a screen reader. -->
+          <div data-slot="day-target" data-noprint>
+            <Stepper
+              v-model="foodPick"
+              label="Foods a day"
+              lower-label="Fewer foods a day"
+              raise-label="More foods a day"
+              :min="MIN_DAILY_PICK"
+              :max="MAX_DAILY_PICK"
+              hide-label
+              suffix="per day"
+              data-testid="foods-a-day"
+            />
+          </div>
+        </template>
+      </SectionHeader>
       <TrackerGrid
         :class="SCREEN_GRID"
         label="Food"
@@ -84,6 +116,7 @@ watch(
         :marks-for="marksFor"
         editable
         :config-mode="planner.configMode"
+        :met-days="metDays"
         data-testid="diet-grid"
         @toggle="diet.toggle"
         @remove="diet.removeFood"

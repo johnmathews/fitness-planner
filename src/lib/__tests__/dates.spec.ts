@@ -1,14 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  dateKey,
-  dayMonth,
-  fullDate,
-  mondayOf,
-  weekDates,
-  weekOf,
-  weekRange,
-  weekTitle,
-} from '@/lib/dates'
+import { dateKey, dayMonth, fullDate, mondayOf, weekDates, weekRange, weekTitle } from '@/lib/dates'
 
 describe('mondayOf', () => {
   it('returns the same day at midnight for a Monday', () => {
@@ -66,14 +57,6 @@ describe('weekTitle', () => {
     expect(weekTitle(new Date(2025, 9, 20), now)).toBe('20–26 October 2025')
     // Seen from the new year, the week that started in December is this year's.
     expect(weekTitle(new Date(2026, 11, 28), new Date(2027, 0, 2))).toBe('28 Dec – 3 Jan')
-  })
-})
-
-describe('weekOf', () => {
-  it('names a week by its Monday, with the year only when it is not this year', () => {
-    const now = new Date(2026, 9, 23)
-    expect(weekOf(new Date(2026, 9, 19), now)).toBe('19 October')
-    expect(weekOf(new Date(2025, 11, 29), now)).toBe('29 December 2025')
   })
 })
 

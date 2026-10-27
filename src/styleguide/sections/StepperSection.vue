@@ -4,7 +4,7 @@ import { Stepper } from '@/components/ui/stepper'
 import ExampleGroup from '../parts/ExampleGroup.vue'
 import StateExample from '../parts/StateExample.vue'
 
-// The daily pick in Settings runs 1 to 8 (Popover card).
+// The daily picks in Edit plan run 1 to 8 (K56).
 const MIN = 1
 const MAX = 8
 
@@ -12,6 +12,7 @@ const normal = ref(3)
 const reps = ref(12)
 const atMin = ref(MIN)
 const atMax = ref(MAX)
+const perDay = ref(4)
 </script>
 
 <!-- The card's states (components/Stepper/preview.html). The ids go to the spinbutton. At a
@@ -60,6 +61,19 @@ const atMax = ref(MAX)
         raise-label="More exercises a day"
         :min="MIN"
         :max="MAX"
+      />
+    </StateExample>
+    <StateExample state="With a suffix, label hidden (Edit plan, K63)">
+      <Stepper
+        id="sg-stepper-pick-suffix"
+        v-model="perDay"
+        label="Exercises a day"
+        lower-label="Fewer exercises a day"
+        raise-label="More exercises a day"
+        :min="MIN"
+        :max="MAX"
+        hide-label
+        suffix="per day"
       />
     </StateExample>
     <StateExample state="Disabled">
