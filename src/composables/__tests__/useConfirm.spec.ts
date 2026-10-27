@@ -32,7 +32,7 @@ async function ask(
 ): Promise<{ answer: Promise<boolean>; asker: HTMLElement }> {
   mount(ConfirmHost, { attachTo: document.body })
   const asker = document.createElement('button')
-  asker.textContent = 'Copy plan to next week'
+  asker.textContent = 'Remove Push-ups'
   document.body.append(asker)
   asker.focus()
   const answer = useConfirm().confirm(options)

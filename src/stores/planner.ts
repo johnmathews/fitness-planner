@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import { DAY_NAMES, addDays, dateKey, fullDate, mondayOf, weekDates, weekTitle } from '@/lib/dates'
+import { DAY_NAMES, dateKey, fullDate, mondayOf, weekDates, weekTitle } from '@/lib/dates'
 import {
   DEFAULT_SETTINGS,
   MAX_DAILY_PICK,
@@ -109,7 +109,7 @@ export const usePlannerStore = defineStore('planner', () => {
   /** Monday of the real current week, whichever week is on screen. */
   const currentWeekKey = computed(() => dateKey(mondayOf(now.value, 0)))
 
-  // Plans, the log, accent and daily pick are the signed-in user's: the sync store fills them
+  // Plans, the log, accent and daily picks are the signed-in user's: the sync store fills them
   // through `adopt` and saves them. Only the theme and the mark set belong to the device, and are
   // stored here. The accent no longer draws anything, since the marks' pens
   // are fixed (DayMark card); it is kept as it was saved, so the server and exports still agree.
@@ -119,6 +119,8 @@ export const usePlannerStore = defineStore('planner', () => {
   const weekOffset = ref(0)
   const accent = ref(DEFAULT_SETTINGS.accent)
   const dailyPick = ref(DEFAULT_SETTINGS.dailyPick)
+  /** Foods a day (K57). It lives here with the other settings, though the diet store's days use it. */
+  const foodPick = ref(DEFAULT_SETTINGS.foodPick)
   const theme = ref<Theme>(parseSettings(readKey(SETTINGS_KEY)).theme)
   const markSet = ref<MarkSet>(parseSettings(readKey(SETTINGS_KEY)).markSet)
   /** Whether the user has settings of their own (from the server, a change, or an import). */
@@ -130,7 +132,6 @@ export const usePlannerStore = defineStore('planner', () => {
   const weekKey = computed(() => dateKey(monday.value))
   /** The page heading: "19–25 October", with the year when it isn't this one. */
   const label = computed(() => weekTitle(monday.value, now.value))
-  const nextWeekKey = computed(() => dateKey(addDays(monday.value, 7)))
   const week = computed(() => log.value[weekKey.value] ?? {})
 
   /** The week whose plan is showing; null while only the defaults exist. */
@@ -139,8 +140,6 @@ export const usePlannerStore = defineStore('planner', () => {
   const exercises = computed<Exercise[]>(() =>
     planWeek.value ? plans.value[planWeek.value]! : defaultExercises(),
   )
-  /** The week this one's plan is carried over from, or null when it has its own. */
-  const carriedFrom = computed(() => (planWeek.value === weekKey.value ? null : planWeek.value))
 
   /** The visible week's own plan, copied from what it shows on its first change. */
   function own(): Exercise[] {
@@ -221,14 +220,6 @@ export const usePlannerStore = defineStore('planner', () => {
     plans.value[weekKey.value] = own().filter((e) => e.id !== id)
   }
 
-  /** Whether the next week already has a plan of its own, which a copy would replace. */
-  const nextWeekHasPlan = computed(() => nextWeekKey.value in plans.value)
-
-  /** Gives the next week a copy of this week's exercises, replacing any plan it had. */
-  function copyToNextWeek(): void {
-    plans.value[nextWeekKey.value] = copyPlan(exercises.value)
-  }
-
   function setConfigMode(on: boolean): void {
     configMode.value = on
   }
@@ -254,6 +245,7 @@ export const usePlannerStore = defineStore('planner', () => {
     log.value = data.log
     accent.value = settings?.accent ?? DEFAULT_SETTINGS.accent
     dailyPick.value = settings?.dailyPick ?? DEFAULT_SETTINGS.dailyPick
+    foodPick.value = settings?.foodPick ?? DEFAULT_SETTINGS.foodPick
     settingsSaved.value = settings !== null
   }
 
@@ -273,13 +265,19 @@ export const usePlannerStore = defineStore('planner', () => {
     dailyPick.value = clamp(dailyPick.value + delta, MIN_DAILY_PICK, MAX_DAILY_PICK)
     settingsSaved.value = true
   }
+  function changeFoodPick(delta: number): void {
+    foodPick.value = clamp(foodPick.value + delta, MIN_DAILY_PICK, MAX_DAILY_PICK)
+    settingsSaved.value = true
+  }
   function setTheme(next: Theme): void {
     theme.value = next
   }
 
-  /** The accent and daily pick, or null while no settings have been stored, changed or imported. */
+  /** The accent and daily picks, or null while no settings have been stored, changed or imported. */
   function savedSettings(): PortableSettings | null {
-    return settingsSaved.value ? { accent: accent.value, dailyPick: dailyPick.value } : null
+    return settingsSaved.value
+      ? { accent: accent.value, dailyPick: dailyPick.value, foodPick: foodPick.value }
+      : null
   }
 
   // Only the theme is written to the device's settings key, merged into what is there: it is
@@ -298,17 +296,16 @@ export const usePlannerStore = defineStore('planner', () => {
     markSet,
     plans,
     exercises,
-    carriedFrom,
     log,
     weekOffset,
     accent,
     dailyPick,
+    foodPick,
     theme,
     now,
     monday,
     weekKey,
     currentWeekKey,
-    nextWeekKey,
     label,
     days,
     dayCounts,
@@ -321,8 +318,6 @@ export const usePlannerStore = defineStore('planner', () => {
     addExercise,
     updateExercise,
     removeExercise,
-    nextWeekHasPlan,
-    copyToNextWeek,
     configMode,
     setConfigMode,
     prevWeek,
@@ -333,6 +328,7 @@ export const usePlannerStore = defineStore('planner', () => {
     adoptWeek,
     clear,
     changeDailyPick,
+    changeFoodPick,
     setTheme,
     savedSettings,
   }

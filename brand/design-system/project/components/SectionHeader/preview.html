@@ -16,6 +16,18 @@
   .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-4); }
   .big { font-size: 40px; line-height: 46px; }
   .week { font-size: 20px; line-height: 26px; color: var(--ink-secondary); }
+  .section-header.centred { align-items: center; }
+  /* Edit plan (K62): three columns like the Header's, the target in the middle one. */
+  .section-header.thirds { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  @media (max-width: 639px) { .section-header.thirds { display: flex; } }
+  /* Edit plan's daily target (K56, K62, K63): a Stepper as its card draws it, at 44px, reading "2 per day". */
+  .stepper output.with-suffix { min-width: 0; justify-content: flex-end; }
+  .stepper .suffix { display: flex; align-items: center; padding: 0 8px 0 4px; font: 600 17px/1 var(--font-sans); white-space: nowrap; }
+  .target { display: inline-flex; align-items: center; gap: var(--space-4); }
+  .stepper { display: inline-flex; align-items: stretch; height: 44px; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
+  .stepper button { display: inline-flex; align-items: center; justify-content: center; width: 44px; padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); }
+  .stepper button svg { width: 20px; height: 20px; }
+  .stepper output { display: flex; align-items: center; justify-content: center; min-width: 48px; font: 600 17px/1 var(--font-sans); font-variant-numeric: tabular-nums; }
 
   @media (max-width: 639px) { body { padding: var(--space-4); } }
 </style>
@@ -27,7 +39,20 @@
     <div class="line"><h2 class="title-1 big" id="ex">Exercises</h2><span class="week" aria-hidden="true">19–25 October</span></div>
   </div>
 </header>
-<p class="variant caption">Folded, or in Edit plan: the title alone</p>
+<p class="variant caption">In Edit plan: the title, and the daily target centred on the line, reading “2 per day”</p>
+<header class="section-header centred thirds">
+  <div class="titles">
+    <h2 class="title-1 big" id="fd">Food</h2>
+  </div>
+  <div class="target" role="group" aria-label="Foods a day">
+    <div class="stepper">
+      <button type="button" aria-label="Fewer foods a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+      <output aria-live="polite" class="with-suffix">2</output><span class="suffix" aria-hidden="true">per day</span>
+      <button type="button" aria-label="More foods a day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    </div>
+  </div>
+</header>
+<p class="variant caption">Folded: the title alone</p>
 <header class="section-header">
   <div class="titles">
     <h2 class="title-1">Food</h2>

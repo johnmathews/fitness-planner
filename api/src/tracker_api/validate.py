@@ -36,6 +36,8 @@ MAX_DURATION = 3600
 MAX_NOTES = 500
 DEFAULT_ACCENT = "#30d158"
 DEFAULT_DAILY_PICK = 3
+#: Foods a day (K57), in the same bounds as the daily pick.
+DEFAULT_FOOD_PICK = 2
 
 Section = Literal["exercise", "diet"]
 SECTIONS: tuple[Section, ...] = ("exercise", "diet")
@@ -90,6 +92,7 @@ class Portable(TypedDict):
 
     accent: str
     dailyPick: int
+    foodPick: int
 
 
 class ExportData(TypedDict):
@@ -273,6 +276,9 @@ def normalise_portable(v: dict[str, Any]) -> Portable:
         else DEFAULT_ACCENT,
         "dailyPick": clamp(
             to_int(v.get("dailyPick"), DEFAULT_DAILY_PICK), MIN_DAILY_PICK, MAX_DAILY_PICK
+        ),
+        "foodPick": clamp(
+            to_int(v.get("foodPick"), DEFAULT_FOOD_PICK), MIN_DAILY_PICK, MAX_DAILY_PICK
         ),
     }
 

@@ -15,13 +15,17 @@
   marker drawing is yours to choose. **Marks** in Settings swaps the squiggles for ticks (a tick, a
   circle, a cross) or faces (happy, so-so, sad), drawn in marker or stamped on a coloured box; a
   press then steps green, yellow, red and back to empty. Each exercise has a weekly goal of 0–7 days, set
-  in its Edit dialog. A day whose marked exercises reach the daily pick (exercises a day) turns green: its
-  name and a check in the header, and a hand-drawn green underline under its column.
+  in its Edit dialog. A day whose marked exercises reach **Exercises a day** turns green: its
+  name in the header goes green and is underlined.
 - **Food.** The screen after the exercises works the same way, with one kind of mark: mark each day you ate
   one. Each food has a weekly goal, set in its Edit dialog. Defaults are Vegetables (7), Fruit (5),
-  Fish (2) and Nuts (3).
+  Fish (2) and Nuts (3). A day whose marked foods reach **Foods a day** (default two) turns green,
+  as an exercise day does.
 - **Normal mode and config mode.** The app opens in normal mode, where you only mark cells. The
   **Edit plan** button in the top bar turns on config mode for changing the plan:
+  - a counter centred on each section's title line, reading "− 3 per day +", sets its daily
+    target (1–8): exercises a day and foods a day. They are one setting for every week. The week isn't shown beside the titles in
+    config mode, since the bar shows it;
   - **Add exercise** and **Add food**, under each grid, open the item's dialog with nothing in it:
     an exercise takes a name, optional sets, reps or a time in seconds (a plank), "Per set" or
     "Each side", an optional weight in kg (e.g. squats with a 12 kg kettlebell), a goal and a
@@ -33,27 +37,26 @@
     stored). New items start with a goal of 3.
 - **Weekly plans.** Each week has its own plan, so reps, sets, weights and goals can change from week
   to week. A week you haven't changed carries over the latest earlier week's plan; it gets its own
-  copy the first time you change it or mark a cell. In config mode, **Copy plan to next week**
-  copies this week's exercises and foods over the next week's.
+  copy the first time you change it or mark a cell. So a change to this week also reaches the weeks
+  after it that you haven't changed yet.
 - `‹` / `›` move between weeks for both sections; past weeks persist. **Print…** produces a
   sheet in the light theme's colours on white paper.
 - **One screen per section.** The week fills the screen, and the bar stays out of sight until the
   pointer reaches the top edge (or the handle at the top centre is pressed). Scrolling brings Food,
   which takes the screen in turn: a flick jumps straight to it. An arrow at the foot of Exercises
   and the top of Food leads to the other. Held upright, a phone or an iPad folds the week: each row's name
-  above its seven boxes. A day that reaches the exercises-a-day target turns green.
-- **Settings** is a page of its own. It sets the theme (System, Light or Dark), how marks are drawn
-  (Squiggles, Ticks, Stamped ticks, Faces or Stamped faces), and the exercises-per-day target (1–8),
-  holds export and import, and shows who is signed
-  in, with **Sign out**.
+  above its seven boxes. A day that reaches its daily target turns green.
+- **Settings** is a page of its own. It sets how marks are drawn (Squiggles, Ticks, Stamped ticks,
+  Faces or Stamped faces) and the theme (System, Light or Dark), holds export and import, and
+  shows who is signed in, with **Sign out**.
 - **Accounts and sync.** Anyone can **Create an account** from the sign-in screen with an email and
   a password, or be invited by a link that names their email. Every account signs in with its email. Sign-up
   closes once `MAX_USERS` accounts exist (`docs/api.md` §4), and each account may store 5 MiB
   (§3). Where the API has a Resend key, a new account gets an email to **confirm** its address,
-  and **Forgot your password?** emails a reset link (§4.1). Plans, marks and the daily pick are stored on the
+  and **Forgot your password?** emails a reset link (§4.1). Plans, marks and the daily targets are stored on the
   server and sync across devices; the theme and the marks stay with each device. The app opens from a cached
   copy and keeps working offline, sending changes once the connection is back.
-- **Export and import.** Settings → **Export** downloads your plans, marks and daily pick as
+- **Export and import.** Settings → **Export** downloads your plans, marks and daily targets as
   a JSON file; **Import…** merges such a file into your account. An import only adds: weeks you
   already have keep their plan, and no mark is ever cleared or changed. The export is your own copy of your
   data.

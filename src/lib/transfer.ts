@@ -72,7 +72,11 @@ export function buildExport(input: {
     exportedAt: (input.now ?? new Date()).toISOString(),
     exercise: { plans: input.exercise.plans, log: input.exercise.log },
     diet: { plans: input.diet.plans, log: input.diet.log },
-    settings: { accent: input.settings.accent, dailyPick: input.settings.dailyPick },
+    settings: {
+      accent: input.settings.accent,
+      dailyPick: input.settings.dailyPick,
+      foodPick: input.settings.foodPick,
+    },
   }
 }
 

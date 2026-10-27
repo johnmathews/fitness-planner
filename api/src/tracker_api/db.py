@@ -105,6 +105,11 @@ MIGRATIONS = [
     ALTER TABLE ticks ADD COLUMN hatch INTEGER NOT NULL DEFAULT 0
         CHECK (hatch BETWEEN 0 AND 127);
     """,
+    # Food has a daily target too (K57). Saved settings take the default, as a file without one
+    # reads.
+    """
+    ALTER TABLE settings ADD COLUMN food_pick INTEGER NOT NULL DEFAULT 2;
+    """,
 ]
 SCHEMA_VERSION = len(MIGRATIONS)
 

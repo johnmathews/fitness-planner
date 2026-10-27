@@ -28,7 +28,7 @@ const VARIANTS: readonly {
     label: 'Not mine',
     busy: 'Importing…',
     small: 'Export',
-    disabled: 'Copy plan to next week',
+    disabled: 'Import…',
   },
   { variant: 'quiet', title: 'Quiet', label: 'Later', small: 'This week', disabled: 'Cancel' },
 ]

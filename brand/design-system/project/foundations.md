@@ -6,7 +6,7 @@ Four project roles each mean exactly one thing:
 
 | Role | Means | Never |
 | --- | --- | --- |
-| `pen` | Great: a day's fill, the year strip's dots, and a day that met the daily pick (its name, check and foot line) | Links, buttons, decoration |
+| `pen` | Great: a day's fill, the year strip's dots, and a day that met the daily pick (its name, underlined, K60) | Links, buttons, decoration |
 | `pen-partial` | Partly done: a day's fill | Over the pick, warnings |
 | `pen-missed` | Tried and couldn't: a day's fill | Errors |
 | `caution-ink` | A caution, always with words; nothing on the planner uses it since the Picked row went (K28) | Errors |
@@ -31,7 +31,7 @@ The type is set for the gym, not the desk: big enough to read at arm's length fr
 | `body-large` | 20/28 | Larger running text, row names (600) |
 | `body` | 18/26 | Running text, inputs, buttons |
 | `caption` | 16/22 | Goals, hints, dates in `ink-secondary` |
-| `label` | 16/22 600 | Field labels, day names ("Mon"), chips (a WeekGrid row's at 18, K46). Sentence case. |
+| `label` | 16/22 600 | Field labels, chips (a WeekGrid row's at 18, K46). Day names ("Mon") take the weight at the rows' name size, max(20px, 27u) (K60). Sentence case. |
 | `note` | 18/26 serif italic | A person's note |
 
 ## The marks
@@ -42,7 +42,7 @@ The type is set for the gym, not the desk: big enough to read at arm's length fr
 - **Mark sets:** Settings' **Marks** chooses how a marked day is drawn on this device (K20): the squiggles above, **Ticks** (a tick, a circle, a cross), **Faces** (happy, so-so, sad), or either **Stamped**, the box coloured in solid with the symbol in paper. Ticks and faces are a marker stroke in the pen, the box drawn over it. A set changes only the look; in a tick or face set a press steps great, partial, missed, then empty (K21).
 - **Today:** "today" in the accessible name; nothing on screen (K36).
 - **Note:** a small `ink-secondary` mark in the cell's top-right corner; "has a note" in the accessible name.
-- **A day that meets the daily pick:** its name in `pen` with a check, and a hand-drawn `pen` underline below its column (K30, K39).
+- **A day that meets the daily pick:** its name in `pen`, underlined (K30, K60). Nothing else marks it.
 
 ## Shape and depth
 

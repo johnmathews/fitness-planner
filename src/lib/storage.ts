@@ -83,6 +83,8 @@ export type DietData = { plans: Plans<Food>; log: Log }
 export type Settings = {
   accent: string
   dailyPick: number
+  /** Foods a day (K57): a day whose food marks reach it turns green. */
+  foodPick: number
   theme: Theme
   /** How marked days are drawn; the device's choice. */
   markSet: MarkSet
@@ -116,6 +118,7 @@ export const MAX_NOTES = 500
 export const DEFAULT_SETTINGS: Settings = {
   accent: '#30d158',
   dailyPick: 3,
+  foodPick: 2,
   theme: 'system',
   markSet: 'squiggles',
 }
@@ -296,9 +299,10 @@ export function parseDietData(
 }
 
 /** The settings that belong to the person rather than the device: not the theme, totals or marks. */
-export type PortableSettings = Pick<Settings, 'accent' | 'dailyPick'>
+export type PortableSettings = Pick<Settings, 'accent' | 'dailyPick' | 'foodPick'>
 
-/** Any `#rrggbb` accent and a daily pick clamped to 1–8, each falling back to its default. */
+/** Any `#rrggbb` accent, and daily picks for exercises and foods clamped to 1–8, each falling back
+ * to its default. */
 export function normalisePortableSettings(v: Record<string, unknown>): PortableSettings {
   const accent =
     typeof v.accent === 'string' && /^#[0-9a-f]{6}$/i.test(v.accent)
@@ -309,7 +313,12 @@ export function normalisePortableSettings(v: Record<string, unknown>): PortableS
     MIN_DAILY_PICK,
     MAX_DAILY_PICK,
   )
-  return { accent, dailyPick }
+  const foodPick = clamp(
+    toInt(v.foodPick, DEFAULT_SETTINGS.foodPick),
+    MIN_DAILY_PICK,
+    MAX_DAILY_PICK,
+  )
+  return { accent, dailyPick, foodPick }
 }
 
 export function parseSettings(raw: string | null): Settings {

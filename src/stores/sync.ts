@@ -184,7 +184,9 @@ export function diff(base: Snapshot, local: Snapshot): Op[] {
   }
   const { settings: bs } = base
   const { settings: ls } = local
-  if (bs.accent !== ls.accent || bs.dailyPick !== ls.dailyPick) ops.push({ kind: 'settings' })
+  if (bs.accent !== ls.accent || bs.dailyPick !== ls.dailyPick || bs.foodPick !== ls.foodPick) {
+    ops.push({ kind: 'settings' })
+  }
   return ops
 }
 
@@ -225,7 +227,11 @@ export const useSyncStore = defineStore('sync', () => {
     return clone({
       exercise: { plans: planner.plans, log: planner.log },
       diet: { plans: diet.plans, log: diet.log },
-      settings: { accent: planner.accent, dailyPick: planner.dailyPick },
+      settings: {
+        accent: planner.accent,
+        dailyPick: planner.dailyPick,
+        foodPick: planner.foodPick,
+      },
     })
   }
 
@@ -355,6 +361,7 @@ export const useSyncStore = defineStore('sync', () => {
       const res = await call('PUT', '/settings', {
         accent: planner.accent,
         dailyPick: planner.dailyPick,
+        foodPick: planner.foodPick,
       })
       if (gen !== generation) return 'stop'
       if (res.ok) return 'done'
@@ -508,7 +515,15 @@ export const useSyncStore = defineStore('sync', () => {
     if (cached) adopt(cached)
     pending.value = readOutbox().length
     stopWatch = watch(
-      () => [planner.plans, planner.log, diet.plans, diet.log, planner.accent, planner.dailyPick],
+      () => [
+        planner.plans,
+        planner.log,
+        diet.plans,
+        diet.log,
+        planner.accent,
+        planner.dailyPick,
+        planner.foodPick,
+      ],
       capture,
       { deep: true },
     )

@@ -32,9 +32,9 @@ export function useImportSummary() {
 
   function describe(data: ExportData): string {
     const { plans, ticks, settings } = additions(data)
-    // The setting as Settings names it: Exercises a day. The file's accent comes too, but nothing
-    // shows it any more, so the summary leaves it out.
-    const extra = settings ? ', plus the number of exercises a day' : ''
+    // The settings as Edit plan names them: Exercises a day and Foods a day (K56). The file's
+    // accent comes too, but nothing shows it any more, so the summary leaves it out.
+    const extra = settings ? ', plus the exercises and foods a day' : ''
     return `Adds ${countOf(plans, 'weekly plan')} and ${countOf(ticks, 'marked day')}${extra}. Existing plans and marks stay as they are.`
   }
 

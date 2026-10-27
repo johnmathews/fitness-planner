@@ -36,7 +36,7 @@ scoped by `user_id`, and no endpoint reads another user's data.
 | `invites`       | `token_hash`                        | `kind` (`invite` or `reset`), `username`, `user_id` (resets), `expires_at`, `used_at`, `mailed` (a reset sent by email)                                                 |
 | `confirmations` | `token_hash`                        | `user_id`, `created_at`, `expires_at`, `used_at`: confirm-your-email links                                                                                              |
 | `mail_log`      | `id`                                | `user_id`, `kind` (`confirm` or `reset`), `sent_at`: one row per email attempted (a failed send still counts), for the limits                                           |
-| `settings`      | `user_id`                           | `accent`, `daily_pick`                                                                                                                                                  |
+| `settings`      | `user_id`                           | `accent`, `daily_pick`, `food_pick` (K57)                                                                                                                               |
 | `plans`         | `(user_id, section, week)`          | `items_json`, `rev`                                                                                                                                                     |
 | `ticks`         | `(user_id, section, week, item_id)` | `days`, `partial`, `missed`, `solid`, `hatch`: 7-bit masks (bit 0 is Monday); see below                                                                                 |
 
@@ -55,7 +55,7 @@ startup inside a transaction. Version 1 is the first six tables; version 2 adds 
 `missed` (default 0), so every tick stored before marks had kinds reads as `great`; version 3 adds
 email: `email_confirmed_at`, `mailed`, `confirmations` and `mail_log`. Every account from before
 it starts unconfirmed. Version 4 adds `solid` and `hatch` (default 0), so every older mark reads as
-the zigzag.
+the zigzag. Version 5 adds `food_pick` to `settings` (default 2), foods a day (K57).
 
 ## 3. Endpoints
 
@@ -88,7 +88,7 @@ cut off at the limit rather than read whole. A body with nothing to send, such a
 | `GET /state`                               | session | everything the client renders (below)                                                          |
 | `PUT /plans/{section}/{week}`              | session | `{items, rev}` → `{rev}`; 409 `conflict` with the server copy                                  |
 | `PUT /ticks/{section}/{week}/{item}/{day}` | session | `{mark}` → `{days}`, the week's seven marks for that item                                      |
-| `PUT /settings`                            | session | `{accent, dailyPick}` → the stored settings                                                    |
+| `PUT /settings`                            | session | `{accent, dailyPick, foodPick}` → the stored settings; no `foodPick` keeps the saved one       |
 | `GET /export`                              | session | the export file (`architecture.md` §4)                                                         |
 | `POST /import`                             | session | an export file, merged in; → `{weeks, ticks, settings}` added                                  |
 
@@ -99,7 +99,7 @@ mail is off, has no such key.
 
 `GET /state` returns `{exercise, diet, settings}`. Each section is `{plans, log, revs}`: `plans`
 and `log` have the same shape as in `localStorage` (a log row is seven marks or nulls), and `revs`
-maps each planned week to its revision. `settings` is `{accent, dailyPick}`, or null before any are saved.
+maps each planned week to its revision. `settings` is `{accent, dailyPick, foodPick}`, or null before any are saved.
 
 **Plans.** `rev` is the revision the client last saw, 0 for a week it has never seen planned.
 A matching `rev` stores the items and returns `rev + 1`. A stale `rev` gets 409 with `{items, rev}`

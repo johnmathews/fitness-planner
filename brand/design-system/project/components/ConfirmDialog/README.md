@@ -5,16 +5,15 @@ A small modal question before something that can't be undone: what will happen, 
 - A Dialog without a close button or fields: `panel`, 1px `line` border, `radius-lg`, `shadow-overlay`, on the `scrim` at 40%, at the page's size (K55): max(24px, 32u) padding, at most max(400px, 600u) wide, buttons 60u tall.
 - **Title** in `title-2` at max(22px, 27u): the question, naming the thing ("Remove Push-ups?").
 - **Body** in `body` at max(18px, 19u): the facts, briefly, then what stays. No "Are you sure", no warning icon, no capitals.
-- **Buttons:** secondary "Cancel", then primary with the verb from the title ("Remove", "Replace", "Sign out"). Never "OK" or "Yes".
+- **Buttons:** secondary "Cancel", then primary with the verb from the title ("Remove", "Sign out"). Never "OK" or "Yes".
 - **No red button.** A destructive action still uses the `ink` primary (K8); the verb does the work. `error-ink` is only for errors.
 - Ask only when something is lost. Importing a file only adds plans and marks ("Existing plans and marks stay as they are"), so it confirms inline in Settings, not here.
 
-The app's three cases, rewritten in voice:
+The app's two cases, rewritten in voice:
 
 | Where | Today (`window.confirm`) | ConfirmDialog |
 | --- | --- | --- |
 | `TrackerRow.vue`, remove in Edit plan | "Remove Push-ups?" | **Remove Push-ups?** It comes off this week's plan. Weeks with their own plan keep it, and its marks stay. · Cancel · Remove |
-| `CopyPlan.vue`, Copy plan to next week | "Replace the plan for Oct 26 – Nov 1, 2026 with this week's?" | **Replace next week's plan?** The week of 26 October already has its own plan. Copying replaces it with this week's exercises and foods. · Cancel · Replace |
 | `SettingsPage.vue`, Sign out | "2 changes haven't synced yet. Sign out anyway?" | **Sign out now?** Two changes on this device haven't reached the server yet. Signing out now loses them. · Cancel · Sign out |
 
 Removing a food uses the first pattern ("Remove Fish?"). The removal touches only this week's plan and the weeks that follow it without a plan of their own; it never deletes the log.

@@ -22,12 +22,24 @@ const props = withDefaults(
     /** Keeps the label for screen readers only, where the row around the Stepper already says
      * what it sets (a goal in the week grid's total cell). */
     hideLabel?: boolean
+    /**
+     * Words after the value, inside the outline: "per day" reads "− 4 per day +" (K63). Shown
+     * only; a screen reader hears the label and the value, as without it.
+     */
+    suffix?: string
     /** The spinbutton's id; one is generated when omitted. */
     id?: string
     /** Classes for the wrapper, for layout. */
     class?: HTMLAttributes['class']
   }>(),
-  { step: 1, disabled: false, hideLabel: false, id: undefined, class: undefined },
+  {
+    step: 1,
+    disabled: false,
+    hideLabel: false,
+    suffix: undefined,
+    id: undefined,
+    class: undefined,
+  },
 )
 
 const model = defineModel<number>({ required: true })
@@ -82,6 +94,7 @@ function onValue(value: number | undefined): void {
       :disabled="disabled"
       :aria-labelledby="labelId"
       :class="stepperVariants()"
+      :data-suffix="suffix ? '' : undefined"
       @update:model-value="onValue"
     >
       <button
@@ -95,7 +108,17 @@ function onValue(value: number | undefined): void {
       >
         <Minus :size="20" :stroke-width="1.5" />
       </button>
-      <NumberFieldInput :aria-labelledby="labelId" :class="stepperValueVariants()" />
+      <NumberFieldInput
+        :aria-labelledby="labelId"
+        :class="cn(stepperValueVariants(), suffix && 'w-8 px-0 text-right')"
+      />
+      <span
+        v-if="suffix"
+        aria-hidden="true"
+        data-slot="stepper-suffix"
+        class="flex items-center pr-2 pl-1 font-sans text-[17px] leading-6 font-semibold whitespace-nowrap text-ink"
+        >{{ suffix }}</span
+      >
       <button
         type="button"
         data-slot="stepper-raise"

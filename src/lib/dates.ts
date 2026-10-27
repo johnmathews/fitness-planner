@@ -15,12 +15,6 @@ export function dateKey(d: Date): string {
   return `${d.getFullYear()}-${month}-${day}`
 }
 
-/** The local-time date for a `YYYY-MM-DD` key (the inverse of `dateKey`). */
-export function fromKey(key: string): Date {
-  const [y, m, d] = key.split('-').map(Number)
-  return new Date(y!, m! - 1, d!)
-}
-
 export function addDays(d: Date, days: number): Date {
   const out = new Date(d)
   out.setDate(d.getDate() + days)
@@ -59,11 +53,6 @@ function otherYear(d: Date, now: Date): string {
  */
 export function weekTitle(monday: Date, now: Date): string {
   return weekRange(monday) + otherYear(addDays(monday, 6), now)
-}
-
-/** "19 October" for a week's Monday, with its year when that is not this year's. */
-export function weekOf(monday: Date, now: Date): string {
-  return dayMonth(monday) + otherYear(monday, now)
 }
 
 /** "Thursday 22 October": a day written in full, as DayMark's accessible name says it. */

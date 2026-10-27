@@ -52,16 +52,16 @@ dialog.
 
 Four project roles each mean one thing, and nothing else may use them:
 
-| Role          | Means                                                                      | Never                      |
-| ------------- | -------------------------------------------------------------------------- | -------------------------- |
-| `pen`         | Great: a day's mark, and a day that met the daily pick (name, check, line) | Links, buttons, decoration |
-| `pen-partial` | Partly done: a day's mark                                                  | Over the pick, warnings    |
-| `pen-missed`  | Tried and couldn't: a day's mark                                           | Errors                     |
-| `caution-ink` | A caution, always with words; nothing on the planner uses it (K28)         | Errors                     |
+| Role          | Means                                                                         | Never                      |
+| ------------- | ----------------------------------------------------------------------------- | -------------------------- |
+| `pen`         | Great: a day's mark, and a day that met the daily pick (its name, underlined) | Links, buttons, decoration |
+| `pen-partial` | Partly done: a day's mark                                                     | Over the pick, warnings    |
+| `pen-missed`  | Tried and couldn't: a day's mark                                              | Errors                     |
+| `caution-ink` | A caution, always with words; nothing on the planner uses it (K28)            | Errors                     |
 
 The primary action is `ink`, not a brand colour (K8): one colour for "act", the pens for "done".
-Outside the day's mark, no meaning rests on colour alone: a met day adds a check and an underline,
-and today adds "today" to the name. The day's mark is the one exception, by the
+Outside the day's mark, no meaning rests on colour alone: a met day's name is underlined as well
+as green (K60), and today adds "today" to the name. The day's mark is the one exception, by the
 owner's choice (K15): its pen alone tells great, partial and missed apart on screen, and the
 accessible name says "partly done" or "couldn't do it".
 
@@ -97,16 +97,16 @@ delicate. Source Serif 4 sets the display date, section titles, the wordmark and
 Source Sans 3 sets everything else, numbers included, with tabular figures (K4: no monospace). Both are
 self-hosted from the Fontsource variable packages, because the CSP allows fonts only from `'self'`.
 
-| Class        | Size and weight                     | Use                                               |
-| ------------ | ----------------------------------- | ------------------------------------------------- |
-| `display`    | 44/48 serif 600 (36/40 below 640px) | The week heading, on paper only                   |
-| `title-1`    | 30/36 serif 600                     | Section titles                                    |
-| `title-2`    | 22/28 sans 600                      | Dialog, popover and prompt titles                 |
-| `body-large` | 20/28                               | Summary lines, row names (600)                    |
-| `body`       | 18/26                               | Running text, inputs, buttons                     |
-| `caption`    | 16/22                               | Goals, hints, dates                               |
-| `label`      | 16/22 600                           | Field labels, day names, chips (18 in a row, K46) |
-| `note`       | 18/26 serif italic                  | A person's note                                   |
+| Class        | Size and weight                     | Use                                                                            |
+| ------------ | ----------------------------------- | ------------------------------------------------------------------------------ |
+| `display`    | 44/48 serif 600 (36/40 below 640px) | The week heading, on paper only                                                |
+| `title-1`    | 30/36 serif 600                     | Section titles                                                                 |
+| `title-2`    | 22/28 sans 600                      | Dialog, popover and prompt titles                                              |
+| `body-large` | 20/28                               | Summary lines, row names (600)                                                 |
+| `body`       | 18/26                               | Running text, inputs, buttons                                                  |
+| `caption`    | 16/22                               | Goals, hints, dates                                                            |
+| `label`      | 16/22 600                           | Field labels, chips (18 in a row, K46); day names at the rows' name size (K60) |
+| `note`       | 18/26 serif italic                  | A person's note                                                                |
 
 Labels are sentence case, never uppercase with letter-spacing.
 

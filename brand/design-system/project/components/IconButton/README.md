@@ -6,7 +6,7 @@ A 44px square button that shows one Lucide icon and carries its meaning in an ac
 - **Quiet** (the default): no border, `ink` icon, a `tile` fill on hover and while its popover or menu is open (`aria-expanded="true"`).
 - **Outlined:** 1px `control-border`, for a button that sits alone in a form or beside fields.
 - The icon is 20px, Lucide outline at 1.5px stroke in `currentColor`, `aria-hidden="true"`. The hit area is 44 × 44px, `radius-md`, on every layout; where a page sizes it to the screen it only grows: the week's arrows in the Header (max(48px, 60u), K47), and Edit plan's edit and remove and a Dialog's Close (max(44px, 52u) with a 28u icon, K54, K55). The Header's Settings is a BarAction.
-- Not for actions people meet once or rarely (sign out, import, copy the plan): use a Button with words. Never an emoji or a Unicode glyph in place of the icon.
+- Not for actions people meet once or rarely (sign out, import, export): use a Button with words. Never an emoji or a Unicode glyph in place of the icon.
 
 ## States
 

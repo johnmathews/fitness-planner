@@ -90,9 +90,11 @@ def load_tracked(conn: sqlite3.Connection, user_id: int, section: Section) -> Tr
 
 def load_settings(conn: sqlite3.Connection, user_id: int) -> Portable | None:
     row = conn.execute(
-        "SELECT accent, daily_pick FROM settings WHERE user_id = ?", (user_id,)
+        "SELECT accent, daily_pick, food_pick FROM settings WHERE user_id = ?", (user_id,)
     ).fetchone()
-    return None if row is None else {"accent": row["accent"], "dailyPick": row["daily_pick"]}
+    if row is None:
+        return None
+    return {"accent": row["accent"], "dailyPick": row["daily_pick"], "foodPick": row["food_pick"]}
 
 
 def state(conn: sqlite3.Connection, user_id: int) -> dict[str, Any]:
@@ -211,12 +213,16 @@ def set_tick(
 
 
 def put_settings(conn: sqlite3.Connection, user_id: int, raw: dict[str, Any]) -> Portable:
+    # A tab still running the app from before foods a day (K57) sends no foodPick; keep the
+    # saved one rather than reset it to the default.
+    if "foodPick" not in raw and (saved := load_settings(conn, user_id)) is not None:
+        raw = {**raw, "foodPick": saved["foodPick"]}
     settings = normalise_portable(raw)
     conn.execute(
-        "INSERT INTO settings (user_id, accent, daily_pick) VALUES (?, ?, ?)"
-        " ON CONFLICT (user_id) DO UPDATE"
-        " SET accent = excluded.accent, daily_pick = excluded.daily_pick",
-        (user_id, settings["accent"], settings["dailyPick"]),
+        "INSERT INTO settings (user_id, accent, daily_pick, food_pick) VALUES (?, ?, ?, ?)"
+        " ON CONFLICT (user_id) DO UPDATE SET accent = excluded.accent,"
+        " daily_pick = excluded.daily_pick, food_pick = excluded.food_pick",
+        (user_id, settings["accent"], settings["dailyPick"], settings["foodPick"]),
     )
     return settings
 

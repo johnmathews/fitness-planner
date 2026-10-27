@@ -236,26 +236,32 @@ describe('parseDietData', () => {
 })
 
 describe('parseSettings', () => {
-  it('defaults to green accent, three a day, the system theme and squiggles', () => {
+  it('defaults to green accent, three exercises and two foods a day, the system theme and squiggles', () => {
     expect(parseSettings(null)).toEqual({
       accent: '#30d158',
       dailyPick: 3,
+      foodPick: 2,
       theme: 'system',
       markSet: 'squiggles',
     })
     expect(DEFAULT_SETTINGS.accent).toBe('#30d158')
   })
 
-  it('accepts valid values and clamps daily pick to 1–8', () => {
+  it('accepts valid values and clamps both daily picks to 1–8', () => {
     expect(
-      parseSettings(JSON.stringify({ accent: '#bf5af2', dailyPick: 20, theme: 'dark' })),
+      parseSettings(
+        JSON.stringify({ accent: '#bf5af2', dailyPick: 20, foodPick: 5, theme: 'dark' }),
+      ),
     ).toEqual({
       accent: '#bf5af2',
       dailyPick: 8,
+      foodPick: 5,
       theme: 'dark',
       markSet: 'squiggles',
     })
     expect(parseSettings(JSON.stringify({ dailyPick: 0 })).dailyPick).toBe(1)
+    expect(parseSettings(JSON.stringify({ foodPick: 0 })).foodPick).toBe(1)
+    expect(parseSettings(JSON.stringify({ foodPick: 12 })).foodPick).toBe(8)
   })
 
   it('rejects a non-hex accent', () => {

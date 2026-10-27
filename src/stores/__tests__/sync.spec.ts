@@ -93,14 +93,14 @@ describe('sync', () => {
   })
 
   it('loads from the server when the device has no cache', async () => {
-    api.accounts.get(USER)!.settings = { accent: '#0a84ff', dailyPick: 5 }
+    api.accounts.get(USER)!.settings = { accent: '#0a84ff', dailyPick: 5, foodPick: 4 }
     const sync = useSyncStore()
     sync.start(USER, lost)
     expect(sync.loaded).toBe(false)
     await flushPromises()
     expect(sync.loaded).toBe(true)
     expect(usePlannerStore().accent).toBe('#0a84ff')
-    expect(cached().settings).toEqual({ accent: '#0a84ff', dailyPick: 5 })
+    expect(cached().settings).toEqual({ accent: '#0a84ff', dailyPick: 5, foodPick: 4 })
   })
 
   it('ignores a cache it cannot read', async () => {
@@ -143,8 +143,24 @@ describe('sync', () => {
     const { planner } = await start(emptyState())
     planner.changeDailyPick(1)
     await settle()
-    expect(api.accounts.get(USER)!.settings).toEqual({ accent: '#30d158', dailyPick: 4 })
-    expect(cached().settings).toEqual({ accent: '#30d158', dailyPick: 4 })
+    expect(api.accounts.get(USER)!.settings).toEqual({
+      accent: '#30d158',
+      dailyPick: 4,
+      foodPick: 2,
+    })
+    expect(cached().settings).toEqual({ accent: '#30d158', dailyPick: 4, foodPick: 2 })
+  })
+
+  it('sends a foods-a-day change', async () => {
+    const { planner } = await start(emptyState())
+    planner.changeFoodPick(2)
+    await settle()
+    expect(api.accounts.get(USER)!.settings).toEqual({
+      accent: '#30d158',
+      dailyPick: 3,
+      foodPick: 4,
+    })
+    expect(cached().settings).toEqual({ accent: '#30d158', dailyPick: 3, foodPick: 4 })
   })
 
   it('ends on the latest value when a cell is toggled while its write is in flight', async () => {
@@ -719,7 +735,7 @@ describe('importFile', () => {
       log: { [WEEK]: { sq: ['great', 'great', null, null, null, null, null] } },
     },
     diet: { plans: {}, log: {} },
-    settings: { accent: '#0a84ff', dailyPick: 5 },
+    settings: { accent: '#0a84ff', dailyPick: 5, foodPick: 4 },
   }
 
   it('sends pending writes first, imports on the server, then shows the merged state', async () => {
@@ -823,7 +839,7 @@ describe('importFile', () => {
 })
 
 describe('diff', () => {
-  const settings = { accent: '#30d158', dailyPick: 3 }
+  const settings = { accent: '#30d158', dailyPick: 3, foodPick: 2 }
   const empty = () => ({
     exercise: { plans: {}, log: {} },
     diet: { plans: {}, log: {} },
@@ -832,6 +848,12 @@ describe('diff', () => {
 
   it('is empty for identical snapshots', () => {
     expect(diff(empty(), empty())).toEqual([])
+  })
+
+  it('finds a changed foods a day', () => {
+    const local = empty()
+    local.settings.foodPick = 5
+    expect(diff(empty(), local)).toEqual([{ kind: 'settings' }])
   })
 
   it('finds changed plans, set and cleared days, and settings', () => {
