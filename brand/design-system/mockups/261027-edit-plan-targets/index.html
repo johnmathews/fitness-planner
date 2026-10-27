@@ -1,0 +1,132 @@
+<title>Daily targets in Edit plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="edit.css">
+<link rel="stylesheet" href="settings.css">
+<!--
+  A mockup (design-system skill, references/mockups.md). Edit plan gets each section's daily
+  target on its title line, and one question: where on that line it sits. The page is live:
+  edit.js draws Edit plan and settings.js the Settings page, each sized from its frame (edit.css,
+  settings.css); marks.js, set-marks.js and icons.js hold the app's drawings and Lucide icons.
+  try.html shows Edit plan full size with a switch for the option and the theme.
+-->
+<style>
+  body { margin: 0; background: var(--canvas); color: var(--ink); font-family: var(--font-sans); }
+  .mockup-page {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: var(--space-8, 32px) var(--space-16, 64px);
+    max-width: 1200px; margin: 0 auto; display: grid; gap: var(--space-12, 48px);
+  }
+  .mockup-head { display: grid; gap: var(--space-2, 8px); max-width: 70ch; }
+  .mockup-head h1, .option h2 { margin: 0; text-wrap: balance; }
+  .mockup-head p, .option p { margin: 0; }
+  .mockup-meta { color: var(--ink-secondary); }
+  .option { display: grid; gap: var(--space-4, 16px); }
+  .option-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2, 8px) var(--space-3, 12px); }
+  .option-tag { color: var(--ink-secondary); }
+  .option[data-recommended] .option-tag::after { content: " · Recommended"; color: var(--ink); }
+  /* The same stage in light and in dark, side by side; stacked on a phone. Each pane is a
+     data-theme subtree, so the system's own tokens switch inside it. */
+  .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-4, 16px); }
+  .pane { min-width: 0; background: var(--canvas); color: var(--ink); border: 1px solid var(--line);
+          border-radius: var(--radius-lg, 10px); padding: var(--space-4, 16px); overflow-x: auto; }
+  .pane-label { color: var(--ink-secondary); margin: 0 0 var(--space-3, 12px); }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .try { margin: 0; }
+  .try a, .mockup-head a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+  .notes { margin: 0; padding-left: 1.2em; display: grid; gap: var(--space-1, 4px); }
+
+  /* A device: the screen at its real size in pixels, scaled down to fit (the script sets the scale). */
+  .device { position: relative; width: 100%; }
+  .device > .ep, .device > .sp { position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .device.phone > .ep { border-radius: 28px; border-width: 2px; }
+  .phones { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .phones .device { max-width: 260px; flex: 1 1 200px; }
+</style>
+
+<main class="mockup-page">
+  <header class="mockup-head">
+    <p class="caption mockup-meta">Mockup · 2026-10-27 · Tracker</p>
+    <h1 class="title-1">Daily targets in Edit plan</h1>
+    <p class="body">Edit plan has a daily target on each section's title line (K56, K57). Round 3 centred it under the bar's week at max(44px, 40u), its words beside it (K62), and that is what is built.</p>
+    <p class="body">Round 4 tries the words two other ways, at the same place and size: <strong>stacked over the Stepper</strong>, or <strong>gone</strong>, with the Stepper's value reading “4 per day”. A screen reader still hears “Exercises a day” in both. The Steppers work.</p>
+    <p class="try body"><a href="try.html#st">Try it full size</a>. The switch at the bottom left changes the option and the theme.</p>
+  </header>
+
+  <section class="option" id="m40" aria-labelledby="m40-h">
+    <div class="option-head"><h2 class="title-2" id="m40-h">M40. Words beside it (as built)</h2><span class="label option-tag">For comparison</span></div>
+    <p class="body">“Exercises a day”, then the Stepper, centred on the title line.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200</p><div class="device" data-w="1920" data-h="1200" data-layout="m40"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, scrolled to Food</p><div class="device" data-w="1280" data-h="800" data-layout="m40" data-scroll="food"></div></div>
+    </div>
+    <div class="panes"><div class="pane" data-theme="light"><p class="label pane-label">Phone, light and dark</p><div class="phones">
+      <div class="device phone" data-w="390" data-h="844" data-layout="m40"></div>
+      <div class="device phone" data-w="390" data-h="844" data-layout="m40" data-theme="dark" data-scroll="food"></div>
+    </div></div></div>
+    <p class="try body"><a href="try.html#m40">Try M40 full size</a></p>
+  </section>
+
+  <section class="option" id="st" data-recommended aria-labelledby="st-h">
+    <div class="option-head"><h2 class="title-2" id="st-h">ST. The words over the Stepper</h2><span class="label option-tag">Option ST</span></div>
+    <p class="body">“Exercises a day” in label, centred over the Stepper, 6u above it. The line is narrower, and the pair is about as tall as the 40u title, so the header does not grow on a big screen. Recommended: it still says what the number is, in less width.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200</p><div class="device" data-w="1920" data-h="1200" data-layout="st"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, scrolled to Food</p><div class="device" data-w="1280" data-h="800" data-layout="st" data-scroll="food"></div></div>
+    </div>
+    <div class="panes"><div class="pane" data-theme="light"><p class="label pane-label">Phone, light and dark</p><div class="phones">
+      <div class="device phone" data-w="390" data-h="844" data-layout="st"></div>
+      <div class="device phone" data-w="390" data-h="844" data-layout="st" data-theme="dark" data-scroll="food"></div>
+    </div></div></div>
+    <p class="try body"><a href="try.html#st">Try ST full size</a></p>
+  </section>
+
+  <section class="option" id="pd" aria-labelledby="pd-h">
+    <div class="option-head"><h2 class="title-2" id="pd-h">PD. No words: “4 per day”</h2><span class="label option-tag">Option PD</span></div>
+    <p class="body">Only the Stepper, its value reading “4 per day” between − and +. The lightest. The section title says what is counted, so the line reads “Exercises … − 4 per day +”. A screen reader hears “Exercises a day, 4”.</p>
+    <div class="panes">
+      <div class="pane" data-theme="light"><p class="label pane-label">Light · 1920×1200</p><div class="device" data-w="1920" data-h="1200" data-layout="pd"></div></div>
+      <div class="pane" data-theme="dark"><p class="label pane-label">Dark · 1280×800, scrolled to Food</p><div class="device" data-w="1280" data-h="800" data-layout="pd" data-scroll="food"></div></div>
+    </div>
+    <div class="panes"><div class="pane" data-theme="light"><p class="label pane-label">Phone, light and dark</p><div class="phones">
+      <div class="device phone" data-w="390" data-h="844" data-layout="pd"></div>
+      <div class="device phone" data-w="390" data-h="844" data-layout="pd" data-theme="dark" data-scroll="food"></div>
+    </div></div></div>
+    <p class="try body"><a href="try.html#pd">Try PD full size</a></p>
+  </section>
+
+</main>
+
+<script src="icons.js"></script>
+<script src="marks.js"></script>
+<script src="set-marks.js"></script>
+<script src="edit.js"></script>
+<script src="settings.js"></script>
+<script>
+  // Each .device gets a live page at its real pixel size, scaled to the space it has.
+  for (const device of document.querySelectorAll('.device')) {
+    const w = Number(device.dataset.w), h = Number(device.dataset.h)
+    const screen = document.createElement('div')
+    screen.style.width = w + 'px'
+    screen.style.height = h + 'px'
+    if (device.dataset.theme) screen.dataset.theme = device.dataset.theme
+    device.append(screen)
+    const fit = () => {
+      const s = Math.min(1, device.clientWidth / w)
+      screen.style.transform = `scale(${s})`
+      device.style.height = Math.ceil(h * s) + 'px'
+    }
+    new ResizeObserver(fit).observe(device)
+    fit()
+    if (device.dataset.page === 'settings') SP.mount(screen, { layout: 'a', moved: true })
+    else EP.mount(screen, { layout: device.dataset.layout })
+    if (device.dataset.scroll === 'food') {
+      const scroller = screen.querySelector('.ep-scroll')
+      const food = scroller.querySelectorAll('section')[1]
+      scroller.scrollTop = food.offsetTop - scroller.querySelector('.ep-bar').offsetHeight
+    }
+  }
+</script>
