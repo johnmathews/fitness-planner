@@ -197,9 +197,9 @@
   ],
   "lastChange": {
     "by": "John Mathews",
-    "at": "2026-10-26T22:58:13Z",
+    "at": "2026-10-27T22:29:34Z",
     "via": "Claude Code",
-    "note": "Everything at the week's size (K46-K55): bigger row names; the bar full width with the new BarAction; Settings in rows with no bar; Edit plan with Add buttons and dialogs; dialogs at the page's size."
+    "note": "Daily targets in Edit plan and a lighter met day (K56-K63): the Stepper centred on each title line, reading \"4 per day\" (a new suffix); Settings with Theme under Marks and no Planner; no Copy plan; a met day's name in pen, underlined, with no check or column stroke, and day names at 27u."
   },
   "layout": "files",
   "libraries": [],
