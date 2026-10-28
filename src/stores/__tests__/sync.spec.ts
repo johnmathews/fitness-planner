@@ -394,6 +394,21 @@ describe('sync', () => {
     sync.onStorage(CACHE_PREFIX + USER) // after stop: ignored
   })
 
+  it('adopts another tab’s cache write without writing it back', async () => {
+    const { sync, planner } = await start(emptyState())
+    // A tab still open on the code from before foods a day (K57) writes settings without
+    // `foodPick`. Writing the adopted state back would add it, that tab would adopt and drop it
+    // again, and the two would echo the cache between them, undoing each other's marks.
+    const other = stateWith({ [WEEK]: [SQUATS] }, { [WEEK]: 1 })
+    other.settings = { accent: '#2f6b4f', dailyPick: 3 } as SyncState['settings']
+    const written = JSON.stringify(other)
+    localStorage.setItem(CACHE_PREFIX + USER, written)
+    sync.onStorage(CACHE_PREFIX + USER)
+    await settle()
+    expect(planner.exercises).toEqual([SQUATS])
+    expect(localStorage.getItem(CACHE_PREFIX + USER)).toBe(written)
+  })
+
   it('ignores a tab still open on the code from before the solid and hatch drawings', async () => {
     api.accounts.get(USER)!.plans.exercise[WEEK] = { items: [SQUATS], rev: 1 }
     const { sync, planner } = await start(emptyState())

@@ -611,7 +611,10 @@ an edit that has not reached the server.
 cold start offline shows data at once. It is written on every change and every read. Another tab's
 write to it arrives as a `storage` event, and this tab adopts it as both its state and its `base`:
 that tab's own writes are already in the shared outbox. Adopting it also counts as a local change,
-so a read this tab already had in flight cannot overwrite it. The cache is validated with the
+so a read this tab already had in flight cannot overwrite it. Adopting never writes the cache back:
+a tab still open on older code words the cache differently (before K57 its settings had no
+`foodPick`), and a write-back would set the two tabs echoing it between them, each undoing the
+other's marks as they were made. The cache is validated with the
 storage normalisers when read, and outbox entries one by one, so a damaged key cannot break the app
 or stick the outbox. A plan write for a week the stores no longer hold is dropped rather than sent
 as an empty plan.
