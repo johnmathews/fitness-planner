@@ -268,8 +268,11 @@ export const useSyncStore = defineStore('sync', () => {
     writeKey(cacheKey(), cache)
   }
 
-  /** Make `state` both what the stores show and what the server is known to hold. */
-  function adopt(state: SyncState): void {
+  /**
+   * Make `state` both what the stores show and what the server is known to hold. `persist` false
+   * leaves the cache alone: another tab's state is already there, in that tab's words.
+   */
+  function adopt(state: SyncState, persist = true): void {
     revs = { exercise: { ...state.exercise.revs }, diet: { ...state.diet.revs } }
     adopting = true
     try {
@@ -280,7 +283,7 @@ export const useSyncStore = defineStore('sync', () => {
     }
     base = local()
     loaded.value = true
-    persistCache()
+    if (persist) persistCache()
   }
 
   /**
@@ -569,10 +572,12 @@ export const useSyncStore = defineStore('sync', () => {
       capture() // queue this tab's own unsent change before the other tab's state replaces it
       const state = normaliseState(parseJson(readKey(cacheKey())))
       // Its pending writes are in the shared outbox, so its state can count as the base. It is
-      // newer than any read still in flight here, so that read must not overwrite it.
+      // newer than any read still in flight here, so that read must not overwrite it. Writing it
+      // back would echo: a tab on older code words the cache differently (no `foodPick`), so each
+      // tab would rewrite the other's copy forever, undoing marks as they were made.
       if (state) {
         changes++
-        adopt(state)
+        adopt(state, false)
       }
     } else if (key === outboxKey()) {
       pending.value = readOutbox().length

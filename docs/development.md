@@ -255,7 +255,8 @@ listed in [api.md](api.md) §10):
     notice for identical creates), and refused writes being dropped (with the account-full notice
     for `quota`);
   - reads that must not undo local edits, including one the watcher has not seen;
-  - other tabs' cache and outbox writes, stop and forget, the old keys never written, `diff` and
+  - other tabs' cache and outbox writes (a cache adopted, never written back, even from older
+    code), stop and forget, the old keys never written, `diff` and
     `normaliseState`;
   - the `-v2` and `-v1` cache and outbox moved at sign-in, the newer winning, and a tab from before
     the solid and hatch drawings unable to empty a `great-solid` day (K41);

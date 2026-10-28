@@ -338,7 +338,7 @@ export function readKey(key: string): string | null {
   }
 }
 
-/** Skips unchanged values, so adopting another tab's write never echoes back to it. */
+/** Skips unchanged values, so rewriting what is already stored fires no `storage` event. */
 export function writeKey(key: string, value: unknown): void {
   try {
     const json = JSON.stringify(value)
